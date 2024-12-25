@@ -1,95 +1,94 @@
 <script lang="ts">
 	import { type WizardInput, WizardRecommendation, type WizardResult } from '$lib/model';
+	import { type WizardTargetSelection } from '$lib/types';
 	import { WizardOptions } from '$lib/enum';
 	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
 
 	export let calculationResult: WizardResult;
 	export let calculationInput: WizardInput;
 
-	export let chosenOption;
+	export let chosenOption: WizardTargetSelection;
 
-	const activeClass = 'variant-ringed-primary';
+	const getActiveClass = (userChoice: WizardOptions) => {
+		if (userChoice === chosenOption.userChoice) {
+			return 'variant-ringed-primary';
+		}
 
-	let activeElement: HTMLElement;
-	let anchorDefault: HTMLAnchorElement;
-	let anchorRecommendation: HTMLAnchorElement;
-	let anchorCustomWeight: HTMLAnchorElement;
-	let anchorCustomDate: HTMLAnchorElement;
-	let anchorCustom: HTMLAnchorElement;
-
-	const choose = (a: HTMLAnchorElement, param: WizardOptions) => {
-		if (activeElement) activeElement.classList.remove(activeClass);
-
-		activeElement = a;
-		activeElement.classList.add(activeClass);
-
-		chosenOption.userChoice = param;
+		return '';
 	};
 </script>
 
 <h2 class="h2">Next steps</h2>
 <p>
-	Let me assist you with a few suggestions. I created a set of targets for you to choose depending on what
-	you want to achieve. You can also set your own, if preferred.
+	Let me assist you with a few suggestions. I created a set of targets for you to choose depending
+	on what you want to achieve. You can also set your own, if preferred.
 </p>
 <div class="flex flex-col gap-4">
-	<a class="block card card-hover p-4" bind:this={anchorDefault}
-		 on:click|preventDefault={() => choose(anchorDefault, WizardOptions.Default)} href="javascript.void(0)"
-	>
-		<h3 class="h3">Take my initial values.</h3>
+	<label class="block card card-hover p-4 {getActiveClass(WizardOptions.Default)}">
+		<div class="flex flex-row gap-2">
+			<input
+				type="radio"
+				name="wizard-choice"
+				class="self-center"
+				value={WizardOptions.Default}
+				bind:group={chosenOption.userChoice}
+			/>
+			<h3 class="h3 self-center">Take my initial values.</h3>
+		</div>
 		<p>
-			I'm fine with what you presented before, set the weight {calculationInput.calculationGoal.toLowerCase() }
+			I'm fine with what you presented before, set the weight {calculationInput.calculationGoal.toLowerCase()}
 			target based on my input.
 		</p>
-	</a>
-
-	<a class="block card card-hover p-4" bind:this={anchorRecommendation}
-		 on:click|preventDefault={() => choose(anchorRecommendation, WizardOptions.Recommended)} href="javascript.void(0)"
-	>
-		<h3 class="h3">I'll take your recommendation.</h3>
+	</label>
+	<label class="block card card-hover p-4 {getActiveClass(WizardOptions.Recommended)}">
+		<div class="flex flex-row gap-2">
+			<input
+				type="radio"
+				name="wizard-choice"
+				class="self-center"
+				value={WizardOptions.Recommended}
+				bind:group={chosenOption.userChoice}
+			/>
+			<h3 class="h3 self-center">I'll take your recommendation.</h3>
+		</div>
 		<p>
-			I want
-			to {calculationResult.recommendation.toLowerCase()} {calculationResult.recommendation === WizardRecommendation.Hold ? 'my' : 'some'}
+			I want to {calculationResult.recommendation.toLowerCase()}
+			{calculationResult.recommendation === WizardRecommendation.Hold ? 'my' : 'some'}
 			weight. Create a target for that.
 		</p>
-	</a>
+	</label>
 
-	<a class="block card card-hover p-4" bind:this={anchorCustomWeight}
-		 on:click|preventDefault={() => choose(anchorCustomWeight, WizardOptions.Custom_weight)} href="javascript.void(0)"
-	>
-		<h3 class="h3">I want to reach my dream weight.</h3>
-		<p>
-			How can I get to my target weight as fast as possible?
-		</p>
-		<ValidatedInput bind:value={chosenOption.customDetails}
-										type="number"
-										label="Target weight"
-										unit={'kg'}
-		/>
-	</a>
+	<label class="block card card-hover p-4 {getActiveClass(WizardOptions.Custom_weight)}">
+		<div class="flex flex-row gap-2">
+			<input
+				type="radio"
+				name="wizard-choice"
+				class="self-center"
+				value={WizardOptions.Custom_weight}
+				bind:group={chosenOption.userChoice}
+			/>
+			<h3 class="h3">I want to reach my dream weight.</h3>
+		</div>
+		<p>How can I get to my target weight of {chosenOption.customDetails}kg as fast as possible?</p>
+	</label>
 
 	{#if calculationResult.recommendation !== WizardRecommendation.Hold}
-		<a class="block card card-hover p-4" bind:this={anchorCustomDate}
-			 on:click|preventDefault={() => choose(anchorCustomDate, WizardOptions.Custom_date)} href="javascript.void(0)"
-		>
-			<h3 class="h3">I am ready to commit.</h3>
+		<label class="block card card-hover p-4 {getActiveClass(WizardOptions.Custom_date)}">
+			<div class="flex flex-row gap-2">
+				<input
+					type="radio"
+					name="wizard-choice"
+					class="self-center"
+					value={WizardOptions.Custom_date}
+					bind:group={chosenOption.userChoice}
+				/>
+				<h3 class="h3">I am ready to commit.</h3>
+			</div>
 			<p>
-				How much weight {calculationInput.calculationGoal.toLowerCase()} can I achieve until a specific date?
+				How much weight {calculationInput.calculationGoal.toLowerCase()} can I achieve until a specific
+				date?
 			</p>
-			<ValidatedInput bind:value={chosenOption.customDetails}
-											type="date"
-											label="Target date"
-			/>
-		</a>
+			<ValidatedInput bind:value={chosenOption.customDetails} type="date" label="Target date" />
+		</label>
 	{/if}
-
-	<a class="block card card-hover p-4 flex-grow" bind:this={anchorCustom}
-		 on:click|preventDefault={() => choose(anchorCustom, WizardOptions.Custom)} href="javascript.void(0)"
-	>
-		<h3 class="h3">I want to set a custom target.</h3>
-
-		<p>
-			I understand the implications of what was presented to me and know what I am doing.
-		</p>
-	</a>
 </div>
