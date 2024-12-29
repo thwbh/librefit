@@ -2,11 +2,12 @@
 	import { validateTargetAmount } from '$lib/validation';
 	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
 	import type { CalorieTarget, ValidationMessage, WeightTarget } from '$lib/model';
+	import type { WizardTargetError } from '$lib/types';
 
-	export let startDate;
-	export let endDate;
+	export let startDate: Date;
+	export let endDate: Date;
 
-	export let errors;
+	export let errors: WizardTargetError;
 	export let errorEndDate: ValidationMessage = {
 		valid: true
 	};
@@ -17,13 +18,7 @@
 
 <div>
 	<form class="variant-ringed p-4 space-y-4 rounded-container-token">
-		<ValidatedInput
-			name="startDate"
-			type="date"
-			label="Begin"
-			required
-			bind:value={startDate}
-		/>
+		<ValidatedInput name="startDate" type="date" label="Begin" required bind:value={startDate} />
 
 		<ValidatedInput
 			name="endDate"
@@ -87,3 +82,4 @@
 		{/if}
 	</form>
 </div>
+

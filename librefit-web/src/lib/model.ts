@@ -1,4 +1,6 @@
-// types/model.d.ts
+// types/model.ts
+
+/** contains types shared between UI and backend */
 
 export enum BmiCategory {
   Underweight = 'Underweight',

@@ -10,7 +10,7 @@
 		type WizardResult
 	} from '$lib/model';
 	import { type WizardTargetSelection } from '$lib/types';
-	import { calculateTdee } from '$lib/api/wizard';
+	import { calculateForTargetWeight, calculateTdee } from '$lib/api/wizard';
 	import WizardResultComponent from './wizard/WizardResultComponent.svelte';
 	import { goto } from '$app/navigation';
 	import WizardInputComponent from './wizard/WizardInputComponent.svelte';
@@ -23,6 +23,7 @@
 	import { WizardOptions } from '$lib/enum';
 	import Check from '$lib/assets/icons/check.svg?component';
 	import WizardTarget from './wizard/WizardTarget.svelte';
+	import WizardTargetResultComponent from './wizard/WizardTargetResultComponent.svelte';
 
 	const toastStore = getToastStore();
 
@@ -209,6 +210,10 @@
 					/>
 				{/await}
 			</Step>
+
+      <Step>
+        <WizardTargetResultComponent {wizardInput} {chosenOption} />
+      </Step>
 
 			<Step>
 				<p>Set your nickname and avatar.</p>
