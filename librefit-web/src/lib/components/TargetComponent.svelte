@@ -4,16 +4,16 @@
 	import type { CalorieTarget, ValidationMessage, WeightTarget } from '$lib/model';
 	import type { WizardTargetError } from '$lib/types';
 
-	export let startDate: Date;
-	export let endDate: Date;
+	export let startDate: string;
+	export let endDate: string;
 
 	export let errors: WizardTargetError;
 	export let errorEndDate: ValidationMessage = {
 		valid: true
 	};
 
-	export let weightTarget: WeightTarget;
-	export let calorieTarget: CalorieTarget;
+	export let weightTarget: WeightTarget = undefined;
+	export let calorieTarget: CalorieTarget = undefined;
 </script>
 
 <div>

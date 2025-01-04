@@ -6,14 +6,17 @@
 
 	export let choices: Array<RadioInputChoice>;
 	export let name = `${value}-radio`;
-	export let label = 'Radio';
+	export let label = undefined;
+  export let flexDirection = 'flex-row';
 </script>
 
-<p>{label}</p>
+{#if label !== undefined}
+  <p>{label}</p>
+{/if}
 
-<RadioGroup>
+<RadioGroup {flexDirection} class="rounded-container-token">
 	{#each choices as choice}
-		<RadioItem bind:group={value} value={choice.value} {name}>
+		<RadioItem class="rounded-container-token" bind:group={value} value={choice.value} {name}>
 			{choice.label}
 		</RadioItem>
 	{/each}

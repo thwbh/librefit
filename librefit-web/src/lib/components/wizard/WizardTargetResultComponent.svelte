@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { calculateForTargetDate, calculateForTargetWeight } from '$lib/api/wizard';
-	import { getDateAsStr } from '$lib/date';
+	import { getDateAsStr, parseStringAsDate } from '$lib/date';
 	import { WizardOptions } from '$lib/enum';
 	import type {
 		CalorieTarget,
@@ -10,34 +10,33 @@
 		WizardTargetWeightResult
 	} from '$lib/model';
 	import type { WizardTargetSelection, WizardTargetError } from '$lib/types';
-	import { Tab, TabGroup } from '@skeletonlabs/skeleton';
+	import { RadioGroup, RadioItem, Tab, TabGroup } from '@skeletonlabs/skeleton';
 	import TargetComponent from '../TargetComponent.svelte';
+	import RadioInputComponent from '../RadioInputComponent.svelte';
 
 	export let wizardInput: WizardInput;
 	export let chosenOption: WizardTargetSelection;
 
-	let rateActive = 700;
+	let rateActive = "700";
 
-	let calorieTarget: CalorieTarget;
-	let weightTarget: WeightTarget;
+	//let calorieTarget: CalorieTarget;
+	//let weightTarget: WeightTarget;
 
 	let errors: WizardTargetError;
 
 	let errorEndDate: ValidationMessage = { valid: true };
 
 	const onTabChange = (wizardTargetResult: WizardTargetWeightResult) => {
-		calorieTarget = wizardTargetResult.dateByRate[rateActive].calorieTarget;
-		weightTarget = wizardTargetResult.dateByRate[rateActive].weightTarget;
-
-		errors.calorieTarget = calorieTarget;
-		errors.weightTarget = weightTarget;
+		//calorieTarget = wizardTargetResult.dateByRate[rateActive].calorieTarget;
+		//weightTarget = wizardTargetResult.dateByRate[rateActive].weightTarget;
+  
+		//errors.calorieTarget = calorieTarget;
+		//errors.weightTarget = weightTarget;
 	};
 </script>
 
-<div>
-	<h2>Select your rate</h2>
-
-	{#if chosenOption.userChoice === WizardOptions.Custom_weight}
+<div class="flex flex-col gap-2">
+		{#if chosenOption.userChoice === WizardOptions.Custom_weight}
 		{@const chosenOptionWeightInput = {
 			age: wizardInput.age,
 			sex: wizardInput.sex,
@@ -53,7 +52,11 @@
 				? Object.keys(chosenOptionWeightResult.dateByRate)
 				: []}
 			{#if rates.length > 0}
-				<div>
+        {@const choices = rates.map(rate => { 
+          return { label: rate, value: rate } 
+        }) }
+        <h2 class="h2">Select your rate</h2>
+        <div>
 					<p>
 						The following rates help you achieve your goal with different run times. Pick the one
 						you think that suits you best. The outcome will be the same, but a lower rate means it
@@ -61,49 +64,30 @@
 					</p>
 				</div>
 
-				<TabGroup class="flex-wrap" flex="flex-wrap">
-					{#each rates as rate}
-						<Tab
-							bind:group={rateActive}
-							name={rate}
-							value={rate}
-							on:change={() => onTabChange(chosenOptionWeightResult)}
-						>
-							<span>{rate}</span>
-						</Tab>
-					{/each}
-
-					<!-- Tab Panels --->
-					<svelte:fragment slot="panel">
-						{#if chosenOptionWeightResult.dateByRate}
-							{@const calorieTarget = chosenOptionWeightResult.dateByRate[rateActive].calorieTarget}
-							{@const weightTarget = chosenOptionWeightResult.dateByRate[rateActive].weightTarget}
-							<TargetComponent
-								startDate={calorieTarget.startDate}
-								endDate={calorieTarget.endDate}
+        <div class="flex flex-row gap-2">
+            <RadioInputComponent flexDirection="flex-col" bind:value={rateActive} {choices}/> 
+            <div class="flex flex-col flex-grow justify-between">
+            {#if chosenOptionWeightResult.dateByRate}
+              {@const endDate = chosenOptionWeightResult.dateByRate[rateActive] }
+              {@const weightProgress = chosenOptionWeightResult.progressByRate[rateActive]}
+  					<TargetComponent
+                startDate={getDateAsStr(new Date())}
+                {endDate}
 								{errors}
 								{errorEndDate}
-								{calorieTarget}
-								{weightTarget}
-							/>
+						/>
+
+              <p class="p-2">
+                With a rate of {rateActive}kcal, you should see a {weightProgress}kg difference each week.
+              </p>
 						{/if}
-					</svelte:fragment>
-				</TabGroup>
+            </div>
+        </div>
+
 			{:else if chosenOptionWeightResult.warning}
 				<header class="text-2xl font-bold">Warning</header>
 
-				<p>{chosenOptionWeightResult.warning}</p>
-			{:else}
-				<header class="text-2xl font-bold">Set target</header>
-
-				<TargetComponent
-					{startDate}
-					{endDate}
-					{errors}
-					{errorEndDate}
-					{calorieTarget}
-					{weightTarget}
-				/>
+				<p>{chosenOptionWeightResult.message}</p>
 			{/if}
 		{/await}
 	{:else if chosenOption.userChoice === WizardOptions.Custom_date}
