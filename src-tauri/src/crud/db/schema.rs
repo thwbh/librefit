@@ -39,15 +39,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    health_data (id) {
-        id -> Integer,
-        height -> Float,
-        weight -> Float,
-        sex -> Text,
-    }
-}
-
-diesel::table! {
     libre_user (id) {
         id -> Integer,
         avatar -> Nullable<Text>,
@@ -79,7 +70,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     calorie_target,
     calorie_tracker,
     food_category,
-    health_data,
     libre_user,
     weight_target,
     weight_tracker,
