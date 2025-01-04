@@ -63,7 +63,7 @@ cargo tauri android dev
 
 If you encounter an error like this:
 
-´java.lang.UnsatisfiedLinkError: dlopen failed: cannot locate symbol "__floatunditf"´
+`java.lang.UnsatisfiedLinkError: dlopen failed: cannot locate symbol "__floatunditf"`
 
 The linker path found in `build.rs` does not match.
 
@@ -72,9 +72,9 @@ The linker path found in `build.rs` does not match.
 
 `$NDK_HOME/toolchains/llvm/prebuild/<host>/<lib>/clang/<clang-version>/lib/<os>/libclang_rt.builtins-<guest>.a`
 
-- <host>:   Your system type, e..g linux-x86_64
+- <host>:   Your system type, e.g. linux-x86_64
 - <lib>:    Either lib or lib64
-- <os>:     Your OS type, eg linux
+- <os>:     Your OS type, e.g. linux
 - <guest>:  Guest system type, e.g. x86_64-android
 
 export that as env variable, e.g. `$LINKER`
