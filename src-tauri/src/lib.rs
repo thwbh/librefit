@@ -47,13 +47,17 @@ pub fn run() {
 
             dotenv().ok();
 
-            // hardwire db path. bundling resources does not work on android for some reason.
-            let resource_path = app
-                .path()
-                .resolve("tracker.db", BaseDirectory::AppData)
-                .unwrap();
-
-            env::set_var("DATABASE_URL", resource_path.clone());
+            match env::var("DATABASE_URL") {
+                Ok(_) => {}
+                // hardwire db path. bundling resources does not work on android for some reason.
+                Err(_) => env::set_var(
+                    "DATABASE_URL",
+                    app.path()
+                        .resolve("tracker.db", BaseDirectory::AppData)
+                        .unwrap()
+                        .clone(),
+                ),
+            }
 
             let _ = init::db_setup::run_migrations(&mut connection::create_db_connection());
 
