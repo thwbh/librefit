@@ -142,7 +142,7 @@
 			</div>
 		</div>
 	{:else if setup}
-		<h1 class="h1">Your Profile</h1>
+		<h1 class="h1">First Setup</h1>
 		<Stepper on:next={handleNextStep} on:complete={() => goto('/dashboard')}>
 			<Step>
 				<p>Let's see where you stand right now.</p>

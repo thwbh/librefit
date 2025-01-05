@@ -3,6 +3,7 @@
 	import { type WizardTargetSelection } from '$lib/types';
 	import { WizardOptions } from '$lib/enum';
 	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
+	import { convertDateStrToDisplayDateStr, parseStringAsDate } from '../../date';
 
 	export let calculationResult: WizardResult;
 	export let calculationInput: WizardInput;
@@ -58,6 +59,7 @@
 		</p>
 	</label>
 
+  {#if chosenOption.userChoice === WizardOptions.Custom_weight}
 	<label class="block card card-hover p-4 {getActiveClass(WizardOptions.Custom_weight)}">
 		<div class="flex flex-row gap-2">
 			<input
@@ -71,24 +73,20 @@
 		</div>
 		<p>How can I get to my target weight of {chosenOption.customDetails}kg as fast as possible?</p>
 	</label>
+  {:else if chosenOption.userChoice === WizardOptions.Custom_date}
+	<label class="block card card-hover p-4 {getActiveClass(WizardOptions.Custom_date)}">
+		<div class="flex flex-row gap-2">
+			<input
+				type="radio"
+				name="wizard-choice"
+				class="self-center"
+				value={WizardOptions.Custom_date}
+				bind:group={chosenOption.userChoice}
+			/>
+			<h3 class="h3">I have a timeline in mind.</h3>
+		</div>
+		<p>How much can I achieve until {convertDateStrToDisplayDateStr(chosenOption.customDetails)}?</p>
+	</label>
 
-	{#if calculationResult.recommendation !== WizardRecommendation.Hold}
-		<label class="block card card-hover p-4 {getActiveClass(WizardOptions.Custom_date)}">
-			<div class="flex flex-row gap-2">
-				<input
-					type="radio"
-					name="wizard-choice"
-					class="self-center"
-					value={WizardOptions.Custom_date}
-					bind:group={chosenOption.userChoice}
-				/>
-				<h3 class="h3">I am ready to commit.</h3>
-			</div>
-			<p>
-				How much weight {calculationInput.calculationGoal.toLowerCase()} can I achieve until a specific
-				date?
-			</p>
-			<ValidatedInput bind:value={chosenOption.customDetails} type="date" label="Target date" />
-		</label>
-	{/if}
+  {/if}
 </div>

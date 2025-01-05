@@ -122,7 +122,8 @@ pub struct WizardTargetDateInput {
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct WizardTargetDateResult {
-    pub result_by_rate: HashMap<i32, WizardResult>,
+    pub weight_by_rate: HashMap<i32, f32>,
+    pub bmi_by_rate: HashMap<i32, f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -312,7 +313,18 @@ pub fn calculate_for_target_date(
                 result_by_rate.insert(rate, result);
             }
 
-            Ok(WizardTargetDateResult { result_by_rate })
+            let mut weight_by_rate = HashMap::new();
+            let mut bmi_by_rate = HashMap::new();
+
+            result_by_rate.into_iter().for_each(|field| {
+                weight_by_rate.insert(field.0, field.1.target_weight);
+                bmi_by_rate.insert(field.0, field.1.bmi);
+            });
+
+            Ok(WizardTargetDateResult {
+                weight_by_rate,
+                bmi_by_rate,
+            })
         }
     }
 }

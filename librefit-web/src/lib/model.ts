@@ -183,7 +183,8 @@ export interface WizardTargetDateInput {
 }
 
 export interface WizardTargetDateResult {
-  resultByRate: Map<number, WizardResult>;
+  weightByRate: Map<number, number>;
+  bmiByRate: Map<number, number>;
   targetClassification: BmiCategory;
   warning: boolean;
   message: string;
