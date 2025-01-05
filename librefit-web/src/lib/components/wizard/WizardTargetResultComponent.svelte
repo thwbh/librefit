@@ -1,52 +1,54 @@
 <script lang="ts">
 	import { calculateForTargetDate, calculateForTargetWeight } from '$lib/api/wizard';
-	import { getDateAsStr, parseStringAsDate } from '$lib/date';
+	import { getDateAsStr } from '$lib/date';
 	import { WizardOptions } from '$lib/enum';
-	import type {
-		CalorieTarget,
-		ValidationMessage,
-		WeightTarget,
+	import type {			
+    ValidationMessage,
 		WizardInput,
 		WizardTargetDateResult,
 		WizardTargetWeightResult
 	} from '$lib/model';
 	import type { WizardTargetSelection, WizardTargetError } from '$lib/types';
-	import { RadioGroup, RadioItem, Tab, TabGroup } from '@skeletonlabs/skeleton';
 	import TargetComponent from '../TargetComponent.svelte';
 	import RadioInputComponent from '../RadioInputComponent.svelte';
-	import WizardResultComponent from './WizardResultComponent.svelte';
-	import WizardTarget from './WizardTarget.svelte';
 
-	export let wizardInput: WizardInput;
+  export let wizardInput: WizardInput;
 	export let chosenOption: WizardTargetSelection;
 
-	let rateActive = "700";
-
-	//let calorieTarget: CalorieTarget;
-	//let weightTarget: WeightTarget;
-
+	export let rateActive = undefined;
 	let errors: WizardTargetError;
 
 	let errorEndDate: ValidationMessage = { valid: true };
 
-	const onTabChange = (wizardTargetResult: WizardTargetWeightResult) => {
-		//calorieTarget = wizardTargetResult.dateByRate[rateActive].calorieTarget;
-		//weightTarget = wizardTargetResult.dateByRate[rateActive].weightTarget;
-  
-		//errors.calorieTarget = calorieTarget;
-		//errors.weightTarget = weightTarget;
-	};
+  const extractAndSelectWeightRate = (wizardTargetResult: WizardTargetWeightResult) => {
+    const rates = wizardTargetResult.dateByRate
+				? Object.keys(wizardTargetResult.dateByRate)
+				: [];
 
-  const extractAndSelectRate = (wizardTargetResult: WizardTargetDateResult) => {
+    if (rateActive === undefined) {
+      const selectedIndex = rates.length <= 0 ? 0 : Math.floor(rates.length / 2);
+      rateActive = `${rates[selectedIndex]}`;
+    }
+    return rates;
+  }
+
+  const extractAndSelectDateRate = (wizardTargetResult: WizardTargetDateResult) => {
     const rates = wizardTargetResult.weightByRate 
         ? Object.keys(wizardTargetResult.weightByRate)
 				: [];
 
-    const selectedIndex = rates.length <= 0 ? 0 : rates.length / 2;
-
-    rateActive = `${rates[selectedIndex]}`;
+    if (rateActive === undefined) {
+      const selectedIndex = rates.length <= 0 ? 0 : Math.floor(rates.length / 2);
+      rateActive = `${rates[selectedIndex]}`;
+    }
 
     return rates;
+  }
+
+  const getRadioChoices = (rates: Array<string>) => {
+      return rates.map(rate => { 
+          return { label: rate, value: rate } 
+      });
   }
 </script>
 
@@ -61,15 +63,11 @@
 			startDate: getDateAsStr(new Date())
 		}}
 		{#await calculateForTargetWeight(chosenOptionWeightInput)}
-			<p>Target weight</p>
+			<p>Calculating...</p>
 		{:then chosenOptionWeightResult}
-			{@const rates = chosenOptionWeightResult.dateByRate
-				? Object.keys(chosenOptionWeightResult.dateByRate)
-				: []}
+			{@const rates = extractAndSelectWeightRate(chosenOptionWeightResult)}
 			{#if rates.length > 0}
-        {@const choices = rates.map(rate => { 
-          return { label: rate, value: rate } 
-        }) }
+        {@const choices = getRadioChoices(rates)}
         <h2 class="h2">Select your rate</h2>
         <div>
 					<p>
@@ -93,7 +91,7 @@
               />
 
               <p class="p-2">
-                With a rate of {rateActive}kcal, you should see a {weightProgress}kg difference each week.
+                With a rate of {rateActive}kcal per day, you should see a {weightProgress}kg difference each week.
               </p>
 						{/if}
             </div>
@@ -115,13 +113,11 @@
 			targetDate: chosenOption.customDetails
 		}}
 		{#await calculateForTargetDate(chosenOptionDateInput)}
-			<p>Target date</p>
+			<p>Calculating...</p>
 		{:then chosenOptionDateResult}
-      {@const rates = extractAndSelectRate(chosenOptionDateResult) }
+      {@const rates = extractAndSelectDateRate(chosenOptionDateResult) }
       {#if rates.length > 0}
-        {@const choices = rates.map(rate => { 
-          return { label: rate, value: rate } 
-        }) }
+        {@const choices = getRadioChoices(rates) }
         <h2 class="h2">Select your rate</h2>
         <div>
 					<p>
@@ -150,7 +146,7 @@
               />
 
               <p>
-                With a rate of {rateActive}kcal, your target weight will be ~{weightResult}kg, 
+                With a rate of {rateActive}kcal per day, your target weight will be ~{weightResult}kg, 
                 which leaves you with a BMI of {bmiResult}.
               </p>
 

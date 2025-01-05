@@ -2,8 +2,7 @@
 	import { type WizardInput, WizardRecommendation, type WizardResult } from '$lib/model';
 	import { type WizardTargetSelection } from '$lib/types';
 	import { WizardOptions } from '$lib/enum';
-	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
-	import { convertDateStrToDisplayDateStr, parseStringAsDate } from '../../date';
+	import { convertDateStrToDisplayDateStr } from '$lib/date';
 
 	export let calculationResult: WizardResult;
 	export let calculationInput: WizardInput;

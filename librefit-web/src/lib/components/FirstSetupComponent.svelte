@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
 	import { Accordion, AccordionItem, getToastStore, Step, Stepper } from '@skeletonlabs/skeleton';
-	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
+	import { showToastError, showToastWarning } from '$lib/toast';
 	import {
 		CalculationGoal,
 		CalculationSex,
 		type LibreUser,
 		type WizardInput,
-		type WizardResult
 	} from '$lib/model';
 	import { type WizardTargetSelection } from '$lib/types';
-	import { calculateForTargetWeight, calculateTdee } from '$lib/api/wizard';
+	import { calculateTdee } from '$lib/api/wizard';
 	import WizardResultComponent from './wizard/WizardResultComponent.svelte';
 	import { goto } from '$app/navigation';
 	import WizardInputComponent from './wizard/WizardInputComponent.svelte';
@@ -36,6 +35,8 @@
 
 	let customWeightOpened = true;
 	let customDateOpened = false;
+
+  let targetRateActive = undefined;
 
 	let setup: boolean = true;
 	let importer: boolean = false;
@@ -212,7 +213,7 @@
 			</Step>
 
       <Step>
-        <WizardTargetResultComponent {wizardInput} {chosenOption} />
+        <WizardTargetResultComponent {wizardInput} {chosenOption} rateActive={targetRateActive} />
       </Step>
 
 			<Step>
