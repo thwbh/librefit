@@ -104,41 +104,59 @@
 <div class="flex flex-row gap-1 justify-end">
 	{#if !existing}
 		<div>
-			<button aria-label="add" bind:this={btnAdd} class="btn-icon variant-filled-primary" on:click|preventDefault={add}>
-			<span>
-			{#if unit === 'kcal'}
-				<AddKcal />
-			{:else if unit === 'kg'}
-				<AddWeight />
-			{:else}
-				<Add />
-			{/if}
-			</span>
+			<button
+				aria-label="add"
+				bind:this={btnAdd}
+				class="btn-icon variant-filled-primary"
+				on:click|preventDefault={add}
+			>
+				<span>
+					{#if unit === 'kcal'}
+						<AddKcal />
+					{:else if unit === 'kg'}
+						<AddWeight />
+					{:else}
+						<Add />
+					{/if}
+				</span>
 			</button>
 		</div>
-	{:else}
-		{#if !editing}
-			<button aria-label="edit" class="btn-icon variant-filled-secondary" on:click|preventDefault={change('update')}>
+	{:else if !editing}
+		<button
+			aria-label="edit"
+			class="btn-icon variant-filled-secondary"
+			on:click|preventDefault={change('update')}
+		>
 			<span>
 				<Edit />
 			</span>
-			</button>
-			<button aria-label="delete" class="btn-icon variant-filled" on:click|preventDefault={change('delete')}>
+		</button>
+		<button
+			aria-label="delete"
+			class="btn-icon variant-filled"
+			on:click|preventDefault={change('delete')}
+		>
 			<span>
 				<Trash />
 			</span>
-			</button>
-		{:else}
-			<button aria-label="confirm" bind:this={btnConfirm}
-							class="btn-icon variant-ghost-primary"
-							on:click={changeAction === 'update' ? update : remove}
-			>
+		</button>
+	{:else}
+		<button
+			aria-label="confirm"
+			bind:this={btnConfirm}
+			class="btn-icon variant-ghost-primary"
+			on:click={changeAction === 'update' ? update : remove}
+		>
 			<span>
 				<Check />
 			</span>
-			</button>
-			<button aria-label="discard" bind:this={btnCancel} class="btn-icon variant-ghost-error"
-							on:click|preventDefault={discard}>
+		</button>
+		<button
+			aria-label="discard"
+			bind:this={btnCancel}
+			class="btn-icon variant-ghost-error"
+			on:click|preventDefault={discard}
+		>
 			<span>
 				{#if changeAction === 'update'}
 					<CancelEdit />
@@ -148,7 +166,6 @@
 					X
 				{/if}
 			</span>
-			</button>
-		{/if}
+		</button>
 	{/if}
 </div>

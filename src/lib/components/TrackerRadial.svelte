@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CalorieTarget } from "$lib/model";
+	import type { CalorieTarget } from '$lib/model';
 
 	export let calorieTarget: CalorieTarget;
 	export let entries: Array<number>;
@@ -53,7 +53,12 @@
 		}
 	};
 
-	$: strokeClass = total <= limit ? 'stroke-primary-500' : (total > limit && total <= maximum ? 'stroke-overflow-1' : 'stroke-overflow-2');
+	$: strokeClass =
+		total <= limit
+			? 'stroke-primary-500'
+			: total > limit && total <= maximum
+				? 'stroke-overflow-1'
+				: 'stroke-overflow-2';
 
 	$: outerEnd = calculateEnd(total, limit);
 	$: innerEnd = calculateEnd(total, maximum);
@@ -61,7 +66,7 @@
 	$: calculateEnd;
 </script>
 
-<figure class="progress-radial relative overflow-hidden w-64 " data-testid="progress-radial">
+<figure class="progress-radial relative overflow-hidden w-64" data-testid="progress-radial">
 	<svg viewBox="0 0 {width} {height}" class="rounded-full">
 		<g stroke-width={stroke}>
 			<path
@@ -117,7 +122,10 @@
 			font-size="56"
 			class="progress-radial-text fill-token"
 		>
-			{total} {#if calorieTarget} / {limit} {/if}
+			{total}
+			{#if calorieTarget}
+				/ {limit}
+			{/if}
 		</text>
 
 		{#if calorieTarget}

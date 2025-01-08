@@ -2,14 +2,13 @@
 	import { env } from '$env/dynamic/public';
 	import { Accordion, AccordionItem, getToastStore, Step, Stepper } from '@skeletonlabs/skeleton';
 	import { showToastError, showToastWarning } from '$lib/toast';
-	import {
-		CalculationGoal,
-		CalculationSex,
-		type LibreUser,
-		type WizardInput,
-	} from '$lib/model';
+	import { CalculationGoal, CalculationSex, type LibreUser, type WizardInput } from '$lib/model';
 	import { type WizardTargetSelection } from '$lib/types';
-	import { calculateTdee, createTargetDateTargets, createTargetWeightTargets } from '$lib/api/wizard';
+	import {
+		calculateTdee,
+		createTargetDateTargets,
+		createTargetWeightTargets
+	} from '$lib/api/wizard';
 	import WizardResultComponent from './wizard/WizardResultComponent.svelte';
 	import { goto } from '$app/navigation';
 	import WizardInputComponent from './wizard/WizardInputComponent.svelte';
@@ -36,7 +35,7 @@
 	let customWeightOpened = true;
 	let customDateOpened = false;
 
-  let selectedRate = undefined;
+	let selectedRate = undefined;
 
 	let setup: boolean = true;
 	let importer: boolean = false;
@@ -61,9 +60,7 @@
 	const handleNextStep = async (event: any) => {};
 
 	const handleProfileData = async () => {
-    let updateTargets;
-
-    
+		let updateTargets;
 
 		await Promise.all([
 			updateBodyData({
@@ -90,13 +87,12 @@
 			chosenOption.userChoice = param;
 		}
 
-    if (chosenOption.userChoice === WizardOptions.Custom_weight) {
-      customWeightOpened = chosenOption.userChoice === WizardOptions.Custom_weight;
-    } else {
-      customDateOpened = chosenOption.userChoice === WizardOptions.Custom_date;
-    }
+		if (chosenOption.userChoice === WizardOptions.Custom_weight) {
+			customWeightOpened = chosenOption.userChoice === WizardOptions.Custom_weight;
+		} else {
+			customDateOpened = chosenOption.userChoice === WizardOptions.Custom_date;
+		}
 	};
-
 </script>
 
 <div class="container mx-auto p-12 space-y-8 self-center">
@@ -192,7 +188,7 @@
 								><p>How much can I achieve until a specific date?</p>
 								<RadioInputComponent
 									bind:value={wizardInput.calculationGoal}
-									label="I want to"
+									label={'I want to'}
 									choices={goalChoices}
 								/>
 								<ValidatedInput bind:value={chosenOption.customDetails} type="date" label="until" />
@@ -201,31 +197,30 @@
 					</Accordion>
 				</div>
 			</Step>
-      {#await calculateTdee(wizardInput)}
-        <p>Calculating...</p>
-      {:then wizardResult}
-	
-        <Step>
-          <p>Based on your input, I calculated the following.</p>
+			{#await calculateTdee(wizardInput)}
+				<p>Calculating...</p>
+			{:then wizardResult}
+				<Step>
+					<p>Based on your input, I calculated the following.</p>
 
-          <WizardResultComponent calculationInput={wizardInput} calculationResult={wizardResult} />
+					<WizardResultComponent calculationInput={wizardInput} calculationResult={wizardResult} />
 
-          <WizardTarget
-            calculationInput={wizardInput}
-            calculationResult={wizardResult}
-            bind:chosenOption
-          />
-        </Step>
+					<WizardTarget
+						calculationInput={wizardInput}
+						calculationResult={wizardResult}
+						bind:chosenOption
+					/>
+				</Step>
 
-        <Step>
-          <WizardTargetResultComponent {wizardInput} {wizardResult} {chosenOption} {selectedRate} />
-        </Step>
+				<Step>
+					<WizardTargetResultComponent {wizardInput} {wizardResult} {chosenOption} {selectedRate} />
+				</Step>
 
-        <Step>
-          <p>Set your nickname and avatar.</p>
-          <UserProfileComponent bind:user={userProfileData} />
-			</Step>
-      {/await}
+				<Step>
+					<p>Set your nickname and avatar.</p>
+					<UserProfileComponent bind:user={userProfileData} />
+				</Step>
+			{/await}
 		</Stepper>
 	{:else if importer}
 		<p>String upload.</p>

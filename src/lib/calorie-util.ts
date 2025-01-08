@@ -1,6 +1,9 @@
 import type { CalorieTracker, FoodCategory } from './model';
 
-export const getAverageCategoryIntake = (entries: Array<CalorieTracker>, foodCategories: Array<FoodCategory>) => {
+export const getAverageCategoryIntake = (
+	entries: Array<CalorieTracker>,
+	foodCategories: Array<FoodCategory>
+) => {
 	const nonEmpty = entries.filter((e) => e.amount > 0);
 
 	if (nonEmpty.length > 0) {
@@ -38,7 +41,7 @@ export const getAverageDailyIntake = (entries: Array<CalorieTracker>): number =>
 				.filter((e) => e.added === day)
 				.map((e) => e.amount)
 				.reduce((a, b) => a + b);
-		})
+		});
 
 		return Math.round(sum / days.size);
 	}

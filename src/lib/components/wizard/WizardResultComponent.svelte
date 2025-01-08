@@ -146,4 +146,3 @@
 		during that time.
 	</p>
 {/if}
-

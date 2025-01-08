@@ -11,8 +11,8 @@ export const createWeightChart = (view: DataViews, start: Date, entries: Array<W
 	let end: number | Date;
 	let displayFormat: String;
 	let duration: {
-		months?: number,
-		days?: number
+		months?: number;
+		days?: number;
 	};
 	switch (view) {
 		case DataViews.Year:

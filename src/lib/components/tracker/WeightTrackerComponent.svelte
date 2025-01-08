@@ -76,7 +76,9 @@
 			type: 'component',
 			component: 'targetModal',
 			meta: {
-				weightTarget: !weightTarget ? { initialWeight: !weightList ? undefined : weightList[0].amount } : weightTarget
+				weightTarget: !weightTarget
+					? { initialWeight: !weightList ? undefined : weightList[0].amount }
+					: weightTarget
 			},
 			response: (e) => {
 				if (e && !e.cancelled) {
@@ -92,24 +94,23 @@
 <div class="flex flex-col grow gap-4 text-center items-center self-center w-full">
 	{#if weightList && weightList.length > 0}
 		<p>
-			Current weight: {weightList[0].amount}kg ({convertDateStrToDisplayDateStr(weightList[0].added)})
+			Current weight: {weightList[0].amount}kg ({convertDateStrToDisplayDateStr(
+				weightList[0].added
+			)})
 		</p>
 	{:else}
-		<p>
-			Nothing tracked for today. Now would be a good moment!
-		</p>
+		<p>Nothing tracked for today. Now would be a good moment!</p>
 	{/if}
-
 
 	<div class="flex flex-row gap-1 items-center">
 		{#if weightTarget}
 			<p>
-				Target: {weightTarget.targetWeight}kg @ ({convertDateStrToDisplayDateStr(weightTarget.endDate)})
+				Target: {weightTarget.targetWeight}kg @ ({convertDateStrToDisplayDateStr(
+					weightTarget.endDate
+				)})
 			</p>
 		{:else}
-			<p>
-				No target weight set.
-			</p>
+			<p>No target weight set.</p>
 		{/if}
 		<button class="btn-icon variant-filled w-8" bind:this={btnTarget} on:click={onSetTarget}>
 			<Target />
@@ -130,9 +131,7 @@
 				<span>
 					<Scale />
 				</span>
-				<span>
-					Edit
-				</span>
+				<span> Edit </span>
 			</button>
 		{/if}
 	</div>

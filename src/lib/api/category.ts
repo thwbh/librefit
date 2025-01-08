@@ -1,7 +1,9 @@
 import type { CalorieTracker, FoodCategory } from '../model';
 
-
-export const getFoodCategoryLongvalue = (foodCategories: Array<FoodCategory>, shortvalue: string) => {
+export const getFoodCategoryLongvalue = (
+	foodCategories: Array<FoodCategory>,
+	shortvalue: string
+) => {
 	return foodCategories.filter((fc) => fc.shortvalue === shortvalue)[0].longvalue;
 };
 

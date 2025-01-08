@@ -1,4 +1,3 @@
-
 # librefit
 
 ![GitHub Release](https://img.shields.io/github/v/release/thwbh/librefit) ![Coverage](https://raw.githubusercontent.com/thwbh/librefit/badges/jacoco.svg)
@@ -8,8 +7,8 @@ metrics, create goals for weight loss or weight gain from that and encourages yo
 Based in your input, you will see easy to understand charts to keep on track with your goal - all that with privacy
 first in mind.
 
-* [Issue Tracker](https://github.com/thwbh/librefit/issues)
-* [Discussions](https://github.com/thwbh/librefit/discussions)
+- [Issue Tracker](https://github.com/thwbh/librefit/issues)
+- [Discussions](https://github.com/thwbh/librefit/discussions)
 
 ## Introduction
 
@@ -20,14 +19,15 @@ was born.
 ### Dependencies
 
 - rust 1.77.2
-- diesel 2.2.6 
+- diesel 2.2.6
 - tauro 2.0
 - sqlite 3
 - sveltekit 2.5.2
-- skeleton 2.9.0 
+- skeleton 2.9.0
 
 ### Tools
- - Android Studio
+
+- Android Studio
 
 ## Structure
 
@@ -67,15 +67,15 @@ If you encounter an error like this:
 
 The linker path found in `build.rs` does not match.
 
-* Navigate to $NDK_HOME.
-* Search for the x86_64-android libclang file. If you followed the steps in the tauri docs, the path should look like this:
+- Navigate to $NDK_HOME.
+- Search for the x86_64-android libclang file. If you followed the steps in the tauri docs, the path should look like this:
 
 `$NDK_HOME/toolchains/llvm/prebuild/<host>/<lib>/clang/<clang-version>/lib/<os>/libclang_rt.builtins-<guest>.a`
 
-- <host>:   Your system type, e.g. linux-x86_64
-- <lib>:    Either lib or lib64
-- <os>:     Your OS type, e.g. linux
-- <guest>:  Guest system type, e.g. x86_64-android
+- <host>: Your system type, e.g. linux-x86_64
+- <lib>: Either lib or lib64
+- <os>: Your OS type, e.g. linux
+- <guest>: Guest system type, e.g. x86_64-android
 
 export that as env variable, e.g. `$LINKER`
 
@@ -88,10 +88,10 @@ RUSTFLAGS="-C link-arg=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/lib/clang
 ```
 
 ## Attribution
+
 The avatars were created with hotpot: https://hotpot.ai/art-generator
 
 ## Contribute
 
 If you have any suggestions, impediments or things that absolutely annoy you, please refer to the issue tracker linked
 at the top of this document. When you are interested in participating in development, feel free to contact me.
-

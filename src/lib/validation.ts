@@ -1,6 +1,12 @@
 import { parseStringAsDate } from './date';
 import { isAfter } from 'date-fns';
-import type { CalorieTarget, ErrorDescription, ErrorResponse, ValidationMessage, WeightTarget } from './model';
+import type {
+	CalorieTarget,
+	ErrorDescription,
+	ErrorResponse,
+	ValidationMessage,
+	WeightTarget
+} from './model';
 
 export const validateAmount = (amount): string => {
 	if (!amount || amount <= 0) {
@@ -8,18 +14,25 @@ export const validateAmount = (amount): string => {
 	}
 };
 
-export const getFieldError = (errorResponse: ErrorResponse, fieldName: string): undefined | string => {
+export const getFieldError = (
+	errorResponse: ErrorResponse,
+	fieldName: string
+): undefined | string => {
 	if (!errorResponse || errorResponse.success) {
 		return undefined;
 	}
 
 	const descriptions: Array<ErrorDescription> = errorResponse.errors;
-	const description: ErrorDescription = descriptions.filter((description) => description.field === fieldName)[0];
+	const description: ErrorDescription = descriptions.filter(
+		(description) => description.field === fieldName
+	)[0];
 
 	return description ? description.message : undefined;
 };
 
-export const validateCalorieTarget = (target: CalorieTarget): {
+export const validateCalorieTarget = (
+	target: CalorieTarget
+): {
 	endDate: ValidationMessage;
 	targetCalories: ValidationMessage;
 	maximumCalories: ValidationMessage;
@@ -42,7 +55,9 @@ export const validateCalorieTarget = (target: CalorieTarget): {
 	};
 };
 
-export const validateWeightTarget = (target: WeightTarget): {
+export const validateWeightTarget = (
+	target: WeightTarget
+): {
 	endDate: ValidationMessage;
 	initialWeight: ValidationMessage;
 	targetWeight: ValidationMessage;

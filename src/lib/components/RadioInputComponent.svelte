@@ -7,11 +7,11 @@
 	export let choices: Array<RadioInputChoice>;
 	export let name = `${value}-radio`;
 	export let label = undefined;
-  export let flexDirection = 'flex-row';
+	export let flexDirection = 'flex-row';
 </script>
 
 {#if label !== undefined}
-  <p>{label}</p>
+	<p>{label}</p>
 {/if}
 
 <RadioGroup {flexDirection} class="rounded-container-token">

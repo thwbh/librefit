@@ -48,6 +48,7 @@
 	};
 
 	const today = new Date();
+	let selectedRate = '100';
 
 	const calculate = async (e) => {
 		$indicator = $indicator.start();
@@ -86,7 +87,8 @@
 						calculationResult,
 						customWizardResult,
 						today,
-						wizardDetails.targetDate
+						wizardDetails.targetDate,
+						selectedRate
 					);
 
 					showModal({
@@ -124,7 +126,8 @@
 						calculationResult,
 						customWizardResult,
 						today,
-						wizardDetails.targetWeight
+						wizardDetails.targetWeight,
+						selectedRate
 					);
 
 					showModal({

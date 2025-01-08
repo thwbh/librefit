@@ -2,8 +2,8 @@
 	import TrackerRadial from '$lib/components/TrackerRadial.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { getDateAsStr, getDaytimeFoodCategory } from '$lib/date';
-	import Plus from '$lib/assets/icons/plus.svg';
-	import Edit from '$lib/assets/icons/pencil.svg';
+	import Plus from '$lib/assets/icons/plus.svg?component';
+	import Edit from '$lib/assets/icons/pencil.svg?component';
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
 	import type { CalorieTarget, CalorieTracker, FoodCategory } from '$lib/model';
@@ -112,12 +112,10 @@
 </script>
 
 <div class="flex flex-col gap-4 justify-between text-center h-full xl:w-80">
-	<h2 class="h3">
-		Calorie Tracker
-	</h2>
+	<h2 class="h3">Calorie Tracker</h2>
 	<div class="flex flex-col w-fit h-full justify-between gap-4 pt-4">
 		<div class="self-center">
-			<TrackerRadial entries={calorieTracker.map(e => e.amount)} {calorieTarget} />
+			<TrackerRadial entries={calorieTracker.map((e) => e.amount)} {calorieTarget} />
 		</div>
 		{#if calorieTarget}
 			<div>
@@ -125,11 +123,13 @@
 					<p>You still have {Math.abs(deficit)}kcal left for the day. Good job!</p>
 				{:else if deficit === 0}
 					<p>A spot landing. How did you even do that? There's {deficit}kcal left.</p>
-				{:else if deficit > 0 && (deficit + calorieTarget.targetCalories) <= calorieTarget.maximumCalories}
+				{:else if deficit > 0 && deficit + calorieTarget.targetCalories <= calorieTarget.maximumCalories}
 					<p>You exceeded your daily target by {deficit}kcal. Days like these happen.</p>
 				{:else}
-					<p>With a {deficit}kcal surplus, you reached the red zone. Eating over your TDEE causes long term weight
-						gain.</p>
+					<p>
+						With a {deficit}kcal surplus, you reached the red zone. Eating over your TDEE causes
+						long term weight gain.
+					</p>
 				{/if}
 			</div>
 		{/if}
@@ -148,19 +148,15 @@
 		<div class="btn-group variant-filled w-fit grow">
 			<button class="w-1/2" aria-label="add calories" on:click={onAddCalories}>
 				<span>
-						<Plus />
+					<Plus />
 				</span>
-				<span>
-					Add
-				</span>
+				<span> Add </span>
 			</button>
 			<button class="w-1/2" aria-label="edit calories" on:click={onEdit}>
 				<span>
 					<Edit />
 				</span>
-				<span>
-					Edit
-				</span>
+				<span> Edit </span>
 			</button>
 		</div>
 	</div>

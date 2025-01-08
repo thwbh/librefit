@@ -23,10 +23,7 @@ export function convertDateStrToDisplayDateStr(str: string, displayFormat?: stri
 	return getDisplayDateAsStr(date);
 }
 
-export const getDisplayDateAsStr = (
-	d: number | Date,
-	locale?: string
-) => {
+export const getDisplayDateAsStr = (d: number | Date, locale?: string) => {
 	/*if (!locale && navigator !== undefined) { no clue why this does not work
         locale = navigator.language;
     }*/
@@ -36,10 +33,7 @@ export const getDisplayDateAsStr = (
 		return format(d, display_date_format);
 	}
 };
-/**
- * @readonly
- * @enum {string}
- */
+
 export const Daytime = {
 	Morning: 'morning',
 	Day: 'day',
@@ -47,10 +41,8 @@ export const Daytime = {
 	Evening: 'evening',
 	Night: 'night'
 };
-/**
- * @param date {Date}
- */
-export const getDaytimeGreeting = (date) => {
+
+export const getDaytimeGreeting = (date: Date) => {
 	const hours = getHours(date);
 
 	if (hours >= 0 && hours <= 4) {
@@ -68,8 +60,7 @@ export const getDaytimeGreeting = (date) => {
 	}
 };
 
-/** @param date {Date} */
-export const getDaytimeFoodCategory = (date) => {
+export const getDaytimeFoodCategory = (date: Date) => {
 	const hours = getHours(date);
 
 	if (hours >= 0 && hours <= 4) {

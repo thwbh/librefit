@@ -31,28 +31,28 @@
 	};
 </script>
 
-<div class="modal block bg-surface-100-800-token w-modal h-auto p-4 space-y-4 rounded-container-token shadow-xl">
+<div
+	class="modal block bg-surface-100-800-token w-modal h-auto p-4 space-y-4 rounded-container-token shadow-xl"
+>
 	<header class="text-2xl font-bold">
 		Update weight for {convertDateStrToDisplayDateStr(weightList[0].added)}
 	</header>
 
 	{#each weightList as entry}
-		<TrackerInput compact={true}
-									id={entry.id}
-									dateStr={entry.added}
-									value={entry.amount}
-									on:update={(e) => onSubmit('update', e)}
-									on:remove={(e) => onSubmit('remove', e)}
-									existing={entry.id !== undefined}
-									disabled={entry.id !== undefined}
-									unit={'kg'}
+		<TrackerInput
+			compact={true}
+			id={entry.id}
+			dateStr={entry.added}
+			value={entry.amount}
+			on:update={(e) => onSubmit('update', e)}
+			on:remove={(e) => onSubmit('remove', e)}
+			existing={entry.id !== undefined}
+			disabled={entry.id !== undefined}
+			unit={'kg'}
 		/>
 	{/each}
 
 	<footer class="modal-footer flex justify-end space-x-2">
-
-		<button on:click|preventDefault={onCancel} class="btn variant-ringed">
-			Cancel
-		</button>
+		<button on:click|preventDefault={onCancel} class="btn variant-ringed"> Cancel </button>
 	</footer>
 </div>

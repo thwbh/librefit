@@ -1,33 +1,31 @@
 /** types.ts contains types exclusive to the UI */
 
-import type { WizardOptions } from "./enum"
+import type { WizardOptions } from './enum';
 
 export interface RadioInputChoice {
-  value: string,
-  label: string
+	value: string;
+	label: string;
 }
 
 export interface WizardTargetSelection {
-  customDetails: string | undefined,
-  userChoice: WizardOptions
+	customDetails: string | undefined;
+	userChoice: WizardOptions;
 }
 
 export interface WizardTargetCaloriesError {
-  targetCalories: { errorMessage: string },
-  maximumCalories: { errorMessage: string }
+	targetCalories: { errorMessage: string };
+	maximumCalories: { errorMessage: string };
 }
 
 export interface WizardTargetWeightError {
-  initialWeight: { errorMessage: string },
-  targetWeight: { errorMessage: string }
+	initialWeight: { errorMessage: string };
+	targetWeight: { errorMessage: string };
 }
 
 export interface WizardTargetError {
-  valid: boolean,
-  calorieTarget: WizardTargetCaloriesError,
-  weightTarget: WizardTargetWeightError
+	valid: boolean;
+	calorieTarget: WizardTargetCaloriesError;
+	weightTarget: WizardTargetWeightError;
 }
 
-export interface WizardTargetSelectionEvent {
-
-}
+export interface WizardTargetSelectionEvent {}

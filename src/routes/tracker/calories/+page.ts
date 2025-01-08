@@ -7,7 +7,10 @@ export const load = async ({ fetch }) => {
 	const today = getDateAsStr(new Date());
 	const fromDate = getDateAsStr(subDays(new Date(), 6));
 
-	const trackedDaysWeek: Array<CalorieTracker> = await listCalorieTrackerDatesRange(fromDate, today);
+	const trackedDaysWeek: Array<CalorieTracker> = await listCalorieTrackerDatesRange(
+		fromDate,
+		today
+	);
 	const calorieTrackerToday: Array<CalorieTracker> = await listCalorieTrackerRange(today, today);
 
 	if (calorieTrackerToday && trackedDaysWeek) {

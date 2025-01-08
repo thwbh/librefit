@@ -24,7 +24,7 @@
 	export let foodCategories: Array<FoodCategory>;
 	export let calorieTarget: CalorieTarget;
 
-	let polarAreaChart: PolarAreaChartConfig
+	let polarAreaChart: PolarAreaChartConfig;
 	let dailyAverage: number;
 
 	const refreshChart = (entries: Array<CalorieTracker>) => {
@@ -67,9 +67,7 @@
 					</div>
 
 					{#if calorieTarget}
-						<div class="text-right">
-							&empty; target intake:
-						</div>
+						<div class="text-right">&empty; target intake:</div>
 						<div class="text-left">
 							~{calorieTarget.targetCalories}kcal
 						</div>
@@ -80,20 +78,19 @@
 	{:else}
 		<div class="flex flex-col gap-4 m-auto">
 			<NoFood height={100} width={100} class="self-center" />
-			<p>
-				Nothing tracked yet.
-			</p>
+			<p>Nothing tracked yet.</p>
 		</div>
 	{/if}
 
 	{#if displayHistory}
-		<button class="btn variant-filled w-full" on:click|preventDefault={() => goto('/tracker/calories')}>
-            <span>
-                <History />
-            </span>
+		<button
+			class="btn variant-filled w-full"
+			on:click|preventDefault={() => goto('/tracker/calories')}
+		>
 			<span>
-                History
-            </span>
+				<History />
+			</span>
+			<span> History </span>
 		</button>
 	{/if}
 </div>

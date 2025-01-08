@@ -55,9 +55,7 @@
 
 <div class="flex md:flex-row flex-col gap-4 items-center">
 	<div class="flex flex-row gap-4 items-center">
-		<p>
-			Show
-		</p>
+		<p>Show</p>
 		<div>
 			<select class="select" bind:value={filterSelection} on:change={onFilter}>
 				{#each filterOptions as filterOption}
@@ -66,19 +64,15 @@
 			</select>
 		</div>
 	</div>
-	<div class="flex flex-row gap-4 { filterSelection !== 'c' ? 'hidden' : '' }">
+	<div class="flex flex-row gap-4 {filterSelection !== 'c' ? 'hidden' : ''}">
 		<label class="flex flex-row gap-4 items-center">
-            <span class="hidden" aria-hidden="true">
-                from
-            </span>
+			<span class="hidden" aria-hidden="true"> from </span>
 
 			<input bind:value={fromDateStr} class="input" type="date" on:change={onDateChanged} />
 		</label>
 
 		<label class="flex flex-row gap-4 items-center">
-            <span>
-                and
-            </span>
+			<span> and </span>
 
 			<input bind:value={toDateStr} class="input" type="date" on:change={onDateChanged} />
 		</label>

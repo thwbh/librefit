@@ -6,10 +6,7 @@ export const load = async ({ fetch }) => {
 	const fromDate = new Date();
 	fromDate.setMonth(fromDate.getMonth() - 1);
 
-	const listWeightResponse = await listWeightRange(
-		getDateAsStr(fromDate), 
-		getDateAsStr(today) 
-	);
+	const listWeightResponse = await listWeightRange(getDateAsStr(fromDate), getDateAsStr(today));
 
 	return {
 		entries: listWeightResponse

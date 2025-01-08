@@ -1,4 +1,4 @@
-import { Mock, vi } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { writable } from 'svelte/store';
 
 interface ModalStoreSettingsMock {
