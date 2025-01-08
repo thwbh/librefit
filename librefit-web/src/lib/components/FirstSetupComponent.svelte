@@ -9,7 +9,7 @@
 		type WizardInput,
 	} from '$lib/model';
 	import { type WizardTargetSelection } from '$lib/types';
-	import { calculateTdee } from '$lib/api/wizard';
+	import { calculateTdee, createTargetDateTargets, createTargetWeightTargets } from '$lib/api/wizard';
 	import WizardResultComponent from './wizard/WizardResultComponent.svelte';
 	import { goto } from '$app/navigation';
 	import WizardInputComponent from './wizard/WizardInputComponent.svelte';
@@ -36,7 +36,7 @@
 	let customWeightOpened = true;
 	let customDateOpened = false;
 
-  let targetRateActive = undefined;
+  let selectedRate = undefined;
 
 	let setup: boolean = true;
 	let importer: boolean = false;
@@ -61,6 +61,10 @@
 	const handleNextStep = async (event: any) => {};
 
 	const handleProfileData = async () => {
+    let updateTargets;
+
+    
+
 		await Promise.all([
 			updateBodyData({
 				id: 1,
@@ -92,6 +96,7 @@
       customDateOpened = chosenOption.userChoice === WizardOptions.Custom_date;
     }
 	};
+
 </script>
 
 <div class="container mx-auto p-12 space-y-8 self-center">
@@ -196,30 +201,31 @@
 					</Accordion>
 				</div>
 			</Step>
+      {#await calculateTdee(wizardInput)}
+        <p>Calculating...</p>
+      {:then wizardResult}
+	
+        <Step>
+          <p>Based on your input, I calculated the following.</p>
 
-			<Step>
-				<p>Based on your input, I calculated the following.</p>
-				{#await calculateTdee(wizardInput)}
-					<p>Calculating...</p>
-				{:then wizardResult}
-					<WizardResultComponent calculationInput={wizardInput} calculationResult={wizardResult} />
-          {chosenOption.userChoice}
-					<WizardTarget
-						calculationInput={wizardInput}
-						calculationResult={wizardResult}
-						bind:chosenOption
-					/>
-				{/await}
+          <WizardResultComponent calculationInput={wizardInput} calculationResult={wizardResult} />
+
+          <WizardTarget
+            calculationInput={wizardInput}
+            calculationResult={wizardResult}
+            bind:chosenOption
+          />
+        </Step>
+
+        <Step>
+          <WizardTargetResultComponent {wizardInput} {wizardResult} {chosenOption} {selectedRate} />
+        </Step>
+
+        <Step>
+          <p>Set your nickname and avatar.</p>
+          <UserProfileComponent bind:user={userProfileData} />
 			</Step>
-
-      <Step>
-        <WizardTargetResultComponent {wizardInput} {chosenOption} rateActive={targetRateActive} />
-      </Step>
-
-			<Step>
-				<p>Set your nickname and avatar.</p>
-				<UserProfileComponent bind:user={userProfileData} />
-			</Step>
+      {/await}
 		</Stepper>
 	{:else if importer}
 		<p>String upload.</p>

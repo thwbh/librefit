@@ -50,33 +50,31 @@ export const createTargetWeightTargets = (
   wizardResult: WizardResult,
   customWizardResult: WizardTargetWeightResult,
   startDate: Date,
-  targetWeight: number
-): Map<string, { calorieTarget: CalorieTarget; weightTarget: WeightTarget }> => {
-  const rates = Object.keys(customWizardResult.dateByRate);
+  targetWeight: number,
+  selectedRate: string
+): { calorieTarget: NewCalorieTarget; weightTarget: NewWeightTarget } => {
   const multiplier = targetWeight < wizardInput.weight ? -1 : 1;
   const todayStr = getDateAsStr(new Date());
 
-  return rates.reduce((acc, rate) => {
-    const calorieTarget: NewCalorieTarget = {
-      added: todayStr,
-      startDate: getDateAsStr(startDate),
-      endDate: customWizardResult.dateByRate[rate],
-      targetCalories: wizardResult.tdee + multiplier * parseFloat(rate),
-      maximumCalories: wizardResult.tdee
-    };
+  const calorieTarget: NewCalorieTarget = {
+    added: todayStr,
+    startDate: getDateAsStr(startDate),
+    endDate: customWizardResult.dateByRate[selectedRate],
+    targetCalories: wizardResult.tdee + multiplier * parseFloat(selectedRate),
+    maximumCalories: wizardResult.tdee
+  };
 
-    const weightTarget: NewWeightTarget = {
-      added: todayStr,
-      startDate: getDateAsStr(startDate),
-      endDate: customWizardResult.dateByRate[rate],
-      initialWeight: wizardInput.weight,
-      targetWeight: targetWeight
-    };
+  const weightTarget: NewWeightTarget = {
+    added: todayStr,
+    startDate: getDateAsStr(startDate),
+    endDate: customWizardResult.dateByRate[selectedRate],
+    initialWeight: wizardInput.weight,
+    targetWeight: targetWeight
+  };
 
-    acc.set(rate, { calorieTarget, weightTarget });
-
-    return acc;
-  }, new Map());
+  return {
+    calorieTarget, weightTarget
+  }
 };
 
 export const createTargetDateTargets = (
@@ -84,37 +82,32 @@ export const createTargetDateTargets = (
   wizardResult: WizardResult,
   customWizardResult: WizardTargetDateResult,
   startDate: Date,
-  endDateStr: string
-): Map<string, { calorieTarget: CalorieTarget; weightTarget: WeightTarget }> => {
+  endDateStr: string,
+  selectedRate: string
+): { calorieTarget: NewCalorieTarget; weightTarget: NewWeightTarget } => {
   console.log(customWizardResult);
-
-  const rates = Object.keys(customWizardResult.resultByRate);
   const multiplier = wizardInput.calculationGoal === CalculationGoal.Loss ? -1 : 1;
   const todayStr = getDateAsStr(new Date());
 
-  return rates.reduce((acc, rate) => {
-    const rateWizardResult = customWizardResult.resultByRate[rate] as WizardResult;
+  const calorieTarget: NewCalorieTarget = {
+    added: todayStr,
+    startDate: getDateAsStr(startDate),
+    endDate: endDateStr,
+    targetCalories: wizardResult.tdee + multiplier * parseFloat(selectedRate),
+    maximumCalories: wizardResult.tdee
+  };
 
-    const calorieTarget: NewCalorieTarget = {
-      added: todayStr,
-      startDate: getDateAsStr(startDate),
-      endDate: endDateStr,
-      targetCalories: wizardResult.tdee + multiplier * parseFloat(rate),
-      maximumCalories: wizardResult.tdee
-    };
+  const weightTarget: NewWeightTarget = {
+    added: todayStr,
+    startDate: getDateAsStr(startDate),
+    endDate: endDateStr,
+    initialWeight: wizardInput.weight,
+    targetWeight: customWizardResult.weightByRate[selectedRate]
+  };
 
-    const weightTarget: NewWeightTarget = {
-      added: todayStr,
-      startDate: getDateAsStr(startDate),
-      endDate: endDateStr,
-      initialWeight: wizardInput.weight,
-      targetWeight: rateWizardResult.targetWeight
-    };
-
-    acc.set(rate, { calorieTarget, weightTarget });
-
-    return acc;
-  }, new Map());
+  return { 
+    calorieTarget, weightTarget 
+  };
 };
 
 export const validateCustomWeight = (detail: { value: number }): { valid: boolean; errorMessage?: string } => {

@@ -1,33 +1,48 @@
 <script lang="ts">
-	import { calculateForTargetDate, calculateForTargetWeight } from '$lib/api/wizard';
+	import { calculateForTargetDate, calculateForTargetWeight, createTargetDateTargets } from '$lib/api/wizard';
 	import { getDateAsStr } from '$lib/date';
 	import { WizardOptions } from '$lib/enum';
 	import type {			
     ValidationMessage,
 		WizardInput,
+		WizardResult,
 		WizardTargetDateResult,
 		WizardTargetWeightResult
 	} from '$lib/model';
-	import type { WizardTargetSelection, WizardTargetError } from '$lib/types';
+	import type { WizardTargetSelection, WizardTargetError, WizardTargetSelectionEvent } from '$lib/types';
 	import TargetComponent from '../TargetComponent.svelte';
 	import RadioInputComponent from '../RadioInputComponent.svelte';
+	import { createEventDispatcher } from 'svelte';
 
   export let wizardInput: WizardInput;
+  export let wizardResult: WizardResult;
+
 	export let chosenOption: WizardTargetSelection;
 
-	export let rateActive = undefined;
+	export let selectedRate = undefined;
+
+  const dispatch = createEventDispatcher();
+
 	let errors: WizardTargetError;
 
 	let errorEndDate: ValidationMessage = { valid: true };
+
+  const onRateSelection = () => {
+    const parameters: WizardTargetSelectionEvent = {
+
+    }
+
+    dispatch('selectedRateChanged', {});
+  }
 
   const extractAndSelectWeightRate = (wizardTargetResult: WizardTargetWeightResult) => {
     const rates = wizardTargetResult.dateByRate
 				? Object.keys(wizardTargetResult.dateByRate)
 				: [];
 
-    if (rateActive === undefined) {
+    if (selectedRate === undefined) {
       const selectedIndex = rates.length <= 0 ? 0 : Math.floor(rates.length / 2);
-      rateActive = `${rates[selectedIndex]}`;
+      selectedRate = `${rates[selectedIndex]}`;
     }
     return rates;
   }
@@ -37,18 +52,18 @@
         ? Object.keys(wizardTargetResult.weightByRate)
 				: [];
 
-    if (rateActive === undefined) {
+    if (selectedRate === undefined) {
       const selectedIndex = rates.length <= 0 ? 0 : Math.floor(rates.length / 2);
-      rateActive = `${rates[selectedIndex]}`;
+      selectedRate = `${rates[selectedIndex]}`;
     }
 
     return rates;
   }
 
   const getRadioChoices = (rates: Array<string>) => {
-      return rates.map(rate => { 
-          return { label: rate, value: rate } 
-      });
+    return rates.map(rate => { 
+      return { label: rate, value: rate } 
+    });
   }
 </script>
 
@@ -78,11 +93,11 @@
 				</div>
 
         <div class="flex flex-row gap-2">
-            <RadioInputComponent flexDirection="flex-col" bind:value={rateActive} {choices}/> 
+            <RadioInputComponent flexDirection="flex-col" bind:value={selectedRate} {choices}/> 
             <div class="flex flex-col flex-grow justify-between">
             {#if chosenOptionWeightResult.dateByRate}
-              {@const endDate = chosenOptionWeightResult.dateByRate[rateActive] }
-              {@const weightProgress = chosenOptionWeightResult.progressByRate[rateActive]}
+              {@const endDate = chosenOptionWeightResult.dateByRate[selectedRate] }
+              {@const weightProgress = chosenOptionWeightResult.progressByRate[selectedRate]}
               <TargetComponent
                   startDate={getDateAsStr(new Date())}
                   {endDate}
@@ -91,7 +106,7 @@
               />
 
               <p class="p-2">
-                With a rate of {rateActive}kcal per day, you should see a {weightProgress}kg difference each week.
+                With a rate of {selectedRate}kcal per day, you should see a {weightProgress}kg difference each week.
               </p>
 						{/if}
             </div>
@@ -129,12 +144,12 @@
 
         <div class="flex flex-row gap-2">
             <div>
-              <RadioInputComponent flexDirection="flex-col" bind:value={rateActive} {choices}/> 
+              <RadioInputComponent flexDirection="flex-col" bind:value={selectedRate} {choices}/> 
             </div>
             <div class="flex flex-col flex-grow justify-between">
             {#if chosenOptionDateResult.weightByRate && chosenOptionDateResult.bmiByRate}
-              {@const weightResult = chosenOptionDateResult.weightByRate[rateActive]}
-              {@const bmiResult = chosenOptionDateResult.bmiByRate[rateActive]}
+              {@const weightResult = chosenOptionDateResult.weightByRate[selectedRate]}
+              {@const bmiResult = chosenOptionDateResult.bmiByRate[selectedRate]}
               {@const startDate = getDateAsStr(new Date())}
               {@const endDate = chosenOptionDateInput.targetDate}
 
@@ -146,7 +161,7 @@
               />
 
               <p>
-                With a rate of {rateActive}kcal per day, your target weight will be ~{weightResult}kg, 
+                With a rate of {selectedRate}kcal per day, your target weight will be ~{weightResult}kg, 
                 which leaves you with a BMI of {bmiResult}.
               </p>
 

@@ -24,7 +24,7 @@ pub fn wizard_calculate_tdee(input: WizardInput) -> Result<WizardResult, Validat
 
 #[command]
 pub fn wizard_create_targets(input: Wizard) -> Result<(), String> {
-    log::info!(">>> wizard_create_targets: {:#?}", input);
+    log::info!(">>> wizard_create_targets: {:?}", input);
 
     let manager = &mut create_db_connection();
 

@@ -27,3 +27,7 @@ export interface WizardTargetError {
   calorieTarget: WizardTargetCaloriesError,
   weightTarget: WizardTargetWeightError
 }
+
+export interface WizardTargetSelectionEvent {
+
+}
