@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { tick } from 'svelte';
 import { updateModalStoreMock } from '../../__mocks__/skeletonProxy';
 import CalorieTrackerModal from '$lib/components/modal/CalorieTrackerModal.svelte';
+import type { CalorieTracker } from '$lib/model';
 
 /**
  * @vitest-environment jsdom
@@ -80,9 +81,9 @@ describe('CalorieTrackerModal.svelte component', () => {
    *  - callback type 'remove' must have been triggered once with data to remove
    */
   it('should render a prefilled component and remove an entry', async () => {
-    const lunch = { added: '2022-02-02', amount: 500, id: 1, category: 'l' };
-    const dinner = { added: '2022-02-02', amount: 500, id: 2, category: 'd' };
-    const empty = { added: '2022-02-02', id: undefined, category: 'l' };
+    const lunch: CalorieTracker = { added: '2022-02-02', amount: 500, id: 1, category: 'l' };
+    const dinner: CalorieTracker = { added: '2022-02-02', amount: 500, id: 2, category: 'd' };
+    const empty: CalorieTracker = { added: '2022-02-02', id: undefined, amount: 0, category: 'l' };
 
     let mockData = {
       categories: [
