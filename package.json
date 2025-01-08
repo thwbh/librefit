@@ -1,20 +1,21 @@
 {
-	"name": "librefit-web",
-	"version": "PREVIEW",
-	"private": true,
-	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"start": "node build",
-		"preview": "vite preview",
-		"test": "vitest run",
-		"coverage": "vitest run --coverage",
-		"check": "svelte-kit sync && svelte-check",
-		"check:watch": "svelte-kit sync && svelte-check",
-		"lint": "prettier --plugin-search-dir . --check . && eslint .",
-		"format": "prettier --plugin-search-dir . --write ."
-	},
-	"devDependencies": {
+  "name": "librefit",
+  "version": "PREVIEW",
+  "description": "Your FOSS calorie tracker!",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2"
+  },
+  "devDependencies": {
 		"@iconify/svelte": "^3.1.6",
 		"@poppanator/sveltekit-svg": "^4.2.1",
 		"@skeletonlabs/skeleton": "^2.9.0",
@@ -55,14 +56,10 @@
 		"vite-plugin-tailwind-purgecss": "^0.2.0",
 		"vitest": "^1.6.0"
 	},
-	"overrides": {
+  "overrides": {
 		"svelte-chartjs": {
 			"svelte": ">=4.x"
 		}
-	},
-	"type": "module",
-	"dependencies": {
-		"@tauri-apps/api": "^2",
-		"@tauri-apps/plugin-shell": "^2"
 	}
 }
+
