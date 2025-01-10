@@ -1,6 +1,11 @@
-import type { BodyData } from '$lib/model';
+import type { BodyData, CalculationSex } from '$lib/model';
 import { invoke } from '@tauri-apps/api/core';
 
-export const updateBodyData = async (bodyData: BodyData): Promise<BodyData> => {
-	return invoke('set_body_data', { bodyData });
+export const updateBodyData = async (age: number, sex: CalculationSex, height: number, weight: number): Promise<BodyData> => {
+  return invoke('update_body_data', {
+    age: +age,
+    sex: sex,
+    height: +height,
+    weight: +weight
+  });
 };
