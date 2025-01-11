@@ -1,31 +1,36 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
-	import { Accordion, AccordionItem, getToastStore, Step, Stepper } from '@skeletonlabs/skeleton';
-	import { showToastError, showToastWarning } from '$lib/toast';
-	import { CalculationGoal, CalculationSex, type LibreUser, type WizardInput } from '$lib/model';
-	import { type WizardTargetSelection } from '$lib/types';
 	import {
-		calculateTdee,
-		createTargetDateTargets,
-		createTargetWeightTargets
-	} from '$lib/api/wizard';
+		Accordion,
+		AccordionItem,
+		getToastStore,
+		ProgressRadial,
+		Step,
+		Stepper
+	} from '@skeletonlabs/skeleton';
+	import {
+		CalculationGoal,
+		CalculationSex,
+		type LibreUser,
+		type NewCalorieTarget,
+		type NewWeightTarget,
+		type WizardInput
+	} from '$lib/model';
+	import { type WizardTargetSelection } from '$lib/types';
+	import { calculateTdee } from '$lib/api/wizard';
 	import WizardResultComponent from './wizard/WizardResultComponent.svelte';
 	import { goto } from '$app/navigation';
 	import WizardInputComponent from './wizard/WizardInputComponent.svelte';
 	import UserProfileComponent from './UserProfileComponent.svelte';
 	import { updateProfile } from '$lib/api/user';
-	import { updateBodyData } from '$lib/api/body';
+	import { setBodyData } from '$lib/api/body';
 	import type { RadioInputChoice } from '$lib/types';
 	import RadioInputComponent from './RadioInputComponent.svelte';
 	import ValidatedInput from './ValidatedInput.svelte';
 	import { WizardOptions } from '$lib/enum';
 	import Check from '$lib/assets/icons/check.svg?component';
-	import WizardTarget from './wizard/WizardTarget.svelte';
 	import WizardTargetResultComponent from './wizard/WizardTargetResultComponent.svelte';
-
-	const toastStore = getToastStore();
-
-	let customDetails: number | Date;
+	import { createCalorieTarget, createWeightTarget } from '$lib/api/target';
 
 	let chosenOption: WizardTargetSelection = {
 		customDetails: '',
@@ -38,6 +43,7 @@
 	let selectedRate = undefined;
 
 	let setup: boolean = true;
+	let completion: boolean = false;
 	let importer: boolean = false;
 
 	let userProfileData: LibreUser = { id: 1, name: '', avatar: '' };
@@ -57,29 +63,21 @@
 		weeklyDifference: 3
 	};
 
-	const handleNextStep = async (event: any) => {};
+	let newWeightTarget: NewWeightTarget | undefined = undefined;
+	let newCalorieTarget: NewCalorieTarget | undefined = undefined;
 
-	const handleProfileData = async () => {
-		let updateTargets;
+	const onTargetChange = (event: CustomEvent) => {
+		newWeightTarget = event.detail.newWeightTarget;
+		newCalorieTarget = event.detail.newCalorieTarget;
+	};
 
-		await Promise.all([
-			updateBodyData({
-				id: 1,
-				age: +wizardInput.age,
-				height: +wizardInput.height,
-				weight: +wizardInput.weight,
-				sex: wizardInput.sex
-			}),
-			updateProfile(userProfileData)
-		]).catch((error) => {
-			console.log(error);
-
-			if (!error.data.error) {
-				showToastWarning(toastStore, 'Please check your input.');
-			} else {
-				showToastError(toastStore, error);
-			}
-		});
+	const handleProfileData = async (): Promise<any> => {
+		return await Promise.all([
+			setBodyData(wizardInput.age, wizardInput.sex, wizardInput.height, wizardInput.weight),
+			updateProfile(userProfileData),
+			createCalorieTarget(newCalorieTarget),
+			createWeightTarget(newWeightTarget)
+		]);
 	};
 
 	const choose = (details: any, param: WizardOptions) => {
@@ -96,7 +94,7 @@
 </script>
 
 <div class="container mx-auto p-12 space-y-8 self-center">
-	{#if !setup && !importer}
+	{#if !setup && !importer && !completion}
 		<div class="lg:grid lg:grid-cols-[auto_1fr_auto] xl:grid-cols-2 flex flex-col gap-4">
 			<div class="flex flex-col gap-4">
 				<h1
@@ -143,9 +141,14 @@
 				</div>
 			</div>
 		</div>
-	{:else if setup}
+	{:else if setup && !completion}
 		<h1 class="h1">First Setup</h1>
-		<Stepper on:next={handleNextStep} on:complete={() => goto('/dashboard')}>
+		<Stepper
+			on:complete={() => {
+				setup = false;
+				completion = true;
+			}}
+		>
 			<Step>
 				<p>Let's see where you stand right now.</p>
 				<WizardInputComponent bind:wizardInput />
@@ -197,31 +200,42 @@
 					</Accordion>
 				</div>
 			</Step>
-			{#await calculateTdee(wizardInput)}
-				<p>Calculating...</p>
-			{:then wizardResult}
-				<Step>
+
+			<Step>
+				{#await calculateTdee(wizardInput)}
+					<p>Calculating...</p>
+				{:then wizardResult}
 					<p>Based on your input, I calculated the following.</p>
 
 					<WizardResultComponent calculationInput={wizardInput} calculationResult={wizardResult} />
-
-					<WizardTarget
-						calculationInput={wizardInput}
-						calculationResult={wizardResult}
-						bind:chosenOption
+					<WizardTargetResultComponent
+						{wizardInput}
+						{wizardResult}
+						{chosenOption}
+						{selectedRate}
+						on:targetChange={onTargetChange}
 					/>
-				</Step>
+				{:catch error}
+					<p>An error occured. Please try again later.</p>
+					<p>{error}</p>
+				{/await}
+			</Step>
 
-				<Step>
-					<WizardTargetResultComponent {wizardInput} {wizardResult} {chosenOption} {selectedRate} />
-				</Step>
-
-				<Step>
-					<p>Set your nickname and avatar.</p>
-					<UserProfileComponent bind:user={userProfileData} />
-				</Step>
-			{/await}
+			<Step>
+				<p>Set your nickname and avatar.</p>
+				<UserProfileComponent bind:user={userProfileData} />
+			</Step>
 		</Stepper>
+	{:else if completion}
+		{#await handleProfileData()}
+			<p>Setting everything up...</p>
+			<ProgressRadial value={undefined} />
+		{:then}
+			<p>Success! You will be redirected...</p>
+			{#await goto('/')}{/await}
+		{:catch error}
+			<p>An error occured. {error}</p>
+		{/await}
 	{:else if importer}
 		<p>String upload.</p>
 	{/if}

@@ -1,17 +1,13 @@
 <script lang="ts">
-	import {
-		calculateForTargetDate,
-		calculateForTargetWeight,
-		createTargetDateTargets
-	} from '$lib/api/wizard';
+	import { calculateForTargetDate, calculateForTargetWeight } from '$lib/api/wizard';
 	import { getDateAsStr } from '$lib/date';
 	import { WizardOptions } from '$lib/enum';
-	import type {
-		ValidationMessage,
-		WizardInput,
-		WizardResult,
-		WizardTargetDateResult,
-		WizardTargetWeightResult
+	import {
+		type ValidationMessage,
+		type WizardInput,
+		type WizardResult,
+		type WizardTargetDateResult,
+		type WizardTargetWeightResult
 	} from '$lib/model';
 	import type {
 		WizardTargetSelection,
@@ -21,6 +17,7 @@
 	import TargetComponent from '../TargetComponent.svelte';
 	import RadioInputComponent from '../RadioInputComponent.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import Alert from '$lib/assets/icons/alert-circle-filled.svg?component';
 
 	export let wizardInput: WizardInput;
 	export let wizardResult: WizardResult;
@@ -32,13 +29,29 @@
 	const dispatch = createEventDispatcher();
 
 	let errors: WizardTargetError;
-
 	let errorEndDate: ValidationMessage = { valid: true };
 
-	const onRateSelection = () => {
-		const parameters: WizardTargetSelectionEvent = {};
+	const onWeightRateSelection = (rate: string, startDateStr: string, endDateStr: string) => {
+		selectedRate = rate;
 
-		dispatch('selectedRateChanged', {});
+		const parameters: WizardTargetSelectionEvent = {
+			newWeightTarget: {
+				added: getDateAsStr(new Date()),
+				startDate: startDateStr,
+				endDate: endDateStr,
+				initialWeight: +wizardInput.weight,
+				targetWeight: +chosenOption.customDetails
+			},
+			newCalorieTarget: {
+				added: getDateAsStr(new Date()),
+				startDate: startDateStr,
+				endDate: endDateStr,
+				targetCalories: +wizardResult.target,
+				maximumCalories: wizardResult.tdee
+			}
+		};
+
+		dispatch('targetChange', parameters);
 	};
 
 	const extractAndSelectWeightRate = (wizardTargetResult: WizardTargetWeightResult) => {
@@ -97,11 +110,17 @@
 				</div>
 
 				<div class="flex flex-row gap-2">
-					<RadioInputComponent flexDirection="flex-col" bind:value={selectedRate} {choices} />
-					<div class="flex flex-col flex-grow justify-between">
-						{#if chosenOptionWeightResult.dateByRate}
-							{@const endDate = chosenOptionWeightResult.dateByRate[selectedRate]}
-							{@const weightProgress = chosenOptionWeightResult.progressByRate[selectedRate]}
+					{#if chosenOptionWeightResult.dateByRate}
+						{@const endDate = chosenOptionWeightResult.dateByRate[selectedRate]}
+						{@const weightProgress = chosenOptionWeightResult.progressByRate[selectedRate]}
+						<RadioInputComponent
+							flexDirection="flex-col"
+							bind:value={selectedRate}
+							{choices}
+							on:change={(changed) =>
+								onWeightRateSelection(changed.detail.selection, getDateAsStr(new Date()), endDate)}
+						/>
+						<div class="flex flex-col flex-grow justify-between">
 							<TargetComponent
 								startDate={getDateAsStr(new Date())}
 								{endDate}
@@ -113,13 +132,18 @@
 								With a rate of {selectedRate}kcal per day, you should see a {weightProgress}kg
 								difference each week.
 							</p>
-						{/if}
-					</div>
+						</div>
+					{/if}
 				</div>
 			{:else if chosenOptionWeightResult.warning}
-				<header class="text-2xl font-bold">Warning</header>
+				<aside class="alert variant-filled-warning">
+					<div><Alert /></div>
 
-				<p>{chosenOptionWeightResult.message}</p>
+					<div class="alert-message">
+						<h3 class="h3">Warning</h3>
+						<p>{chosenOptionWeightResult.message}</p>
+					</div>
+				</aside>
 			{/if}
 		{/await}
 	{:else if chosenOption.userChoice === WizardOptions.Custom_date}
@@ -147,29 +171,39 @@
 				</div>
 
 				<div class="flex flex-row gap-2">
-					<div>
-						<RadioInputComponent flexDirection="flex-col" bind:value={selectedRate} {choices} />
-					</div>
-					<div class="flex flex-col flex-grow justify-between">
-						{#if chosenOptionDateResult.weightByRate && chosenOptionDateResult.bmiByRate}
-							{@const weightResult = chosenOptionDateResult.weightByRate[selectedRate]}
-							{@const bmiResult = chosenOptionDateResult.bmiByRate[selectedRate]}
-							{@const startDate = getDateAsStr(new Date())}
-							{@const endDate = chosenOptionDateInput.targetDate}
+					{#if chosenOptionDateResult.weightByRate && chosenOptionDateResult.bmiByRate}
+						{@const weightResult = chosenOptionDateResult.weightByRate[selectedRate]}
+						{@const bmiResult = chosenOptionDateResult.bmiByRate[selectedRate]}
+						{@const startDate = getDateAsStr(new Date())}
+						{@const endDate = chosenOptionDateInput.targetDate}
 
+						<div>
+							<RadioInputComponent
+								flexDirection="flex-col"
+								bind:value={selectedRate}
+								{choices}
+								on:change={(changed) => (selectedRate = changed.detail.selection)}
+							/>
+						</div>
+						<div class="flex flex-col flex-grow justify-between">
 							<TargetComponent {startDate} {endDate} {errors} {errorEndDate} />
 
 							<p>
 								With a rate of {selectedRate}kcal per day, your target weight will be ~{weightResult}kg,
 								which leaves you with a BMI of {bmiResult}.
 							</p>
-						{/if}
-					</div>
+						</div>
+					{/if}
 				</div>
 			{:else if chosenOptionDateResult.warning}
-				<header class="text-2xl font-bold">Warning</header>
+				<aside class="alert variant-filled-warning">
+					<div><Alert /></div>
 
-				<p>{chosenOptionDateResult.message}</p>
+					<div class="alert-message">
+						<h3 class="h3">Warning</h3>
+						<p>{chosenOptionDateResult.message}</p>
+					</div>
+				</aside>
 			{/if}
 		{:catch}
 			<p>Error</p>

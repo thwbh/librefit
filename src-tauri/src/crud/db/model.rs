@@ -133,7 +133,7 @@ pub struct NewWeightTarget {
 }
 
 /// Represents the body data upon profile creation.
-#[derive(Queryable, Selectable, AsChangeset, Serialize, Deserialize, Debug)]
+#[derive(Insertable, Queryable, Selectable, AsChangeset, Serialize, Deserialize, Debug)]
 #[diesel(table_name = crate::crud::db::schema::body_data)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
