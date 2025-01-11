@@ -5,7 +5,7 @@
 
 	export let data: { userData: LibreUser };
 
-	if (!data.userData) {
+	if (data.userData) {
 		goto('/dashboard');
 	}
 </script>

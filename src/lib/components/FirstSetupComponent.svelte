@@ -31,6 +31,9 @@
 	import Check from '$lib/assets/icons/check.svg?component';
 	import WizardTargetResultComponent from './wizard/WizardTargetResultComponent.svelte';
 	import { createCalorieTarget, createWeightTarget } from '$lib/api/target';
+	import { addWeight } from '$lib/api/tracker';
+	import type { WeightModificationEvent } from '$lib/event';
+	import { getDateAsStr } from '$lib/date';
 
 	let chosenOption: WizardTargetSelection = {
 		customDetails: '',
@@ -72,12 +75,20 @@
 	};
 
 	const handleProfileData = async (): Promise<any> => {
+		const weightEvent: WeightModificationEvent = {
+			detail: {
+				dateStr: getDateAsStr(new Date()),
+				value: wizardInput.weight
+			}
+		};
+
 		return await Promise.all([
 			setBodyData(wizardInput.age, wizardInput.sex, wizardInput.height, wizardInput.weight),
 			updateProfile(userProfileData),
 			createCalorieTarget(newCalorieTarget),
-			createWeightTarget(newWeightTarget)
-		]);
+			createWeightTarget(newWeightTarget),
+			addWeight(weightEvent)
+		]).then((_) => goto('/dashboard'));
 	};
 
 	const choose = (details: any, param: WizardOptions) => {
