@@ -1,6 +1,6 @@
 use crate::crud::db::model::{NewCalorieTarget, NewWeightTarget, NewWeightTracker};
 use crate::i18n::localize;
-use chrono::{Duration, NaiveDate, Utc};
+use chrono::{Duration, NaiveDate};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use validator::{Validate, ValidationError, ValidationErrors};
@@ -118,6 +118,7 @@ pub struct WizardTargetDateInput {
     pub height: f32,
     pub calculation_goal: CalculationGoal,
     pub target_date: String,
+    pub start_date: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -236,11 +237,12 @@ pub fn calculate_for_target_date(
     match input.validate() {
         Err(e) => Err(localize::localize_validation_errors(&e)),
         Ok(_) => {
-            let today = Utc::now().date_naive();
+            let start_naive_date =
+                NaiveDate::parse_from_str(&input.start_date, "%Y-%m-%d").unwrap();
             let target_naive_date =
                 NaiveDate::parse_from_str(&input.target_date, "%Y-%m-%d").unwrap();
 
-            let days_between = (target_naive_date - today).num_days() as i32;
+            let days_between = (target_naive_date - start_naive_date).num_days() as i32;
 
             let current_bmi = calculate_bmi(&input.current_weight, &input.height);
             let current_classification = calculate_bmi_category(&current_bmi);
@@ -339,18 +341,8 @@ pub fn calculate_for_target_weight(
             let current_bmi = calculate_bmi(&input.current_weight, &input.height);
             let target_bmi = calculate_bmi(&input.target_weight, &input.height);
 
-            println!(
-                "calculated current_bmi={:?} target_bmi={:?} with target_weight={:?} and height={:?}",
-                &current_bmi, &target_bmi, &input.target_weight, &input.height
-            );
-
             let current_classification = calculate_bmi_category(&current_bmi);
             let target_classification = calculate_bmi_category(&target_bmi);
-
-            println!(
-                "current_classification={:?} target_classification={:?}",
-                &current_classification, &target_classification
-            );
 
             let difference = if input.target_weight > input.current_weight {
                 input.target_weight - input.current_weight

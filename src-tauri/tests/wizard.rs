@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{Days, NaiveDate, Utc};
+use chrono::{Days, NaiveDate};
 use librefit_lib::calc::wizard;
 use librefit_lib::calc::wizard::{
     BmiCategory, CalculationGoal, CalculationSex, WizardInput, WizardTargetDateInput,
@@ -198,10 +198,8 @@ fn calulcate_severely_obese_classification_for_women() {
 /// Verify integrity of the calculation function that aims for a desired end date.
 #[test]
 fn caclulate_target_date_weight_loss() {
-    let target_date_nd = Utc::now()
-        .date_naive()
-        .checked_add_days(Days::new(150))
-        .unwrap();
+    let start_date_nd = NaiveDate::from_ymd_opt(2025, 01, 01).unwrap();
+    let target_date_nd = start_date_nd.checked_add_days(Days::new(150)).unwrap();
 
     let input_target_date = WizardTargetDateInput {
         age: 30,
@@ -209,6 +207,7 @@ fn caclulate_target_date_weight_loss() {
         current_weight: 90.0,
         height: 180.0,
         calculation_goal: CalculationGoal::LOSS,
+        start_date: start_date_nd.format("%Y-%m-%d").to_string(),
         target_date: target_date_nd.format("%Y-%m-%d").to_string(),
     };
 
@@ -350,6 +349,7 @@ fn return_target_date_validation_errors() {
         current_weight: 29.9,
         height: 99.9,
         calculation_goal: CalculationGoal::GAIN,
+        start_date: "2024-01-01".to_string(),
         target_date: "2024-06-01".to_string(),
     };
 
@@ -619,25 +619,25 @@ fn calculate_target_weights_for_specific_weight_loss_goal() {
     let target_date_nd = start_date_nd.checked_add_days(Days::new(250)).unwrap();
 
     let expected_weight_by_rate: HashMap<i32, f32> = vec![
-        (100, 81.6),
-        (200, 78.1),
-        (300, 74.7),
-        (400, 71.2),
-        (500, 67.8),
-        (600, 64.3),
-        (700, 60.9),
+        (100, 81.4),
+        (200, 77.9),
+        (300, 74.3),
+        (400, 70.7),
+        (500, 67.1),
+        (600, 63.6),
+        (700, 60.0),
     ]
     .into_iter()
     .collect();
 
     let expected_bmi_by_rate: HashMap<i32, f32> = vec![
         (100, 28.2),
-        (200, 27.0),
-        (300, 25.8),
-        (400, 24.6),
-        (500, 23.5),
-        (600, 22.3),
-        (700, 21.1),
+        (200, 26.9),
+        (300, 25.7),
+        (400, 24.5),
+        (500, 23.2),
+        (600, 22.0),
+        (700, 20.8),
     ]
     .into_iter()
     .collect();
@@ -647,6 +647,7 @@ fn calculate_target_weights_for_specific_weight_loss_goal() {
         height: 170.0,
         current_weight: 85.0,
         sex: CalculationSex::MALE,
+        start_date: start_date_nd.format("%Y-%m-%d").to_string(),
         target_date: target_date_nd.format("%Y-%m-%d").to_string(),
         calculation_goal: CalculationGoal::LOSS,
     };
@@ -672,25 +673,25 @@ fn calculate_target_weights_for_specific_weight_gain_goal() {
     let target_date_nd = start_date_nd.checked_add_days(Days::new(150)).unwrap();
 
     let expected_weight_by_rate: HashMap<i32, f32> = vec![
-        (100, 47.0),
-        (200, 49.0),
-        (300, 51.0),
-        (400, 53.1),
-        (500, 55.1),
-        (600, 57.1),
-        (700, 59.1),
+        (100, 47.1),
+        (200, 49.3),
+        (300, 51.4),
+        (400, 53.6),
+        (500, 55.7),
+        (600, 57.9),
+        (700, 60.0),
     ]
     .into_iter()
     .collect();
 
     let expected_bmi_by_rate: HashMap<i32, f32> = vec![
         (100, 19.6),
-        (200, 20.4),
-        (300, 21.2),
-        (400, 22.1),
-        (500, 22.9),
-        (600, 23.8),
-        (700, 24.6),
+        (200, 20.5),
+        (300, 21.4),
+        (400, 22.3),
+        (500, 23.2),
+        (600, 24.1),
+        (700, 25.0),
     ]
     .into_iter()
     .collect();
@@ -700,6 +701,7 @@ fn calculate_target_weights_for_specific_weight_gain_goal() {
         height: 155.0,
         current_weight: 45.0,
         sex: CalculationSex::FEMALE,
+        start_date: start_date_nd.format("%Y-%m-%d").to_string(),
         target_date: target_date_nd.format("%Y-%m-%d").to_string(),
         calculation_goal: CalculationGoal::GAIN,
     };
