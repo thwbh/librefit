@@ -3,6 +3,7 @@
 <script lang="ts">
 	import { CheckboxEventTarget } from '$lib/event';
 	import type { ValidationMessage } from '$lib/model';
+	import { createEventDispatcher } from 'svelte';
 
 	export let value: any = '';
 	export let name = 'control';
@@ -12,7 +13,7 @@
 	export let placeholder = '';
 	export let unit = '';
 
-	export let validateDetail = (e): ValidationMessage => {
+	export let validateDetail = (e: any): ValidationMessage => {
 		return {
 			valid: false,
 			skip: true
@@ -55,6 +56,12 @@
 		this.checked = (<CheckboxEventTarget>e.target).checked;
 	};
 
+	const dispatch = createEventDispatcher();
+
+	const onChange = (e: any) => {
+		dispatch('change', e.detail);
+	};
+
 	$: value;
 	$: label;
 	$: type;
@@ -90,6 +97,7 @@
 				{placeholder}
 				{required}
 				bind:value
+				on:change={onChange}
 				on:focusout={validate}
 				{readonly}
 			/>
