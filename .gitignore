@@ -1,45 +1,12 @@
-# Gradle
-.gradle/
-build/
-
-# Eclipse
-.project
-.classpath
-.settings/
-bin/
-
-# IntelliJ
-.idea
-*.ipr
-*.iml
-*.iws
-
-# NetBeans
-nb-configuration.xml
-
-# Visual Studio Code
-.vscode
-.factorypath
-
-# OSX
 .DS_Store
-
-# Vim
-*.swp
-*.swo
-
-# patch
-*.orig
-*.rej
-
-# Local environment
-.env
-
-# Keypairs
-*.pem
-
-# kotlin compiler log
-.kotlin
-
-# quarkus
-.quarkus
+node_modules
+/build
+/.svelte-kit
+/package
+!.env
+!.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+/.cache/
+coverage/
+*/**/tracker.db

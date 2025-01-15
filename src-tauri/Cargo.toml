@@ -1,0 +1,39 @@
+[package]
+name = "librefit"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["Stefan Poindl"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "librefit_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.2", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.1.0", features = [] }
+tauri-plugin-log = "2.0.0-rc"
+diesel = { version = "2.2.6", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
+dotenv = "0.15.0"
+chrono = "0.4.38"
+validator = { version = "0.19.0", features = ["derive"] }
+rust-i18n = "3.1.2"
+libmath = "0.2.1"
+tauri-plugin-fs = "2"
+
+# satisfy linker for sqlite3 required by diesel
+[dependencies.libsqlite3-sys]
+version = "0.30.1"
+features = [ "bundled" ]
+

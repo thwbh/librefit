@@ -1,0 +1,4 @@
+res/tracker.db-journal
+res/tracker.db
+../node_modules
+gen/

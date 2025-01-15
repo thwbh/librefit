@@ -1,8 +1,0 @@
-wwwroot/*.js
-node_modules
-typings
-dist
-rest/
-rest/.openapi-generator/
-.openapi-generator/
-.cache/
