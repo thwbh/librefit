@@ -34,6 +34,7 @@
 	import { addWeight } from '$lib/api/tracker';
 	import type { WeightModificationEvent } from '$lib/event';
 	import { getDateAsStr } from '$lib/date';
+	import ActivityLevelComponent from './ActivityLevelComponent.svelte';
 
 	let chosenOption: WizardTargetSelection = {
 		customDetails: '',
@@ -212,6 +213,9 @@
 				</div>
 			</Step>
 
+			<Step>
+				<ActivityLevelComponent {wizardInput} />
+			</Step>
 			<Step>
 				{#await calculateTdee(wizardInput)}
 					<p>Calculating...</p>
