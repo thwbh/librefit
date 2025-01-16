@@ -1,13 +1,6 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
-	import {
-		Accordion,
-		AccordionItem,
-		getToastStore,
-		ProgressRadial,
-		Step,
-		Stepper
-	} from '@skeletonlabs/skeleton';
+	import { Accordion, AccordionItem, ProgressRadial, Step, Stepper } from '@skeletonlabs/skeleton';
 	import {
 		CalculationGoal,
 		CalculationSex,
@@ -176,21 +169,21 @@
 							class="block card card-hover"
 						>
 							{#snippet iconClosed()}
-																<Check />
-															{/snippet}
+								<Check />
+							{/snippet}
 							{#snippet summary()}
-																<h3 class="h3">I want to reach my dream weight.</h3>
-															{/snippet}
+								<h3 class="h3">I want to reach my dream weight.</h3>
+							{/snippet}
 							{#snippet content()}
-																<p>How can I get to my target weight as fast as possible?</p>
-									<ValidatedInput
-										bind:value={chosenOption.customDetails}
-										type="number"
-										label="Target weight"
-										unit={'kg'}
-									/>
-								
-															{/snippet}
+								<p>How can I get to my target weight as fast as possible?</p>
+								<ValidatedInput
+									bind:value={chosenOption.customDetails}
+									name="targetWeight"
+									type="number"
+									label="Target weight"
+									unit={'kg'}
+								/>
+							{/snippet}
 						</AccordionItem>
 
 						<AccordionItem
@@ -199,21 +192,25 @@
 							class="block card card-hover"
 						>
 							{#snippet iconClosed()}
-																<Check />
-															{/snippet}
+								<Check />
+							{/snippet}
 							{#snippet summary()}
-																<h3 class="h3">I have a timeline in mind.</h3>
-															{/snippet}
+								<h3 class="h3">I have a timeline in mind.</h3>
+							{/snippet}
 							{#snippet content()}
-																<p>How much can I achieve until a specific date?</p>
-									<RadioInputComponent
-										bind:value={wizardInput.calculationGoal}
-										label={'I want to'}
-										choices={goalChoices}
-									/>
-									<ValidatedInput bind:value={chosenOption.customDetails} type="date" label="until" />
-								
-															{/snippet}
+								<p>How much can I achieve until a specific date?</p>
+								<RadioInputComponent
+									bind:value={wizardInput.calculationGoal}
+									label={'I want to'}
+									choices={goalChoices}
+								/>
+								<ValidatedInput
+									bind:value={chosenOption.customDetails}
+									name="targetDate"
+									type="date"
+									label="until"
+								/>
+							{/snippet}
 						</AccordionItem>
 					</Accordion>
 				</div>

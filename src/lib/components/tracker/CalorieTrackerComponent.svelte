@@ -22,9 +22,8 @@
 
 	const dispatch = createEventDispatcher();
 
-	let caloriesQuickAdd: number = $state();
+	let caloriesQuickAdd: number = $state(0);
 	let deficit: number = $state();
-
 
 	const addCaloriesQuickly = (e) => {
 		// take default category based on time

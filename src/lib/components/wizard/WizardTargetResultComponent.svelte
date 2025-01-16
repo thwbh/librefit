@@ -9,17 +9,12 @@
 		type WizardTargetDateResult,
 		type WizardTargetWeightResult
 	} from '$lib/model';
-	import type {
-		WizardTargetSelection,
-		WizardTargetError,
-		WizardTargetSelectionEvent
-	} from '$lib/types';
+	import type { WizardTargetSelection, WizardTargetError } from '$lib/types';
 	import TargetComponent from '../TargetComponent.svelte';
 	import RadioInputComponent from '../RadioInputComponent.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import Alert from '$lib/assets/icons/alert-circle-filled.svg?component';
-
-
+	import type { WizardTargetSelectionEvent } from '$lib/event';
 
 	interface Props {
 		wizardInput: WizardInput;
@@ -162,7 +157,8 @@
 			currentWeight: wizardInput.weight,
 			height: wizardInput.height,
 			calculationGoal: wizardInput.calculationGoal,
-			targetDate: chosenOption.customDetails
+			targetDate: chosenOption.customDetails,
+			startDate: getDateAsStr(new Date())
 		}}
 		{#await calculateForTargetDate(chosenOptionDateInput)}
 			<p>Calculating...</p>

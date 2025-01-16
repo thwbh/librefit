@@ -9,7 +9,7 @@
 
 	let { data }: Props = $props();
 
-	if (data.userData) {
+	if (data.userData && data.userData.name) {
 		goto('/dashboard');
 	}
 </script>

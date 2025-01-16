@@ -3,6 +3,7 @@ import { enGB } from 'date-fns/locale';
 import { DataViews } from './enum';
 import { getDateAsStr, parseStringAsDate } from './date';
 import type { WeightTracker } from './model';
+import type { ChartData, ChartOptions} from 'chart.js';
 
 export const createWeightChart = (view: DataViews, start: Date, entries: Array<WeightTracker>) => {
 	const legend = [];
@@ -102,13 +103,12 @@ export const createWeightChartDataset = (weight: any) => {
 	};
 };
 
-/**
- *
- * @param {Array<WeightTracker>} entries
- * @param {Date} date
- * @param {DataViews} filter
- */
-export const paintWeightTracker = (entries, date, filter) => {
+
+export const paintWeightTracker = (entries: Array<WeightTracker>, date: Date, filter: DataViews): 
+{ 
+  chartData: ChartData<"line">, 
+  chartOptions: ChartOptions<"line">
+} => {
 	const style = getComputedStyle(document.body);
 	const elemHtmlClasses = document.documentElement.classList;
 
@@ -161,7 +161,10 @@ export const paintWeightTracker = (entries, date, filter) => {
 	}
 
 	return {
-		chartData: undefined,
+		chartData: {
+      labels: [],
+      datasets: []
+    },
 		chartOptions: undefined
 	};
 };

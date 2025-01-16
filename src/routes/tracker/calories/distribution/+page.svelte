@@ -1,52 +1,21 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import CalorieDistribution from '$lib/components/CalorieDistribution.svelte';
 	import { getContext } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { DataViews, enumKeys } from '$lib/enum';
-	import { getToastStore, RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
+	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 	import { listCaloriesFiltered } from '$lib/api/tracker';
-	import { showToastError } from '$lib/toast';
 	import NoFood from '$lib/assets/icons/food-off.svg?component';
 	import { getFoodCategoryLongvalue, skimCategories } from '$lib/api/category';
-	import type { CalorieTarget, CalorieTracker, FoodCategory, LibreUser } from '$lib/model';
-	import type { Indicator } from '$lib/indicator';
+	import type { CalorieTarget, CalorieTracker, FoodCategory } from '$lib/model';
 	import type { Writable } from 'svelte/store';
 
 	let { data } = $props();
 
-	const toastStore = getToastStore();
-
 	const calorieTracker: Array<CalorieTracker> = data.caloriesMonthList;
-	const user: Writable<LibreUser> = getContext('user');
-	const indicator: Writable<Indicator> = getContext('indicator');
 	const foodCategories: Writable<Array<FoodCategory>> = getContext('foodCategories');
 	const calorieTarget: Writable<CalorieTarget> = getContext('calorieTarget');
 
-	if (!$user) goto('/');
-
 	let filter = $state(DataViews.Month);
-	let filteredData = $state();
-	let categories = $state();
-
-	run(() => {
-		if (calorieTracker) {
-			filteredData = calorieTracker;
-			categories = skimCategories(calorieTracker);
-		}
-	});
-
-	const loadEntriesFiltered = async () => {
-		$indicator = $indicator.start();
-
-		await listCaloriesFiltered(filter)
-			.then((result) => {
-				filteredData = result;
-			})
-			.catch((e) => showToastError(toastStore, e))
-			.finally(() => ($indicator = $indicator.finish()));
-	};
 
 	const calculateAverage = (calorieTracker: Array<CalorieTracker>, category: string) => {
 		const filtered = calorieTracker.filter((entry) => entry.category === category);
@@ -68,25 +37,21 @@
 	};
 </script>
 
-{#if $user}
-	<section>
-		<div class="container mx-auto p-8 space-y-10">
-			<h1 class="h1">Calorie Distribution</h1>
-			<div class="flex flex-col gap-4">
-				<RadioGroup>
-					{#each enumKeys(DataViews) as dataView}
-						<RadioItem
-							bind:group={filter}
-							name="justify"
-							value={DataViews[dataView]}
-							on:change={loadEntriesFiltered}
-						>
-							{dataView}
-						</RadioItem>
-					{/each}
-				</RadioGroup>
+<section>
+	<div class="container mx-auto p-8 space-y-10">
+		<h1 class="h1">Calorie Distribution</h1>
+		<div class="flex flex-col gap-4">
+			<RadioGroup>
+				{#each enumKeys(DataViews) as dataView}
+					<RadioItem bind:group={filter} name="justify" value={DataViews[dataView]}>
+						{dataView}
+					</RadioItem>
+				{/each}
+			</RadioGroup>
 
-				{#if calorieTracker.length > 0}
+			{#await listCaloriesFiltered(filter) then filteredData}
+				{@const categories = skimCategories(calorieTracker)}
+				{#if filteredData.length > 0}
 					<div class="flex flex-col lg:flex-row gap-4">
 						<div class="lg:w-3/5 flex flex-col">
 							<h2 class="h2">Last {filter.toLowerCase()}:</h2>
@@ -128,7 +93,7 @@
 								displayHeader={false}
 								displayHistory={false}
 								foodCategories={$foodCategories}
-								bind:calorieTarget={$calorieTarget}
+								calorieTarget={$calorieTarget}
 							/>
 						</div>
 					</div>
@@ -138,7 +103,7 @@
 						<p>Insufficient data to render your history.</p>
 					</div>
 				{/if}
-			</div>
+			{/await}
 		</div>
-	</section>
-{/if}
+	</div>
+</section>

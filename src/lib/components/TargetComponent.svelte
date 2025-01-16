@@ -1,30 +1,18 @@
 <script lang="ts">
 	import { validateTargetAmount } from '$lib/validation';
 	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
-	import type { CalorieTarget, ValidationMessage, WeightTarget } from '$lib/model';
-	import type { WizardTargetError } from '$lib/types';
-
-
-
-	interface Props {
-		startDate: string;
-		endDate: string;
-		errors: WizardTargetError;
-		errorEndDate?: ValidationMessage;
-		weightTarget?: WeightTarget;
-		calorieTarget?: CalorieTarget;
-	}
+	import type { TargetComponentProps } from '$lib/props';
 
 	let {
 		startDate = $bindable(),
 		endDate = $bindable(),
 		errors,
 		errorEndDate = {
-		valid: true
-	},
+			valid: true
+		},
 		weightTarget = $bindable(undefined),
 		calorieTarget = $bindable(undefined)
-	}: Props = $props();
+	}: TargetComponentProps = $props();
 </script>
 
 <div>

@@ -10,8 +10,12 @@
 
 	let { calorieTarget, entries }: Props = $props();
 
-	let limit = $state(calorieTarget && calorieTarget.targetCalories ? calorieTarget.targetCalories : 0),
-		maximum = $state(calorieTarget && calorieTarget.maximumCalories ? calorieTarget.maximumCalories : 0),
+	let limit = $state(
+			calorieTarget && calorieTarget.targetCalories ? calorieTarget.targetCalories : 0
+		),
+		maximum = $state(
+			calorieTarget && calorieTarget.maximumCalories ? calorieTarget.maximumCalories : 0
+		),
 		total = $state(0);
 
 	let width = 512,
@@ -29,8 +33,6 @@
 			maximum = calorieTarget.maximumCalories;
 		}
 	});
-
-	let innerEnd: number = $derived(calculateEnd(total, maximum)), outerEnd: number = $derived(calculateEnd(total, limit));
 
 	const stroke = 40;
 
@@ -63,15 +65,16 @@
 		}
 	};
 
-	let strokeClass =
-		$derived(total <= limit
+	let strokeClass = $derived(
+		total <= limit
 			? 'stroke-primary-500'
 			: total > limit && total <= maximum
 				? 'stroke-overflow-1'
-				: 'stroke-overflow-2');
+				: 'stroke-overflow-2'
+	);
 
-	
-	
+	let innerEnd: number = $derived(calculateEnd(total, maximum)),
+		outerEnd: number = $derived(calculateEnd(total, limit));
 
 	run(() => {
 		calculateEnd;

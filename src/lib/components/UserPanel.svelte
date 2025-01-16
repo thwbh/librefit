@@ -12,7 +12,7 @@
 	import Scale from '$lib/assets/icons/scale-outline.svg?component';
 	import FileTypeCsv from '$lib/assets/icons/file-type-csv.svg?component';
 	import ChartLine from '$lib/assets/icons/chart-line.svg?component';
-	import PieChart from '$lib/assets/icons/chart-pie-4.svg';
+	import PieChart from '$lib/assets/icons/chart-pie-4.svg?component';
 	import type { LibreUser } from '$lib/model';
 	import type { Writable } from 'svelte/store';
 
@@ -23,7 +23,9 @@
 		user;
 	});
 
-	let classesActive = $derived((href) => (href === $page.url.pathname ? '!variant-soft-primary' : ''));
+	let classesActive = $derived((href) =>
+		href === $page.url.pathname ? '!variant-soft-primary' : ''
+	);
 
 	const navigate = () => {
 		drawerStore.close();
@@ -76,11 +78,7 @@
 					</a>
 				</li>
 				<li>
-					<a
-						href="/tracker/calories"
-						class={classesActive('/tracker/calories')}
-						onclick={navigate}
-					>
+					<a href="/tracker/calories" class={classesActive('/tracker/calories')} onclick={navigate}>
 						<span class="badge-icon variant-glass-surface">
 							<Food />
 						</span>

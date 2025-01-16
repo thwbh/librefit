@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { preventDefault } from 'svelte/legacy';
-
 	import { getModalStore, Tab, TabGroup } from '@skeletonlabs/skeleton';
 	import { getDateAsStr } from '$lib/date';
 	import { validateCalorieTarget, validateWeightTarget } from '$lib/validation';
@@ -21,7 +19,9 @@
 	let weightTarget: WeightTarget = $state();
 
 	// used for customized wizard results only
-	let targetsByRate: Map<number, { calorieTarget: CalorieTarget; weightTarget: WeightTarget }> = $state();
+	let targetsByRate: Map<number, { calorieTarget: CalorieTarget; weightTarget: WeightTarget }> =
+		$state();
+
 	let rates: Array<string> = $state();
 	let rateActive: string = $state();
 
@@ -149,23 +149,18 @@
 				</Tab>
 			{/each}
 
-			<!-- Tab Panels --->
-			{#snippet panel()}
-					
-					{#if targetsByRate}
-						{@const calorieTarget = targetsByRate[rateActive].calorieTarget}
-						{@const weightTarget = targetsByRate[rateActive].weightTarget}
-						<TargetComponent
-							startDate={calorieTarget.startDate}
-							endDate={calorieTarget.endDate}
-							{errors}
-							{errorEndDate}
-							{calorieTarget}
-							{weightTarget}
-						/>
-					{/if}
-				
-					{/snippet}
+			{#if targetsByRate}
+				{@const calorieTarget = targetsByRate[rateActive].calorieTarget}
+				{@const weightTarget = targetsByRate[rateActive].weightTarget}
+				<TargetComponent
+					startDate={calorieTarget.startDate}
+					endDate={calorieTarget.endDate}
+					{errors}
+					{errorEndDate}
+					{calorieTarget}
+					{weightTarget}
+				/>
+			{/if}
 		</TabGroup>
 	{:else if warningMessage}
 		<header class="text-2xl font-bold">Warning</header>
@@ -178,8 +173,8 @@
 	{/if}
 
 	<footer class="modal-footer flex justify-between space-x-2">
-		<button onclick={preventDefault(onCancel)} class="btn variant-ringed"> Cancel </button>
+		<button onclick={onCancel} class="btn variant-ringed"> Cancel </button>
 
-		<button onclick={preventDefault(onSubmit)} class="btn variant-filled"> Submit </button>
+		<button onclick={onSubmit} class="btn variant-filled"> Submit </button>
 	</footer>
 </div>

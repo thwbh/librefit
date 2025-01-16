@@ -1,53 +1,50 @@
-<!-- @migration-task Error while migrating Svelte code: Unexpected token `}`. Did you mean `&rbrace;` or `{"}"}`?
-https://svelte.dev/e/js_parse_error -->
-<svelte:options accessors={true} />
-
 <script lang="ts">
 	import { CheckboxEventTarget } from '$lib/event';
 	import type { ValidationMessage } from '$lib/model';
 	import { createEventDispatcher } from 'svelte';
+	import type { ValidatedInputProps } from '$lib/props';
 
-	export let value: any = '';
-	export let name = 'control';
-	export let label = '';
-	export let type = 'text';
-	export let styling = 'input';
-	export let placeholder = '';
-	export let unit = '';
+	let {
+		value = $bindable(''),
+		name = 'control',
+		label = '',
+		type = 'text',
+		styling = 'input',
+		placeholder = '',
+		unit = '',
+		emptyMessage = `${label ? label : 'Field'} is empty.`,
+		required = false,
+		errorMessage = undefined,
+		readonly = false,
+		validateDetail = (e: any): ValidationMessage => {
+			return {
+				valid: false,
+				skip: true
+			};
+		},
+		validate = () => {
+			let valid = false;
 
-	export let validateDetail = (e: any): ValidationMessage => {
-		return {
-			valid: false,
-			skip: true
-		};
-	};
+			let detail: ValidationMessage = this.validateDetail({
+				value: value,
+				label: label
+			});
 
-	export let emptyMessage = `${label ? label : 'Field'} is empty.`;
-	export let required = false;
-	export let errorMessage = undefined;
-
-	export let readonly = false;
+			if (required && isEmpty()) {
+				errorMessage = emptyMessage;
+			} else if (!detail.skip) {
+				valid = detail.valid;
+				errorMessage = detail.errorMessage;
+			} else {
+				errorMessage = undefined;
+				valid = true;
+			}
+			return valid;
+		}
+	}: ValidatedInputProps = $props();
 
 	const getType = (node: any) => {
 		node.type = type;
-	};
-
-	export let validate = () => {
-		let valid = false;
-		let detail = validateDetail({
-			value: value,
-			label: label
-		});
-		if (required && isEmpty()) {
-			errorMessage = emptyMessage;
-		} else if (!detail.skip) {
-			valid = detail.valid;
-			errorMessage = detail.errorMessage;
-		} else {
-			errorMessage = undefined;
-			valid = true;
-		}
-		return valid;
 	};
 
 	const isEmpty = () => {
@@ -63,12 +60,6 @@ https://svelte.dev/e/js_parse_error -->
 	const onChange = (e: any) => {
 		dispatch('change', e.detail);
 	};
-
-	$: value;
-	$: label;
-	$: type;
-	$: errorMessage;
-	$: validateDetail;
 </script>
 
 <label class="label">
@@ -99,8 +90,8 @@ https://svelte.dev/e/js_parse_error -->
 				{placeholder}
 				{required}
 				bind:value
-				on:change={onChange}
-				on:focusout={validate}
+				onchange={onChange}
+				onfocusout={validate}
 				{readonly}
 			/>
 		</div>
@@ -115,8 +106,8 @@ https://svelte.dev/e/js_parse_error -->
 					class={styling + (!errorMessage ? '' : ' input-error')}
 					use:getType
 					bind:value
-					on:change={handleCheckboxEvent}
-					on:focusout={validate}
+					onchange={handleCheckboxEvent}
+					onfocusout={validate}
 					{readonly}
 				/>
 			</span>

@@ -1,24 +1,19 @@
 <script lang="ts">
-	import { run, preventDefault } from 'svelte/legacy';
-
 	import { goto } from '$app/navigation';
-	import Check from '$lib/assets/icons/check.svg';
-	import History from '$lib/assets/icons/history.svg';
-	import NoFood from '$lib/assets/icons/food-off.svg';
-	import Overflow1 from '$lib/assets/icons/overflow-1.svg';
-	import Overflow2 from '$lib/assets/icons/overflow-2.svg';
+	import Check from '$lib/assets/icons/check.svg?component';
+	import History from '$lib/assets/icons/history.svg?component';
+	import NoFood from '$lib/assets/icons/food-off.svg?component';
+	import Overflow1 from '$lib/assets/icons/overflow-1.svg?component';
+	import Overflow2 from '$lib/assets/icons/overflow-2.svg?component';
 	import { PolarArea } from 'svelte-chartjs';
 	import { Chart, registerables } from 'chart.js';
-	import { observeToggle } from '$lib/theme-toggle';
-	import { type PolarAreaChartConfig, createDistributionChart } from '$lib/distribution-chart';
+	import { createDistributionChart } from '$lib/distribution-chart';
 	import { getAverageDailyIntake } from '$lib/calorie-util';
 	import type { CalorieTarget, CalorieTracker, FoodCategory } from '$lib/model';
 
 	Chart.register(...registerables);
 
-
-
-	interface Props {
+  interface Props {
 		calorieTracker: Array<CalorieTracker>;
 		displayClass?: string;
 		displayHeader?: boolean;
@@ -37,28 +32,14 @@
 		foodCategories,
 		calorieTarget
 	}: Props = $props();
-
-	let polarAreaChart: PolarAreaChartConfig = $state();
-	let dailyAverage: number = $state();
-
-	const refreshChart = (entries: Array<CalorieTracker>) => {
-		polarAreaChart = createDistributionChart(entries, foodCategories, displayHistory);
-		dailyAverage = getAverageDailyIntake(entries);
-	};
-
-	run(() => {
-		calorieTracker, refreshChart(calorieTracker);
-	});
-
-	observeToggle(document.documentElement, () => {
-		refreshChart(calorieTracker);
-	});
 </script>
 
 <div class="{displayClass} gap-4 text-center justify-between items-center relative h-full">
 	{#if displayHeader}<h2 class="h3">{headerText}</h2>{/if}
 
 	{#if calorieTracker && calorieTracker.length > 0}
+    {@const polarAreaChart = createDistributionChart(calorieTracker, foodCategories, displayHistory)}
+    {@const dailyAverage = getAverageDailyIntake(calorieTracker)}
 		<div class="flex flex-col md:max-2xl:w-fit h-full justify-between gap-4">
 			<PolarArea data={polarAreaChart.chartData} options={polarAreaChart.chartOptions} />
 
@@ -101,7 +82,7 @@
 	{#if displayHistory}
 		<button
 			class="btn variant-filled w-full"
-			onclick={preventDefault(() => goto('/tracker/calories'))}
+			onclick={() => goto('/tracker/calories')}
 		>
 			<span>
 				<History />

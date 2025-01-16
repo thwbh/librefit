@@ -98,6 +98,6 @@ export const createDistributionChart = (
 };
 
 export interface PolarAreaChartConfig {
-	chartData: ChartData<any>;
-	chartOptions: ChartOptions<any>;
+	chartData: ChartData<'polarArea'>;
+	chartOptions: ChartOptions<'polarArea'>;
 }

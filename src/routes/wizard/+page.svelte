@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { preventDefault } from 'svelte/legacy';
 
-	import TdeeStepper from '$lib/components/TdeeStepper.svelte';
 	import { getModalStore, getToastStore } from '@skeletonlabs/skeleton';
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
 	import { getContext } from 'svelte';
@@ -27,6 +26,7 @@
 		type Wizard,
 		type WizardInput,
 		type WizardResult,
+		type WizardTargetDateInput,
 		type WizardTargetDateResult,
 		type WizardTargetWeightInput,
 		type WizardTargetWeightResult
@@ -34,15 +34,19 @@
 	import type { Writable } from 'svelte/store';
 	import type { Indicator } from '$lib/indicator';
 
+  interface Props {
+    calculationResult: WizardResult;
+    calculationInput: WizardInput;
+  }
+
+  let { calculationResult, calculationInput }: Props = $props();
+
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
 
 	const indicator: Writable<Indicator> = getContext('indicator');
 
-	let calculationResult: WizardResult = $state();
-	let calculationInput: WizardInput = $state();
-
-	let calculationError = $state();
+  let calculationError = $state();
 
 	let chosenOption = $state({
 		userChoice: undefined,
@@ -75,14 +79,17 @@
 		} else {
 			$indicator = $indicator.start();
 
-			await calculateForTargetDate({
-				age: calculationInput.age,
+      const wizardInput: WizardTargetDateInput = {
+        age: calculationInput.age,
 				height: calculationInput.height,
 				currentWeight: calculationInput.weight,
 				sex: calculationInput.sex,
 				targetDate: wizardDetails.targetDate,
-				calculationGoal: calculationInput.calculationGoal
-			})
+				calculationGoal: calculationInput.calculationGoal,
+        startDate: getDateAsStr(new Date())
+      }
+
+			await calculateForTargetDate(wizardInput)
 				.then((customWizardResult: WizardTargetDateResult) => {
 					const targetsByRate = createTargetDateTargets(
 						calculationInput,
@@ -250,34 +257,4 @@
 	<div class="container mx-auto p-8 space-y-8">
 		<h1 class="h1">TDEE Calculator</h1>
 
-		{#if !calculationResult && !calculationError}
-			<TdeeStepper on:calculate={calculate} />
-		{:else if !calculationError}
-			<WizardResultComponent {calculationResult} {calculationInput} />
-
-			<WizardTarget
-				{calculationResult}
-				{calculationInput}
-				bind:chosenOption
-				on:setTargets={createTargetsAddWeight}
-			/>
-
-			<div class="flex flex-grow justify-between">
-				<button onclick={preventDefault(reset)} class="btn variant-filled">Recalculate</button>
-				<button
-					onclick={preventDefault(() => processResult(calculationResult))}
-					class="btn variant-filled-primary"
-					disabled={chosenOption.userChoice === undefined}
-				>
-					Review
-				</button>
-			</div>
-		{:else}
-			<p>
-				An error occurred. Please try again later.
-
-				<button onclick={preventDefault(reset)} class="btn variant-filled">Recalculate</button>
-			</p>
-		{/if}
-	</div>
 </section>

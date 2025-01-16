@@ -4,7 +4,7 @@
 	import { getToastStore, RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 	import { paintWeightTracker } from '$lib/weight-chart';
 	import { Line } from 'svelte-chartjs';
-	import { Chart, registerables } from 'chart.js';
+	import { Chart, registerables, type ChartData, type ChartOptions } from 'chart.js';
 	import { showToastError } from '$lib/toast';
 	import { getContext } from 'svelte';
 	import NoScale from '$lib/assets/icons/scale-outline-off.svg?component';
@@ -35,7 +35,7 @@
 	const today = new Date();
 
 	let entries: Array<WeightTracker> = $state();
-	let chartData = $state(), chartOptions = $state();
+	let chartData: ChartData<'line'> = $state(), chartOptions: ChartOptions<'line'> = $state();
 
 	observeToggle(document.documentElement, () => paint(entries));
 
@@ -52,7 +52,7 @@
 			.finally(() => ($indicator = $indicator.finish()));
 	};
 
-	const paint = (entries) => {
+	const paint = (entries: Array<WeightTracker>) => {
 		const paintMeta = paintWeightTracker(entries, today, filter);
 
 		chartData = paintMeta.chartData;
@@ -64,7 +64,7 @@
 			entries = data.weightWeekList;
 
 			paint(entries);
-		}
+    }
 	});
 </script>
 

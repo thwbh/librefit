@@ -1,10 +1,10 @@
 <script lang="ts">
-	import Scale from '$lib/assets/icons/scale-outline.svg';
+	import Scale from '$lib/assets/icons/scale-outline.svg?component';
 	import { createEventDispatcher } from 'svelte';
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
-	import Target from '$lib/assets/icons/target-arrow.svg';
+	import Target from '$lib/assets/icons/target-arrow.svg?component';
 	import type { WeightTarget, WeightTracker } from '$lib/model';
 
 	interface Props {

@@ -4,10 +4,6 @@
 	import TrackerButtons from './TrackerButtons.svelte';
 	import type { FoodCategory } from '$lib/model';
 
-
-
-
-
 	interface Props {
 		value?: any;
 		dateStr: string;
@@ -30,9 +26,12 @@
 		disabled = $bindable(false),
 		compact = false,
 		categories = undefined,
-		category = $bindable(categories
-		? categories.filter((c) => c.shortvalue === getDaytimeFoodCategory(new Date()))[0].shortvalue
-		: undefined),
+		category = $bindable(
+			categories
+				? categories.filter((c) => c.shortvalue === getDaytimeFoodCategory(new Date()))[0]
+						.shortvalue
+				: undefined
+		),
 		unit,
 		maxWidthCss = '',
 		placeholder = 'Amount...'
