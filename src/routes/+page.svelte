@@ -1,17 +1,7 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { getDashboard } from '$lib/api/user';
+	import DashboardComponent from '$lib/components/DashboardComponent.svelte';
 	import FirstSetupComponent from '$lib/components/FirstSetupComponent.svelte';
-	import type { LibreUser } from '$lib/model';
-
-	interface Props {
-		data: { userData: LibreUser };
-	}
-
-	let { data }: Props = $props();
-
-	if (data.userData && data.userData.name) {
-		goto('/dashboard');
-	}
 </script>
 
 <svelte:head>
@@ -19,5 +9,12 @@
 </svelte:head>
 
 <section class="h-full flex">
-	<FirstSetupComponent />
+	{#await getDashboard(new Date()) then dashboardData}
+		{@const userData = dashboardData.userData}
+		{#if userData && userData.name}
+			<DashboardComponent {dashboardData} />
+		{:else}
+			<FirstSetupComponent />
+		{/if}
+	{/await}}
 </section>

@@ -9,21 +9,6 @@ export interface CalorieTrackerComponentProps {
 
 export interface DashboardComponentProps {
   dashboardData: Dashboard;
-  today: Date;
-  // these properties needs to be passed as reactive
-  caloriesTodayList?: Array<CalorieTracker>;
-  calorieTarget?: CalorieTarget;
-  caloriesWeekList?: Array<CalorieTracker>;
-  weightTodayList?: Array<WeightTracker>;
-  weightTarget?: WeightTarget;
-  onAddWeight: (e: CustomEvent<any>) => void;
-  onAddCalories: (e: CustomEvent<any>) => void;
-  onUpdateCalories: (e: CustomEvent<any>) => void;
-  onDeleteCalories: (e: CustomEvent<any>) => void;
-  onUpdateWeight: (e: CustomEvent<any>) => void;
-  onDeleteWeight: (e: CustomEvent<any>) => void;
-  setCalorieTarget: (e: CustomEvent<any>) => void;
-  setWeightTarget: (e: CustomEvent<any>) => void;
 }
 
 export interface TargetComponentProps {
