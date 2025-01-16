@@ -148,6 +148,7 @@ describe('paintWeightTracker function', () => {
 
     // Simulate weight data
     const entries = Array.from({ length: 12 }, (_, i) => ({
+      id: i,
       added: `2024-${String(i + 1).padStart(2, '0')}-15`,
       amount: 70 + i
     }));
@@ -182,6 +183,7 @@ describe('paintWeightTracker function', () => {
 
     // Simulate weight data
     const entries = Array.from({ length: 12 }, (_, i) => ({
+      id: i,
       added: `2024-${String(i + 1).padStart(2, '0')}-15`,
       amount: 70 + i
     }));

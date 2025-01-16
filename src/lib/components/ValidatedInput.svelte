@@ -99,7 +99,7 @@
 		<span class="flex justify-between">
 			<span>
 				<span>
-					<slot />
+					{label}
 				</span>
 				<input
 					{name}

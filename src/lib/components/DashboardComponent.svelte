@@ -1,13 +1,6 @@
 <script lang="ts">
 	import { getDaytimeGreeting } from '$lib/date';
 	import { DataViews } from '$lib/enum';
-	import type {
-		CalorieTarget,
-		CalorieTracker,
-		Dashboard,
-		WeightTarget,
-		WeightTracker
-	} from '$lib/model';
 	import { paintWeightTracker } from '$lib/weight-chart';
 	import { Line } from 'svelte-chartjs';
 	import CalorieDistribution from './CalorieDistribution.svelte';
@@ -16,25 +9,7 @@
 	import WeightTrackerComponent from './tracker/WeightTrackerComponent.svelte';
 	import ScaleOff from '$lib/assets/icons/scale-outline-off.svg?component';
 	import { getDashboard } from '$lib/api/user';
-
-	interface Props {
-		dashboardData: Dashboard;
-		today: Date;
-		// these properties needs to be passed as reactive
-		caloriesTodayList?: Array<CalorieTracker>;
-		calorieTarget?: CalorieTarget;
-		caloriesWeekList?: Array<CalorieTracker>;
-		weightTodayList?: Array<WeightTracker>;
-		weightTarget?: WeightTarget;
-		onAddWeight: (e: CustomEvent<any>) => void;
-		onAddCalories: (e: CustomEvent<any>) => void;
-		onUpdateCalories: (e: CustomEvent<any>) => void;
-		onDeleteCalories: (e: CustomEvent<any>) => void;
-		onUpdateWeight: (e: CustomEvent<any>) => void;
-		onDeleteWeight: (e: CustomEvent<any>) => void;
-		setCalorieTarget: (e: CustomEvent<any>) => void;
-		setWeightTarget: (e: CustomEvent<any>) => void;
-	}
+	import type { DashboardComponentProps } from '$lib/props';
 
 	let {
 		dashboardData,
@@ -52,7 +27,7 @@
 		onDeleteWeight,
 		setCalorieTarget,
 		setWeightTarget
-	}: Props = $props();
+	}: DashboardComponentProps = $props();
 
 	let weightChart = $derived(
 		paintWeightTracker(dashboardData.weightMonthList, today, DataViews.Month)

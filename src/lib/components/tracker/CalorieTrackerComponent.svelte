@@ -8,17 +8,12 @@
 	import Edit from '$lib/assets/icons/pencil.svg?component';
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
-	import type { CalorieTarget, CalorieTracker, FoodCategory } from '$lib/model';
+	import type { CalorieTracker } from '$lib/model';
+	import type { CalorieTrackerComponentProps } from '$lib/props';
 
 	const modalStore = getModalStore();
 
-	interface Props {
-		calorieTracker?: Array<CalorieTracker>;
-		categories: Array<FoodCategory>;
-		calorieTarget: CalorieTarget;
-	}
-
-	let { calorieTracker = [], categories, calorieTarget }: Props = $props();
+	let { calorieTracker = [], categories, calorieTarget }: CalorieTrackerComponentProps = $props();
 
 	const dispatch = createEventDispatcher();
 
