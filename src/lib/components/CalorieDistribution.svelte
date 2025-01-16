@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import { goto } from '$app/navigation';
 	import Check from '$lib/assets/icons/check.svg';
 	import History from '$lib/assets/icons/history.svg';
@@ -14,25 +16,39 @@
 
 	Chart.register(...registerables);
 
-	export let calorieTracker: Array<CalorieTracker>;
 
-	export let displayClass = '';
-	export let displayHeader = true;
-	export let displayHistory = true;
-	export let headerText = 'Average distribution';
 
-	export let foodCategories: Array<FoodCategory>;
-	export let calorieTarget: CalorieTarget;
+	interface Props {
+		calorieTracker: Array<CalorieTracker>;
+		displayClass?: string;
+		displayHeader?: boolean;
+		displayHistory?: boolean;
+		headerText?: string;
+		foodCategories: Array<FoodCategory>;
+		calorieTarget: CalorieTarget;
+	}
 
-	let polarAreaChart: PolarAreaChartConfig;
-	let dailyAverage: number;
+	let {
+		calorieTracker,
+		displayClass = '',
+		displayHeader = true,
+		displayHistory = true,
+		headerText = 'Average distribution',
+		foodCategories,
+		calorieTarget
+	}: Props = $props();
+
+	let polarAreaChart: PolarAreaChartConfig = $state();
+	let dailyAverage: number = $state();
 
 	const refreshChart = (entries: Array<CalorieTracker>) => {
 		polarAreaChart = createDistributionChart(entries, foodCategories, displayHistory);
 		dailyAverage = getAverageDailyIntake(entries);
 	};
 
-	$: calorieTracker, refreshChart(calorieTracker);
+	run(() => {
+		calorieTracker, refreshChart(calorieTracker);
+	});
 
 	observeToggle(document.documentElement, () => {
 		refreshChart(calorieTracker);
@@ -85,7 +101,7 @@
 	{#if displayHistory}
 		<button
 			class="btn variant-filled w-full"
-			on:click|preventDefault={() => goto('/tracker/calories')}
+			onclick={preventDefault(() => goto('/tracker/calories'))}
 		>
 			<span>
 				<History />

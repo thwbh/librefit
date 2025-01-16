@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import TdeeStepper from '$lib/components/TdeeStepper.svelte';
 	import { getModalStore, getToastStore } from '@skeletonlabs/skeleton';
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
@@ -37,15 +39,15 @@
 
 	const indicator: Writable<Indicator> = getContext('indicator');
 
-	let calculationResult: WizardResult;
-	let calculationInput: WizardInput;
+	let calculationResult: WizardResult = $state();
+	let calculationInput: WizardInput = $state();
 
-	let calculationError;
+	let calculationError = $state();
 
-	let chosenOption = {
+	let chosenOption = $state({
 		userChoice: undefined,
 		customDetails: undefined
-	};
+	});
 
 	const today = new Date();
 	let selectedRate = '100';
@@ -261,9 +263,9 @@
 			/>
 
 			<div class="flex flex-grow justify-between">
-				<button on:click|preventDefault={reset} class="btn variant-filled">Recalculate</button>
+				<button onclick={preventDefault(reset)} class="btn variant-filled">Recalculate</button>
 				<button
-					on:click|preventDefault={() => processResult(calculationResult)}
+					onclick={preventDefault(() => processResult(calculationResult))}
 					class="btn variant-filled-primary"
 					disabled={chosenOption.userChoice === undefined}
 				>
@@ -274,7 +276,7 @@
 			<p>
 				An error occurred. Please try again later.
 
-				<button on:click|preventDefault={reset} class="btn variant-filled">Recalculate</button>
+				<button onclick={preventDefault(reset)} class="btn variant-filled">Recalculate</button>
 			</p>
 		{/if}
 	</div>

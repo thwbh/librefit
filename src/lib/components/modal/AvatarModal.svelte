@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import AvatarPicker from '$lib/components/AvatarPicker.svelte';
 	import { getModalStore } from '@skeletonlabs/skeleton';
 
 	const modalStore = getModalStore();
 
-	let selected: string;
+	let selected: string = $state();
 
 	if ($modalStore[0] && $modalStore[0].meta) {
 		selected = $modalStore[0].meta.avatar;
@@ -36,15 +38,15 @@
 
 	<footer class="modal-footer flex justify-between space-x-2">
 		<div>
-			<button on:click|preventDefault={(e) => onSubmit(e, true)} class="btn variant-ringed">
+			<button onclick={preventDefault((e) => onSubmit(e, true))} class="btn variant-ringed">
 				Unset
 			</button>
 		</div>
 
 		<div>
-			<button on:click|preventDefault={onCancel} class="btn variant-ringed"> Cancel </button>
+			<button onclick={preventDefault(onCancel)} class="btn variant-ringed"> Cancel </button>
 
-			<button on:click|preventDefault={onSubmit} class="btn variant-filled"> Submit </button>
+			<button onclick={preventDefault(onSubmit)} class="btn variant-filled"> Submit </button>
 		</div>
 	</footer>
 </div>

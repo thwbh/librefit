@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import TrackerRadial from '$lib/components/TrackerRadial.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { getDateAsStr, getDaytimeFoodCategory } from '$lib/date';
@@ -10,18 +12,19 @@
 
 	const modalStore = getModalStore();
 
-	export let calorieTracker: Array<CalorieTracker> = [];
-	export let categories: Array<FoodCategory>;
-	export let calorieTarget: CalorieTarget;
+	interface Props {
+		calorieTracker?: Array<CalorieTracker>;
+		categories: Array<FoodCategory>;
+		calorieTarget: CalorieTarget;
+	}
+
+	let { calorieTracker = [], categories, calorieTarget }: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let caloriesQuickAdd: number;
-	let deficit: number;
+	let caloriesQuickAdd: number = $state();
+	let deficit: number = $state();
 
-	$: if (calorieTarget) {
-		deficit = calculateDeficit(calorieTracker);
-	}
 
 	const addCaloriesQuickly = (e) => {
 		// take default category based on time
@@ -109,6 +112,11 @@
 
 		return total - calorieTarget.targetCalories;
 	};
+	run(() => {
+		if (calorieTarget) {
+			deficit = calculateDeficit(calorieTracker);
+		}
+	});
 </script>
 
 <div class="flex flex-col gap-4 justify-between text-center h-full xl:w-80">
@@ -146,13 +154,13 @@
 
 	<div class="flex">
 		<div class="btn-group variant-filled w-fit grow">
-			<button class="w-1/2" aria-label="add calories" on:click={onAddCalories}>
+			<button class="w-1/2" aria-label="add calories" onclick={onAddCalories}>
 				<span>
 					<Plus />
 				</span>
 				<span> Add </span>
 			</button>
-			<button class="w-1/2" aria-label="edit calories" on:click={onEdit}>
+			<button class="w-1/2" aria-label="edit calories" onclick={onEdit}>
 				<span>
 					<Edit />
 				</span>

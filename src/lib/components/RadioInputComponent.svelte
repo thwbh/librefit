@@ -3,12 +3,22 @@
 	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 	import { createEventDispatcher } from 'svelte';
 
-	export let value: any;
 
-	export let choices: Array<RadioInputChoice>;
-	export let name = `${value}-radio`;
-	export let label = undefined;
-	export let flexDirection = 'flex-row';
+	interface Props {
+		value: any;
+		choices: Array<RadioInputChoice>;
+		name?: any;
+		label?: any;
+		flexDirection?: string;
+	}
+
+	let {
+		value = $bindable(),
+		choices,
+		name = `${value}-radio`,
+		label = undefined,
+		flexDirection = 'flex-row'
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 

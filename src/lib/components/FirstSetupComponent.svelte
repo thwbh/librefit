@@ -36,28 +36,28 @@
 	import { getDateAsStr } from '$lib/date';
 	import ActivityLevelComponent from './ActivityLevelComponent.svelte';
 
-	let chosenOption: WizardTargetSelection = {
+	let chosenOption: WizardTargetSelection = $state({
 		customDetails: '',
 		userChoice: WizardOptions.Custom_weight
-	};
+	});
 
-	let customWeightOpened = true;
-	let customDateOpened = false;
+	let customWeightOpened = $state(true);
+	let customDateOpened = $state(false);
 
 	let selectedRate = undefined;
 
-	let setup: boolean = true;
-	let completion: boolean = false;
-	let importer: boolean = false;
+	let setup: boolean = $state(true);
+	let completion: boolean = $state(false);
+	let importer: boolean = $state(false);
 
-	let userProfileData: LibreUser = { id: 1, name: '', avatar: '' };
+	let userProfileData: LibreUser = $state({ id: 1, name: '', avatar: '' });
 
 	let goalChoices: Array<RadioInputChoice> = [
 		{ value: CalculationGoal.Loss, label: 'lose weight' },
 		{ value: CalculationGoal.Gain, label: 'gain weight' }
 	];
 
-	let wizardInput: WizardInput = {
+	let wizardInput: WizardInput = $state({
 		age: 30,
 		height: 160,
 		sex: CalculationSex.Female,
@@ -65,7 +65,7 @@
 		activityLevel: 1.25,
 		calculationGoal: CalculationGoal.Loss,
 		weeklyDifference: 3
-	};
+	});
 
 	let newWeightTarget: NewWeightTarget | undefined = undefined;
 	let newCalorieTarget: NewCalorieTarget | undefined = undefined;
@@ -139,14 +139,14 @@
 				</div>
 				<div class="flex flex-row gap-2 justify-between">
 					<p class="self-center">I am new. How does this work?</p>
-					<button on:click={() => (setup = true)} type="button" class="btn variant-filled-primary"
+					<button onclick={() => (setup = true)} type="button" class="btn variant-filled-primary"
 						>Setup</button
 					>
 				</div>
 				<div class="flex flex-row gap-2 justify-between">
 					<p class="self-center">I want to import my old stuff.</p>
 					<button
-						on:click={() => (importer = true)}
+						onclick={() => (importer = true)}
 						type="button"
 						class="btn variant-filled-secondary">Import</button
 					>
@@ -175,19 +175,22 @@
 							on:toggle={(event) => choose(event.detail, WizardOptions.Custom_weight)}
 							class="block card card-hover"
 						>
-							<svelte:fragment slot="iconClosed"><Check /></svelte:fragment>
-							<svelte:fragment slot="summary"
-								><h3 class="h3">I want to reach my dream weight.</h3></svelte:fragment
-							>
-							<svelte:fragment slot="content"
-								><p>How can I get to my target weight as fast as possible?</p>
-								<ValidatedInput
-									bind:value={chosenOption.customDetails}
-									type="number"
-									label="Target weight"
-									unit={'kg'}
-								/>
-							</svelte:fragment>
+							{#snippet iconClosed()}
+																<Check />
+															{/snippet}
+							{#snippet summary()}
+																<h3 class="h3">I want to reach my dream weight.</h3>
+															{/snippet}
+							{#snippet content()}
+																<p>How can I get to my target weight as fast as possible?</p>
+									<ValidatedInput
+										bind:value={chosenOption.customDetails}
+										type="number"
+										label="Target weight"
+										unit={'kg'}
+									/>
+								
+															{/snippet}
 						</AccordionItem>
 
 						<AccordionItem
@@ -195,19 +198,22 @@
 							on:toggle={(event) => choose(event.detail, WizardOptions.Custom_date)}
 							class="block card card-hover"
 						>
-							<svelte:fragment slot="iconClosed"><Check /></svelte:fragment>
-							<svelte:fragment slot="summary"
-								><h3 class="h3">I have a timeline in mind.</h3></svelte:fragment
-							>
-							<svelte:fragment slot="content"
-								><p>How much can I achieve until a specific date?</p>
-								<RadioInputComponent
-									bind:value={wizardInput.calculationGoal}
-									label={'I want to'}
-									choices={goalChoices}
-								/>
-								<ValidatedInput bind:value={chosenOption.customDetails} type="date" label="until" />
-							</svelte:fragment>
+							{#snippet iconClosed()}
+																<Check />
+															{/snippet}
+							{#snippet summary()}
+																<h3 class="h3">I have a timeline in mind.</h3>
+															{/snippet}
+							{#snippet content()}
+																<p>How much can I achieve until a specific date?</p>
+									<RadioInputComponent
+										bind:value={wizardInput.calculationGoal}
+										label={'I want to'}
+										choices={goalChoices}
+									/>
+									<ValidatedInput bind:value={chosenOption.customDetails} type="date" label="until" />
+								
+															{/snippet}
 						</AccordionItem>
 					</Accordion>
 				</div>

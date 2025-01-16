@@ -7,10 +7,10 @@
 
 	const today = new Date();
 
-	let toDateStr = getDateAsStr(today);
-	let fromDateStr = getDateAsStr(subDays(today, 6));
+	let toDateStr = $state(getDateAsStr(today));
+	let fromDateStr = $state(getDateAsStr(subDays(today, 6)));
 
-	let filterSelection = 'w';
+	let filterSelection = $state('w');
 	const filterOptions = [
 		{ value: 'w', label: 'last 7 days' },
 		{ value: 'm', label: 'last 31 days' },
@@ -57,7 +57,7 @@
 	<div class="flex flex-row gap-4 items-center">
 		<p>Show</p>
 		<div>
-			<select class="select" bind:value={filterSelection} on:change={onFilter}>
+			<select class="select" bind:value={filterSelection} onchange={onFilter}>
 				{#each filterOptions as filterOption}
 					<option value={filterOption.value}>{filterOption.label}</option>
 				{/each}
@@ -68,13 +68,13 @@
 		<label class="flex flex-row gap-4 items-center">
 			<span class="hidden" aria-hidden="true"> from </span>
 
-			<input bind:value={fromDateStr} class="input" type="date" on:change={onDateChanged} />
+			<input bind:value={fromDateStr} class="input" type="date" onchange={onDateChanged} />
 		</label>
 
 		<label class="flex flex-row gap-4 items-center">
 			<span> and </span>
 
-			<input bind:value={toDateStr} class="input" type="date" on:change={onDateChanged} />
+			<input bind:value={toDateStr} class="input" type="date" onchange={onDateChanged} />
 		</label>
 	</div>
 </div>

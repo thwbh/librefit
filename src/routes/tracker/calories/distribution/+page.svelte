@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import CalorieDistribution from '$lib/components/CalorieDistribution.svelte';
 	import { getContext } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -12,7 +14,7 @@
 	import type { Indicator } from '$lib/indicator';
 	import type { Writable } from 'svelte/store';
 
-	export let data;
+	let { data } = $props();
 
 	const toastStore = getToastStore();
 
@@ -24,14 +26,16 @@
 
 	if (!$user) goto('/');
 
-	let filter = DataViews.Month;
-	let filteredData;
-	let categories;
+	let filter = $state(DataViews.Month);
+	let filteredData = $state();
+	let categories = $state();
 
-	$: if (calorieTracker) {
-		filteredData = calorieTracker;
-		categories = skimCategories(calorieTracker);
-	}
+	run(() => {
+		if (calorieTracker) {
+			filteredData = calorieTracker;
+			categories = skimCategories(calorieTracker);
+		}
+	});
 
 	const loadEntriesFiltered = async () => {
 		$indicator = $indicator.start();

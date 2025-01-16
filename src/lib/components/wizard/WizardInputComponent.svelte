@@ -4,7 +4,11 @@
 	import RangeInputComponent from '../RangeInputComponent.svelte';
 	import RadioInputComponent from '../RadioInputComponent.svelte';
 
-	export let wizardInput: WizardInput;
+	interface Props {
+		wizardInput: WizardInput;
+	}
+
+	let { wizardInput = $bindable() }: Props = $props();
 
 	const choices: Array<RadioInputChoice> = [
 		{ value: CalculationSex.Male, label: 'Male' },

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import FilterComponent from '$lib/components/FilterComponent.svelte';
 	import { getContext } from 'svelte';
 	import { deleteWeight, listWeightRange, updateWeight } from '$lib/api/tracker';
@@ -20,31 +22,37 @@
 
 	if (!$user) goto('/');
 
-	export let data;
+	let { data } = $props();
 
-	let weightList = [];
-	let paginatedSource = [];
+	let weightList = $state([]);
+	let paginatedSource = $state([]);
 
 	let toDate = new Date();
 	let fromDate = subDays(toDate, 6);
 
-	$: weightList;
+	run(() => {
+		weightList;
+	});
 
-	let paginationSettings = {
+	let paginationSettings = $state({
 		page: 0,
 		limit: 7,
 		size: data.weightWeekList.length,
 		amounts: [1, 7, 14, 31]
-	};
+	});
 
-	$: if (data) {
-		weightList = data.weightWeekList;
-	}
+	run(() => {
+		if (data) {
+			weightList = data.weightWeekList;
+		}
+	});
 
-	$: paginatedSource = weightList.slice(
-		paginationSettings.page * paginationSettings.limit,
-		paginationSettings.page * paginationSettings.limit + paginationSettings.limit
-	);
+	run(() => {
+		paginatedSource = weightList.slice(
+			paginationSettings.page * paginationSettings.limit,
+			paginationSettings.page * paginationSettings.limit + paginationSettings.limit
+		);
+	});
 
 	const onFilterChanged = async (event) => {
 		fromDate = event.detail.from;

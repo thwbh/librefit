@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import Trash from '$lib/assets/icons/trash.svg?component';
 	import AddKcal from '$lib/assets/icons/hamburger-plus.svg?component';
 	import AddWeight from '$lib/assets/icons/plus.svg?component';
@@ -9,21 +11,33 @@
 	import CancelEdit from '$lib/assets/icons/pencil-off.svg?component';
 	import { createEventDispatcher } from 'svelte';
 
-	export let existing = false;
-	export let disabled = false;
-	export let unit;
 
-	let btnAdd: HTMLButtonElement;
-	let btnConfirm: HTMLButtonElement;
-	let btnCancel: HTMLButtonElement;
+	let btnAdd: HTMLButtonElement = $state();
+	let btnConfirm: HTMLButtonElement = $state();
+	let btnCancel: HTMLButtonElement = $state();
 
-	let editing = false;
+	let editing = $state(false);
 
-	export let previous;
-	export let changeAction;
 
-	export let category;
-	export let value;
+	interface Props {
+		existing?: boolean;
+		disabled?: boolean;
+		unit: any;
+		previous: any;
+		changeAction: any;
+		category: any;
+		value: any;
+	}
+
+	let {
+		existing = false,
+		disabled = $bindable(false),
+		unit,
+		previous = $bindable(),
+		changeAction = $bindable(),
+		category = $bindable(),
+		value = $bindable()
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
@@ -108,7 +122,7 @@
 				aria-label="add"
 				bind:this={btnAdd}
 				class="btn-icon variant-filled-primary"
-				on:click|preventDefault={add}
+				onclick={preventDefault(add)}
 			>
 				<span>
 					{#if unit === 'kcal'}
@@ -125,7 +139,7 @@
 		<button
 			aria-label="edit"
 			class="btn-icon variant-filled-secondary"
-			on:click|preventDefault={change('update')}
+			onclick={preventDefault(change('update'))}
 		>
 			<span>
 				<Edit />
@@ -134,7 +148,7 @@
 		<button
 			aria-label="delete"
 			class="btn-icon variant-filled"
-			on:click|preventDefault={change('delete')}
+			onclick={preventDefault(change('delete'))}
 		>
 			<span>
 				<Trash />
@@ -145,7 +159,7 @@
 			aria-label="confirm"
 			bind:this={btnConfirm}
 			class="btn-icon variant-ghost-primary"
-			on:click={changeAction === 'update' ? update : remove}
+			onclick={changeAction === 'update' ? update : remove}
 		>
 			<span>
 				<Check />
@@ -155,7 +169,7 @@
 			aria-label="discard"
 			bind:this={btnCancel}
 			class="btn-icon variant-ghost-error"
-			on:click|preventDefault={discard}
+			onclick={preventDefault(discard)}
 		>
 			<span>
 				{#if changeAction === 'update'}

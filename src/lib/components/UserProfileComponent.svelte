@@ -1,10 +1,16 @@
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import type { LibreUser } from '$lib/model';
 	import { Avatar, getModalStore } from '@skeletonlabs/skeleton';
 
 	const modalStore = getModalStore();
 
-	export let user: LibreUser;
+	interface Props {
+		user: LibreUser;
+	}
+
+	let { user = $bindable() }: Props = $props();
 
 	const showAvatarPickerModal = () => {
 		modalStore.trigger({
@@ -45,7 +51,7 @@
 			</div>
 
 			<div class="justify-center self-center">
-				<button on:click|preventDefault={showAvatarPickerModal} class="btn variant-filled-secondary"
+				<button onclick={preventDefault(showAvatarPickerModal)} class="btn variant-filled-secondary"
 					>Change</button
 				>
 			</div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
@@ -6,7 +8,7 @@
 
 	const modalStore = getModalStore();
 
-	let weightList: Array<WeightTracker>;
+	let weightList: Array<WeightTracker> = $state();
 
 	if ($modalStore[0] && $modalStore[0].meta) {
 		weightList = $modalStore[0].meta.weightList;
@@ -53,6 +55,6 @@
 	{/each}
 
 	<footer class="modal-footer flex justify-end space-x-2">
-		<button on:click|preventDefault={onCancel} class="btn variant-ringed"> Cancel </button>
+		<button onclick={preventDefault(onCancel)} class="btn variant-ringed"> Cancel </button>
 	</footer>
 </div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { display_date_format, getDateAsStr, getDaytimeFoodCategory } from '$lib/date';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
@@ -6,8 +8,12 @@
 
 	const modalStore = getModalStore();
 
-	export let entries: Array<CalorieTracker>;
-	export let categories: Array<FoodCategory>;
+	interface Props {
+		entries: Array<CalorieTracker>;
+		categories: Array<FoodCategory>;
+	}
+
+	let { entries = $bindable(), categories = $bindable() }: Props = $props();
 
 	if ($modalStore[0] && $modalStore[0].meta) {
 		entries = $modalStore[0].meta.entries;
@@ -81,6 +87,6 @@
 	{/if}
 
 	<footer class="modal-footer flex justify-start space-x-2">
-		<button on:click|preventDefault={onCancel} class="btn variant-ringed"> Close </button>
+		<button onclick={preventDefault(onCancel)} class="btn variant-ringed"> Close </button>
 	</footer>
 </div>

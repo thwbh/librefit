@@ -19,12 +19,21 @@
 	import { createEventDispatcher } from 'svelte';
 	import Alert from '$lib/assets/icons/alert-circle-filled.svg?component';
 
-	export let wizardInput: WizardInput;
-	export let wizardResult: WizardResult;
 
-	export let chosenOption: WizardTargetSelection;
 
-	export let selectedRate = undefined;
+	interface Props {
+		wizardInput: WizardInput;
+		wizardResult: WizardResult;
+		chosenOption: WizardTargetSelection;
+		selectedRate?: any;
+	}
+
+	let {
+		wizardInput,
+		wizardResult,
+		chosenOption,
+		selectedRate = $bindable(undefined)
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 

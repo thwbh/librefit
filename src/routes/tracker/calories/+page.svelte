@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { Accordion, AccordionItem, getToastStore, Paginator } from '@skeletonlabs/skeleton';
 	import CalorieTracker from '$lib/components/tracker/CalorieTrackerComponent.svelte';
 	import { validateAmount } from '$lib/validation';
@@ -29,32 +31,40 @@
 	const foodCategories: Writable<FoodCategory[]> = getContext('foodCategories');
 	const calorieTarget: Writable<CalorieTarget> = getContext('calorieTarget');
 
-	export let data;
+	let { data } = $props();
 
-	let datesToEntries = {};
+	let datesToEntries = $state({});
 
-	let availableDates = [];
-	let paginatedSource = [];
+	let availableDates = $state([]);
+	let paginatedSource = $state([]);
 
-	$: datesToEntries;
-	$: availableDates;
+	run(() => {
+		datesToEntries;
+	});
+	run(() => {
+		availableDates;
+	});
 
-	let paginationSettings = {
+	let paginationSettings = $state({
 		page: 0,
 		limit: 7,
 		size: data.availableDates.length,
 		amounts: [1, 7, 14, 31]
-	};
+	});
 
-	$: if (data && data.entryToday) {
-		datesToEntries[todayStr] = data.entryToday;
-		availableDates = data.availableDates;
-	}
+	run(() => {
+		if (data && data.entryToday) {
+			datesToEntries[todayStr] = data.entryToday;
+			availableDates = data.availableDates;
+		}
+	});
 
-	$: paginatedSource = availableDates.slice(
-		paginationSettings.page * paginationSettings.limit,
-		paginationSettings.page * paginationSettings.limit + paginationSettings.limit
-	);
+	run(() => {
+		paginatedSource = availableDates.slice(
+			paginationSettings.page * paginationSettings.limit,
+			paginationSettings.page * paginationSettings.limit + paginationSettings.limit
+		);
+	});
 
 	const addEntry = async (event) => {
 		const amountMessage = validateAmount(event.detail.value);
@@ -184,48 +194,52 @@
 					{#each paginatedSource as dateStr}
 						<Accordion class="card rounded-xl">
 							<AccordionItem id={dateStr} on:toggle={() => loadEntries(dateStr)}>
-								<svelte:fragment slot="summary">
-									{convertDateStrToDisplayDateStr(dateStr)}
-								</svelte:fragment>
-								<svelte:fragment slot="content">
-									<div class="flex md:flex-row flex-col gap-4 p-4">
-										{#if datesToEntries[dateStr]}
-											<CalorieTracker
-												calorieTracker={datesToEntries[dateStr]}
-												categories={$foodCategories}
-												calorieTarget={$calorieTarget}
-												on:addCalories={addEntry}
-												on:updateCalories={updateEntry}
-												on:deleteCalories={deleteEntry}
-											/>
+								{#snippet summary()}
+															
+										{convertDateStrToDisplayDateStr(dateStr)}
+									
+															{/snippet}
+								{#snippet content()}
+															
+										<div class="flex md:flex-row flex-col gap-4 p-4">
+											{#if datesToEntries[dateStr]}
+												<CalorieTracker
+													calorieTracker={datesToEntries[dateStr]}
+													categories={$foodCategories}
+													calorieTarget={$calorieTarget}
+													on:addCalories={addEntry}
+													on:updateCalories={updateEntry}
+													on:deleteCalories={deleteEntry}
+												/>
 
-											<CalorieDistribution
-												calorieTracker={datesToEntries[dateStr]}
-												displayHistory={false}
-												displayHeader={false}
-												foodCategories={$foodCategories}
-												calorieTarget={$calorieTarget}
-											/>
-										{:else}
-											{#await datesToEntries[dateStr]}
-												<p>... loading</p>
-											{:then entries}
-												{#if entries}
-													<CalorieTracker
-														calorieTracker={entries}
-														categories={$foodCategories}
-														calorieTarget={$calorieTarget}
-														on:addCalories={addEntry}
-														on:updateCalories={updateEntry}
-														on:deleteCalories={deleteEntry}
-													/>
-												{/if}
-											{:catch error}
-												<p>{error}</p>
-											{/await}
-										{/if}
-									</div>
-								</svelte:fragment>
+												<CalorieDistribution
+													calorieTracker={datesToEntries[dateStr]}
+													displayHistory={false}
+													displayHeader={false}
+													foodCategories={$foodCategories}
+													calorieTarget={$calorieTarget}
+												/>
+											{:else}
+												{#await datesToEntries[dateStr]}
+													<p>... loading</p>
+												{:then entries}
+													{#if entries}
+														<CalorieTracker
+															calorieTracker={entries}
+															categories={$foodCategories}
+															calorieTarget={$calorieTarget}
+															on:addCalories={addEntry}
+															on:updateCalories={updateEntry}
+															on:deleteCalories={deleteEntry}
+														/>
+													{/if}
+												{:catch error}
+													<p>{error}</p>
+												{/await}
+											{/if}
+										</div>
+									
+															{/snippet}
 							</AccordionItem>
 						</Accordion>
 					{/each}

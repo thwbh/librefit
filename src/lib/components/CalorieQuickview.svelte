@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import { Bar } from 'svelte-chartjs';
 	import { createEventDispatcher } from 'svelte';
 	import Target from '$lib/assets/icons/target-arrow.svg?component';
@@ -11,22 +13,34 @@
 	import { observeToggle } from '$lib/theme-toggle';
 	import type { CalorieTarget, CalorieTracker } from '$lib/model';
 
-	export let calorieTracker: Array<CalorieTracker>;
-	export let calorieTarget: CalorieTarget;
 
-	export let displayClass = '';
-	export let displayHeader = true;
-	export let headerText = 'Target Quickview';
+	interface Props {
+		calorieTracker: Array<CalorieTracker>;
+		calorieTarget: CalorieTarget;
+		displayClass?: string;
+		displayHeader?: boolean;
+		headerText?: string;
+	}
+
+	let {
+		calorieTracker,
+		calorieTarget,
+		displayClass = '',
+		displayHeader = true,
+		headerText = 'Target Quickview'
+	}: Props = $props();
 
 	const modalStore = getModalStore();
 	const dispatch = createEventDispatcher();
 
-	let targetButton: HTMLButtonElement;
-	let quickview: BarChartConfig;
+	let targetButton: HTMLButtonElement = $state();
+	let quickview: BarChartConfig = $state();
 
-	$: if (calorieTracker && calorieTarget) {
-		quickview = paintCalorieTrackerQuickview(calorieTracker, calorieTarget);
-	}
+	run(() => {
+		if (calorieTracker && calorieTarget) {
+			quickview = paintCalorieTrackerQuickview(calorieTracker, calorieTarget);
+		}
+	});
 
 	const setTarget = (event) => {
 		dispatch('setTarget', {
@@ -77,7 +91,7 @@
 			<button
 				class="w-1/2"
 				aria-label="add calories"
-				on:click={onSetTarget}
+				onclick={onSetTarget}
 				bind:this={targetButton}
 			>
 				<span>
@@ -88,7 +102,7 @@
 			<button
 				class="w-1/2"
 				aria-label="edit calories"
-				on:click|preventDefault={() => goto('/wizard')}
+				onclick={preventDefault(() => goto('/wizard'))}
 			>
 				<span>
 					<Wand />

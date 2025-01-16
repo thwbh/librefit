@@ -4,28 +4,44 @@
 	import TrackerButtons from './TrackerButtons.svelte';
 	import type { FoodCategory } from '$lib/model';
 
-	export let value: any = undefined;
-	export let dateStr: string;
-	export let id: number | undefined = undefined;
-	export let existing = false;
-	export let disabled = false;
-	export let compact = false;
 
-	export let categories: Array<FoodCategory> | undefined = undefined;
 
-	export let category: string = categories
+
+
+	interface Props {
+		value?: any;
+		dateStr: string;
+		id?: number | undefined;
+		existing?: boolean;
+		disabled?: boolean;
+		compact?: boolean;
+		categories?: Array<FoodCategory> | undefined;
+		category?: string;
+		unit: string;
+		maxWidthCss?: string;
+		placeholder?: string;
+	}
+
+	let {
+		value = $bindable(undefined),
+		dateStr,
+		id = undefined,
+		existing = false,
+		disabled = $bindable(false),
+		compact = false,
+		categories = undefined,
+		category = $bindable(categories
 		? categories.filter((c) => c.shortvalue === getDaytimeFoodCategory(new Date()))[0].shortvalue
-		: undefined;
-
-	export let unit: string;
-
-	export let maxWidthCss = '';
-	export let placeholder = 'Amount...';
+		: undefined),
+		unit,
+		maxWidthCss = '',
+		placeholder = 'Amount...'
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let previous: any;
-	let changeAction;
+	let previous: any = $state();
+	let changeAction = $state();
 
 	const add = (e) => {
 		dispatch('add', {

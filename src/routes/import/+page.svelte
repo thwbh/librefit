@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
 	import { getFieldError } from '$lib/validation';
 	import { showToastError, showToastSuccess } from '$lib/toast';
@@ -25,10 +27,10 @@
 		{ label: 'Weight', value: 'W' }
 	];
 
-	let importGroup = 'A';
+	let importGroup = $state('A');
 
-	let files: FileList;
-	let status: any;
+	let files: FileList = $state();
+	let status: any = $state();
 
 	const handleImport = async (event) => {
 		status = undefined;
@@ -64,7 +66,7 @@
 				class="variant-ringed p-4 space-y-4 rounded-container-token"
 				method="POST"
 				enctype="multipart/form-data"
-				on:submit|preventDefault={handleImport}
+				onsubmit={preventDefault(handleImport)}
 			>
 				<ValidatedInput
 					name="datePattern"
@@ -108,31 +110,37 @@
 				/>
 
 				<FileDropzone name="file" bind:files accept="text/csv">
-					<svelte:fragment slot="lead">
-						<div class="btn-icon scale-150">
-							<FileUpload />
+					{#snippet lead()}
+									
+							<div class="btn-icon scale-150">
+								<FileUpload />
 
-							{#if getFieldError(status, 'file')}
-								<strong class="text-error-400"> {getFieldError(status, 'file')} </strong>
+								{#if getFieldError(status, 'file')}
+									<strong class="text-error-400"> {getFieldError(status, 'file')} </strong>
+								{/if}
+							</div>
+						
+									{/snippet}
+					{#snippet message()}
+									
+							{#if files}
+								<p>
+									Selected: {files[0].name}
+								</p>
+							{:else}
+								<strong>Upload a file</strong> or drag and drop
 							{/if}
-						</div>
-					</svelte:fragment>
-					<svelte:fragment slot="message">
-						{#if files}
-							<p>
-								Selected: {files[0].name}
-							</p>
-						{:else}
-							<strong>Upload a file</strong> or drag and drop
-						{/if}
-					</svelte:fragment>
-					<svelte:fragment slot="meta">
-						{#if files}
-							Size: {files[0].size} Bytes
-						{:else}
-							CSV allowed. Max. size: 32 KB
-						{/if}
-					</svelte:fragment>
+						
+									{/snippet}
+					{#snippet meta()}
+									
+							{#if files}
+								Size: {files[0].size} Bytes
+							{:else}
+								CSV allowed. Max. size: 32 KB
+							{/if}
+						
+									{/snippet}
 				</FileDropzone>
 
 				<div class="flex justify-between">

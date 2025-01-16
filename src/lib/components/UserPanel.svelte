@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { page } from '$app/stores';
 	import { Avatar, getDrawerStore, LightSwitch } from '@skeletonlabs/skeleton';
 	import { getContext } from 'svelte';
@@ -17,9 +19,11 @@
 	const drawerStore = getDrawerStore();
 
 	const user: Writable<LibreUser> = getContext('user');
-	$: user;
+	run(() => {
+		user;
+	});
 
-	$: classesActive = (href) => (href === $page.url.pathname ? '!variant-soft-primary' : '');
+	let classesActive = $derived((href) => (href === $page.url.pathname ? '!variant-soft-primary' : ''));
 
 	const navigate = () => {
 		drawerStore.close();
@@ -48,7 +52,7 @@
 		<nav class="list-nav">
 			<ul>
 				<li>
-					<a href="/dashboard" class={classesActive('/dashboard')} on:click={navigate}>
+					<a href="/dashboard" class={classesActive('/dashboard')} onclick={navigate}>
 						<span class="badge-icon variant-glass-surface">
 							<Dashboard />
 						</span>
@@ -56,7 +60,7 @@
 					</a>
 				</li>
 				<li>
-					<a href="/profile" class={classesActive('/profile')} on:click={navigate}>
+					<a href="/profile" class={classesActive('/profile')} onclick={navigate}>
 						<span class="badge-icon variant-glass-surface">
 							<User />
 						</span>
@@ -64,7 +68,7 @@
 					</a>
 				</li>
 				<li>
-					<a href="/wizard" class={classesActive('/wizard')} on:click={navigate}>
+					<a href="/wizard" class={classesActive('/wizard')} onclick={navigate}>
 						<span class="badge-icon variant-glass-surface">
 							<Wand />
 						</span>
@@ -75,7 +79,7 @@
 					<a
 						href="/tracker/calories"
 						class={classesActive('/tracker/calories')}
-						on:click={navigate}
+						onclick={navigate}
 					>
 						<span class="badge-icon variant-glass-surface">
 							<Food />
@@ -87,7 +91,7 @@
 					<a
 						href="/tracker/calories/distribution"
 						class={classesActive('/tracker/calories/distribution')}
-						on:click={navigate}
+						onclick={navigate}
 					>
 						<span class="badge-icon variant-glass-surface">
 							<PieChart />
@@ -96,7 +100,7 @@
 					</a>
 				</li>
 				<li>
-					<a href="/tracker/weight" class={classesActive('/tracker/weight')} on:click={navigate}>
+					<a href="/tracker/weight" class={classesActive('/tracker/weight')} onclick={navigate}>
 						<span class="badge-icon variant-glass-surface">
 							<Scale />
 						</span>
@@ -107,7 +111,7 @@
 					<a
 						href="/tracker/weight/chart"
 						class={classesActive('/tracker/weight/chart')}
-						on:click={navigate}
+						onclick={navigate}
 					>
 						<span class="badge-icon variant-glass-surface">
 							<ChartLine />
@@ -116,7 +120,7 @@
 					</a>
 				</li>
 				<li>
-					<a href="/import" class={classesActive('/import')} on:click={navigate}>
+					<a href="/import" class={classesActive('/import')} onclick={navigate}>
 						<span class="badge-icon variant-glass-surface">
 							<FileTypeCsv />
 						</span>

@@ -3,7 +3,11 @@
 	import FirstSetupComponent from '$lib/components/FirstSetupComponent.svelte';
 	import type { LibreUser } from '$lib/model';
 
-	export let data: { userData: LibreUser };
+	interface Props {
+		data: { userData: LibreUser };
+	}
+
+	let { data }: Props = $props();
 
 	if (data.userData) {
 		goto('/dashboard');

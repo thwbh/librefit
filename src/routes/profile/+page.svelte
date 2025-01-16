@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import { getContext } from 'svelte';
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
@@ -9,7 +11,9 @@
 	import UserProfileComponent from '$lib/components/UserProfileComponent.svelte';
 
 	const user: Writable<LibreUser> = getContext('user');
-	$: user;
+	run(() => {
+		user;
+	});
 
 	const indicator: Writable<Indicator> = getContext('indicator');
 
@@ -51,7 +55,7 @@
 		<UserProfileComponent user={$user} />
 
 		<div class="flex justify-between">
-			<button on:click|preventDefault={onUpdateProfile} class="btn variant-filled-primary"
+			<button onclick={preventDefault(onUpdateProfile)} class="btn variant-filled-primary"
 				>Update</button
 			>
 		</div>

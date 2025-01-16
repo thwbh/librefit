@@ -3,7 +3,7 @@
 	import { CalculationGoal, CalculationSex, type WizardInput } from '$lib/model';
 	import { createEventDispatcher } from 'svelte';
 
-	const wizardInput: WizardInput = {
+	const wizardInput: WizardInput = $state({
 		age: 30,
 		height: 160,
 		sex: CalculationSex.Female,
@@ -11,7 +11,7 @@
 		activityLevel: 1.25,
 		calculationGoal: CalculationGoal.Loss,
 		weeklyDifference: 3
-	};
+	});
 
 	const activityLevels = [
 		{ label: 'Mostly Sedentary', value: 1 },
@@ -40,7 +40,9 @@
 
 <Stepper on:complete={calculate}>
 	<Step>
-		<svelte:fragment slot="header">Step 1: Body Metrics</svelte:fragment>
+		{#snippet header()}
+				Step 1: Body Metrics
+			{/snippet}
 		<p>
 			To find the optimal amount of how many calories you should consume per day to reach a specific
 			goal, it's a good idea to calculate your TDEE.
@@ -109,7 +111,9 @@
 	</Step>
 
 	<Step>
-		<svelte:fragment slot="header">Step 2: Activity Level</svelte:fragment>
+		{#snippet header()}
+				Step 2: Activity Level
+			{/snippet}
 
 		<p>How active are you during your day? Choose what describes your daily activity level best.</p>
 		<p>
@@ -171,7 +175,9 @@
 	</Step>
 
 	<Step>
-		<svelte:fragment slot="header">Step 3: Your Goal</svelte:fragment>
+		{#snippet header()}
+				Step 3: Your Goal
+			{/snippet}
 
 		<p>Do you aim for weight loss or weight gain?</p>
 

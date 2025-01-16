@@ -4,10 +4,14 @@
 	import { WizardOptions } from '$lib/enum';
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 
-	export let calculationResult: WizardResult;
-	export let calculationInput: WizardInput;
 
-	export let chosenOption: WizardTargetSelection;
+	interface Props {
+		calculationResult: WizardResult;
+		calculationInput: WizardInput;
+		chosenOption: WizardTargetSelection;
+	}
+
+	let { calculationResult, calculationInput, chosenOption = $bindable() }: Props = $props();
 
 	const getActiveClass = (userChoice: WizardOptions) => {
 		if (userChoice === chosenOption.userChoice) {

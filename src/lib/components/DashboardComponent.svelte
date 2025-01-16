@@ -16,28 +16,49 @@
 	import WeightTrackerComponent from './tracker/WeightTrackerComponent.svelte';
 	import ScaleOff from '$lib/assets/icons/scale-outline-off.svg?component';
 
-	export let dashboardData: Dashboard;
-	export let today: Date;
 
-	// these properties needs to be passed as reactive
-	export let caloriesTodayList: Array<CalorieTracker> = undefined;
-	export let calorieTarget: CalorieTarget = undefined;
-	export let caloriesWeekList: Array<CalorieTracker> = undefined;
-	export let weightTodayList: Array<WeightTracker> = undefined;
-	export let weightTarget: WeightTarget = undefined;
+	
 
-	export let onAddWeight: (e: CustomEvent<any>) => void;
-	export let onAddCalories: (e: CustomEvent<any>) => void;
-	export let onUpdateCalories: (e: CustomEvent<any>) => void;
-	export let onDeleteCalories: (e: CustomEvent<any>) => void;
 
-	export let onUpdateWeight: (e: CustomEvent<any>) => void;
-	export let onDeleteWeight: (e: CustomEvent<any>) => void;
 
-	export let setCalorieTarget: (e: CustomEvent<any>) => void;
-	export let setWeightTarget: (e: CustomEvent<any>) => void;
+	interface Props {
+		dashboardData: Dashboard;
+		today: Date;
+		// these properties needs to be passed as reactive
+		caloriesTodayList?: Array<CalorieTracker>;
+		calorieTarget?: CalorieTarget;
+		caloriesWeekList?: Array<CalorieTracker>;
+		weightTodayList?: Array<WeightTracker>;
+		weightTarget?: WeightTarget;
+		onAddWeight: (e: CustomEvent<any>) => void;
+		onAddCalories: (e: CustomEvent<any>) => void;
+		onUpdateCalories: (e: CustomEvent<any>) => void;
+		onDeleteCalories: (e: CustomEvent<any>) => void;
+		onUpdateWeight: (e: CustomEvent<any>) => void;
+		onDeleteWeight: (e: CustomEvent<any>) => void;
+		setCalorieTarget: (e: CustomEvent<any>) => void;
+		setWeightTarget: (e: CustomEvent<any>) => void;
+	}
 
-	$: weightChart = paintWeightTracker(dashboardData.weightMonthList, today, DataViews.Month);
+	let {
+		dashboardData,
+		today,
+		caloriesTodayList = undefined,
+		calorieTarget = $bindable(undefined),
+		caloriesWeekList = $bindable(undefined),
+		weightTodayList = undefined,
+		weightTarget = undefined,
+		onAddWeight,
+		onAddCalories,
+		onUpdateCalories,
+		onDeleteCalories,
+		onUpdateWeight,
+		onDeleteWeight,
+		setCalorieTarget,
+		setWeightTarget
+	}: Props = $props();
+
+	let weightChart = $derived(paintWeightTracker(dashboardData.weightMonthList, today, DataViews.Month));
 </script>
 
 <div class="container md:w-fit mx-auto p-8 space-y-8">

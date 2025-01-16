@@ -1,3 +1,5 @@
+<!-- @migration-task Error while migrating Svelte code: Unexpected token `}`. Did you mean `&rbrace;` or `{"}"}`?
+https://svelte.dev/e/js_parse_error -->
 <svelte:options accessors={true} />
 
 <script lang="ts">

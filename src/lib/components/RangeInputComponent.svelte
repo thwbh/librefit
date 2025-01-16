@@ -1,12 +1,14 @@
-<script>
+<script lang="ts">
 	import { RangeSlider } from '@skeletonlabs/skeleton';
 
-	export let rangeValue;
-	export let rangeMin;
-	export let rangeMax;
 
-	export let name;
-	export let label;
+	let {
+		rangeValue = $bindable(),
+		rangeMin,
+		rangeMax,
+		name,
+		label
+	} = $props();
 </script>
 
 <RangeSlider

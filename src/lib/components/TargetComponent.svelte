@@ -4,16 +4,27 @@
 	import type { CalorieTarget, ValidationMessage, WeightTarget } from '$lib/model';
 	import type { WizardTargetError } from '$lib/types';
 
-	export let startDate: string;
-	export let endDate: string;
 
-	export let errors: WizardTargetError;
-	export let errorEndDate: ValidationMessage = {
+
+	interface Props {
+		startDate: string;
+		endDate: string;
+		errors: WizardTargetError;
+		errorEndDate?: ValidationMessage;
+		weightTarget?: WeightTarget;
+		calorieTarget?: CalorieTarget;
+	}
+
+	let {
+		startDate = $bindable(),
+		endDate = $bindable(),
+		errors,
+		errorEndDate = {
 		valid: true
-	};
-
-	export let weightTarget: WeightTarget = undefined;
-	export let calorieTarget: CalorieTarget = undefined;
+	},
+		weightTarget = $bindable(undefined),
+		calorieTarget = $bindable(undefined)
+	}: Props = $props();
 </script>
 
 <div>

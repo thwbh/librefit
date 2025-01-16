@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { paintWeightTracker } from '$lib/weight-chart';
 	import CalorieTrackerComponent from '$lib/components/tracker/CalorieTrackerComponent.svelte';
 	import { getToastStore } from '@skeletonlabs/skeleton';
@@ -46,27 +48,21 @@
 	const foodCategories: Writable<Array<FoodCategory>> = getContext('foodCategories');
 	const calorieTarget: Writable<CalorieTarget> = getContext('calorieTarget');
 
-	export let data;
+	let { data } = $props();
 
-	const dashboardData: Dashboard = data.dashboardData;
+	const dashboardData: Dashboard = $state(data.dashboardData);
 
-	let caloriesToday: Array<CalorieTracker> = dashboardData.caloriesTodayList;
-	let weightListToday: Array<WeightTracker> = dashboardData.weightTodayList;
-	let weightListMonth: Array<WeightTracker> = dashboardData.weightMonthList;
+	let caloriesToday: Array<CalorieTracker> = $state(dashboardData.caloriesTodayList);
+	let weightListToday: Array<WeightTracker> = $state(dashboardData.weightTodayList);
+	let weightListMonth: Array<WeightTracker> = $state(dashboardData.weightMonthList);
 
-	let weightTarget: WeightTarget = dashboardData.weightTarget;
+	let weightTarget: WeightTarget = $state(dashboardData.weightTarget);
 
-	$: weightChart = paintWeightTracker(weightListMonth, today, DataViews.Month);
-	$: lastWeightTracker.set(dashboardData.weightTodayList[0]);
-	$: foodCategories.set(dashboardData.foodCategories);
-	$: calorieTarget.set(dashboardData.calorieTarget);
 
-	$: dashboardData.caloriesWeekList;
 
 	const user: Writable<LibreUser> = getContext('user');
 	const indicator: Writable<Indicator> = getContext('indicator');
 
-	$: user.set(dashboardData.userData);
 
 	const toastStore = getToastStore();
 
@@ -265,6 +261,25 @@
 			})
 			.finally(() => ($indicator = $indicator.finish()));
 	};
+	let weightChart;
+	run(() => {
+		weightChart = paintWeightTracker(weightListMonth, today, DataViews.Month);
+	});
+	run(() => {
+		lastWeightTracker.set(dashboardData.weightTodayList[0]);
+	});
+	run(() => {
+		foodCategories.set(dashboardData.foodCategories);
+	});
+	run(() => {
+		calorieTarget.set(dashboardData.calorieTarget);
+	});
+	run(() => {
+		dashboardData.caloriesWeekList;
+	});
+	run(() => {
+		user.set(dashboardData.userData);
+	});
 </script>
 
 <svelte:head>

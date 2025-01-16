@@ -7,11 +7,15 @@
 	import Target from '$lib/assets/icons/target-arrow.svg';
 	import type { WeightTarget, WeightTracker } from '$lib/model';
 
-	export let weightTarget: WeightTarget;
-	export let weightList: Array<WeightTracker>;
+	interface Props {
+		weightTarget: WeightTarget;
+		weightList: Array<WeightTracker>;
+	}
 
-	let weightQuickAdd: number;
-	let btnTarget: HTMLButtonElement;
+	let { weightTarget, weightList }: Props = $props();
+
+	let weightQuickAdd: number = $state();
+	let btnTarget: HTMLButtonElement = $state();
 
 	const modalStore = getModalStore();
 	const todayDateStr = getDateAsStr(new Date());
@@ -112,7 +116,7 @@
 		{:else}
 			<p>No target weight set.</p>
 		{/if}
-		<button class="btn-icon variant-filled w-8" bind:this={btnTarget} on:click={onSetTarget}>
+		<button class="btn-icon variant-filled w-8" bind:this={btnTarget} onclick={onSetTarget}>
 			<Target />
 		</button>
 	</div>
@@ -127,7 +131,7 @@
 		/>
 
 		{#if weightList && weightList.length > 0}
-			<button class="btn variant-filled grow" aria-label="edit weight" on:click={onEdit}>
+			<button class="btn variant-filled grow" aria-label="edit weight" onclick={onEdit}>
 				<span>
 					<Scale />
 				</span>

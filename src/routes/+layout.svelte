@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import '../app.pcss';
 	import {
 		autoModeWatcher,
@@ -20,6 +22,11 @@
 	import CalorieTrackerModal from '$lib/components/modal/CalorieTrackerModal.svelte';
 	import { observeToggle } from '$lib/theme-toggle';
 	import type { Writable } from 'svelte/store';
+	interface Props {
+		children?: import('svelte').Snippet;
+	}
+
+	let { children }: Props = $props();
 
 	initializeStores();
 
@@ -52,7 +59,9 @@
 	const lastWeight = writable();
 	const foodCategories = writable();
 
-	$: indicator.set(new Indicator());
+	run(() => {
+		indicator.set(new Indicator());
+	});
 
 	setContext('user', user);
 	setContext('indicator', indicator);
@@ -93,19 +102,23 @@
 </Drawer>
 
 <AppShell>
-	<svelte:fragment slot="header">
-		{#if $user && window.location.pathname !== '/'}
-			<TopBar />
-		{/if}
-	</svelte:fragment>
+	{#snippet header()}
+	
+			{#if $user && window.location.pathname !== '/'}
+				<TopBar />
+			{/if}
+		
+	{/snippet}
 	<!-- Router Slot -->
-	<slot />
+	{@render children?.()}
 	<!-- ---- / ---- -->
-	<svelte:fragment slot="pageFooter">
-		{#if $user && window.location.pathname !== '/'}
-			<div class="text-center">
-				<p class="unstyled text-xs">&copy; {new Date().getFullYear()} tohuwabohu.io</p>
-			</div>
-		{/if}
-	</svelte:fragment>
+	{#snippet pageFooter()}
+	
+			{#if $user && window.location.pathname !== '/'}
+				<div class="text-center">
+					<p class="unstyled text-xs">&copy; {new Date().getFullYear()} tohuwabohu.io</p>
+				</div>
+			{/if}
+		
+	{/snippet}
 </AppShell>

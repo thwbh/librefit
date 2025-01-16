@@ -12,7 +12,12 @@
 	import avatar8 from '$lib/assets/avatars/panda-1.png';
 	import avatar9 from '$lib/assets/avatars/tiger-1.png';
 
-	export let fileList = [
+	interface Props {
+		fileList?: any;
+		chosen?: string;
+	}
+
+	let { fileList = [
 		avatar1,
 		avatar2,
 		avatar3,
@@ -22,8 +27,7 @@
 		avatar7,
 		avatar8,
 		avatar9
-	];
-	export let chosen = 'dog-1.png';
+	], chosen = $bindable('dog-1.png') }: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
@@ -38,7 +42,7 @@
 
 <div class="lg:flex lg:flex-row lg:gap-2 grid grid-cols-3 justify-items-center">
 	{#each fileList as file}
-		<button on:click={() => avatarClicked(file)} aria-label="choose">
+		<button onclick={() => avatarClicked(file)} aria-label="choose">
 			<Avatar
 				src={file}
 				border="border-4 border-surface-300-600-token hover:!border-primary-500 {file === chosen

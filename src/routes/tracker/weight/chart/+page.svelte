@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { getToastStore, RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 	import { paintWeightTracker } from '$lib/weight-chart';
 	import { Line } from 'svelte-chartjs';
@@ -23,13 +25,17 @@
 
 	if (!$user) goto('/');
 
-	export let filter = DataViews.Month;
-	export let data: PageData;
+	interface Props {
+		filter?: any;
+		data: PageData;
+	}
+
+	let { filter = $bindable(DataViews.Month), data }: Props = $props();
 
 	const today = new Date();
 
-	let entries: Array<WeightTracker>;
-	let chartData, chartOptions;
+	let entries: Array<WeightTracker> = $state();
+	let chartData = $state(), chartOptions = $state();
 
 	observeToggle(document.documentElement, () => paint(entries));
 
@@ -53,11 +59,13 @@
 		chartOptions = paintMeta.chartOptions;
 	};
 
-	$: if (data && data.weightWeekList) {
-		entries = data.weightWeekList;
+	run(() => {
+		if (data && data.weightWeekList) {
+			entries = data.weightWeekList;
 
-		paint(entries);
-	}
+			paint(entries);
+		}
+	});
 </script>
 
 <svelte:head>
