@@ -2,7 +2,6 @@
 	import { getDaytimeGreeting } from '$lib/date';
 	import { DataViews } from '$lib/enum';
 	import { paintWeightTracker } from '$lib/weight-chart';
-	import { Line } from 'svelte-chartjs';
 	import CalorieDistribution from './CalorieDistribution.svelte';
 	import CalorieQuickview from './CalorieQuickview.svelte';
 	import CalorieTrackerComponent from './tracker/CalorieTrackerComponent.svelte';
@@ -25,6 +24,7 @@
 	import type { Writable } from 'svelte/store';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import type { WeightTracker } from '$lib/model';
+	import LineChartComponent from './chart/LineChartComponent.svelte';
 
 	let { dashboardData }: DashboardComponentProps = $props();
 
@@ -154,7 +154,7 @@
 		>
 			<h2 class="h3">Weight Tracker</h2>
 			{#if weightChart && dashboardData.weightMonthList.length > 0}
-				<Line class="md:w-full" options={weightChart.chartOptions} data={weightChart.chartData} />
+				<LineChartComponent data={weightChart.chartData} options={weightChart.chartOptions} />
 			{:else}
 				<div>
 					<ScaleOff width={100} height={100} class="self-center" />

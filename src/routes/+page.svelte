@@ -11,10 +11,10 @@
 <section class="h-full flex">
 	{#await getDashboard(new Date()) then dashboardData}
 		{@const userData = dashboardData.userData}
-		{#if userData && userData.name}
+		{#if userData}
 			<DashboardComponent {dashboardData} />
 		{:else}
 			<FirstSetupComponent />
 		{/if}
-	{/await}}
+	{/await}
 </section>

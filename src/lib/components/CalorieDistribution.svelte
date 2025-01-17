@@ -5,15 +5,15 @@
 	import NoFood from '$lib/assets/icons/food-off.svg?component';
 	import Overflow1 from '$lib/assets/icons/overflow-1.svg?component';
 	import Overflow2 from '$lib/assets/icons/overflow-2.svg?component';
-	import { PolarArea } from 'svelte-chartjs';
 	import { Chart, registerables } from 'chart.js';
 	import { createDistributionChart } from '$lib/distribution-chart';
 	import { getAverageDailyIntake } from '$lib/calorie-util';
 	import type { CalorieTarget, CalorieTracker, FoodCategory } from '$lib/model';
+	import PolarAreaChartComponent from './chart/PolarAreaChartComponent.svelte';
 
 	Chart.register(...registerables);
 
-  interface Props {
+	interface Props {
 		calorieTracker: Array<CalorieTracker>;
 		displayClass?: string;
 		displayHeader?: boolean;
@@ -38,10 +38,17 @@
 	{#if displayHeader}<h2 class="h3">{headerText}</h2>{/if}
 
 	{#if calorieTracker && calorieTracker.length > 0}
-    {@const polarAreaChart = createDistributionChart(calorieTracker, foodCategories, displayHistory)}
-    {@const dailyAverage = getAverageDailyIntake(calorieTracker)}
+		{@const polarAreaChart = createDistributionChart(
+			calorieTracker,
+			foodCategories,
+			displayHistory
+		)}
+		{@const dailyAverage = getAverageDailyIntake(calorieTracker)}
 		<div class="flex flex-col md:max-2xl:w-fit h-full justify-between gap-4">
-			<PolarArea data={polarAreaChart.chartData} options={polarAreaChart.chartOptions} />
+			<PolarAreaChartComponent
+				data={polarAreaChart.chartData}
+				options={polarAreaChart.chartOptions}
+			/>
 
 			<div>
 				<div class="w-full grid grid-cols-2 gap-2">
@@ -80,10 +87,7 @@
 	{/if}
 
 	{#if displayHistory}
-		<button
-			class="btn variant-filled w-full"
-			onclick={() => goto('/tracker/calories')}
-		>
+		<button class="btn variant-filled w-full" onclick={() => goto('/tracker/calories')}>
 			<span>
 				<History />
 			</span>

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { run, preventDefault } from 'svelte/legacy';
 
-	import { Bar } from 'svelte-chartjs';
 	import { createEventDispatcher } from 'svelte';
 	import Target from '$lib/assets/icons/target-arrow.svg?component';
 	import TargetOff from '$lib/assets/icons/target-off.svg?component';
@@ -12,7 +11,7 @@
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { observeToggle } from '$lib/theme-toggle';
 	import type { CalorieTarget, CalorieTracker } from '$lib/model';
-
+	import BarChartComponent from './chart/BarChartComponent.svelte';
 
 	interface Props {
 		calorieTracker: Array<CalorieTracker>;
@@ -54,7 +53,6 @@
 			type: 'component',
 			component: 'targetModal',
 			meta: {
-				/** @type CalorieTarget */
 				calorieTarget: !calorieTarget ? {} : calorieTarget
 			},
 			response: async (e) => {
@@ -77,7 +75,7 @@
 
 	{#if calorieTracker && calorieTarget}
 		<div class="flex flex-col xl:w-fit h-full justify-between gap-4">
-			<Bar data={quickview.chartData} options={quickview.chartOptions} />
+			<BarChartComponent data={quickview.chartData} options={quickview.chartOptions} />
 		</div>
 	{:else}
 		<div class="flex flex-col gap-4 m-auto">
