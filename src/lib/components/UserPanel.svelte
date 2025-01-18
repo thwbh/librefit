@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import { page } from '$app/stores';
 	import { Avatar, getDrawerStore, LightSwitch } from '@skeletonlabs/skeleton';
 	import { getContext } from 'svelte';
@@ -19,11 +17,8 @@
 	const drawerStore = getDrawerStore();
 
 	const user: Writable<LibreUser> = getContext('user');
-	run(() => {
-		user;
-	});
 
-	let classesActive = $derived((href) =>
+	let classesActive = $derived((href: string) =>
 		href === $page.url.pathname ? '!variant-soft-primary' : ''
 	);
 
@@ -32,108 +27,106 @@
 	};
 </script>
 
-{#if $user}
-	<div class="container mx-auto p-8 space-y-10">
-		<div class="flex flex-row gap-6 justify-between">
-			<div class="flex flex-row gap-6">
-				<span>
-					<Avatar src={$user.avatar} initials="LU" width="w-16" />
-				</span>
-				<div class="flex flex-col justify-evenly">
-					<p>
-						{$user.name}
-					</p>
-				</div>
-			</div>
-
-			<div>
-				<LightSwitch />
+<div class="container mx-auto p-8 space-y-10">
+	<div class="flex flex-row gap-6 justify-between">
+		<div class="flex flex-row gap-6">
+			<span>
+				<Avatar src={$user.avatar} initials="LU" width="w-16" />
+			</span>
+			<div class="flex flex-col justify-evenly">
+				<p>
+					{$user.name}
+				</p>
 			</div>
 		</div>
 
-		<nav class="list-nav">
-			<ul>
-				<li>
-					<a href="/dashboard" class={classesActive('/dashboard')} onclick={navigate}>
-						<span class="badge-icon variant-glass-surface">
-							<Dashboard />
-						</span>
-						<span class="flex-auto"> Dashboard </span>
-					</a>
-				</li>
-				<li>
-					<a href="/profile" class={classesActive('/profile')} onclick={navigate}>
-						<span class="badge-icon variant-glass-surface">
-							<User />
-						</span>
-						<span class="flex-auto"> Profile </span>
-					</a>
-				</li>
-				<li>
-					<a href="/wizard" class={classesActive('/wizard')} onclick={navigate}>
-						<span class="badge-icon variant-glass-surface">
-							<Wand />
-						</span>
-						<span class="flex-auto"> Wizard </span>
-					</a>
-				</li>
-				<li>
-					<a href="/tracker/calories" class={classesActive('/tracker/calories')} onclick={navigate}>
-						<span class="badge-icon variant-glass-surface">
-							<Food />
-						</span>
-						<span class="flex-auto"> Calorie Tracker </span>
-					</a>
-				</li>
-				<li>
-					<a
-						href="/tracker/calories/distribution"
-						class={classesActive('/tracker/calories/distribution')}
-						onclick={navigate}
-					>
-						<span class="badge-icon variant-glass-surface">
-							<PieChart />
-						</span>
-						<span class="flex-auto"> Calorie Distribution </span>
-					</a>
-				</li>
-				<li>
-					<a href="/tracker/weight" class={classesActive('/tracker/weight')} onclick={navigate}>
-						<span class="badge-icon variant-glass-surface">
-							<Scale />
-						</span>
-						<span class="flex-auto"> Weight Tracker </span>
-					</a>
-				</li>
-				<li>
-					<a
-						href="/tracker/weight/chart"
-						class={classesActive('/tracker/weight/chart')}
-						onclick={navigate}
-					>
-						<span class="badge-icon variant-glass-surface">
-							<ChartLine />
-						</span>
-						<span class="flex-auto"> Weight Progress </span>
-					</a>
-				</li>
-				<li>
-					<a href="/import" class={classesActive('/import')} onclick={navigate}>
-						<span class="badge-icon variant-glass-surface">
-							<FileTypeCsv />
-						</span>
-						<span class="flex-auto"> Import data </span>
-					</a>
-				</li>
-				<li>
-					<a href="https://github.com/tohuwabohu-io/librefit" target="_blank">
-						<span class="badge-icon variant-glass-surface">
-							<GitHub />
-						</span>
-						<span class="flex-auto"> GitHub </span>
-					</a>
-				</li>
-			</ul>
-		</nav>
+		<div>
+			<LightSwitch />
+		</div>
 	</div>
-{/if}
+
+	<nav class="list-nav">
+		<ul>
+			<li>
+				<a href="/" class={classesActive('/')} onclick={navigate}>
+					<span class="badge-icon variant-glass-surface">
+						<Dashboard />
+					</span>
+					<span class="flex-auto"> Dashboard </span>
+				</a>
+			</li>
+			<li>
+				<a href="/profile" class={classesActive('/profile')} onclick={navigate}>
+					<span class="badge-icon variant-glass-surface">
+						<User />
+					</span>
+					<span class="flex-auto"> Profile </span>
+				</a>
+			</li>
+			<li>
+				<a href="/wizard" class={classesActive('/wizard')} onclick={navigate}>
+					<span class="badge-icon variant-glass-surface">
+						<Wand />
+					</span>
+					<span class="flex-auto"> Wizard </span>
+				</a>
+			</li>
+			<li>
+				<a href="/tracker/calories" class={classesActive('/tracker/calories')} onclick={navigate}>
+					<span class="badge-icon variant-glass-surface">
+						<Food />
+					</span>
+					<span class="flex-auto"> Calorie Tracker </span>
+				</a>
+			</li>
+			<li>
+				<a
+					href="/tracker/calories/distribution"
+					class={classesActive('/tracker/calories/distribution')}
+					onclick={navigate}
+				>
+					<span class="badge-icon variant-glass-surface">
+						<PieChart />
+					</span>
+					<span class="flex-auto"> Calorie Distribution </span>
+				</a>
+			</li>
+			<li>
+				<a href="/tracker/weight" class={classesActive('/tracker/weight')} onclick={navigate}>
+					<span class="badge-icon variant-glass-surface">
+						<Scale />
+					</span>
+					<span class="flex-auto"> Weight Tracker </span>
+				</a>
+			</li>
+			<li>
+				<a
+					href="/tracker/weight/chart"
+					class={classesActive('/tracker/weight/chart')}
+					onclick={navigate}
+				>
+					<span class="badge-icon variant-glass-surface">
+						<ChartLine />
+					</span>
+					<span class="flex-auto"> Weight Progress </span>
+				</a>
+			</li>
+			<li>
+				<a href="/import" class={classesActive('/import')} onclick={navigate}>
+					<span class="badge-icon variant-glass-surface">
+						<FileTypeCsv />
+					</span>
+					<span class="flex-auto"> Import data </span>
+				</a>
+			</li>
+			<li>
+				<a href="https://github.com/tohuwabohu-io/librefit" target="_blank">
+					<span class="badge-icon variant-glass-surface">
+						<GitHub />
+					</span>
+					<span class="flex-auto"> GitHub </span>
+				</a>
+			</li>
+		</ul>
+	</nav>
+</div>
