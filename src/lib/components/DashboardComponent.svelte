@@ -23,7 +23,7 @@
 	import type { Indicator } from '$lib/indicator';
 	import type { Writable } from 'svelte/store';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import type { WeightTracker } from '$lib/model';
+	import type { LibreUser, WeightTracker } from '$lib/model';
 	import LineChartComponent from './chart/LineChartComponent.svelte';
 
 	let { dashboardData }: DashboardComponentProps = $props();
@@ -34,6 +34,9 @@
 
 	const toastStore: ToastStore = getToastStore();
 	const indicator: Writable<Indicator> = getContext('indicator');
+	const user: Writable<LibreUser> = getContext('user');
+
+	user.set(dashboardData.userData);
 
 	const handleRequest = async (
 		event: CustomEvent,
@@ -116,7 +119,10 @@
 </script>
 
 <div class="container md:w-fit mx-auto p-8 space-y-8">
-	<h1 class="h1">Good {getDaytimeGreeting(new Date())}{dashboardData.userData.name}!</h1>
+	<h1 class="h1">
+		Good {getDaytimeGreeting(new Date())},
+		{dashboardData.userData.name}!
+	</h1>
 	<p>This is your daily summary.</p>
 	<div class="flex flex-col gap-8 lg:grid grid-cols-3">
 		<div class="card flex flex-col gap-4 p-4">

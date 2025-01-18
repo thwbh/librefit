@@ -93,7 +93,7 @@
 
 <AppShell>
 	{#snippet header()}
-		{#if $user && window.location.pathname !== '/'}
+		{#if $user}
 			<TopBar />
 		{/if}
 	{/snippet}
@@ -101,7 +101,7 @@
 	{@render children?.()}
 	<!-- ---- / ---- -->
 	{#snippet pageFooter()}
-		{#if $user && window.location.pathname !== '/'}
+		{#if $user}
 			<div class="text-center">
 				<p class="unstyled text-xs">&copy; {new Date().getFullYear()} tohuwabohu.io</p>
 			</div>
