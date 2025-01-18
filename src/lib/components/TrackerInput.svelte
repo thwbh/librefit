@@ -19,7 +19,7 @@
 	}
 
 	let {
-		value = $bindable(undefined),
+		value = $bindable(),
 		dateStr,
 		id = undefined,
 		existing = false,

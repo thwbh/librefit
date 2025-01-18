@@ -14,7 +14,7 @@
 
 	let { weightTarget, weightList }: Props = $props();
 
-	let weightQuickAdd: number = $state();
+	let weightQuickAdd: number = $state(undefined);
 	let btnTarget: HTMLButtonElement = $state();
 
 	const modalStore = getModalStore();
