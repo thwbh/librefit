@@ -160,7 +160,7 @@
 		>
 			<h2 class="h3">Weight Tracker</h2>
 			{#if weightChart && dashboardData.weightMonthList.length > 0}
-				<LineChartComponent data={weightChart.chartData} options={weightChart.chartOptions} />
+				<LineChartComponent data={weightChart.data} options={weightChart.options} />
 			{:else}
 				<div>
 					<ScaleOff width={100} height={100} class="self-center" />

@@ -9,9 +9,6 @@
 	import type { CalorieTarget, CalorieTracker, FoodCategory } from '$lib/model';
 	import type { Writable } from 'svelte/store';
 
-	let { data } = $props();
-
-	const calorieTracker: Array<CalorieTracker> = data.caloriesMonthList;
 	const foodCategories: Writable<Array<FoodCategory>> = getContext('foodCategories');
 	const calorieTarget: Writable<CalorieTarget> = getContext('calorieTarget');
 
