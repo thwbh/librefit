@@ -45,10 +45,7 @@
 		)}
 		{@const dailyAverage = getAverageDailyIntake(calorieTracker)}
 		<div class="flex flex-col md:max-2xl:w-fit h-full justify-between gap-4">
-			<PolarAreaChartComponent
-				data={polarAreaChart.chartData}
-				options={polarAreaChart.chartOptions}
-			/>
+			<PolarAreaChartComponent data={polarAreaChart.data} options={polarAreaChart.options} />
 
 			<div>
 				<div class="w-full grid grid-cols-2 gap-2">

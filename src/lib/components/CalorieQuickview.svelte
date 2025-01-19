@@ -1,25 +1,11 @@
 <script lang="ts">
-	import { run, preventDefault } from 'svelte/legacy';
-
-	import { createEventDispatcher } from 'svelte';
-	import Target from '$lib/assets/icons/target-arrow.svg?component';
 	import TargetOff from '$lib/assets/icons/target-off.svg?component';
 	import Wand from '$lib/assets/icons/wand.svg?component';
 
-	import { type BarChartConfig, paintCalorieTrackerQuickview } from '$lib/quickview-chart';
+	import { paintCalorieTrackerQuickview } from '$lib/quickview-chart';
 	import { goto } from '$app/navigation';
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	import { observeToggle } from '$lib/theme-toggle';
-	import type { CalorieTarget, CalorieTracker } from '$lib/model';
+	import type { CalorieQuickviewProps } from '$lib/props';
 	import BarChartComponent from './chart/BarChartComponent.svelte';
-
-	interface Props {
-		calorieTracker: Array<CalorieTracker>;
-		calorieTarget: CalorieTarget;
-		displayClass?: string;
-		displayHeader?: boolean;
-		headerText?: string;
-	}
 
 	let {
 		calorieTracker,
@@ -27,86 +13,27 @@
 		displayClass = '',
 		displayHeader = true,
 		headerText = 'Target Quickview'
-	}: Props = $props();
-
-	const modalStore = getModalStore();
-	const dispatch = createEventDispatcher();
-
-	let targetButton: HTMLButtonElement = $state();
-	let quickview: BarChartConfig = $state();
-
-	run(() => {
-		if (calorieTracker && calorieTarget) {
-			quickview = paintCalorieTrackerQuickview(calorieTracker, calorieTarget);
-		}
-	});
-
-	const setTarget = (event) => {
-		dispatch('setTarget', {
-			calorieTarget: event.calorieTarget,
-			target: targetButton
-		});
-	};
-
-	const onSetTarget = () => {
-		modalStore.trigger({
-			type: 'component',
-			component: 'targetModal',
-			meta: {
-				calorieTarget: !calorieTarget ? {} : calorieTarget
-			},
-			response: async (e) => {
-				if (e && !e.cancelled) {
-					setTarget(e);
-				}
-
-				modalStore.close();
-			}
-		});
-	};
-
-	observeToggle(document.documentElement, () => {
-		quickview = paintCalorieTrackerQuickview(calorieTracker, calorieTarget);
-	});
+	}: CalorieQuickviewProps = $props();
 </script>
 
 <div class="{displayClass} gap-4 text-center justify-between relative h-full">
 	{#if displayHeader}<h2 class="h3">{headerText}</h2>{/if}
 
 	{#if calorieTracker && calorieTarget}
+		{@const quickview = paintCalorieTrackerQuickview(calorieTracker, calorieTarget)}
 		<div class="flex flex-col xl:w-fit h-full justify-between gap-4">
-			<BarChartComponent data={quickview.chartData} options={quickview.chartOptions} />
+			<BarChartComponent data={quickview.data} options={quickview.options} />
 		</div>
 	{:else}
 		<div class="flex flex-col gap-4 m-auto">
 			<TargetOff width={100} height={100} class="self-center" />
 			<p>No target set up.</p>
-		</div>
-	{/if}
-
-	<div class="flex">
-		<div class="btn-group variant-filled w-fit grow">
-			<button
-				class="w-1/2"
-				aria-label="add calories"
-				onclick={onSetTarget}
-				bind:this={targetButton}
-			>
-				<span>
-					<Target />
-				</span>
-				<span> Set target </span>
-			</button>
-			<button
-				class="w-1/2"
-				aria-label="edit calories"
-				onclick={preventDefault(() => goto('/wizard'))}
-			>
+			<button class="w-1/2" aria-label="edit calories" onclick={() => goto('/wizard')}>
 				<span>
 					<Wand />
 				</span>
 				<span> Wizard </span>
 			</button>
 		</div>
-	</div>
+	{/if}
 </div>

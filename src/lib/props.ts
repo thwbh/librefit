@@ -1,7 +1,15 @@
 import type { HTMLCanvasAttributes } from "svelte/elements";
-import type { CalorieTarget, CalorieTracker, Dashboard, FoodCategory, ValidationMessage, WeightTarget, WeightTracker } from "./model";
+import type { CalorieTarget, CalorieTracker, Dashboard, FoodCategory, ValidationMessage, WeightTarget } from "./model";
 import type { WizardTargetError } from "./types";
 import type { ChartData, ChartOptions, ChartTypeRegistry, Point } from "chart.js";
+
+export interface CalorieQuickviewProps {
+  calorieTracker: Array<CalorieTracker>;
+  calorieTarget: CalorieTarget;
+  displayClass?: string;
+  displayHeader?: boolean;
+  headerText?: string;
+}
 
 export interface CalorieTrackerComponentProps {
   calorieTracker?: Array<CalorieTracker>;
@@ -10,7 +18,7 @@ export interface CalorieTrackerComponentProps {
 }
 
 export interface ChartProps<T extends keyof ChartTypeRegistry> extends HTMLCanvasAttributes {
-  data: ChartData<T, (number | Point)[], unknown>;
+  data: ChartData<T, (number | [number, number] | Point)[], unknown>;
   options: ChartOptions<T>;
 }
 

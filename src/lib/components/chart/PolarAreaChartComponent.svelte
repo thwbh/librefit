@@ -11,7 +11,7 @@
 
 	$effect(() => {
 		chart = new Chart(canvasElem, {
-			type: 'line',
+			type: 'polarArea',
 			data,
 			options
 		});

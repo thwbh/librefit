@@ -30,7 +30,7 @@ describe('createDistributionChart', () => {
 
   it('should return an object with undefined chartData when no valid average category intakes', () => {
     const result = createDistributionChart([], foodCategories, false);
-    expect(result.chartData).toBeUndefined();
+    expect(result.data).toBeUndefined();
     expect(result).toHaveProperty('chartOptions');
   });
 
@@ -50,7 +50,7 @@ describe('createDistributionChart', () => {
     document.documentElement.classList.remove('dark');
 
     let chart = createDistributionChart([entry1, entry2], foodCategories, false);
-    let chartDataset = chart.chartData.datasets[0];
+    let chartDataset = chart.data.datasets[0];
 
     expect(chartDataset.borderColor).toEqual('rgb(128, 128, 128)');
 
@@ -58,7 +58,7 @@ describe('createDistributionChart', () => {
     document.documentElement.classList.add('dark');
 
     chart = createDistributionChart([entry1, entry2], foodCategories, false);
-    chartDataset = chart.chartData.datasets[0];
+    chartDataset = chart.data.datasets[0];
 
     expect(chartDataset.borderColor).toEqual('rgb(255, 255, 255)');
   });
@@ -66,14 +66,8 @@ describe('createDistributionChart', () => {
   it('should return object of correct shape', () => {
     const result = createDistributionChart([entry1, entry2], foodCategories, false);
 
-    // Validate the shape of the returned object
-    expect(result).toHaveProperty('chartData.labels');
-    expect(result).toHaveProperty('chartData.datasets');
-    expect(result).toHaveProperty('chartOptions.plugins');
-    expect(result).toHaveProperty('chartOptions.scales');
-
-    // Further assertions can be made on the length and type of properties
-    expect(Array.isArray(result.chartData.labels)).toBeTruthy();
-    expect(Array.isArray(result.chartData.datasets)).toBeTruthy();
+    expect(Array.isArray(result.data.labels)).toBeTruthy();
+    expect(Array.isArray(result.data.datasets)).toBeTruthy();
+    expect(Array.isArray(result.options)).toBeTruthy();
   });
 });

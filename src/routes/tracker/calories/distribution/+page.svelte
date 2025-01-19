@@ -50,8 +50,9 @@
 			</RadioGroup>
 
 			{#await listCaloriesFiltered(filter) then filteredData}
-				{@const categories = skimCategories(calorieTracker)}
 				{#if filteredData.length > 0}
+					{@const categories = skimCategories(filteredData)}
+
 					<div class="flex flex-col lg:flex-row gap-4">
 						<div class="lg:w-3/5 flex flex-col">
 							<h2 class="h2">Last {filter.toLowerCase()}:</h2>
