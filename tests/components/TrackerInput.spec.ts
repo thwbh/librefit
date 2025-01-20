@@ -2,7 +2,8 @@ import { render, fireEvent, cleanup, screen } from '@testing-library/svelte';
 import { afterEach, expect, describe, it, vi } from 'vitest';
 import TrackerInput from '$lib/components/TrackerInput.svelte';
 import { tick } from 'svelte';
-import type { FoodCategory } from '$lib/model';
+import type { CalorieTracker, FoodCategory, NewCalorieTracker, NewWeightTracker, WeightTracker } from '$lib/model';
+import type { TrackerInputEvent } from '$lib/event';
 
 const categories: Array<FoodCategory> = [
   { shortvalue: 'b', longvalue: 'Breakfast' },
@@ -16,18 +17,17 @@ describe('TrackerInput.svelte', () => {
   afterEach(() => cleanup());
 
   it('should render a blank component and trigger add', async () => {
+    let addEvent: TrackerInputEvent<NewWeightTracker>;
+    const addMock = vi.fn((event: TrackerInputEvent<NewWeightTracker>) => addEvent = event);
+
     const mockData = {
       value: '',
       dateStr: '2024-12-31',
-      unit: 'kg'
+      unit: 'kg',
+      onAdd: addMock
     };
 
-    let addEvent: any;
-    const addMock = vi.fn((event) => (addEvent = event.detail));
-
-    const { component } = render(TrackerInput, { ...mockData });
-
-    component.$on('add', addMock);
+    render(TrackerInput, { ...mockData });
 
     const unitDisplay = screen.getByText(mockData.unit);
     const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
@@ -51,28 +51,32 @@ describe('TrackerInput.svelte', () => {
     expect(addMock).toHaveBeenCalledTimes(1);
 
     expect(addEvent).toEqual({
-      callback: expect.any(Function),
-      value: 50,
-      id: undefined,
-      category: undefined,
-      dateStr: mockData.dateStr
+      details: {
+        amount: 50,
+        id: undefined,
+        category: undefined,
+        added: mockData.dateStr
+      }, buttonEvent: {
+        callback: expect.any(Function)
+      }
     });
   });
 
   it('should render a blank component with categories and trigger add', async () => {
+    let addEvent: TrackerInputEvent<NewCalorieTracker>;
+    const addMock = vi.fn((event: TrackerInputEvent<NewCalorieTracker>) => (addEvent = event));
+
     const mockData = {
       categories: categories,
       category: 'b', // set here to avoid time based issues
       unit: 'kcal',
       value: '',
-      dateStr: '2025-01-01'
+      dateStr: '2025-01-01',
+      onAdd: addMock
     };
 
-    let addEvent;
-    const addMock = vi.fn((event) => (addEvent = event.detail));
 
-    const { component } = render(TrackerInput, { ...mockData });
-    component.$on('add', addMock);
+    render(TrackerInput, { ...mockData });
 
     const unitDisplay = screen.getByText(mockData.unit);
     const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
@@ -104,15 +108,21 @@ describe('TrackerInput.svelte', () => {
     expect(addMock).toHaveBeenCalledTimes(1);
 
     expect(addEvent).toEqual({
-      callback: expect.any(Function),
-      category: 'd',
-      value: 100,
-      id: undefined,
-      dateStr: mockData.dateStr
+      details: {
+        category: 'd',
+        amount: 100,
+        id: undefined,
+        added: mockData.dateStr
+      }, buttonEvent: {
+        callback: expect.any(Function),
+      }
     });
   });
 
   it('should render a filled component without categories', async () => {
+    let addEvent: TrackerInputEvent<CalorieTracker>;
+    const addMock = vi.fn((event: TrackerInputEvent<CalorieTracker>) => (addEvent = event));
+
     const mockData = {
       id: 1,
       dateStr: '2022-02-02',
@@ -123,12 +133,7 @@ describe('TrackerInput.svelte', () => {
       value: 500
     };
 
-    let addEvent: any;
-    const addMock = vi.fn((event) => (addEvent = event.detail));
-
-    const { component } = render(TrackerInput, { ...mockData });
-
-    component.$on('add', addMock);
+    render(TrackerInput, { ...mockData });
 
     const unitDisplay = screen.getByText('kcal');
     const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
@@ -160,28 +165,29 @@ describe('TrackerInput.svelte', () => {
     expect(addMock).toHaveBeenCalledTimes(1);
 
     expect(addEvent).toEqual({
-      callback: expect.any(Function),
-      dateStr: '2022-02-02',
-      id: 1,
-      category: 'd',
-      value: 100
+      details: {
+        added: '2022-02-02',
+        id: 1,
+        category: 'd',
+        amount: 100
+      }, buttonEvent: { callback: expect.any(Function) }
     });
   });
 
+
   it('should enter edit mode, change and confirm the change', async () => {
+    let updateEvent: TrackerInputEvent<WeightTracker>;
+    const updateMock = vi.fn((event: TrackerInputEvent<WeightTracker>) => (updateEvent = event));
+
     const mockData = {
       value: 70,
       unit: 'kg',
       existing: true,
-      dateStr: '2022-02-02'
+      dateStr: '2022-02-02',
+      onUpdate: updateMock
     };
 
-    let updateEvent: any;
-    const updateMock = vi.fn((event) => (updateEvent = event.detail));
-
-    const { component } = render(TrackerInput, { ...mockData });
-
-    component.$on('update', updateMock);
+    render(TrackerInput, { ...mockData });
 
     const editButton = screen.queryByRole('button', { name: 'edit' });
     const deleteButton = screen.queryByRole('button', { name: 'delete' });
@@ -213,11 +219,12 @@ describe('TrackerInput.svelte', () => {
     expect(updateMock).toHaveBeenCalledTimes(1);
 
     expect(updateEvent).toEqual({
-      callback: expect.any(Function),
-      value: 100,
-      category: undefined,
-      dateStr: "2022-02-02",
-      id: undefined
+      details: {
+        amount: 100,
+        category: undefined,
+        added: "2022-02-02",
+        id: undefined
+      }, buttonEvent: { callback: expect.any(Function) }
     });
 
     // after the update event finishes, confirm and discard should disappear
@@ -230,6 +237,10 @@ describe('TrackerInput.svelte', () => {
   });
 
   it('should enter edit mode, change and cancel the change', async () => {
+
+    let updateEvent: TrackerInputEvent<CalorieTracker>;
+    const updateMock = vi.fn((event: TrackerInputEvent<CalorieTracker>) => (updateEvent = event));
+
     const mockData = {
       value: 870,
       unit: 'kcal',
@@ -237,13 +248,10 @@ describe('TrackerInput.svelte', () => {
       category: 'b', // set here to avoid time based issues
       existing: true,
       dateStr: '2023-01-21',
+      onUpdate: updateMock
     };
 
-    let updateEvent;
-    const updateMock = vi.fn((event) => (updateEvent = event.detail));
-
-    const { component } = render(TrackerInput, { ...mockData });
-    component.$on('update', updateMock);
+    render(TrackerInput, { ...mockData });
 
     const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
 
@@ -275,17 +283,17 @@ describe('TrackerInput.svelte', () => {
   });
 
   it('should enter delete mode and confirm the delete', async () => {
+    const deleteMock = vi.fn();
+
     const mockData = {
       value: 780,
       unit: 'kcal',
       existing: true,
       dateStr: '2023-01-21',
+      onDelete: deleteMock
     };
 
-    const deleteMock = vi.fn();
-
-    const { component } = render(TrackerInput, { ...mockData });
-    component.$on('remove', deleteMock);
+    render(TrackerInput, { ...mockData });
 
     const deleteButton = screen.queryByRole('button', { name: 'delete' });
 
@@ -311,6 +319,9 @@ describe('TrackerInput.svelte', () => {
   });
 
   it('should enter delete mode and cancel the delete', async () => {
+    let deleteEvent: TrackerInputEvent<WeightTracker>;
+    const deleteMock = vi.fn((event: TrackerInputEvent<WeightTracker>) => (deleteEvent = event));
+
     const mockData = {
       value: 70,
       unit: 'kg',
@@ -318,11 +329,7 @@ describe('TrackerInput.svelte', () => {
       dateStr: '2022-02-02'
     };
 
-    let deleteEvent;
-    const deleteMock = vi.fn((event) => (deleteEvent = event.detail));
-
-    const { component } = render(TrackerInput, { ...mockData });
-    component.$on('delete', deleteMock);
+    render(TrackerInput, { ...mockData });
 
     const deleteButton = screen.queryByRole('button', { name: 'delete' });
 

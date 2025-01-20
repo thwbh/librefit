@@ -5,6 +5,7 @@ import { tick } from 'svelte';
 import * as skeleton from '@skeletonlabs/skeleton';
 import { extractModalStoreMockTriggerCallback } from '../../__mocks__/skeletonProxy';
 import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
+import type { WeightTracker } from '$lib/model';
 
 const mockData = {
   weightList: [
@@ -51,13 +52,15 @@ describe('WeightTrackerComponent.svelte component', () => {
   });
 
   it('should trigger the quick add button and dispatch addWeight', async () => {
-    const { component, getByRole } = render(WeightTrackerComponent);
+    let addedWeight: WeightTracker;
+    let addCallback: () => void;
 
-    let dispatchEvent: any;
-    const dispatchMock = vi.fn((e) => {
-      dispatchEvent = e.detail;
+    const addMock = vi.fn((weight: WeightTracker, callback: () => void) => {
+      addedWeight = weight;
+      addCallback = callback;
     });
-    component.$on('addWeight', dispatchMock);
+
+    const { getByRole } = render(WeightTrackerComponent, { ...mockData, onAddWeight: addMock });
 
     const amountInput = getByRole('spinbutton', { name: 'amount' });
     await fireEvent.input(amountInput, { target: { value: 72 } });
@@ -66,24 +69,24 @@ describe('WeightTrackerComponent.svelte component', () => {
     await fireEvent.click(quickAddButton);
     await tick();
 
-    expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(dispatchEvent).toEqual({
-      callback: expect.any(Function),
-      value: 72,
-      dateStr: getDateAsStr(new Date()),
+    expect(addMock).toHaveBeenCalledTimes(1);
+    expect(addedWeight).toEqual({
+      amount: 72,
+      added: getDateAsStr(new Date()),
       target: undefined
     });
   });
 
   it('should trigger the edit button and dispatch updateWeight', async () => {
-    let dispatchEvent: any;
-    const dispatchMock = vi.fn((e) => {
-      dispatchEvent = e.detail;
+    let updatedWeight: WeightTracker;
+    let updateCallback: () => void;
+
+    const updateMock = vi.fn((weight: WeightTracker, callback: () => void) => {
+      updatedWeight = weight;
+      updateCallback = callback;
     });
 
-    const { component, getByText } = render(WeightTrackerComponent, mockData);
-
-    component.$on('updateWeight', dispatchMock);
+    const { getByText } = render(WeightTrackerComponent, { ...mockData, onUpdateWeight: updateMock });
 
     const updateWeightButton = getByText('Edit');
     expect(updateWeightButton).toBeTruthy();
@@ -104,12 +107,12 @@ describe('WeightTrackerComponent.svelte component', () => {
     await callback(undefined);
     await tick();
 
-    expect(dispatchMock).toHaveBeenCalledTimes(0);
+    expect(updateMock).toHaveBeenCalledTimes(0);
 
     const callbackDetails = {
       id: 1,
-      dateStr: getDateAsStr(new Date()),
-      value: 71
+      added: getDateAsStr(new Date()),
+      amount: 71
     };
 
     const callbackParams = {
@@ -121,19 +124,20 @@ describe('WeightTrackerComponent.svelte component', () => {
 
     await callback(callbackParams);
 
-    expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(dispatchEvent).toEqual(callbackDetails);
+    expect(updateMock).toHaveBeenCalledTimes(1);
+    expect(updatedWeight).toEqual(callbackDetails);
   });
 
   it('should trigger the edit button and dispatch deleteWeight', async () => {
-    let dispatchEvent: any;
-    const dispatchMock = vi.fn((e) => {
-      dispatchEvent = e.detail;
+    let deletedWeight: WeightTracker;
+    let deleteCallback: () => void;
+
+    const deleteMock = vi.fn((weight: WeightTracker, callback: () => void) => {
+      deletedWeight = weight;
+      deleteCallback = callback;
     });
 
-    const { component, getByText } = render(WeightTrackerComponent, mockData);
-
-    component.$on('deleteWeight', dispatchMock);
+    const { getByText } = render(WeightTrackerComponent, { ...mockData, onDeleteWeight: deleteMock });
 
     const updateWeightButton = getByText('Edit');
     expect(updateWeightButton).toBeTruthy();
@@ -144,7 +148,7 @@ describe('WeightTrackerComponent.svelte component', () => {
     await callback(undefined);
     await tick();
 
-    expect(dispatchMock).toHaveBeenCalledTimes(0);
+    expect(deleteMock).toHaveBeenCalledTimes(0);
 
     const callbackDetails = {
       dateStr: getDateAsStr(new Date()),
@@ -160,7 +164,7 @@ describe('WeightTrackerComponent.svelte component', () => {
 
     await callback(callbackParams);
 
-    expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(dispatchEvent).toEqual(callbackDetails);
+    expect(deleteMock).toHaveBeenCalledTimes(1);
+    expect(deletedWeight).toEqual(callbackDetails);
   });
 });

@@ -8,7 +8,7 @@ export class Indicator {
   track: string;
   progress: number;
   actorDisabled: boolean;
-  actor: { disabled: boolean } | undefined;
+  actor: HTMLButtonElement | undefined;
   invisible: string;
   theme: string | undefined;
 
@@ -22,7 +22,7 @@ export class Indicator {
     this.invisible = '';
   }
 
-  start(actor?: { disabled: boolean }): Indicator {
+  start(actor?: HTMLButtonElement): Indicator {
     this.progress = undefined as any;
     this.actorDisabled = true;
     this.invisible = '';

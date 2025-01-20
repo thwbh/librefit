@@ -1,8 +1,5 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import { Accordion, AccordionItem, getToastStore, Paginator } from '@skeletonlabs/skeleton';
-	import CalorieTracker from '$lib/components/tracker/CalorieTrackerComponent.svelte';
 	import { validateAmount } from '$lib/validation';
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
 	import { getContext } from 'svelte';
@@ -20,7 +17,14 @@
 	import CalorieDistribution from '$lib/components/CalorieDistribution.svelte';
 	import type { Writable } from 'svelte/store';
 	import type { Indicator } from '$lib/indicator';
-	import type { CalorieTarget, FoodCategory, LibreUser } from '$lib/model.js';
+	import type {
+		CalorieTarget,
+		CalorieTracker,
+		FoodCategory,
+		LibreUser,
+		NewCalorieTracker
+	} from '$lib/model.js';
+	import CalorieTrackerComponent from '$lib/components/tracker/CalorieTrackerComponent.svelte';
 
 	let today = new Date();
 	let todayStr = getDateAsStr(today);
@@ -38,13 +42,6 @@
 	let availableDates = $state([]);
 	let paginatedSource = $state([]);
 
-	run(() => {
-		datesToEntries;
-	});
-	run(() => {
-		availableDates;
-	});
-
 	let paginationSettings = $state({
 		page: 0,
 		limit: 7,
@@ -52,98 +49,78 @@
 		amounts: [1, 7, 14, 31]
 	});
 
-	run(() => {
-		if (data && data.entryToday) {
-			datesToEntries[todayStr] = data.entryToday;
-			availableDates = data.availableDates;
-		}
-	});
+	$effect(() => {
+		datesToEntries[todayStr] = data.entryToday;
+		availableDates = data.availableDates;
 
-	run(() => {
 		paginatedSource = availableDates.slice(
 			paginationSettings.page * paginationSettings.limit,
 			paginationSettings.page * paginationSettings.limit + paginationSettings.limit
 		);
 	});
 
-	const addEntry = async (event) => {
-		const amountMessage = validateAmount(event.detail.value);
+	const handleRequest = async (
+		amount: number,
+		promise: Promise<Array<CalorieTracker>>,
+		callback: (response: Array<CalorieTracker>) => void
+	) => {
+		const amountMessage = validateAmount(amount);
 
 		if (!amountMessage) {
-			$indicator = $indicator.start(event.detail.target);
+			$indicator = $indicator.start();
 
-			await addCalories(event)
-				.then(async (response) => {
-					event.detail.callback();
-
-					datesToEntries[event.detail.dateStr] = response;
-
-					showToastSuccess(
-						toastStore,
-						`Successfully added ${getFoodCategoryLongvalue($foodCategories, event.detail.category)}.`
-					);
-				})
-				.catch((e) => {
-					showToastError(toastStore, e);
-					event.detail.callback(true);
-				})
+			await promise
+				.then(callback)
+				.catch((e) => showToastError(toastStore, e))
 				.finally(() => ($indicator = $indicator.finish()));
 		} else {
 			showToastWarning(toastStore, amountMessage);
-			event.detail.callback();
 		}
 	};
 
-	const updateEntry = async (event) => {
-		const amountMessage = validateAmount(event.detail.value);
+	const onAddCalories = async (calories: NewCalorieTracker) => {
+		await handleRequest(
+			calories.amount,
+			addCalories(calories),
+			(response: Array<CalorieTracker>) => {
+				datesToEntries[calories.added] = response;
 
-		if (!amountMessage) {
-			$indicator = $indicator.start(event.detail.target);
-
-			await updateCalories(event)
-				.then(async (response) => {
-					event.detail.callback();
-
-					datesToEntries[event.detail.dateStr] = response;
-
-					showToastSuccess(
-						toastStore,
-						`Successfully updated ${getFoodCategoryLongvalue($foodCategories, event.detail.category)}.`
-					);
-				})
-				.catch((e) => {
-					showToastError(toastStore, e);
-					event.detail.callback(true);
-				})
-				.finally(() => ($indicator = $indicator.finish()));
-		} else {
-			showToastWarning(toastStore, amountMessage);
-			event.detail.callback(true);
-		}
+				showToastSuccess(
+					toastStore,
+					`Successfully added ${getFoodCategoryLongvalue($foodCategories, calories.category)}.`
+				);
+			}
+		);
 	};
 
-	const deleteEntry = async (event) => {
-		$indicator = $indicator.start(event.detail.target);
+	const onUpdateCalories = async (calories: CalorieTracker) => {
+		await handleRequest(
+			calories.amount,
+			updateCalories(calories),
+			(response: Array<CalorieTracker>) => {
+				datesToEntries[calories.added] = response;
 
-		await deleteCalories(event)
-			.then(async (response) => {
-				event.detail.callback();
+				showToastSuccess(
+					toastStore,
+					`Successfully updated ${getFoodCategoryLongvalue($foodCategories, calories.category)}.`
+				);
+			}
+		);
+	};
 
-				datesToEntries[event.detail.dateStr] = await response;
+	const onDeleteCalories = async (calories: CalorieTracker) => {
+		await handleRequest(
+			calories.amount,
+			deleteCalories(calories),
+			(response: Array<CalorieTracker>) => {
+				datesToEntries[calories.added] = response;
 
 				showToastSuccess(toastStore, `Deletion successful.`);
-			})
-			.catch((e) => {
-				showToastError(toastStore, e);
-				event.detail.callback(true);
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+			}
+		);
 	};
 
-	/**
-	 * @param added {string}
-	 */
-	const loadEntries = async (added) => {
+	const loadEntries = async (added: string) => {
 		if (!datesToEntries[added]) {
 			$indicator = $indicator.start();
 
@@ -158,7 +135,7 @@
 		}
 	};
 
-	const onFilterChanged = async (event) => {
+	const onFilterChanged = async (event: any) => {
 		const fromDateStr = event.detail.from;
 		const toDateStr = event.detail.to;
 
@@ -195,51 +172,47 @@
 						<Accordion class="card rounded-xl">
 							<AccordionItem id={dateStr} on:toggle={() => loadEntries(dateStr)}>
 								{#snippet summary()}
-															
-										{convertDateStrToDisplayDateStr(dateStr)}
-									
-															{/snippet}
+									{convertDateStrToDisplayDateStr(dateStr)}
+								{/snippet}
 								{#snippet content()}
-															
-										<div class="flex md:flex-row flex-col gap-4 p-4">
-											{#if datesToEntries[dateStr]}
-												<CalorieTracker
-													calorieTracker={datesToEntries[dateStr]}
-													categories={$foodCategories}
-													calorieTarget={$calorieTarget}
-													on:addCalories={addEntry}
-													on:updateCalories={updateEntry}
-													on:deleteCalories={deleteEntry}
-												/>
+									<div class="flex md:flex-row flex-col gap-4 p-4">
+										{#if datesToEntries[dateStr]}
+											<CalorieTrackerComponent
+												calorieTracker={datesToEntries[dateStr]}
+												categories={$foodCategories}
+												calorieTarget={$calorieTarget}
+												{onAddCalories}
+												{onUpdateCalories}
+												{onDeleteCalories}
+											/>
 
-												<CalorieDistribution
-													calorieTracker={datesToEntries[dateStr]}
-													displayHistory={false}
-													displayHeader={false}
-													foodCategories={$foodCategories}
-													calorieTarget={$calorieTarget}
-												/>
-											{:else}
-												{#await datesToEntries[dateStr]}
-													<p>... loading</p>
-												{:then entries}
-													{#if entries}
-														<CalorieTracker
-															calorieTracker={entries}
-															categories={$foodCategories}
-															calorieTarget={$calorieTarget}
-															on:addCalories={addEntry}
-															on:updateCalories={updateEntry}
-															on:deleteCalories={deleteEntry}
-														/>
-													{/if}
-												{:catch error}
-													<p>{error}</p>
-												{/await}
-											{/if}
-										</div>
-									
-															{/snippet}
+											<CalorieDistribution
+												calorieTracker={datesToEntries[dateStr]}
+												displayHistory={false}
+												displayHeader={false}
+												foodCategories={$foodCategories}
+												calorieTarget={$calorieTarget}
+											/>
+										{:else}
+											{#await datesToEntries[dateStr]}
+												<p>... loading</p>
+											{:then entries}
+												{#if entries}
+													<CalorieTrackerComponent
+														calorieTracker={entries}
+														categories={$foodCategories}
+														calorieTarget={$calorieTarget}
+														{onAddCalories}
+														{onUpdateCalories}
+														{onDeleteCalories}
+													/>
+												{/if}
+											{:catch error}
+												<p>{error}</p>
+											{/await}
+										{/if}
+									</div>
+								{/snippet}
 							</AccordionItem>
 						</Accordion>
 					{/each}

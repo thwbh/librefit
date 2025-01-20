@@ -4,8 +4,16 @@
 
 	import { paintCalorieTrackerQuickview } from '$lib/quickview-chart';
 	import { goto } from '$app/navigation';
-	import type { CalorieQuickviewProps } from '$lib/props';
 	import BarChartComponent from './chart/BarChartComponent.svelte';
+	import type { CalorieTarget, CalorieTracker } from '$lib/model';
+
+	interface Props {
+		calorieTracker: Array<CalorieTracker>;
+		calorieTarget: CalorieTarget;
+		displayClass?: string;
+		displayHeader?: boolean;
+		headerText?: string;
+	}
 
 	let {
 		calorieTracker,
@@ -13,7 +21,7 @@
 		displayClass = '',
 		displayHeader = true,
 		headerText = 'Target Quickview'
-	}: CalorieQuickviewProps = $props();
+	}: Props = $props();
 </script>
 
 <div class="{displayClass} gap-4 text-center justify-between relative h-full">

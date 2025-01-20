@@ -6,6 +6,12 @@ export enum DataViews {
   Year = 'YEAR'
 }
 
+export enum TrackerInputEventType {
+  Add = 'add',
+  Update = 'update',
+  Delete = 'delete'
+}
+
 export enum WizardOptions {
   Default = 'DEFAULT',
   Recommended = 'RECOMMENDED',

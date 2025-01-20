@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { preventDefault } from 'svelte/legacy';
-
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { display_date_format, getDateAsStr, getDaytimeFoodCategory } from '$lib/date';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
-	import type { CalorieTracker, FoodCategory } from '$lib/model';
+	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
+	import type { TrackerInputEvent } from '$lib/event';
 
 	const modalStore = getModalStore();
 
@@ -24,13 +23,12 @@
 		categories = $modalStore[0].meta.categories;
 	}
 
-	const onSubmit = (eventType, event) => {
+	const onSubmit = (event: TrackerInputEvent<NewCalorieTracker>) => {
 		if ($modalStore[0].response) {
 			$modalStore[0].response({
 				detail: {
-					type: eventType,
 					close: true,
-					detail: event.detail
+					detail: event.details
 				}
 			});
 		}
@@ -60,7 +58,7 @@
 				dateStr={getDateAsStr(new Date())}
 				category={getDaytimeFoodCategory(new Date())}
 				unit={'kcal'}
-				on:add={(e) => onSubmit('add', e)}
+				onAdd={onSubmit}
 			/>
 		</div>
 	{:else}
@@ -75,9 +73,7 @@
 					dateStr={entry.added}
 					id={entry.id}
 					category={entry.category}
-					on:add={(e) => onSubmit('add', e)}
-					on:update={(e) => onSubmit('update', e)}
-					on:remove={(e) => onSubmit('remove', e)}
+					onAdd={onSubmit}
 					existing={entry.id !== undefined}
 					disabled={entry.id !== undefined}
 					unit={'kcal'}
@@ -87,6 +83,6 @@
 	{/if}
 
 	<footer class="modal-footer flex justify-start space-x-2">
-		<button onclick={preventDefault(onCancel)} class="btn variant-ringed"> Close </button>
+		<button onclick={() => onCancel()} class="btn variant-ringed"> Close </button>
 	</footer>
 </div>

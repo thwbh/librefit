@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { preventDefault } from 'svelte/legacy';
-
 	import Trash from '$lib/assets/icons/trash.svg?component';
 	import AddKcal from '$lib/assets/icons/hamburger-plus.svg?component';
 	import AddWeight from '$lib/assets/icons/plus.svg?component';
@@ -9,15 +7,13 @@
 	import Check from '$lib/assets/icons/check.svg?component';
 	import CancelDelete from '$lib/assets/icons/trash-off.svg?component';
 	import CancelEdit from '$lib/assets/icons/pencil-off.svg?component';
-	import { createEventDispatcher } from 'svelte';
-
+	import type { TrackerButtonEvent } from '$lib/event';
 
 	let btnAdd: HTMLButtonElement = $state();
 	let btnConfirm: HTMLButtonElement = $state();
 	let btnCancel: HTMLButtonElement = $state();
 
 	let editing = $state(false);
-
 
 	interface Props {
 		existing?: boolean;
@@ -27,6 +23,9 @@
 		changeAction: any;
 		category: any;
 		value: any;
+		onAdd: (event: TrackerButtonEvent) => void;
+		onUpdate: (event: TrackerButtonEvent) => void;
+		onDelete: (event: TrackerButtonEvent) => void;
 	}
 
 	let {
@@ -36,60 +35,11 @@
 		previous = $bindable(),
 		changeAction = $bindable(),
 		category = $bindable(),
-		value = $bindable()
+		value = $bindable(),
+		onAdd,
+		onUpdate,
+		onDelete
 	}: Props = $props();
-
-	const dispatch = createEventDispatcher();
-
-	const add = () => {
-		btnAdd.disabled = true;
-
-		dispatch('add', {
-			callback: () => {
-				btnAdd.disabled = false;
-			}
-		});
-	};
-
-	const change = (action) => {
-		return () => {
-			disabled = false;
-			editing = true;
-
-			changeAction = action;
-
-			if (action === 'update') {
-				previous = { category, value };
-			}
-		};
-	};
-
-	const update = (e) => {
-		e.preventDefault();
-
-		btnConfirm.disabled = true;
-		btnCancel.disabled = true;
-
-		if (value !== previous.value || category !== previous.category) {
-			dispatch('update', {
-				callback: postAction
-			});
-		} else {
-			postAction();
-		}
-	};
-
-	const remove = (e) => {
-		e.preventDefault();
-
-		btnConfirm.disabled = true;
-		btnCancel.disabled = true;
-
-		dispatch('remove', {
-			target: btnConfirm,
-			callback: postAction
-		});
-	};
 
 	const discard = () => {
 		disabled = true;
@@ -113,6 +63,50 @@
 			editing = false;
 		}
 	};
+
+	const add = () => {
+		btnAdd.disabled = true;
+
+		onAdd({
+			callback: () => (btnAdd.disabled = false)
+		});
+	};
+
+	const change = (action) => {
+		return () => {
+			disabled = false;
+			editing = true;
+
+			changeAction = action;
+
+			if (action === 'update') {
+				previous = { category, value };
+			}
+		};
+	};
+
+	const update = () => {
+		btnConfirm.disabled = true;
+		btnCancel.disabled = true;
+
+		if (value !== previous.value || category !== previous.category) {
+			onUpdate({
+				callback: postAction
+			});
+		} else {
+			postAction();
+		}
+	};
+
+	const remove = () => {
+		btnConfirm.disabled = true;
+		btnCancel.disabled = true;
+
+		onDelete({
+			target: btnConfirm,
+			callback: postAction
+		});
+	};
 </script>
 
 <div class="flex flex-row gap-1 justify-end">
@@ -122,7 +116,7 @@
 				aria-label="add"
 				bind:this={btnAdd}
 				class="btn-icon variant-filled-primary"
-				onclick={preventDefault(add)}
+				onclick={() => add()}
 			>
 				<span>
 					{#if unit === 'kcal'}
@@ -136,20 +130,12 @@
 			</button>
 		</div>
 	{:else if !editing}
-		<button
-			aria-label="edit"
-			class="btn-icon variant-filled-secondary"
-			onclick={preventDefault(change('update'))}
-		>
+		<button aria-label="edit" class="btn-icon variant-filled-secondary" onclick={() => update()}>
 			<span>
 				<Edit />
 			</span>
 		</button>
-		<button
-			aria-label="delete"
-			class="btn-icon variant-filled"
-			onclick={preventDefault(change('delete'))}
-		>
+		<button aria-label="delete" class="btn-icon variant-filled" onclick={() => change('delete')}>
 			<span>
 				<Trash />
 			</span>
@@ -169,7 +155,7 @@
 			aria-label="discard"
 			bind:this={btnCancel}
 			class="btn-icon variant-ghost-error"
-			onclick={preventDefault(discard)}
+			onclick={() => discard()}
 		>
 			<span>
 				{#if changeAction === 'update'}

@@ -1,11 +1,8 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import FilterComponent from '$lib/components/FilterComponent.svelte';
 	import { getContext } from 'svelte';
 	import { deleteWeight, listWeightRange, updateWeight } from '$lib/api/tracker';
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
-	import { goto } from '$app/navigation';
 	import { getToastStore, Paginator } from '@skeletonlabs/skeleton';
 	import ScaleOff from '$lib/assets/icons/scale-outline-off.svg?component';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
@@ -14,13 +11,12 @@
 	import { subDays } from 'date-fns';
 	import type { Indicator } from '$lib/indicator.js';
 	import type { Writable } from 'svelte/store';
-	import type { LibreUser } from '$lib/model.js';
+	import type { LibreUser, WeightTracker } from '$lib/model.js';
+	import type { TrackerInputEvent } from '$lib/event';
 
 	const toastStore = getToastStore();
 	const indicator: Writable<Indicator> = getContext('indicator');
 	const user: Writable<LibreUser> = getContext('user');
-
-	if (!$user) goto('/');
 
 	let { data } = $props();
 
@@ -30,10 +26,6 @@
 	let toDate = new Date();
 	let fromDate = subDays(toDate, 6);
 
-	run(() => {
-		weightList;
-	});
-
 	let paginationSettings = $state({
 		page: 0,
 		limit: 7,
@@ -41,13 +33,11 @@
 		amounts: [1, 7, 14, 31]
 	});
 
-	run(() => {
+	$effect(() => {
 		if (data) {
 			weightList = data.weightWeekList;
 		}
-	});
 
-	run(() => {
 		paginatedSource = weightList.slice(
 			paginationSettings.page * paginationSettings.limit,
 			paginationSettings.page * paginationSettings.limit + paginationSettings.limit
@@ -77,15 +67,21 @@
 			.finally(() => ($indicator = $indicator.finish()));
 	};
 
-	const updateWeightEntry = async (event) => {
-		const amountMessage = validateAmount(event.detail.value);
+	const updateWeightEntry = async (event: TrackerInputEvent<WeightTracker>) => {
+		const amountMessage = validateAmount(event.details.amount);
 
 		if (!amountMessage) {
-			$indicator = $indicator.start(event.detail.target);
+			$indicator = $indicator.start(event.buttonEvent.target);
 
-			await updateWeight(event)
-				.then(async (response) => {
-					event.detail.callback();
+			const weight: WeightTracker = {
+				id: event.details.id,
+				amount: event.details.amount,
+				added: event.details.added
+			};
+
+			await updateWeight(weight)
+				.then(async (_) => {
+					event.buttonEvent.callback();
 
 					showToastSuccess(toastStore, 'Successfully updated weight.');
 
@@ -93,21 +89,27 @@
 				})
 				.catch((e) => {
 					showToastError(toastStore, e);
-					event.detail.callback(true);
+					event.buttonEvent.callback();
 				})
 				.finally(() => ($indicator = $indicator.finish()));
 		} else {
 			showToastWarning(toastStore, amountMessage);
-			event.detail.callback(true);
+			event.buttonEvent.callback();
 		}
 	};
 
-	const deleteWeightEntry = async (event) => {
-		$indicator = $indicator.start(event.detail.target);
+	const deleteWeightEntry = async (event: TrackerInputEvent<WeightTracker>) => {
+		$indicator = $indicator.start(event.buttonEvent.target);
 
-		await deleteWeight(event)
+		const weight: WeightTracker = {
+			id: event.details.id,
+			added: event.details.added,
+			amount: event.details.amount
+		};
+
+		await deleteWeight(weight)
 			.then(async (_) => {
-				event.detail.callback();
+				event.buttonEvent.callback();
 
 				showToastSuccess(toastStore, `Deletion successful.`);
 
@@ -115,7 +117,7 @@
 			})
 			.catch((e) => {
 				showToastError(toastStore, e);
-				event.detail.callback(true);
+				event.buttonEvent.callback();
 			})
 			.finally(() => ($indicator = $indicator.finish()));
 	};
@@ -157,8 +159,8 @@
 												value={entry.amount}
 												dateStr={entry.added}
 												category={entry.category}
-												on:update={updateWeightEntry}
-												on:remove={deleteWeightEntry}
+												onUpdate={updateWeightEntry}
+												onDelete={deleteWeightEntry}
 												existing={entry.sequence !== undefined}
 												disabled={entry.sequence !== undefined}
 												placeholder={''}

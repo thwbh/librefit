@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { preventDefault } from 'svelte/legacy';
-
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
-	import type { WeightTracker } from '$lib/model';
+	import type { NewWeightTracker, WeightTracker } from '$lib/model';
+	import type { TrackerInputEvent } from '$lib/event';
 
 	const modalStore = getModalStore();
 
@@ -14,13 +13,12 @@
 		weightList = $modalStore[0].meta.weightList;
 	}
 
-	const onSubmit = (eventType, e) => {
+	const onSubmit = (event: TrackerInputEvent<NewWeightTracker>) => {
 		if ($modalStore[0].response) {
 			$modalStore[0].response({
 				detail: {
-					type: eventType,
 					close: true,
-					detail: e.detail
+					detail: event.details
 				}
 			});
 		}
@@ -46,8 +44,7 @@
 			id={entry.id}
 			dateStr={entry.added}
 			value={entry.amount}
-			on:update={(e) => onSubmit('update', e)}
-			on:remove={(e) => onSubmit('remove', e)}
+			onUpdate={onSubmit}
 			existing={entry.id !== undefined}
 			disabled={entry.id !== undefined}
 			unit={'kg'}
@@ -55,6 +52,6 @@
 	{/each}
 
 	<footer class="modal-footer flex justify-end space-x-2">
-		<button onclick={preventDefault(onCancel)} class="btn variant-ringed"> Cancel </button>
+		<button onclick={() => onCancel()} class="btn variant-ringed"> Cancel </button>
 	</footer>
 </div>

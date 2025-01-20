@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { getDaytimeFoodCategory } from '$lib/date';
 	import TrackerButtons from './TrackerButtons.svelte';
 	import type { FoodCategory } from '$lib/model';
+	import type { TrackerInputDetails, TrackerInputEvent, TrackerButtonEvent } from '$lib/event';
 
 	interface Props {
 		value?: any;
@@ -16,6 +16,9 @@
 		unit: string;
 		maxWidthCss?: string;
 		placeholder?: string;
+		onAdd?: (input: TrackerInputEvent<any>) => void;
+		onUpdate?: (input: TrackerInputEvent<any>) => void;
+		onDelete?: (input: TrackerInputEvent<any>) => void;
 	}
 
 	let {
@@ -34,48 +37,49 @@
 		),
 		unit,
 		maxWidthCss = '',
-		placeholder = 'Amount...'
+		placeholder = 'Amount...',
+		onAdd,
+		onUpdate,
+		onDelete
 	}: Props = $props();
-
-	const dispatch = createEventDispatcher();
 
 	let previous: any = $state();
 	let changeAction = $state();
 
-	const add = (e) => {
-		dispatch('add', {
+	const addCallback = (buttonEvent: TrackerButtonEvent) => {
+		const details: TrackerInputDetails = {
 			id: id,
-			dateStr: dateStr,
-			value: value,
-			category: category,
-			callback: () => {
-				e.detail.callback();
-			}
-		});
+			added: dateStr,
+			amount: value,
+			category: category
+		};
+
+		onAdd({ details, buttonEvent });
 	};
 
-	const update = (e) => {
-		e.preventDefault();
-
+	const updateCallback = (buttonEvent: TrackerButtonEvent) => {
 		if (value !== previous.value || category !== previous.category) {
-			dispatch('update', {
-				id: id,
-				dateStr: dateStr,
-				value: value,
-				category: category,
-				callback: () => e.detail.callback()
+			onUpdate({
+				details: {
+					id: id,
+					added: dateStr,
+					amount: value,
+					category: category
+				},
+
+				buttonEvent
 			});
 		}
 	};
 
-	const remove = (e) => {
-		e.preventDefault();
+	const deleteCallback = (buttonEvent: TrackerButtonEvent) => {
+		onDelete({
+			details: {
+				id: id,
+				added: dateStr
+			},
 
-		dispatch('remove', {
-			id: id,
-			dateStr: dateStr,
-			target: e.target,
-			callback: () => e.detail.callback()
+			buttonEvent
 		});
 	};
 </script>
@@ -104,9 +108,9 @@
 			<TrackerButtons
 				{unit}
 				{existing}
-				on:add={add}
-				on:update={update}
-				on:remove={remove}
+				onAdd={addCallback}
+				onUpdate={updateCallback}
+				onDelete={deleteCallback}
 				bind:previous
 				bind:changeAction
 				bind:disabled
@@ -119,9 +123,9 @@
 		<TrackerButtons
 			{unit}
 			{existing}
-			on:add={add}
-			on:update={update}
-			on:remove={remove}
+			onAdd={addCallback}
+			onUpdate={updateCallback}
+			onDelete={deleteCallback}
 			bind:previous
 			bind:changeAction
 			bind:disabled

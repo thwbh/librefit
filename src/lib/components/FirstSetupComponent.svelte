@@ -7,6 +7,7 @@
 		type LibreUser,
 		type NewCalorieTarget,
 		type NewWeightTarget,
+		type NewWeightTracker,
 		type WizardInput
 	} from '$lib/model';
 	import { type WizardTargetSelection } from '$lib/types';
@@ -25,7 +26,6 @@
 	import WizardTargetResultComponent from './wizard/WizardTargetResultComponent.svelte';
 	import { createCalorieTarget, createWeightTarget } from '$lib/api/target';
 	import { addWeight } from '$lib/api/tracker';
-	import type { WeightModificationEvent } from '$lib/event';
 	import { getDateAsStr } from '$lib/date';
 	import ActivityLevelComponent from './ActivityLevelComponent.svelte';
 
@@ -69,11 +69,9 @@
 	};
 
 	const handleProfileData = async (): Promise<any> => {
-		const weightEvent: WeightModificationEvent = {
-			detail: {
-				dateStr: getDateAsStr(new Date()),
-				value: wizardInput.weight
-			}
+		const newWeightTracker: NewWeightTracker = {
+			added: getDateAsStr(new Date()),
+			amount: wizardInput.weight
 		};
 
 		return await Promise.all([
@@ -81,7 +79,7 @@
 			updateProfile(userProfileData),
 			createCalorieTarget(newCalorieTarget),
 			createWeightTarget(newWeightTarget),
-			addWeight(weightEvent)
+			addWeight(newWeightTracker)
 		]).then((_) => goto('/dashboard'));
 	};
 

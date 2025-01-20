@@ -23,7 +23,13 @@
 	import type { Indicator } from '$lib/indicator';
 	import type { Writable } from 'svelte/store';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import type { LibreUser, WeightTracker } from '$lib/model';
+	import type {
+		CalorieTracker,
+		LibreUser,
+		NewCalorieTracker,
+		NewWeightTracker,
+		WeightTracker
+	} from '$lib/model';
 	import LineChartComponent from './chart/LineChartComponent.svelte';
 
 	let { dashboardData }: DashboardComponentProps = $props();
@@ -39,80 +45,62 @@
 	user.set(dashboardData.userData);
 
 	const handleRequest = async (
-		event: CustomEvent,
-		promise: Promise<any>,
+		amount: number,
+		promise: Promise<Array<CalorieTracker | WeightTracker>>,
 		callback: (response: any) => void
 	) => {
-		const amountMessage = validateAmount(event.detail.value);
+		const amountMessage = validateAmount(amount);
 
 		if (!amountMessage) {
-			$indicator = $indicator.start(event.detail.target);
+			$indicator = $indicator.start();
 
 			await promise
 				.then(callback)
-				.catch((e) => {
-					showToastError(toastStore, e);
-
-					if (event.detail.callback) {
-						event.detail.callback();
-					}
-				})
+				.catch((e) => showToastError(toastStore, e))
 				.finally(() => ($indicator = $indicator.finish()));
 		} else {
 			showToastWarning(toastStore, amountMessage);
-
-			if (event.detail.callback) {
-				event.detail.callback(true);
-			}
 		}
 	};
 
-	const onAddCalories = async (event: CustomEvent) => {
-		await handleRequest(event, addCalories(event), (_) => {
-			event.detail.callback();
-
+	const onAddCalories = async (calories: NewCalorieTracker) => {
+		await handleRequest(calories.amount, addCalories(calories), (_) => {
 			showToastSuccess(
 				toastStore,
-				`Successfully added ${getFoodCategoryLongvalue(dashboardData.foodCategories, event.detail.category)}.`
+				`Successfully added ${getFoodCategoryLongvalue(dashboardData.foodCategories, calories.category)}.`
 			);
 		});
 	};
 
-	const onUpdateCalories = async (event: CustomEvent) => {
-		await handleRequest(event, updateCalories(event), (_) => {
-			event.detail.callback();
-
+	const onUpdateCalories = async (calories: CalorieTracker) => {
+		await handleRequest(calories.amount, updateCalories(calories), (_) => {
 			showToastSuccess(
 				toastStore,
-				`Successfully updated ${getFoodCategoryLongvalue(dashboardData.foodCategories, event.detail.category)}.`
+				`Successfully updated ${getFoodCategoryLongvalue(dashboardData.foodCategories, calories.category)}.`
 			);
 		});
 	};
 
-	const onDeleteCalories = async (event: CustomEvent) => {
-		await handleRequest(event, deleteCalories(event), (_) => {
-			event.detail.callback();
+	const onDeleteCalories = async (calories: CalorieTracker) => {
+		await handleRequest(calories.amount, deleteCalories(calories), (_) => {
 			showToastSuccess(toastStore, `Deletion successful.`);
 		});
 	};
 
-	const onAddWeight = async (event: CustomEvent) => {
-		await handleRequest(event, addWeight(event), (response: WeightTracker) => {
-			event.detail.callback();
+	const onAddWeight = async (weight: NewWeightTracker) => {
+		await handleRequest(weight.amount, addWeight(weight), (response: WeightTracker) => {
 			showToastSuccess(toastStore, `Set weight to ${response.amount}kg.`);
 		});
 	};
 
-	const onUpdateWeight = async (event: CustomEvent) => {
-		await handleRequest(event, updateWeight(event), (_) => {
-			event.detail.callback();
+	const onUpdateWeight = async (weight: WeightTracker) => {
+		await handleRequest(weight.amount, updateWeight(weight), (_) => {
 			showToastSuccess(toastStore, 'Successfully updated weight.');
 		});
 	};
 
-	const onDeleteWeight = async (event: CustomEvent) => {
-		await handleRequest(event, deleteWeight(event), (_) => {
-			event.detail.callback();
+	const onDeleteWeight = async (weight: WeightTracker) => {
+		await handleRequest(weight.amount, deleteWeight(weight), (_) => {
 			showToastSuccess(toastStore, `Deletion successful.`);
 		});
 	};
@@ -130,9 +118,9 @@
 				calorieTracker={dashboardData.caloriesTodayList}
 				categories={dashboardData.foodCategories}
 				calorieTarget={dashboardData.calorieTarget}
-				on:addCalories={onAddCalories}
-				on:updateCalories={onUpdateCalories}
-				on:deleteCalories={onDeleteCalories}
+				{onAddCalories}
+				{onUpdateCalories}
+				{onDeleteCalories}
 			/>
 		</div>
 
@@ -169,9 +157,9 @@
 			<WeightTrackerComponent
 				weightList={dashboardData.weightTodayList}
 				weightTarget={dashboardData.weightTarget}
-				on:addWeight={onAddWeight}
-				on:updateWeight={onUpdateWeight}
-				on:deleteWeight={onDeleteWeight}
+				{onAddWeight}
+				{onUpdateWeight}
+				{onDeleteWeight}
 			/>
 		</div>
 	</div>

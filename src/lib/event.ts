@@ -4,36 +4,21 @@ export class CheckboxEventTarget extends EventTarget {
   public checked: boolean = false;
 }
 
-export interface CaloriesModificationEvent {
-  detail: {
-    dateStr: string;
-    value: number;
-    category: string;
-    description?: string | undefined;
-    id?: number | undefined;
-  };
+export interface TrackerButtonEvent {
+  callback: () => void;
+  target?: HTMLButtonElement;
 }
 
-export interface CaloriesDeletionEvent {
-  detail: {
-    id: number;
-    dateStr: string;
-  };
+export interface TrackerInputDetails {
+  id?: number;
+  added: string;
+  amount?: number;
+  category?: string;
 }
 
-export interface WeightModificationEvent {
-  detail: {
-    dateStr: string;
-    value: number;
-    id?: number | undefined;
-  };
-}
-
-export interface WeightDeletionEvent {
-  detail: {
-    id: number;
-    dateStr: string;
-  };
+export interface TrackerInputEvent<T> {
+  details: T;
+  buttonEvent: TrackerButtonEvent;
 }
 
 export interface WizardRateSelectionEvent {

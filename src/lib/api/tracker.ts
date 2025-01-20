@@ -7,44 +7,31 @@ import type {
   NewWeightTracker,
   WeightTracker
 } from '$lib/model';
-import type {
-  CaloriesDeletionEvent,
-  CaloriesModificationEvent,
-  WeightDeletionEvent,
-  WeightModificationEvent
-} from '$lib/event';
 
-export const addCalories = (event: CaloriesModificationEvent): Promise<Array<CalorieTracker>> => {
-  const newEntry: NewCalorieTracker = {
-    added: event.detail.dateStr,
-    amount: event.detail.value,
-    category: event.detail.category,
-    description: ''
-  };
-
+export const addCalories = (newEntry: NewCalorieTracker): Promise<Array<CalorieTracker>> => {
   return invoke('create_calorie_tracker_entry', { newEntry });
 };
 
 export const updateCalories = (
-  event: CaloriesModificationEvent
+  calories: CalorieTracker
 ): Promise<Array<CalorieTracker>> => {
   const entry: NewCalorieTracker = {
-    added: event.detail.dateStr,
-    amount: event.detail.value,
-    category: event.detail.category,
-    description: ''
+    added: calories.added,
+    amount: calories.amount,
+    category: calories.category,
+    description: calories.description
   };
 
   return invoke('update_calorie_tracker_entry', {
-    trackerId: event.detail.id,
+    trackerId: calories.id,
     updatedEntry: entry
   });
 };
 
-export const deleteCalories = (event: CaloriesDeletionEvent): Promise<Array<CalorieTracker>> => {
+export const deleteCalories = (calories: CalorieTracker): Promise<Array<CalorieTracker>> => {
   return invoke('delete_calorie_tracker_entry', {
-    trackerId: event.detail.id,
-    addedStr: event.detail.dateStr
+    trackerId: calories.id,
+    addedStr: calories.added
   });
 };
 
@@ -108,31 +95,26 @@ export const listCaloriesFiltered = (filter: DataViews): Promise<Array<CalorieTr
   return listCalorieTrackerRange(getDateAsStr(fromDate), getDateAsStr(toDate));
 };
 
-export const addWeight = (event: WeightModificationEvent): Promise<Array<WeightTracker>> => {
-  const newEntry: NewWeightTracker = {
-    added: event.detail.dateStr,
-    amount: event.detail.value
-  };
-
+export const addWeight = (newEntry: NewWeightTracker): Promise<Array<WeightTracker>> => {
   return invoke('create_weight_tracker_entry', { newEntry });
 };
 
-export const updateWeight = (event: WeightModificationEvent): Promise<Array<WeightTracker>> => {
+export const updateWeight = (weight: WeightTracker): Promise<Array<WeightTracker>> => {
   const entry: NewWeightTracker = {
-    added: event.detail.dateStr,
-    amount: event.detail.value
+    added: weight.added,
+    amount: weight.amount
   };
 
   return invoke('update_weight_tracker_entry', {
-    trackerId: event.detail.id,
+    trackerId: weight.id,
     updatedEntry: entry
   });
 };
 
-export const deleteWeight = (event: WeightDeletionEvent): Promise<Array<WeightTracker>> => {
+export const deleteWeight = (weight: WeightTracker): Promise<Array<WeightTracker>> => {
   return invoke('delete_weight_tracker_entry', {
-    trackerId: event.detail.id,
-    addedStr: event.detail.dateStr
+    trackerId: weight.id,
+    addedStr: weight.added
   });
 };
 
