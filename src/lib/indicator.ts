@@ -23,7 +23,7 @@ export class Indicator {
 	}
 
 	start(actor?: HTMLButtonElement): Indicator {
-		this.progress = undefined as any;
+		this.progress = undefined as number;
 		this.actorDisabled = true;
 		this.invisible = '';
 

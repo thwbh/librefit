@@ -3,7 +3,7 @@ import { listCalorieTrackerDatesRange, listCalorieTrackerRange } from '$lib/api/
 import { getDateAsStr } from '$lib/date';
 import type { CalorieTracker } from '$lib/model';
 
-export const load = async ({ fetch }) => {
+export const load = async () => {
 	const today = getDateAsStr(new Date());
 	const fromDate = getDateAsStr(subDays(new Date(), 6));
 

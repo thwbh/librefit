@@ -2,7 +2,8 @@ import { subMonths } from 'date-fns';
 import { listCalorieTrackerRange } from '$lib/api/tracker';
 import { getDateAsStr } from '$lib/date';
 import type { CalorieTracker } from '$lib/model';
-export const load = async ({ fetch }): Promise<{ caloriesMonthList: Array<CalorieTracker> }> => {
+
+export const load = async (): Promise<{ caloriesMonthList: Array<CalorieTracker> }> => {
 	const today = new Date();
 	const lastMonth = subMonths(today, 1);
 

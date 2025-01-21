@@ -20,7 +20,7 @@ export enum WizardOptions {
 	Custom = 'CUSTOM'
 }
 
-export function enumKeys(obj: {}) {
+export function enumKeys(obj: object) {
 	return Object.keys(obj).filter((k) => Number.isNaN(+k));
 }
 

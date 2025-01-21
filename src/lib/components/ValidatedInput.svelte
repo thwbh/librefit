@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CheckboxEventTarget, type ValidatedInputChangeEvent } from '$lib/event';
 	import type { ValidationMessage } from '$lib/model';
+	import type { ChangeEventHandler } from 'svelte/elements';
 
 	const defaultValidate = () => {
 		let valid = false;
@@ -43,7 +44,7 @@
 		readonly?: boolean;
 		errorMessage?: string | undefined;
 		validate?: () => {};
-		onChange?: ValidatedInputChangeEvent;
+		onChange?: ChangeEventHandler<HTMLInputElement>;
 	}
 
 	let {

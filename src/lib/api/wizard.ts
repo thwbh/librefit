@@ -1,10 +1,8 @@
 import { getDateAsStr, parseStringAsDate } from '$lib/date';
 import { CalculationGoal } from '$lib/model';
 import type {
-	CalorieTarget,
 	NewCalorieTarget,
 	NewWeightTarget,
-	WeightTarget,
 	Wizard,
 	WizardInput,
 	WizardResult,

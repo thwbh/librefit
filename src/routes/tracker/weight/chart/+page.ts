@@ -1,7 +1,7 @@
 import { getDateAsStr } from '$lib/date';
 import { listWeightRange } from '$lib/api/tracker';
 
-export const load = async ({ fetch }) => {
+export const load = async () => {
 	const today = new Date();
 	const fromDate = new Date();
 	fromDate.setMonth(fromDate.getMonth() - 1);

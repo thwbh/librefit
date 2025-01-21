@@ -3,7 +3,6 @@ import { enGB } from 'date-fns/locale';
 import { DataViews } from './enum';
 import { getDateAsStr, parseStringAsDate } from './date';
 import type { WeightTracker } from './model';
-import type { ChartData, ChartOptions } from 'chart.js';
 import type { ChartProps } from './props';
 
 export const createWeightChart = (view: DataViews, start: Date, entries: Array<WeightTracker>) => {
@@ -11,7 +10,7 @@ export const createWeightChart = (view: DataViews, start: Date, entries: Array<W
 	const data = [];
 	const begin = 1;
 	let end: number | Date;
-	let displayFormat: String;
+	let displayFormat: string;
 	let duration: {
 		months?: number;
 		days?: number;
@@ -78,7 +77,7 @@ export const createWeightChart = (view: DataViews, start: Date, entries: Array<W
 	return { legend, data };
 };
 
-export const createWeightChartDataset = (weight: any) => {
+export const createWeightChartDataset = (weight: Array<number>) => {
 	const style = getComputedStyle(document.body);
 	const elemHtmlClasses = document.documentElement.classList;
 

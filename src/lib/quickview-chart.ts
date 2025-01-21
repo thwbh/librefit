@@ -12,9 +12,9 @@ const createCalorieTrackerQuickviewDataset = (
 
 	//let lineColor = style.getPropertyValue('--color-surface-500');
 	let borderColor = style.getPropertyValue('--color-surface-200');
-	let deficitColor = style.getPropertyValue('--color-primary-500');
-	let surplusColor = style.getPropertyValue('--color-warning-500');
-	let maximumColor = style.getPropertyValue('--color-error-500');
+	const deficitColor = style.getPropertyValue('--color-primary-500');
+	const surplusColor = style.getPropertyValue('--color-warning-500');
+	const maximumColor = style.getPropertyValue('--color-error-500');
 
 	if (elemHtmlClasses.contains('dark')) {
 		borderColor = style.getPropertyValue('--color-surface-500');
