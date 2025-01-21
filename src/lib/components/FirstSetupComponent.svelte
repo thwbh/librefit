@@ -28,6 +28,7 @@
 	import { addWeight } from '$lib/api/tracker';
 	import { getDateAsStr } from '$lib/date';
 	import ActivityLevelComponent from './ActivityLevelComponent.svelte';
+	import type { WizardTargetSelectionEvent } from '$lib/event';
 
 	let chosenOption: WizardTargetSelection = $state({
 		customDetails: '',
@@ -63,9 +64,9 @@
 	let newWeightTarget: NewWeightTarget | undefined = undefined;
 	let newCalorieTarget: NewCalorieTarget | undefined = undefined;
 
-	const onTargetChange = (event: CustomEvent) => {
-		newWeightTarget = event.detail.newWeightTarget;
-		newCalorieTarget = event.detail.newCalorieTarget;
+	const onTargetSelected = (event: WizardTargetSelectionEvent) => {
+		newWeightTarget = event.newWeightTarget;
+		newCalorieTarget = event.newCalorieTarget;
 	};
 
 	const handleProfileData = async (): Promise<any> => {
@@ -229,7 +230,7 @@
 						{wizardResult}
 						{chosenOption}
 						{selectedRate}
-						on:targetChange={onTargetChange}
+						{onTargetSelected}
 					/>
 				{:catch error}
 					<p>An error occured. Please try again later.</p>

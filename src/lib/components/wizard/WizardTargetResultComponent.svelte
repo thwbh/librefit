@@ -12,7 +12,6 @@
 	import type { WizardTargetSelection, WizardTargetError } from '$lib/types';
 	import TargetComponent from '../TargetComponent.svelte';
 	import RadioInputComponent from '../RadioInputComponent.svelte';
-	import { createEventDispatcher } from 'svelte';
 	import Alert from '$lib/assets/icons/alert-circle-filled.svg?component';
 	import type { WizardTargetSelectionEvent } from '$lib/event';
 
@@ -21,16 +20,16 @@
 		wizardResult: WizardResult;
 		chosenOption: WizardTargetSelection;
 		selectedRate?: any;
+		onTargetSelected: (event: WizardTargetSelectionEvent) => void;
 	}
 
 	let {
 		wizardInput,
 		wizardResult,
 		chosenOption,
-		selectedRate = $bindable(undefined)
+		selectedRate = $bindable(undefined),
+		onTargetSelected
 	}: Props = $props();
-
-	const dispatch = createEventDispatcher();
 
 	let errors: WizardTargetError;
 	let errorEndDate: ValidationMessage = { valid: true };
@@ -55,7 +54,7 @@
 			}
 		};
 
-		dispatch('targetChange', parameters);
+		onTargetSelected(parameters);
 	};
 
 	const extractAndSelectWeightRate = (wizardTargetResult: WizardTargetWeightResult) => {
