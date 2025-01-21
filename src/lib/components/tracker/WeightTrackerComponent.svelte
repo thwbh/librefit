@@ -4,16 +4,17 @@
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
 	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/model';
 	import type { TrackerInputEvent } from '$lib/event';
+	import type { WeightTrackerCallback } from '$lib/api/tracker';
 
 	interface Props {
 		weightTarget: WeightTarget;
 		weightList: Array<WeightTracker>;
-		onAddWeight?: (newWeight: NewWeightTracker, callback: () => void) => void;
-		onUpdateWeight?: (weight: WeightTracker, callback: () => void) => void;
-		onDeleteWeight?: (weight: WeightTracker, callback: () => void) => void;
+		onAddWeight?: WeightTrackerCallback; 
+		onUpdateWeight?: WeightTrackerCallback;
+		onDeleteWeight?: WeightTrackerCallback;
 	}
 
-	let { weightTarget, weightList, onAddWeight, onUpdateWeight, onDeleteWeight }: Props = $props();
+	let { weightTarget, weightList, onAddWeight }: Props = $props();
 
 	let weightQuickAdd: number = $state(undefined);
 
@@ -23,17 +24,6 @@
 		onAddWeight(newWeight, event.buttonEvent.callback);
 	};
 
-	const updateWeight = (event: TrackerInputEvent<WeightTracker>) => {
-		const weight: WeightTracker = event.details;
-
-		onUpdateWeight(weight, event.buttonEvent.callback);
-	};
-
-	const deleteWeight = (event: TrackerInputEvent<WeightTracker>) => {
-		const weight = event.details;
-
-		onDeleteWeight(weight, event.buttonEvent.callback);
-	};
 </script>
 
 <div class="flex flex-col grow gap-4 text-center items-center self-center w-full">

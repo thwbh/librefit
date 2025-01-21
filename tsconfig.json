@@ -8,6 +8,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
+    "strict": false,
     "moduleResolution": "bundler",
     "types": [ "node", "vitest" ]
   }

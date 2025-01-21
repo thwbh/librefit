@@ -7,16 +7,17 @@
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
 	import type { CalorieTarget, CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
 	import type { TrackerInputEvent } from '$lib/event';
+	import type { CalorieTrackerCallback } from '$lib/api/tracker';
 
-	const modalStore = getModalStore();
+  const modalStore = getModalStore();
 
 	interface Props {
 		calorieTracker?: Array<CalorieTracker>;
 		categories: Array<FoodCategory>;
 		calorieTarget: CalorieTarget;
-		onAddCalories?: (newCalories: NewCalorieTracker, callback: () => void) => void;
-		onUpdateCalories?: (calories: CalorieTracker, callback: () => void) => void;
-		onDeleteCalories?: (calories: CalorieTracker, callback: () => void) => void;
+		onAddCalories?: CalorieTrackerCallback;
+		onUpdateCalories?: CalorieTrackerCallback;
+		onDeleteCalories?: CalorieTrackerCallback;
 	}
 
 	let {
@@ -28,7 +29,7 @@
 		onDeleteCalories
 	}: Props = $props();
 
-	let caloriesQuickAdd: number = $state(0);
+	let caloriesQuickAdd: number = $state(undefined);
 
 	const addCaloriesQuickly = (event: TrackerInputEvent<NewCalorieTracker>) => {
 		// take default category based on time

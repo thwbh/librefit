@@ -8,6 +8,9 @@ import type {
   WeightTracker
 } from '$lib/model';
 
+export type CalorieTrackerCallback = (calories: NewCalorieTracker | CalorieTracker, callback: () => void) => void;
+export type WeightTrackerCallback = (weight: NewWeightTracker | WeightTracker, callback: () => void) => void;
+
 export const addCalories = (newEntry: NewCalorieTracker): Promise<Array<CalorieTracker>> => {
   return invoke('create_calorie_tracker_entry', { newEntry });
 };

@@ -16,9 +16,6 @@ export interface ChartProps<T extends keyof ChartTypeRegistry> extends HTMLCanva
   options: ChartOptions<T>;
 }
 
-export interface DashboardComponentProps {
-  dashboardData: Dashboard;
-}
 
 export interface TargetComponentProps {
   startDate: string;

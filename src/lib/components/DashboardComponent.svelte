@@ -7,7 +7,6 @@
 	import CalorieTrackerComponent from './tracker/CalorieTrackerComponent.svelte';
 	import WeightTrackerComponent from './tracker/WeightTrackerComponent.svelte';
 	import ScaleOff from '$lib/assets/icons/scale-outline-off.svg?component';
-	import type { DashboardComponentProps } from '$lib/props';
 	import { validateAmount } from '$lib/validation';
 	import {
 		addCalories,
@@ -25,6 +24,7 @@
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import type {
 		CalorieTracker,
+		Dashboard,
 		LibreUser,
 		NewCalorieTracker,
 		NewWeightTracker,
@@ -32,7 +32,11 @@
 	} from '$lib/model';
 	import LineChartComponent from './chart/LineChartComponent.svelte';
 
-	let { dashboardData }: DashboardComponentProps = $props();
+  interface Props {
+    dashboardData: Dashboard;
+  }
+
+	let { dashboardData }: Props = $props();
 
 	let weightChart = $derived(
 		paintWeightTracker(dashboardData.weightMonthList, new Date(), DataViews.Month)
@@ -47,7 +51,8 @@
 	const handleRequest = async (
 		amount: number,
 		promise: Promise<Array<CalorieTracker | WeightTracker>>,
-		callback: (response: any) => void
+		callback: (response: any) => void,
+    trackerCallback: () => void
 	) => {
 		const amountMessage = validateAmount(amount);
 
@@ -61,48 +66,50 @@
 		} else {
 			showToastWarning(toastStore, amountMessage);
 		}
+
+    trackerCallback();
 	};
 
-	const onAddCalories = async (calories: NewCalorieTracker) => {
+	const onAddCalories = async (calories: NewCalorieTracker, callback: () => void) => {
 		await handleRequest(calories.amount, addCalories(calories), (_) => {
 			showToastSuccess(
 				toastStore,
 				`Successfully added ${getFoodCategoryLongvalue(dashboardData.foodCategories, calories.category)}.`
 			);
-		});
+		}, callback);
 	};
 
-	const onUpdateCalories = async (calories: CalorieTracker) => {
+	const onUpdateCalories = async (calories: CalorieTracker, callback: () => void) => {
 		await handleRequest(calories.amount, updateCalories(calories), (_) => {
 			showToastSuccess(
 				toastStore,
 				`Successfully updated ${getFoodCategoryLongvalue(dashboardData.foodCategories, calories.category)}.`
 			);
-		});
+		}, callback);
 	};
 
-	const onDeleteCalories = async (calories: CalorieTracker) => {
+	const onDeleteCalories = async (calories: CalorieTracker, callback: () => void) => {
 		await handleRequest(calories.amount, deleteCalories(calories), (_) => {
 			showToastSuccess(toastStore, `Deletion successful.`);
-		});
+		}, callback);
 	};
 
-	const onAddWeight = async (weight: NewWeightTracker) => {
+	const onAddWeight = async (weight: NewWeightTracker, callback: () => void) => {
 		await handleRequest(weight.amount, addWeight(weight), (response: WeightTracker) => {
 			showToastSuccess(toastStore, `Set weight to ${response.amount}kg.`);
-		});
+		}, callback);
 	};
 
-	const onUpdateWeight = async (weight: WeightTracker) => {
+	const onUpdateWeight = async (weight: WeightTracker, callback: () => void) => {
 		await handleRequest(weight.amount, updateWeight(weight), (_) => {
 			showToastSuccess(toastStore, 'Successfully updated weight.');
-		});
+		}, callback);
 	};
 
-	const onDeleteWeight = async (weight: WeightTracker) => {
+	const onDeleteWeight = async (weight: WeightTracker, callback: () => void) => {
 		await handleRequest(weight.amount, deleteWeight(weight), (_) => {
 			showToastSuccess(toastStore, `Deletion successful.`);
-		});
+		}, callback);
 	};
 </script>
 

@@ -1,4 +1,5 @@
-import type { NewCalorieTarget, NewWeightTarget } from './model';
+import type { CalorieTracker, NewCalorieTarget, NewCalorieTracker, NewWeightTarget, NewWeightTracker, WeightTracker } from './model';
+
 
 export class CheckboxEventTarget extends EventTarget {
   public checked: boolean = false;

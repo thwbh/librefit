@@ -8,7 +8,7 @@ import type {
 	WeightTarget
 } from './model';
 
-export const validateAmount = (amount): string => {
+export const validateAmount = (amount: number | undefined): string => {
 	if (!amount || amount <= 0) {
 		return 'Please enter a valid amount.';
 	}
