@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import type { CalorieTarget } from '$lib/model';
 
 	interface Props {
@@ -20,19 +18,6 @@
 
 	let width = 512,
 		height = 512;
-
-	run(() => {
-		if (entries && entries.length > 0) {
-			total = entries.reduce((a, b) => a + b);
-		}
-	});
-
-	run(() => {
-		if (calorieTarget) {
-			limit = calorieTarget.targetCalories;
-			maximum = calorieTarget.maximumCalories;
-		}
-	});
 
 	const stroke = 40;
 
@@ -76,8 +61,15 @@
 	let innerEnd: number = $derived(calculateEnd(total, maximum)),
 		outerEnd: number = $derived(calculateEnd(total, limit));
 
-	run(() => {
-		calculateEnd;
+	$effect(() => {
+		if (entries && entries.length > 0) {
+			total = entries.reduce((a, b) => a + b);
+		}
+
+		if (calorieTarget) {
+			limit = calorieTarget.targetCalories;
+			maximum = calorieTarget.maximumCalories;
+		}
 	});
 </script>
 

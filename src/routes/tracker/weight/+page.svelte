@@ -136,7 +136,7 @@
 				{#if weightList.length > 0}
 					<div class=" overflow-x-auto space-y-2">
 						<header>
-							<FilterComponent on:change={onFilterChanged} />
+							<FilterComponent {onFilterChanged} />
 						</header>
 						<table class="table table-hover table-compact table-auto w-full align-middle">
 							<thead>

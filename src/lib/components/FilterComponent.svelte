@@ -1,9 +1,12 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { getDateAsStr, parseStringAsDate } from '$lib/date';
 	import { subDays } from 'date-fns';
 
-	const dispatch = createEventDispatcher();
+	interface Props {
+		onFilterChanged: (from: string, to: string) => void;
+	}
+
+	let { onFilterChanged }: Props = $props();
 
 	const today = new Date();
 
@@ -27,10 +30,7 @@
 		}
 
 		if (filterSelection !== 'c') {
-			dispatch('change', {
-				from: parseStringAsDate(fromDateStr),
-				to: parseStringAsDate(toDateStr)
-			});
+			onFilterChanged(fromDateStr, toDateStr);
 		}
 	};
 
@@ -40,15 +40,9 @@
 
 		// can't swap without triggering another change event
 		if (fromDate > toDate) {
-			dispatch('change', {
-				from: toDate,
-				to: fromDate
-			});
+			onFilterChanged(toDateStr, fromDateStr);
 		} else {
-			dispatch('change', {
-				from: fromDate,
-				to: toDate
-			});
+			onFilterChanged(fromDateStr, toDateStr);
 		}
 	};
 </script>

@@ -94,7 +94,7 @@
 <AppShell>
 	{#snippet header()}
 		{#if $user}
-			<TopBar />
+			<TopBar indicator={$indicator} />
 		{/if}
 	{/snippet}
 	<!-- Router Slot -->

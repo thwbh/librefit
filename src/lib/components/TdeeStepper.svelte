@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { RadioGroup, RadioItem, RangeSlider, Step, Stepper } from '@skeletonlabs/skeleton';
 	import { CalculationGoal, CalculationSex, type WizardInput } from '$lib/model';
-	import { createEventDispatcher } from 'svelte';
+
+	interface Props {
+		calculate: (input: WizardInput) => void;
+	}
+
+	let { calculate }: Props = $props();
 
 	const wizardInput: WizardInput = $state({
 		age: 30,
@@ -30,15 +35,9 @@
 		{ label: 'Weight Loss', value: CalculationGoal.Loss },
 		{ label: 'Weight Gain', value: CalculationGoal.Gain }
 	];
-
-	const dispatch = createEventDispatcher();
-
-	const calculate = () => {
-		dispatch('calculate', { input: wizardInput });
-	};
 </script>
 
-<Stepper on:complete={calculate}>
+<Stepper on:complete={() => calculate(wizardInput)}>
 	<Step>
 		{#snippet header()}
 			Step 1: Body Metrics

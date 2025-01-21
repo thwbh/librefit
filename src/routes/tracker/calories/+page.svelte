@@ -21,7 +21,6 @@
 		CalorieTarget,
 		CalorieTracker,
 		FoodCategory,
-		LibreUser,
 		NewCalorieTracker
 	} from '$lib/model.js';
 	import CalorieTrackerComponent from '$lib/components/tracker/CalorieTrackerComponent.svelte';
@@ -31,7 +30,6 @@
 
 	const toastStore = getToastStore();
 	const indicator: Writable<Indicator> = getContext('indicator');
-	const user: Writable<LibreUser> = getContext('user');
 	const foodCategories: Writable<FoodCategory[]> = getContext('foodCategories');
 	const calorieTarget: Writable<CalorieTarget> = getContext('calorieTarget');
 
@@ -135,10 +133,7 @@
 		}
 	};
 
-	const onFilterChanged = async (event: any) => {
-		const fromDateStr = event.detail.from;
-		const toDateStr = event.detail.to;
-
+	const onFilterChanged = async (fromDateStr: string, toDateStr: string) => {
 		if (fromDateStr && toDateStr) {
 			$indicator = $indicator.start();
 
@@ -159,88 +154,86 @@
 	<title>LibreFit - Calorie Tracker</title>
 </svelte:head>
 
-{#if $user}
-	<section>
-		<div class="container 2xl:w-2/5 xl:w-3/5 lg:w-4/5 mx-auto p-8 space-y-10 justify-between">
-			<h1 class="h1">Tracker History</h1>
+<section>
+	<div class="container 2xl:w-2/5 xl:w-3/5 lg:w-4/5 mx-auto p-8 space-y-10 justify-between">
+		<h1 class="h1">Tracker History</h1>
 
-			{#if data.availableDates}
-				{#if availableDates.length > 0}
-					<FilterComponent on:change={onFilterChanged} />
+		{#if data.availableDates}
+			{#if availableDates.length > 0}
+				<FilterComponent {onFilterChanged} />
 
-					{#each paginatedSource as dateStr}
-						<Accordion class="card rounded-xl">
-							<AccordionItem id={dateStr} on:toggle={() => loadEntries(dateStr)}>
-								{#snippet summary()}
-									{convertDateStrToDisplayDateStr(dateStr)}
-								{/snippet}
-								{#snippet content()}
-									<div class="flex md:flex-row flex-col gap-4 p-4">
-										{#if datesToEntries[dateStr]}
-											<CalorieTrackerComponent
-												calorieTracker={datesToEntries[dateStr]}
-												categories={$foodCategories}
-												calorieTarget={$calorieTarget}
-												{onAddCalories}
-												{onUpdateCalories}
-												{onDeleteCalories}
-											/>
+				{#each paginatedSource as dateStr}
+					<Accordion class="card rounded-xl">
+						<AccordionItem id={dateStr} on:toggle={() => loadEntries(dateStr)}>
+							{#snippet summary()}
+								{convertDateStrToDisplayDateStr(dateStr)}
+							{/snippet}
+							{#snippet content()}
+								<div class="flex md:flex-row flex-col gap-4 p-4">
+									{#if datesToEntries[dateStr]}
+										<CalorieTrackerComponent
+											calorieTracker={datesToEntries[dateStr]}
+											categories={$foodCategories}
+											calorieTarget={$calorieTarget}
+											{onAddCalories}
+											{onUpdateCalories}
+											{onDeleteCalories}
+										/>
 
-											<CalorieDistribution
-												calorieTracker={datesToEntries[dateStr]}
-												displayHistory={false}
-												displayHeader={false}
-												foodCategories={$foodCategories}
-												calorieTarget={$calorieTarget}
-											/>
-										{:else}
-											{#await datesToEntries[dateStr]}
-												<p>... loading</p>
-											{:then entries}
-												{#if entries}
-													<CalorieTrackerComponent
-														calorieTracker={entries}
-														categories={$foodCategories}
-														calorieTarget={$calorieTarget}
-														{onAddCalories}
-														{onUpdateCalories}
-														{onDeleteCalories}
-													/>
-												{/if}
-											{:catch error}
-												<p>{error}</p>
-											{/await}
-										{/if}
-									</div>
-								{/snippet}
-							</AccordionItem>
-						</Accordion>
-					{/each}
+										<CalorieDistribution
+											calorieTracker={datesToEntries[dateStr]}
+											displayHistory={false}
+											displayHeader={false}
+											foodCategories={$foodCategories}
+											calorieTarget={$calorieTarget}
+										/>
+									{:else}
+										{#await datesToEntries[dateStr]}
+											<p>... loading</p>
+										{:then entries}
+											{#if entries}
+												<CalorieTrackerComponent
+													calorieTracker={entries}
+													categories={$foodCategories}
+													calorieTarget={$calorieTarget}
+													{onAddCalories}
+													{onUpdateCalories}
+													{onDeleteCalories}
+												/>
+											{/if}
+										{:catch error}
+											<p>{error}</p>
+										{/await}
+									{/if}
+								</div>
+							{/snippet}
+						</AccordionItem>
+					</Accordion>
+				{/each}
 
-					<Paginator
-						bind:settings={paginationSettings}
-						showFirstLastButtons={false}
-						showPreviousNextButtons={true}
-					/>
-				{:else}
-					<div class="flex flex-col items-center text-center gap-4">
-						<FoodOff width={100} height={100} />
-						<p>
-							Insufficient data to render your history. Start tracking now on the <a
-								href="/dashboard">Dashboard</a
-							>!
-						</p>
-						<p>
-							Are you trying to add tracking data for the past? Don't worry, the <a href="/import"
-								>CSV Import</a
-							>
-							is the right tool for that.
-						</p>
-					</div>
-				{/if}
+				<Paginator
+					bind:settings={paginationSettings}
+					showFirstLastButtons={false}
+					showPreviousNextButtons={true}
+				/>
 			{:else}
-				{data.error}
+				<div class="flex flex-col items-center text-center gap-4">
+					<FoodOff width={100} height={100} />
+					<p>
+						Insufficient data to render your history. Start tracking now on the <a href="/dashboard"
+							>Dashboard</a
+						>!
+					</p>
+					<p>
+						Are you trying to add tracking data for the past? Don't worry, the <a href="/import"
+							>CSV Import</a
+						>
+						is the right tool for that.
+					</p>
+				</div>
 			{/if}
-		</div>
-	</section>
-{/if}
+		{:else}
+			{data.error}
+		{/if}
+	</div>
+</section>

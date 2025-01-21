@@ -120,8 +120,8 @@
 							flexDirection="flex-col"
 							bind:value={selectedRate}
 							{choices}
-							on:change={(changed) =>
-								onWeightRateSelection(changed.detail.selection, getDateAsStr(new Date()), endDate)}
+							onRadioSelected={(value) =>
+								onWeightRateSelection(value, getDateAsStr(new Date()), endDate)}
 						/>
 						<div class="flex flex-col flex-grow justify-between">
 							<TargetComponent
@@ -186,7 +186,7 @@
 								flexDirection="flex-col"
 								bind:value={selectedRate}
 								{choices}
-								on:change={(changed) => (selectedRate = changed.detail.selection)}
+								onRadioSelected={(value) => (selectedRate = value)}
 							/>
 						</div>
 						<div class="flex flex-col flex-grow justify-between">

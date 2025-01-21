@@ -1,21 +1,19 @@
-<script>
-	import { run } from 'svelte/legacy';
-
+<script lang="ts">
+	import type { Indicator } from '$lib/indicator';
+	import type { LibreUser } from '$lib/model';
 	import { AppBar, Avatar, getDrawerStore, ProgressBar } from '@skeletonlabs/skeleton';
 	import { getContext } from 'svelte';
+
+	interface Props {
+		indicator: Indicator;
+	}
+
+	let { indicator }: Props = $props();
+
 	const drawerStore = getDrawerStore();
+	const user: LibreUser = getContext('user');
 
-	const user = getContext('user');
-	run(() => {
-		user;
-	});
-
-	const indicator = getContext('indicator');
-	run(() => {
-		indicator;
-	});
-
-	export const showDrawer = (e) => {
+	export const showDrawer = () => {
 		drawerStore.open({
 			width: 'xl:w-1/3 md:w-3/5 w-full'
 		});
@@ -23,12 +21,12 @@
 </script>
 
 <ProgressBar
-	class={$indicator.invisible}
+	class={indicator.invisible}
 	height="h-1"
 	rounded="rounded-none"
-	value={$indicator.progress}
-	meter={$indicator.meter}
-	track={$indicator.track}
+	value={indicator.progress}
+	meter={indicator.meter}
+	track={indicator.track}
 />
 <AppBar shadow="drop-shadow">
 	{#snippet lead()}
@@ -40,9 +38,9 @@
 		</a>
 	{/snippet}
 	{#snippet trail()}
-		<button onclick={showDrawer}>
+		<button onclick={() => showDrawer()}>
 			<Avatar
-				src={$user.avatar}
+				src={user.avatar}
 				initials="LU"
 				width="w-12"
 				border="border-4 border-surface-300-600-token hover:!border-primary-500"

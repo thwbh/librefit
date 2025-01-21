@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import { Avatar, getDrawerStore, LightSwitch } from '@skeletonlabs/skeleton';
 	import { getContext } from 'svelte';
 	import Dashboard from '$lib/assets/icons/dashboard.svg?component';
@@ -13,13 +12,14 @@
 	import PieChart from '$lib/assets/icons/chart-pie-4.svg?component';
 	import type { LibreUser } from '$lib/model';
 	import type { Writable } from 'svelte/store';
+	import { page } from '$app/state';
 
 	const drawerStore = getDrawerStore();
 
 	const user: Writable<LibreUser> = getContext('user');
 
 	let classesActive = $derived((href: string) =>
-		href === $page.url.pathname ? '!variant-soft-primary' : ''
+		href === page.url.pathname ? '!variant-soft-primary' : ''
 	);
 
 	const navigate = () => {

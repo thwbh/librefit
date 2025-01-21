@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { RadioInputChoice } from '$lib/types';
 	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
-	import { createEventDispatcher } from 'svelte';
 
 	interface Props {
 		value: any;
@@ -9,6 +8,7 @@
 		name?: any;
 		label?: any;
 		flexDirection?: string;
+		onRadioSelected?: (value: string) => void;
 	}
 
 	let {
@@ -16,16 +16,9 @@
 		choices,
 		name = `${value}-radio`,
 		label = undefined,
-		flexDirection = 'flex-row'
+		flexDirection = 'flex-row',
+		onRadioSelected = (_) => {}
 	}: Props = $props();
-
-	const dispatch = createEventDispatcher();
-
-	const changeSelection = (e: any) => {
-		dispatch('change', {
-			selection: e.target.value
-		});
-	};
 </script>
 
 {#if label !== undefined}
@@ -39,7 +32,7 @@
 			bind:group={value}
 			value={choice.value}
 			{name}
-			on:change={changeSelection}
+			on:change={(event: any) => onRadioSelected(event.target.value)}
 		>
 			{choice.label}
 		</RadioItem>
