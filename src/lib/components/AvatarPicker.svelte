@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Avatar } from '@skeletonlabs/skeleton';
-	import { createEventDispatcher } from 'svelte';
 
 	import avatar1 from '$lib/assets/avatars/buffdude-1.png';
 	import avatar2 from '$lib/assets/avatars/buffdude-2.png';
@@ -15,21 +14,17 @@
 	interface Props {
 		fileList?: any;
 		chosen?: string;
+		onAvatarSelected: (fileName: string) => void;
 	}
 
 	let {
 		fileList = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7, avatar8, avatar9],
-		chosen = $bindable('dog-1.png')
+		chosen = $bindable('dog-1.png'),
+		onAvatarSelected
 	}: Props = $props();
 
-	const dispatch = createEventDispatcher();
-
 	const avatarClicked = (fileName: string) => {
-		chosen = fileName;
-
-		dispatch('chooseAvatar', {
-			avatar: fileName
-		});
+		onAvatarSelected(fileName);
 	};
 </script>
 

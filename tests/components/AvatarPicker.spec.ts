@@ -10,15 +10,11 @@ const files = ['file1', 'file2', 'file3'];
 describe('AvatarPicker.svelte', () => {
   it('should trigger avatarClicked function when Avatar is clicked', async () => {
     let chosenFile: string;
-    const chooseAvatarMock = vi.fn((event) => {
-      chosenFile = event.detail;
-    });
+    const chooseAvatarMock = vi.fn((fileName: string) => chosenFile = fileName);
 
-    const { component } = render(AvatarPicker, {
-      props: { fileList: files }
+    render(AvatarPicker, {
+      props: { fileList: files, onAvatarSelected: chooseAvatarMock }
     });
-
-    component.$on('chooseAvatar', chooseAvatarMock);
 
     const buttons = screen.getAllByRole('button', { name: 'choose' });
 

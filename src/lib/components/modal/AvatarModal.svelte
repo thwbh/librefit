@@ -32,7 +32,7 @@
 >
 	<header class="text-2xl font-bold">Choose avatar</header>
 
-	<AvatarPicker chosen={selected} on:chooseAvatar={(e) => (selected = e.detail.avatar)} />
+	<AvatarPicker chosen={selected} onAvatarSelected={(fileName: string) => (selected = fileName)} />
 
 	<footer class="modal-footer flex justify-between space-x-2">
 		<div>

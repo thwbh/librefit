@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { preventDefault } from 'svelte/legacy';
-
 	import type { LibreUser } from '$lib/model';
 	import { Avatar, getModalStore } from '@skeletonlabs/skeleton';
 
@@ -51,7 +49,7 @@
 			</div>
 
 			<div class="justify-center self-center">
-				<button onclick={preventDefault(showAvatarPickerModal)} class="btn variant-filled-secondary"
+				<button onclick={() => showAvatarPickerModal()} class="btn variant-filled-secondary"
 					>Change</button
 				>
 			</div>
