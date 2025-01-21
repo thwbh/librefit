@@ -1,23 +1,50 @@
 <script lang="ts">
-	import { CheckboxEventTarget } from '$lib/event';
+	import { CheckboxEventTarget, type ValidatedInputChangeEvent } from '$lib/event';
 	import type { ValidationMessage } from '$lib/model';
-	import { createEventDispatcher } from 'svelte';
 
-  interface Props {
-    value: any;
-    name: string;
-    label: string;
-    type: string;
-    styling?: string;
-    placeholder?: string;
-    unit?: string;
-    validateDetail?: (e: any) => {};
-    emptyMessage?: string;
-    required?: boolean;
-    readonly?: boolean;
-    errorMessage?: string | undefined;
-    validate?: () => {};
-  }
+	const defaultValidate = () => {
+		let valid = false;
+
+		let detail: ValidationMessage = this.validateDetail({
+			value: value,
+			label: label
+		});
+
+		if (required && isEmpty()) {
+			errorMessage = emptyMessage;
+		} else if (!detail.skip) {
+			valid = detail.valid;
+			errorMessage = detail.errorMessage;
+		} else {
+			errorMessage = undefined;
+			valid = true;
+		}
+		return valid;
+	};
+
+	const defaultValidateDetail = (_: any): ValidationMessage => {
+		return {
+			valid: false,
+			skip: true
+		};
+	};
+
+	interface Props {
+		value: any;
+		name: string;
+		label: string;
+		type: string;
+		styling?: string;
+		placeholder?: string;
+		unit?: string;
+		validateDetail?: (e: any) => {};
+		emptyMessage?: string;
+		required?: boolean;
+		readonly?: boolean;
+		errorMessage?: string | undefined;
+		validate?: () => {};
+		onChange?: ValidatedInputChangeEvent;
+	}
 
 	let {
 		value = $bindable(''),
@@ -31,31 +58,9 @@
 		required = false,
 		errorMessage = undefined,
 		readonly = false,
-		validateDetail = (e: any): ValidationMessage => {
-			return {
-				valid: false,
-				skip: true
-			};
-		},
-		validate = () => {
-			let valid = false;
-
-			let detail: ValidationMessage = this.validateDetail({
-				value: value,
-				label: label
-			});
-
-			if (required && isEmpty()) {
-				errorMessage = emptyMessage;
-			} else if (!detail.skip) {
-				valid = detail.valid;
-				errorMessage = detail.errorMessage;
-			} else {
-				errorMessage = undefined;
-				valid = true;
-			}
-			return valid;
-		}
+		validateDetail = defaultValidateDetail,
+		validate = defaultValidate,
+		onChange
 	}: Props = $props();
 
 	const getType = (node: any) => {
@@ -68,12 +73,6 @@
 
 	const handleCheckboxEvent = (e: Event) => {
 		this.checked = (<CheckboxEventTarget>e.target).checked;
-	};
-
-	const dispatch = createEventDispatcher();
-
-	const onChange = (e: any) => {
-		dispatch('change', e.detail);
 	};
 </script>
 

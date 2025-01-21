@@ -4,14 +4,14 @@
 	import type { WizardTargetError } from '$lib/types';
 	import type { CalorieTarget, ValidationMessage, WeightTarget } from '$lib/model';
 
-  interface Props {
-    startDate: string;
-    endDate: string;
-    errors: WizardTargetError;
-    errorEndDate?: ValidationMessage;
-    weightTarget?: WeightTarget;
-    calorieTarget?: CalorieTarget;
-  }
+	interface Props {
+		startDate: string;
+		endDate: string;
+		errors: WizardTargetError;
+		errorEndDate?: ValidationMessage;
+		weightTarget?: WeightTarget;
+		calorieTarget?: CalorieTarget;
+	}
 
 	let {
 		startDate = $bindable(),

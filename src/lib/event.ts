@@ -1,11 +1,7 @@
-import type {
-	CalorieTracker,
-	NewCalorieTarget,
-	NewCalorieTracker,
-	NewWeightTarget,
-	NewWeightTracker,
-	WeightTracker
-} from './model';
+import type { ChangeEventHandler } from 'svelte/elements';
+import type { NewCalorieTarget, NewWeightTarget } from './model';
+
+export interface ValidatedInputChangeEvent extends ChangeEventHandler<HTMLInputElement> {}
 
 export class CheckboxEventTarget extends EventTarget {
 	public checked: boolean = false;

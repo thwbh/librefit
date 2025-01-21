@@ -5,4 +5,3 @@ export interface ChartProps<T extends keyof ChartTypeRegistry> extends HTMLCanva
 	data: ChartData<T, (number | [number, number] | Point)[], unknown>;
 	options: ChartOptions<T>;
 }
-
