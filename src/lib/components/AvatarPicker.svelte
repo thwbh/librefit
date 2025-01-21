@@ -17,17 +17,10 @@
 		chosen?: string;
 	}
 
-	let { fileList = [
-		avatar1,
-		avatar2,
-		avatar3,
-		avatar4,
-		avatar5,
-		avatar6,
-		avatar7,
-		avatar8,
-		avatar9
-	], chosen = $bindable('dog-1.png') }: Props = $props();
+	let {
+		fileList = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7, avatar8, avatar9],
+		chosen = $bindable('dog-1.png')
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 

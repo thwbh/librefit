@@ -3,7 +3,6 @@
 	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 	import { createEventDispatcher } from 'svelte';
 
-
 	interface Props {
 		value: any;
 		choices: Array<RadioInputChoice>;

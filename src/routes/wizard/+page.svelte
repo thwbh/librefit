@@ -34,19 +34,19 @@
 	import type { Writable } from 'svelte/store';
 	import type { Indicator } from '$lib/indicator';
 
-  interface Props {
-    calculationResult: WizardResult;
-    calculationInput: WizardInput;
-  }
+	interface Props {
+		calculationResult: WizardResult;
+		calculationInput: WizardInput;
+	}
 
-  let { calculationResult, calculationInput }: Props = $props();
+	let { calculationResult, calculationInput }: Props = $props();
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
 
 	const indicator: Writable<Indicator> = getContext('indicator');
 
-  let calculationError = $state();
+	let calculationError = $state();
 
 	let chosenOption = $state({
 		userChoice: undefined,
@@ -79,15 +79,15 @@
 		} else {
 			$indicator = $indicator.start();
 
-      const wizardInput: WizardTargetDateInput = {
-        age: calculationInput.age,
+			const wizardInput: WizardTargetDateInput = {
+				age: calculationInput.age,
 				height: calculationInput.height,
 				currentWeight: calculationInput.weight,
 				sex: calculationInput.sex,
 				targetDate: wizardDetails.targetDate,
 				calculationGoal: calculationInput.calculationGoal,
-        startDate: getDateAsStr(new Date())
-      }
+				startDate: getDateAsStr(new Date())
+			};
 
 			await calculateForTargetDate(wizardInput)
 				.then((customWizardResult: WizardTargetDateResult) => {
@@ -256,5 +256,5 @@
 <section>
 	<div class="container mx-auto p-8 space-y-8">
 		<h1 class="h1">TDEE Calculator</h1>
-
+	</div>
 </section>

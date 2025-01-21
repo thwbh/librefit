@@ -9,7 +9,7 @@
 	interface Props {
 		weightTarget: WeightTarget;
 		weightList: Array<WeightTracker>;
-		onAddWeight?: WeightTrackerCallback; 
+		onAddWeight?: WeightTrackerCallback;
 		onUpdateWeight?: WeightTrackerCallback;
 		onDeleteWeight?: WeightTrackerCallback;
 	}
@@ -23,7 +23,6 @@
 
 		onAddWeight(newWeight, event.buttonEvent.callback);
 	};
-
 </script>
 
 <div class="flex flex-col grow gap-4 text-center items-center self-center w-full">

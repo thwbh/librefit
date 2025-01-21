@@ -4,89 +4,88 @@ const successProgressClass = 'bg-success-500';
 const errorProgressClass = 'bg-error-500';
 
 export class Indicator {
-  meter: string;
-  track: string;
-  progress: number;
-  actorDisabled: boolean;
-  actor: HTMLButtonElement | undefined;
-  invisible: string;
-  theme: string | undefined;
+	meter: string;
+	track: string;
+	progress: number;
+	actorDisabled: boolean;
+	actor: HTMLButtonElement | undefined;
+	invisible: string;
+	theme: string | undefined;
 
-  constructor() {
-    this.theme = undefined; // This should be set outside or passed in
-    this.meter = this.theme === 'dark' ? darkProgressClass : lightProgressClass;
-    this.track = this.theme === 'dark' ? darkProgressClass : lightProgressClass + '/30';
-    this.progress = 0;
-    this.actorDisabled = false;
-    this.actor = undefined;
-    this.invisible = '';
-  }
+	constructor() {
+		this.theme = undefined; // This should be set outside or passed in
+		this.meter = this.theme === 'dark' ? darkProgressClass : lightProgressClass;
+		this.track = this.theme === 'dark' ? darkProgressClass : lightProgressClass + '/30';
+		this.progress = 0;
+		this.actorDisabled = false;
+		this.actor = undefined;
+		this.invisible = '';
+	}
 
-  start(actor?: HTMLButtonElement): Indicator {
-    this.progress = undefined as any;
-    this.actorDisabled = true;
-    this.invisible = '';
+	start(actor?: HTMLButtonElement): Indicator {
+		this.progress = undefined as any;
+		this.actorDisabled = true;
+		this.invisible = '';
 
-    if (actor) {
-      actor.disabled = true;
-      this.actor = actor;
-    }
+		if (actor) {
+			actor.disabled = true;
+			this.actor = actor;
+		}
 
-    return this;
-  }
+		return this;
+	}
 
-  finishSuccess(): Indicator {
-    this.meter = successProgressClass;
-    return this.finish();
-  }
+	finishSuccess(): Indicator {
+		this.meter = successProgressClass;
+		return this.finish();
+	}
 
-  finishError(): Indicator {
-    this.meter = errorProgressClass;
-    return this.finish();
-  }
+	finishError(): Indicator {
+		this.meter = errorProgressClass;
+		return this.finish();
+	}
 
-  finish(): Indicator {
-    this.track = this.meter + '/30';
-    this.progress = 100;
-    this.actorDisabled = false;
+	finish(): Indicator {
+		this.track = this.meter + '/30';
+		this.progress = 100;
+		this.actorDisabled = false;
 
-    if (this.actor) {
-      this.actor.disabled = false;
-      this.actor = undefined;
-    }
+		if (this.actor) {
+			this.actor.disabled = false;
+			this.actor = undefined;
+		}
 
-    return this.hide();
-  }
+		return this.hide();
+	}
 
-  hide(): Indicator {
-    this.invisible = 'invisible';
-    return this;
-  }
+	hide(): Indicator {
+		this.invisible = 'invisible';
+		return this;
+	}
 
-  reset(): Indicator {
-    this.progress = 0;
-    this.meter = this.theme === 'dark' ? darkProgressClass : lightProgressClass;
+	reset(): Indicator {
+		this.progress = 0;
+		this.meter = this.theme === 'dark' ? darkProgressClass : lightProgressClass;
 
-    if (this.actor) {
-      this.actor.disabled = false;
-      this.actor = undefined;
-    }
+		if (this.actor) {
+			this.actor.disabled = false;
+			this.actor = undefined;
+		}
 
-    return this;
-  }
+		return this;
+	}
 
-  toggle(toggle: string): Indicator {
-    this.theme = toggle;
+	toggle(toggle: string): Indicator {
+		this.theme = toggle;
 
-    if ('dark' === toggle) {
-      this.meter = darkProgressClass;
-      this.track = darkProgressClass + '/30';
-    } else {
-      this.meter = lightProgressClass;
-      this.track = lightProgressClass + '/30';
-    }
+		if ('dark' === toggle) {
+			this.meter = darkProgressClass;
+			this.track = darkProgressClass + '/30';
+		} else {
+			this.meter = lightProgressClass;
+			this.track = lightProgressClass + '/30';
+		}
 
-    return this;
-  }
+		return this;
+	}
 }
-

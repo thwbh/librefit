@@ -41,8 +41,8 @@
 <Stepper on:complete={calculate}>
 	<Step>
 		{#snippet header()}
-				Step 1: Body Metrics
-			{/snippet}
+			Step 1: Body Metrics
+		{/snippet}
 		<p>
 			To find the optimal amount of how many calories you should consume per day to reach a specific
 			goal, it's a good idea to calculate your TDEE.
@@ -112,8 +112,8 @@
 
 	<Step>
 		{#snippet header()}
-				Step 2: Activity Level
-			{/snippet}
+			Step 2: Activity Level
+		{/snippet}
 
 		<p>How active are you during your day? Choose what describes your daily activity level best.</p>
 		<p>
@@ -176,8 +176,8 @@
 
 	<Step>
 		{#snippet header()}
-				Step 3: Your Goal
-			{/snippet}
+			Step 3: Your Goal
+		{/snippet}
 
 		<p>Do you aim for weight loss or weight gain?</p>
 

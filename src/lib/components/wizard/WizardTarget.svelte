@@ -4,7 +4,6 @@
 	import { WizardOptions } from '$lib/enum';
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 
-
 	interface Props {
 		calculationResult: WizardResult;
 		calculationInput: WizardInput;

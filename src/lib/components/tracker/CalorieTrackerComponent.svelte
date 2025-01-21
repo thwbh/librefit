@@ -9,7 +9,7 @@
 	import type { TrackerInputEvent } from '$lib/event';
 	import type { CalorieTrackerCallback } from '$lib/api/tracker';
 
-  const modalStore = getModalStore();
+	const modalStore = getModalStore();
 
 	interface Props {
 		calorieTracker?: Array<CalorieTracker>;

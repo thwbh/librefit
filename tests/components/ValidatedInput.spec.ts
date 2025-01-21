@@ -1,9 +1,8 @@
 import { render, fireEvent, screen, cleanup } from '@testing-library/svelte';
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import ValidatedInput from '$lib/components/ValidatedInput.svelte';
-import type { ValidatedInputProps } from '$lib/props';
 
-const props: ValidatedInputProps = {
+const props = {
   value: '',
   type: 'text',
   name: 'email',

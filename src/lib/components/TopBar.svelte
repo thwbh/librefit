@@ -32,26 +32,22 @@
 />
 <AppBar shadow="drop-shadow">
 	{#snippet lead()}
-	
-			<a href="/dashboard" class="h1 text-2xl">
-				<span class="flex flex-row gap-1">
-					<span class="text-primary-500"> Libre </span>
-					<span class="text-secondary-500"> Fit </span>
-				</span>
-			</a>
-		
+		<a href="/dashboard" class="h1 text-2xl">
+			<span class="flex flex-row gap-1">
+				<span class="text-primary-500"> Libre </span>
+				<span class="text-secondary-500"> Fit </span>
+			</span>
+		</a>
 	{/snippet}
 	{#snippet trail()}
-	
-			<button onclick={showDrawer}>
-				<Avatar
-					src={$user.avatar}
-					initials="LU"
-					width="w-12"
-					border="border-4 border-surface-300-600-token hover:!border-primary-500"
-					cursor="cursor-pointer"
-				/>
-			</button>
-		
+		<button onclick={showDrawer}>
+			<Avatar
+				src={$user.avatar}
+				initials="LU"
+				width="w-12"
+				border="border-4 border-surface-300-600-token hover:!border-primary-500"
+				cursor="cursor-pointer"
+			/>
+		</button>
 	{/snippet}
 </AppBar>

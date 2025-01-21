@@ -2,7 +2,22 @@
 	import { CheckboxEventTarget } from '$lib/event';
 	import type { ValidationMessage } from '$lib/model';
 	import { createEventDispatcher } from 'svelte';
-	import type { ValidatedInputProps } from '$lib/props';
+
+  interface Props {
+    value: any;
+    name: string;
+    label: string;
+    type: string;
+    styling?: string;
+    placeholder?: string;
+    unit?: string;
+    validateDetail?: (e: any) => {};
+    emptyMessage?: string;
+    required?: boolean;
+    readonly?: boolean;
+    errorMessage?: string | undefined;
+    validate?: () => {};
+  }
 
 	let {
 		value = $bindable(''),
@@ -41,7 +56,7 @@
 			}
 			return valid;
 		}
-	}: ValidatedInputProps = $props();
+	}: Props = $props();
 
 	const getType = (node: any) => {
 		node.type = type;
