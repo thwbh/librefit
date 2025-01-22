@@ -7,8 +7,6 @@
 	const drawerStore = getDrawerStore();
 	const user: Writable<LibreUser> = getContext('user');
 
-	console.log($user);
-
 	export const showDrawer = () => {
 		drawerStore.open({
 			width: 'xl:w-1/3 md:w-3/5 w-full'

@@ -39,10 +39,6 @@
 				</p>
 			</div>
 		</div>
-
-		<div>
-			<!--			<LightSwitch /> -->
-		</div>
 	</div>
 
 	<nav class="list-nav">

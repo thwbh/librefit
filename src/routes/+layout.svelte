@@ -1,13 +1,6 @@
 <script lang="ts">
 	import '../app.pcss';
-	import {
-		autoModeWatcher,
-		AppShell,
-		Drawer,
-		initializeStores,
-		Modal,
-		Toast
-	} from '@skeletonlabs/skeleton';
+	import { AppShell, Drawer, initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
 	import TopBar from '$lib/components/TopBar.svelte';
 	import WeightModal from '$lib/components/modal/WeightTrackerModal.svelte';
 	import UserPanel from '$lib/components/UserPanel.svelte';
@@ -23,10 +16,6 @@
 	let { children }: Props = $props();
 
 	initializeStores();
-
-	onMount(() => {
-		autoModeWatcher();
-	});
 
 	const modalComponentRegistry = {
 		weightModal: {
