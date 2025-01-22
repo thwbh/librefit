@@ -4,7 +4,7 @@
 	import TopBar from '$lib/components/TopBar.svelte';
 	import WeightModal from '$lib/components/modal/WeightTrackerModal.svelte';
 	import UserPanel from '$lib/components/UserPanel.svelte';
-	import { onMount, setContext } from 'svelte';
+	import { setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 	import AvatarModal from '$lib/components/modal/AvatarModal.svelte';
 	import CalorieTrackerModal from '$lib/components/modal/CalorieTrackerModal.svelte';
