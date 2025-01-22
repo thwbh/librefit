@@ -9,13 +9,11 @@
 	import { validateAmount } from '$lib/validation';
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 	import { subDays } from 'date-fns';
-	import type { Indicator } from '$lib/indicator.js';
 	import type { Writable } from 'svelte/store';
 	import type { LibreUser, WeightTracker } from '$lib/model.js';
 	import type { TrackerInputEvent } from '$lib/event';
 
 	const toastStore = getToastStore();
-	const indicator: Writable<Indicator> = getContext('indicator');
 	const user: Writable<LibreUser> = getContext('user');
 
 	let { data } = $props();
@@ -44,18 +42,13 @@
 		);
 	});
 
-	const onFilterChanged = async (event) => {
-		fromDate = event.detail.from;
-		toDate = event.detail.to;
-
+	const onFilterChanged = async (fromDate: Date, toDate: Date) => {
 		if (fromDate && toDate) {
 			await reload(fromDate, toDate);
 		}
 	};
 
-	const reload = async (fromDate, toDate) => {
-		$indicator = $indicator.start();
-
+	const reload = async (fromDate: Date, toDate: Date) => {
 		await listWeightRange(fromDate, toDate)
 			.then((response) => {
 				weightList = response;
@@ -63,16 +56,13 @@
 			})
 			.catch((e) => {
 				showToastError(toastStore, e);
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+			});
 	};
 
 	const updateWeightEntry = async (event: TrackerInputEvent<WeightTracker>) => {
 		const amountMessage = validateAmount(event.details.amount);
 
 		if (!amountMessage) {
-			$indicator = $indicator.start(event.buttonEvent.target);
-
 			const weight: WeightTracker = {
 				id: event.details.id,
 				amount: event.details.amount,
@@ -90,8 +80,7 @@
 				.catch((e) => {
 					showToastError(toastStore, e);
 					event.buttonEvent.callback();
-				})
-				.finally(() => ($indicator = $indicator.finish()));
+				});
 		} else {
 			showToastWarning(toastStore, amountMessage);
 			event.buttonEvent.callback();
@@ -99,8 +88,6 @@
 	};
 
 	const deleteWeightEntry = async (event: TrackerInputEvent<WeightTracker>) => {
-		$indicator = $indicator.start(event.buttonEvent.target);
-
 		const weight: WeightTracker = {
 			id: event.details.id,
 			added: event.details.added,
@@ -118,8 +105,7 @@
 			.catch((e) => {
 				showToastError(toastStore, e);
 				event.buttonEvent.callback();
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+			});
 	};
 </script>
 

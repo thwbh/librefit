@@ -16,7 +16,6 @@
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import CalorieDistribution from '$lib/components/CalorieDistribution.svelte';
 	import type { Writable } from 'svelte/store';
-	import type { Indicator } from '$lib/indicator';
 	import type {
 		CalorieTarget,
 		CalorieTracker,
@@ -29,7 +28,6 @@
 	let todayStr = getDateAsStr(today);
 
 	const toastStore = getToastStore();
-	const indicator: Writable<Indicator> = getContext('indicator');
 	const foodCategories: Writable<FoodCategory[]> = getContext('foodCategories');
 	const calorieTarget: Writable<CalorieTarget> = getContext('calorieTarget');
 
@@ -65,12 +63,7 @@
 		const amountMessage = validateAmount(amount);
 
 		if (!amountMessage) {
-			$indicator = $indicator.start();
-
-			await promise
-				.then(callback)
-				.catch((e) => showToastError(toastStore, e))
-				.finally(() => ($indicator = $indicator.finish()));
+			await promise.then(callback).catch((e) => showToastError(toastStore, e));
 		} else {
 			showToastWarning(toastStore, amountMessage);
 		}
@@ -122,23 +115,18 @@
 		const added = getDateAsStr(date);
 
 		if (!datesToEntries[added]) {
-			$indicator = $indicator.start();
-
 			await listCaloriesForDate(date)
 				.then((response) => {
 					datesToEntries[added] = response;
 				})
 				.catch((e) => {
 					showToastError(toastStore, e);
-				})
-				.finally(() => ($indicator = $indicator.finish()));
+				});
 		}
 	};
 
 	const onFilterChanged = async (fromDate: Date, toDate: Date) => {
 		if (fromDate && toDate) {
-			$indicator = $indicator.start();
-
 			await listCalorieTrackerDatesRange(fromDate, toDate)
 				.then((response) => {
 					availableDates = response;
@@ -146,8 +134,7 @@
 				})
 				.catch((e) => {
 					showToastError(toastStore, e);
-				})
-				.finally(() => ($indicator = $indicator.finish()));
+				});
 		}
 	};
 </script>

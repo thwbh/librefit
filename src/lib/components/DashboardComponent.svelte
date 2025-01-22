@@ -21,7 +21,6 @@
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
 	import { getToastStore, type ToastStore } from '@skeletonlabs/skeleton';
 	import { getContext } from 'svelte';
-	import type { Indicator } from '$lib/indicator';
 	import type { Writable } from 'svelte/store';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import type {
@@ -49,7 +48,6 @@
 	let weightTrackerMonth: Array<WeightTracker> = $state(dashboardData.weightMonthList);
 
 	const toastStore: ToastStore = getToastStore();
-	const indicator: Writable<Indicator> = getContext('indicator');
 	const user: Writable<LibreUser> = getContext('user');
 
 	user.set(dashboardData.userData);
@@ -63,12 +61,7 @@
 		const amountMessage = validateAmount(amount);
 
 		if (!amountMessage) {
-			$indicator = $indicator.start();
-
-			await promise
-				.then(callback)
-				.catch((e) => showToastError(toastStore, e))
-				.finally(() => ($indicator = $indicator.finish()));
+			await promise.then(callback).catch((e) => showToastError(toastStore, e));
 		} else {
 			showToastWarning(toastStore, amountMessage);
 		}

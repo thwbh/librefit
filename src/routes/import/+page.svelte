@@ -1,19 +1,14 @@
 <script lang="ts">
-	import { preventDefault } from 'svelte/legacy';
-
 	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
 	import { getFieldError } from '$lib/validation';
-	import { showToastError, showToastSuccess } from '$lib/toast';
 	import { FileDropzone, getToastStore, RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 	import FileUpload from '$lib/assets/icons/file-upload.svg?component';
 	import { getContext } from 'svelte';
-	import type { Indicator } from '$lib/indicator';
 	import type { LibreUser } from '$lib/model';
 	import type { Writable } from 'svelte/store';
 	import type { RadioInputChoice } from '$lib/types';
 
 	const toastStore = getToastStore();
-	const indicator: Writable<Indicator> = getContext('indicator');
 	const user: Writable<LibreUser> = getContext('user');
 
 	const radioOptions: Array<RadioInputChoice> = [
@@ -33,9 +28,6 @@
 		status = undefined;
 
 		//const formData = new FormData(event.currentTarget);
-
-		$indicator = $indicator.reset();
-		$indicator = $indicator.start();
 		//
 		//await startImport(formData)
 		//	.then(async (response) => {

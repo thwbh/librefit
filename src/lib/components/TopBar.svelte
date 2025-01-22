@@ -1,14 +1,7 @@
 <script lang="ts">
-	import type { Indicator } from '$lib/indicator';
 	import type { LibreUser } from '$lib/model';
-	import { AppBar, Avatar, getDrawerStore, ProgressBar } from '@skeletonlabs/skeleton';
+	import { AppBar, Avatar, getDrawerStore } from '@skeletonlabs/skeleton';
 	import { getContext } from 'svelte';
-
-	interface Props {
-		indicator: Indicator;
-	}
-
-	let { indicator }: Props = $props();
 
 	const drawerStore = getDrawerStore();
 	const user: LibreUser = getContext('user');
@@ -20,14 +13,6 @@
 	};
 </script>
 
-<ProgressBar
-	class={indicator.invisible}
-	height="h-1"
-	rounded="rounded-none"
-	value={indicator.progress}
-	meter={indicator.meter}
-	track={indicator.track}
-/>
 <AppBar shadow="drop-shadow">
 	{#snippet lead()}
 		<a href="/" class="h1 text-2xl">

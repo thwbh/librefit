@@ -1,34 +1,28 @@
 <script lang="ts">
-	import { run, preventDefault } from 'svelte/legacy';
-
 	import { getContext } from 'svelte';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { Avatar, getModalStore, getToastStore } from '@skeletonlabs/skeleton';
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
 	import type { Writable } from 'svelte/store';
 	import type { LibreUser } from '$lib/model';
-	import type { Indicator } from '$lib/indicator';
-	import { updateProfile } from '$lib/api/user';
-	import UserProfileComponent from '$lib/components/UserProfileComponent.svelte';
+	import { getProfile, updateProfile } from '$lib/api/user';
+
+	const modalStore = getModalStore();
 
 	const user: Writable<LibreUser> = getContext('user');
-	run(() => {
-		user;
-	});
-
-	const indicator: Writable<Indicator> = getContext('indicator');
-
 	const toastStore = getToastStore();
 
-	let btnSubmit: HTMLButtonElement;
+	let avatarInput: HTMLInputElement;
 
-	const onUpdateProfile = async (_: any) => {
-		$indicator = $indicator.start(btnSubmit);
+	let promise = getProfile();
 
-		await updateProfile($user)
+	const updateUserData = async (userData: LibreUser) => {
+		await updateProfile(userData)
 			.then(async (response) => {
 				showToastSuccess(toastStore, 'Successfully updated profile.');
 
 				user.set(response);
+
+				promise = new Promise((resolve) => resolve(userData));
 			})
 			.catch((error) => {
 				console.log(error);
@@ -38,8 +32,24 @@
 				} else {
 					showToastError(toastStore, error);
 				}
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+			});
+	};
+
+	const showAvatarPickerModal = (avatar: string) => {
+		modalStore.trigger({
+			type: 'component',
+			component: 'avatarModal',
+			meta: {
+				avatar
+			},
+			response: (e) => {
+				if (e && !e.cancelled) {
+					avatarInput.value = e.avatar;
+				}
+
+				modalStore.close();
+			}
+		});
 	};
 </script>
 
@@ -52,12 +62,48 @@
 		<h1 class="h1">Profile</h1>
 		<p>Change your user settings.</p>
 
-		<UserProfileComponent user={$user} />
+		{#await promise then userData}
+			<div class="variant-ringed p-4 space-y-4 rounded-container-token">
+				<label class="label">
+					<span>Nickname</span>
+					<input
+						bind:value={userData.name}
+						name="username"
+						class="input"
+						type="text"
+						placeholder="Enter Nickname"
+					/>
+				</label>
 
-		<div class="flex justify-between">
-			<button onclick={preventDefault(onUpdateProfile)} class="btn variant-filled-primary"
-				>Update</button
-			>
-		</div>
+				<div class="flex flex-col gap-4">
+					<span>Avatar</span>
+
+					<div class="flex flex-row gap-4">
+						<div>
+							<Avatar src={userData.avatar} initials="LU" />
+						</div>
+
+						<div class="justify-center self-center">
+							<button
+								onclick={() => showAvatarPickerModal(userData.avatar)}
+								class="btn variant-filled-secondary">Change</button
+							>
+						</div>
+						<input
+							bind:this={avatarInput}
+							bind:value={userData.avatar}
+							name="avatar"
+							type="text"
+							style="visibility:hidden"
+						/>
+					</div>
+				</div>
+				<div class="flex justify-between">
+					<button onclick={() => updateUserData(userData)} class="btn variant-filled-primary"
+						>Update</button
+					>
+				</div>
+			</div>
+		{/await}
 	</div>
 </section>

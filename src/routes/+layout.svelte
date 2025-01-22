@@ -14,7 +14,6 @@
 	import { onMount, setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 	import AvatarModal from '$lib/components/modal/AvatarModal.svelte';
-	import { Indicator } from '$lib/indicator';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import CalorieTrackerModal from '$lib/components/modal/CalorieTrackerModal.svelte';
 	import type { Writable } from 'svelte/store';
@@ -45,36 +44,16 @@
 	};
 
 	const user = writable();
-	const indicator: Writable<Indicator> = writable();
 	const weightTarget = writable();
 	const calorieTarget = writable();
 	const lastWeight = writable();
 	const foodCategories = writable();
 
-	indicator.set(new Indicator());
-
 	setContext('user', user);
-	setContext('indicator', indicator);
 	setContext('weightTarget', weightTarget);
 	setContext('calorieTarget', calorieTarget);
 	setContext('lastWeight', lastWeight);
 	setContext('foodCategories', foodCategories);
-
-	const logout = () => {
-		user.set(null);
-	};
-
-	beforeNavigate(() => {
-		$indicator = $indicator.start();
-	});
-
-	afterNavigate(() => {
-		$indicator = $indicator.finish();
-
-		setTimeout(() => {
-			$indicator = $indicator.hide();
-		}, 1000);
-	});
 
 	//observeToggle(document.documentElement, (document) => {
 	//	if (document.classList.contains('dark')) {
@@ -88,13 +67,13 @@
 <Toast position={'tr'} />
 <Modal components={modalComponentRegistry} />
 <Drawer position={'right'}>
-	<UserPanel on:logout={logout} />
+	<UserPanel />
 </Drawer>
 
 <AppShell>
 	{#snippet header()}
 		{#if $user}
-			<TopBar indicator={$indicator} />
+			<TopBar />
 		{/if}
 	{/snippet}
 	<!-- Router Slot -->
