@@ -64,7 +64,17 @@ pub fn get_calorie_tracker_dates_in_range(
 ) -> Result<Vec<String>, String> {
     let conn = &mut create_db_connection();
 
-    calories::find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str)
-        .map(|trackers| trackers.into_iter().map(|tracker| tracker.added).collect())
-        .map_err(handle_error)
+    return match calories::find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str) {
+        Ok(result) => {
+            let mut vec = result
+                .into_iter()
+                .map(|tracker| tracker.added)
+                .collect::<Vec<String>>();
+
+            vec.dedup();
+
+            return Ok(vec);
+        }
+        Err(error) => Err(handle_error(error)),
+    };
 }
