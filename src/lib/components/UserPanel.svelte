@@ -41,7 +41,7 @@
 		</div>
 
 		<div>
-			<LightSwitch />
+			<!--			<LightSwitch /> -->
 		</div>
 	</div>
 

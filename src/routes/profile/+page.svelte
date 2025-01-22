@@ -35,16 +35,16 @@
 			});
 	};
 
-	const showAvatarPickerModal = (avatar: string) => {
+	const showAvatarPickerModal = (userData: LibreUser) => {
 		modalStore.trigger({
 			type: 'component',
 			component: 'avatarModal',
 			meta: {
-				avatar
+				avatar: userData.avatar
 			},
 			response: (e) => {
 				if (e && !e.cancelled) {
-					avatarInput.value = e.avatar;
+					userData.avatar = e.avatar;
 				}
 
 				modalStore.close();
@@ -80,12 +80,12 @@
 
 					<div class="flex flex-row gap-4">
 						<div>
-							<Avatar src={userData.avatar} initials="LU" />
+							<Avatar bind:src={userData.avatar} initials="LU" />
 						</div>
 
 						<div class="justify-center self-center">
 							<button
-								onclick={() => showAvatarPickerModal(userData.avatar)}
+								onclick={() => showAvatarPickerModal(userData)}
 								class="btn variant-filled-secondary">Change</button
 							>
 						</div>

@@ -14,9 +14,8 @@
 	import { onMount, setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 	import AvatarModal from '$lib/components/modal/AvatarModal.svelte';
-	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import CalorieTrackerModal from '$lib/components/modal/CalorieTrackerModal.svelte';
-	import type { Writable } from 'svelte/store';
+
 	interface Props {
 		children?: import('svelte').Snippet;
 	}

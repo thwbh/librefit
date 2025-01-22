@@ -41,7 +41,6 @@
 	let { dashboardData }: Props = $props();
 
 	let calorieTrackerToday: Array<CalorieTracker> = $state(dashboardData.caloriesTodayList);
-
 	let calorieTrackerWeek: Array<CalorieTracker> = $state(dashboardData.caloriesWeekList);
 
 	let weightTrackerToday: Array<WeightTracker> = $state(dashboardData.weightTodayList);
