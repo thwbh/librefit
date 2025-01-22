@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckboxEventTarget, type ValidatedInputChangeEvent } from '$lib/event';
+	import { CheckboxEventTarget } from '$lib/event';
 	import type { ValidationMessage } from '$lib/model';
 	import type { ChangeEventHandler } from 'svelte/elements';
 

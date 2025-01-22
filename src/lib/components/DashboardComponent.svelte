@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getDaytimeGreeting } from '$lib/date';
+	import { getDateAsStr, getDaytimeGreeting } from '$lib/date';
 	import { DataViews } from '$lib/enum';
 	import { paintWeightTracker } from '$lib/weight-chart';
 	import CalorieDistribution from './CalorieDistribution.svelte';
@@ -13,6 +13,8 @@
 		addWeight,
 		deleteCalories,
 		deleteWeight,
+		listCalorieTrackerRange,
+		listWeightRange,
 		updateCalories,
 		updateWeight
 	} from '$lib/api/tracker';
@@ -31,6 +33,7 @@
 		WeightTracker
 	} from '$lib/model';
 	import LineChartComponent from './chart/LineChartComponent.svelte';
+	import { subDays, subWeeks } from 'date-fns';
 
 	interface Props {
 		dashboardData: Dashboard;
@@ -38,9 +41,12 @@
 
 	let { dashboardData }: Props = $props();
 
-	let weightChart = $derived(
-		paintWeightTracker(dashboardData.weightMonthList, new Date(), DataViews.Month)
-	);
+	let calorieTrackerToday: Array<CalorieTracker> = $state(dashboardData.caloriesTodayList);
+
+	let calorieTrackerWeek: Array<CalorieTracker> = $state(dashboardData.caloriesWeekList);
+
+	let weightTrackerToday: Array<WeightTracker> = $state(dashboardData.weightTodayList);
+	let weightTrackerMonth: Array<WeightTracker> = $state(dashboardData.weightMonthList);
 
 	const toastStore: ToastStore = getToastStore();
 	const indicator: Writable<Indicator> = getContext('indicator');
@@ -70,15 +76,31 @@
 		trackerCallback();
 	};
 
+	const updateCalorieTracker = async (tracker: Array<CalorieTracker>) => {
+		const today = new Date();
+
+		calorieTrackerToday = tracker;
+		calorieTrackerWeek = await listCalorieTrackerRange(subDays(today, 6), today);
+	};
+
+	const updateWeightTracker = async (tracker: Array<WeightTracker>) => {
+		const today = new Date();
+
+		weightTrackerToday = tracker;
+		weightTrackerMonth = await listWeightRange(subWeeks(today, 4), today);
+	};
+
 	const onAddCalories = async (calories: NewCalorieTracker, callback: () => void) => {
 		await handleRequest(
 			calories.amount,
 			addCalories(calories),
-			(_) => {
+			async (response: Array<CalorieTracker>) => {
 				showToastSuccess(
 					toastStore,
 					`Successfully added ${getFoodCategoryLongvalue(dashboardData.foodCategories, calories.category)}.`
 				);
+
+				updateCalorieTracker(response);
 			},
 			callback
 		);
@@ -88,11 +110,13 @@
 		await handleRequest(
 			calories.amount,
 			updateCalories(calories),
-			(_) => {
+			async (response: Array<CalorieTracker>) => {
 				showToastSuccess(
 					toastStore,
 					`Successfully updated ${getFoodCategoryLongvalue(dashboardData.foodCategories, calories.category)}.`
 				);
+
+				updateCalorieTracker(response);
 			},
 			callback
 		);
@@ -102,8 +126,10 @@
 		await handleRequest(
 			calories.amount,
 			deleteCalories(calories),
-			(_) => {
+			async (response: Array<CalorieTracker>) => {
 				showToastSuccess(toastStore, `Deletion successful.`);
+
+				updateCalorieTracker(response);
 			},
 			callback
 		);
@@ -113,8 +139,10 @@
 		await handleRequest(
 			weight.amount,
 			addWeight(weight),
-			(response: WeightTracker) => {
-				showToastSuccess(toastStore, `Set weight to ${response.amount}kg.`);
+			async (response: Array<WeightTracker>) => {
+				showToastSuccess(toastStore, `Set weight to ${response[0].amount}kg.`);
+
+				updateWeightTracker(response);
 			},
 			callback
 		);
@@ -124,8 +152,10 @@
 		await handleRequest(
 			weight.amount,
 			updateWeight(weight),
-			(_) => {
+			async (response: Array<WeightTracker>) => {
 				showToastSuccess(toastStore, 'Successfully updated weight.');
+
+				updateWeightTracker(response);
 			},
 			callback
 		);
@@ -135,8 +165,10 @@
 		await handleRequest(
 			weight.amount,
 			deleteWeight(weight),
-			(_) => {
+			async (response: Array<WeightTracker>) => {
 				showToastSuccess(toastStore, `Deletion successful.`);
+
+				updateWeightTracker(response);
 			},
 			callback
 		);
@@ -149,10 +181,11 @@
 		{dashboardData.userData.name}!
 	</h1>
 	<p>This is your daily summary.</p>
+
 	<div class="flex flex-col gap-8 lg:grid grid-cols-3">
 		<div class="card flex flex-col gap-4 p-4">
 			<CalorieTrackerComponent
-				calorieTracker={dashboardData.caloriesTodayList}
+				calorieTracker={calorieTrackerToday}
 				categories={dashboardData.foodCategories}
 				calorieTarget={dashboardData.calorieTarget}
 				{onAddCalories}
@@ -165,7 +198,7 @@
 			<CalorieDistribution
 				displayClass="flex flex-col"
 				foodCategories={dashboardData.foodCategories}
-				calorieTracker={dashboardData.caloriesWeekList}
+				calorieTracker={calorieTrackerWeek}
 				calorieTarget={dashboardData.calorieTarget}
 			/>
 		</div>
@@ -173,7 +206,7 @@
 		<div class="card p-4">
 			<CalorieQuickview
 				displayClass="flex flex-col"
-				calorieTracker={dashboardData.caloriesWeekList}
+				calorieTracker={calorieTrackerWeek}
 				calorieTarget={dashboardData.calorieTarget}
 			/>
 		</div>
@@ -184,7 +217,8 @@
 			class="flex flex-col gap-4 card p-4 object-fill justify-center items-center relative md:w-full"
 		>
 			<h2 class="h3">Weight Tracker</h2>
-			{#if weightChart && dashboardData.weightMonthList.length > 0}
+			{#if weightTrackerMonth.length > 0}
+				{@const weightChart = paintWeightTracker(weightTrackerMonth, new Date(), DataViews.Month)}
 				<LineChartComponent data={weightChart.data} options={weightChart.options} />
 			{:else}
 				<div>
@@ -192,7 +226,7 @@
 				</div>
 			{/if}
 			<WeightTrackerComponent
-				weightList={dashboardData.weightTodayList}
+				weightList={weightTrackerToday}
 				weightTarget={dashboardData.weightTarget}
 				{onAddWeight}
 				{onUpdateWeight}

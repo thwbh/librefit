@@ -3,7 +3,7 @@
 	import { subDays } from 'date-fns';
 
 	interface Props {
-		onFilterChanged: (from: string, to: string) => void;
+		onFilterChanged: (from: Date, to: Date) => void;
 	}
 
 	let { onFilterChanged }: Props = $props();
@@ -14,6 +14,7 @@
 	let fromDateStr = $state(getDateAsStr(subDays(today, 6)));
 
 	let filterSelection = $state('w');
+
 	const filterOptions = [
 		{ value: 'w', label: 'last 7 days' },
 		{ value: 'm', label: 'last 31 days' },
@@ -30,7 +31,7 @@
 		}
 
 		if (filterSelection !== 'c') {
-			onFilterChanged(fromDateStr, toDateStr);
+			onFilterChanged(parseStringAsDate(fromDateStr), parseStringAsDate(toDateStr));
 		}
 	};
 
@@ -40,9 +41,9 @@
 
 		// can't swap without triggering another change event
 		if (fromDate > toDate) {
-			onFilterChanged(toDateStr, fromDateStr);
+			onFilterChanged(toDate, fromDate);
 		} else {
-			onFilterChanged(fromDateStr, toDateStr);
+			onFilterChanged(fromDate, toDate);
 		}
 	};
 </script>

@@ -118,11 +118,13 @@
 		);
 	};
 
-	const loadEntries = async (added: string) => {
+	const loadEntries = async (date: Date) => {
+		const added = getDateAsStr(date);
+
 		if (!datesToEntries[added]) {
 			$indicator = $indicator.start();
 
-			await listCaloriesForDate(added)
+			await listCaloriesForDate(date)
 				.then((response) => {
 					datesToEntries[added] = response;
 				})
@@ -133,11 +135,11 @@
 		}
 	};
 
-	const onFilterChanged = async (fromDateStr: string, toDateStr: string) => {
-		if (fromDateStr && toDateStr) {
+	const onFilterChanged = async (fromDate: Date, toDate: Date) => {
+		if (fromDate && toDate) {
 			$indicator = $indicator.start();
 
-			await listCalorieTrackerDatesRange(fromDateStr, toDateStr)
+			await listCalorieTrackerDatesRange(fromDate, toDate)
 				.then((response) => {
 					availableDates = response;
 					paginationSettings.size = availableDates.length;

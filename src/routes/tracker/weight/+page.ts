@@ -1,12 +1,11 @@
 import { subDays } from 'date-fns';
 import { listWeightRange } from '$lib/api/tracker';
-import { getDateAsStr } from '$lib/date';
 
 export const load = async () => {
-	const today = new Date();
-	const fromDate = subDays(today, 6);
+  const today = new Date();
+  const fromDate = subDays(today, 6);
 
-	return {
-		weightWeekList: await listWeightRange(getDateAsStr(fromDate), getDateAsStr(today))
-	};
+  return {
+    weightWeekList: await listWeightRange(fromDate, today)
+  };
 };

@@ -7,8 +7,6 @@
 	import { FileDropzone, getToastStore, RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 	import FileUpload from '$lib/assets/icons/file-upload.svg?component';
 	import { getContext } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { startImport } from '$lib/api/importer';
 	import type { Indicator } from '$lib/indicator';
 	import type { LibreUser } from '$lib/model';
 	import type { Writable } from 'svelte/store';
@@ -31,23 +29,23 @@
 
 	let overwriteDuplicates: boolean = $state(false);
 
-	const handleImport = async (event) => {
+	const handleImport = async () => {
 		status = undefined;
 
-		const formData = new FormData(event.currentTarget);
+		//const formData = new FormData(event.currentTarget);
 
 		$indicator = $indicator.reset();
 		$indicator = $indicator.start();
-
-		await startImport(formData)
-			.then(async (response) => {
-				showToastSuccess(toastStore, 'Import successful.');
-			})
-			.catch((error) => {
-				showToastError(toastStore, error);
-				status = error.data;
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+		//
+		//await startImport(formData)
+		//	.then(async (response) => {
+		//		showToastSuccess(toastStore, 'Import successful.');
+		//	})
+		//	.catch((error) => {
+		//		showToastError(toastStore, error);
+		//		status = error.data;
+		//	})
+		//	.finally(() => ($indicator = $indicator.finish()));
 	};
 </script>
 
@@ -64,7 +62,7 @@
 			class="variant-ringed p-4 space-y-4 rounded-container-token"
 			method="POST"
 			enctype="multipart/form-data"
-			onsubmit={preventDefault(handleImport)}
+			onsubmit={() => handleImport()}
 		>
 			<ValidatedInput
 				name="datePattern"

@@ -1,14 +1,11 @@
-import { getDateAsStr } from '$lib/date';
 import { listWeightRange } from '$lib/api/tracker';
+import { subWeeks } from 'date-fns';
 
 export const load = async () => {
-	const today = new Date();
-	const fromDate = new Date();
-	fromDate.setMonth(fromDate.getMonth() - 1);
+  const today = new Date();
+  const listWeightResponse = await listWeightRange(subWeeks(today, 4), today);
 
-	const listWeightResponse = await listWeightRange(getDateAsStr(fromDate), getDateAsStr(today));
-
-	return {
-		entries: listWeightResponse
-	};
+  return {
+    entries: listWeightResponse
+  };
 };
