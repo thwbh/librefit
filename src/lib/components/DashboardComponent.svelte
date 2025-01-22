@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getDateAsStr, getDaytimeGreeting } from '$lib/date';
+	import { getDaytimeGreeting } from '$lib/date';
 	import { DataViews } from '$lib/enum';
 	import { paintWeightTracker } from '$lib/weight-chart';
 	import CalorieDistribution from './CalorieDistribution.svelte';
@@ -140,7 +140,7 @@
 			weight.amount,
 			addWeight(weight),
 			async (response: Array<WeightTracker>) => {
-				showToastSuccess(toastStore, `Set weight to ${response[0].amount}kg.`);
+				showToastSuccess(toastStore, `Set weight to ${response[response.length - 1].amount}kg.`);
 
 				updateWeightTracker(response);
 			},
