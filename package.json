@@ -11,7 +11,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check ./src && eslint ./src",
-    "lint:fix": "prettier --check ./src && eslint ./src --fix",
+		"lint:fix": "prettier --check ./src && eslint ./src --fix",
 		"prettier": "prettier --write ./src",
 		"tauri": "tauri"
 	},
