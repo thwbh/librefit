@@ -39,8 +39,8 @@ describe('paintCalorieTrackerQuickview', () => {
     document.documentElement.classList.remove('dark');
 
     let quickview = paintCalorieTrackerQuickview([entry1, entry2, entry3], goal);
-    let lineChart = quickview.chartData.datasets[0];
-    let barChart = quickview.chartData.datasets[1];
+    let lineChart = quickview.data.datasets[0];
+    let barChart = quickview.data.datasets[1];
 
     expect(lineChart.borderColor).toEqual('rgb(255, 255, 255)');
 
@@ -54,8 +54,8 @@ describe('paintCalorieTrackerQuickview', () => {
     document.documentElement.classList.add('dark');
 
     quickview = paintCalorieTrackerQuickview([entry1, entry2, entry3], goal);
-    lineChart = quickview.chartData.datasets[0];
-    barChart = quickview.chartData.datasets[1];
+    lineChart = quickview.data.datasets[0];
+    barChart = quickview.data.datasets[1];
 
     expect(lineChart.borderColor).toEqual('rgb(128, 128, 128)');
 
@@ -78,7 +78,7 @@ describe('paintCalorieTrackerQuickview', () => {
     expect(result).toHaveProperty('chartOptions.aspectRatio');
 
     // Further assertions can be made on the length and type of properties
-    expect(Array.isArray(result.chartData.labels)).toBeTruthy();
-    expect(Array.isArray(result.chartData.datasets)).toBeTruthy();
+    expect(Array.isArray(result.data.labels)).toBeTruthy();
+    expect(Array.isArray(result.data.datasets)).toBeTruthy();
   });
 });

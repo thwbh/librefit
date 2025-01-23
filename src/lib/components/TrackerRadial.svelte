@@ -1,26 +1,23 @@
 <script lang="ts">
 	import type { CalorieTarget } from '$lib/model';
 
-	export let calorieTarget: CalorieTarget;
-	export let entries: Array<number>;
+	interface Props {
+		calorieTarget: CalorieTarget;
+		entries: Array<number>;
+	}
 
-	let limit = calorieTarget && calorieTarget.targetCalories ? calorieTarget.targetCalories : 0,
-		maximum = calorieTarget && calorieTarget.maximumCalories ? calorieTarget.maximumCalories : 0,
-		total = 0;
+	let { calorieTarget, entries }: Props = $props();
+
+	let limit = $state(
+			calorieTarget && calorieTarget.targetCalories ? calorieTarget.targetCalories : 0
+		),
+		maximum = $state(
+			calorieTarget && calorieTarget.maximumCalories ? calorieTarget.maximumCalories : 0
+		),
+		total = $state(0);
 
 	let width = 512,
 		height = 512;
-
-	$: if (entries && entries.length > 0) {
-		total = entries.reduce((a, b) => a + b);
-	}
-
-	$: if (calorieTarget) {
-		limit = calorieTarget.targetCalories;
-		maximum = calorieTarget.maximumCalories;
-	}
-
-	let innerEnd: number, outerEnd: number;
 
 	const stroke = 40;
 
@@ -53,17 +50,27 @@
 		}
 	};
 
-	$: strokeClass =
+	let strokeClass = $derived(
 		total <= limit
 			? 'stroke-primary-500'
 			: total > limit && total <= maximum
 				? 'stroke-overflow-1'
-				: 'stroke-overflow-2';
+				: 'stroke-overflow-2'
+	);
 
-	$: outerEnd = calculateEnd(total, limit);
-	$: innerEnd = calculateEnd(total, maximum);
+	let innerEnd: number = $derived(calculateEnd(total, maximum)),
+		outerEnd: number = $derived(calculateEnd(total, limit));
 
-	$: calculateEnd;
+	$effect(() => {
+		if (entries && entries.length > 0) {
+			total = entries.reduce((a, b) => a + b);
+		}
+
+		if (calorieTarget) {
+			limit = calorieTarget.targetCalories;
+			maximum = calorieTarget.maximumCalories;
+		}
+	});
 </script>
 
 <figure class="progress-radial relative overflow-hidden w-64" data-testid="progress-radial">

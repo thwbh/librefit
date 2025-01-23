@@ -2,8 +2,12 @@
 	import { BmiCategory, type WizardInput, type WizardResult } from '$lib/model';
 	import { getBmiCategoryDisplayValue } from '$lib/enum';
 
-	export let calculationResult: WizardResult;
-	export let calculationInput: WizardInput;
+	interface Props {
+		calculationResult: WizardResult;
+		calculationInput: WizardInput;
+	}
+
+	let { calculationResult, calculationInput }: Props = $props();
 </script>
 
 <h2 class="h2">Your result</h2>

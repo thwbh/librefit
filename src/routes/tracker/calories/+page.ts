@@ -1,11 +1,10 @@
 import { subDays } from 'date-fns';
 import { listCalorieTrackerDatesRange, listCalorieTrackerRange } from '$lib/api/tracker';
-import { getDateAsStr } from '$lib/date';
 import type { CalorieTracker } from '$lib/model';
 
-export const load = async ({ fetch }) => {
-	const today = getDateAsStr(new Date());
-	const fromDate = getDateAsStr(subDays(new Date(), 6));
+export const load = async () => {
+	const today = new Date();
+	const fromDate = subDays(today, 6);
 
 	const trackedDaysWeek: Array<CalorieTracker> = await listCalorieTrackerDatesRange(
 		fromDate,

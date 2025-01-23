@@ -1,66 +1,85 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { getDaytimeFoodCategory } from '$lib/date';
 	import TrackerButtons from './TrackerButtons.svelte';
 	import type { FoodCategory } from '$lib/model';
+	import type { TrackerInputDetails, TrackerInputEvent, TrackerButtonEvent } from '$lib/event';
 
-	export let value: any = undefined;
-	export let dateStr: string;
-	export let id: number | undefined = undefined;
-	export let existing = false;
-	export let disabled = false;
-	export let compact = false;
+	interface Props {
+		value?: any;
+		dateStr: string;
+		id?: number | undefined;
+		existing?: boolean;
+		disabled?: boolean;
+		compact?: boolean;
+		categories?: Array<FoodCategory> | undefined;
+		category?: string;
+		unit: string;
+		maxWidthCss?: string;
+		placeholder?: string;
+		onAdd?: (input: TrackerInputEvent<any>) => void;
+		onUpdate?: (input: TrackerInputEvent<any>) => void;
+		onDelete?: (input: TrackerInputEvent<any>) => void;
+	}
 
-	export let categories: Array<FoodCategory> | undefined = undefined;
+	let {
+		value = $bindable(),
+		dateStr,
+		id = undefined,
+		existing = false,
+		disabled = $bindable(false),
+		compact = false,
+		categories = undefined,
+		category = $bindable(
+			categories
+				? categories.filter((c) => c.shortvalue === getDaytimeFoodCategory(new Date()))[0]
+						.shortvalue
+				: undefined
+		),
+		unit,
+		maxWidthCss = '',
+		placeholder = 'Amount...',
+		onAdd,
+		onUpdate,
+		onDelete
+	}: Props = $props();
 
-	export let category: string = categories
-		? categories.filter((c) => c.shortvalue === getDaytimeFoodCategory(new Date()))[0].shortvalue
-		: undefined;
+	let previous: any = $state();
+	let changeAction = $state();
 
-	export let unit: string;
-
-	export let maxWidthCss = '';
-	export let placeholder = 'Amount...';
-
-	const dispatch = createEventDispatcher();
-
-	let previous: any;
-	let changeAction;
-
-	const add = (e) => {
-		dispatch('add', {
+	const addCallback = (buttonEvent: TrackerButtonEvent) => {
+		const details: TrackerInputDetails = {
 			id: id,
-			dateStr: dateStr,
-			value: value,
-			category: category,
-			callback: () => {
-				e.detail.callback();
-			}
-		});
+			added: dateStr,
+			amount: value,
+			category: category
+		};
+
+		onAdd({ details, buttonEvent });
 	};
 
-	const update = (e) => {
-		e.preventDefault();
-
+	const updateCallback = (buttonEvent: TrackerButtonEvent) => {
 		if (value !== previous.value || category !== previous.category) {
-			dispatch('update', {
-				id: id,
-				dateStr: dateStr,
-				value: value,
-				category: category,
-				callback: () => e.detail.callback()
+			onUpdate({
+				details: {
+					id: id,
+					added: dateStr,
+					amount: value,
+					category: category
+				},
+
+				buttonEvent
 			});
 		}
 	};
 
-	const remove = (e) => {
-		e.preventDefault();
+	const deleteCallback = (buttonEvent: TrackerButtonEvent) => {
+		onDelete({
+			details: {
+				id: id,
+				added: dateStr
+			},
 
-		dispatch('remove', {
-			id: id,
-			dateStr: dateStr,
-			target: e.target,
-			callback: () => e.detail.callback()
+			buttonEvent
 		});
 	};
 </script>
@@ -89,9 +108,9 @@
 			<TrackerButtons
 				{unit}
 				{existing}
-				on:add={add}
-				on:update={update}
-				on:remove={remove}
+				onAdd={addCallback}
+				onUpdate={updateCallback}
+				onDelete={deleteCallback}
 				bind:previous
 				bind:changeAction
 				bind:disabled
@@ -104,9 +123,9 @@
 		<TrackerButtons
 			{unit}
 			{existing}
-			on:add={add}
-			on:update={update}
-			on:remove={remove}
+			onAdd={addCallback}
+			onUpdate={updateCallback}
+			onDelete={deleteCallback}
 			bind:previous
 			bind:changeAction
 			bind:disabled

@@ -9,24 +9,27 @@
 		type WizardTargetDateResult,
 		type WizardTargetWeightResult
 	} from '$lib/model';
-	import type {
-		WizardTargetSelection,
-		WizardTargetError,
-		WizardTargetSelectionEvent
-	} from '$lib/types';
+	import type { WizardTargetSelection, WizardTargetError } from '$lib/types';
 	import TargetComponent from '../TargetComponent.svelte';
 	import RadioInputComponent from '../RadioInputComponent.svelte';
-	import { createEventDispatcher } from 'svelte';
 	import Alert from '$lib/assets/icons/alert-circle-filled.svg?component';
+	import type { WizardTargetSelectionEvent } from '$lib/event';
 
-	export let wizardInput: WizardInput;
-	export let wizardResult: WizardResult;
+	interface Props {
+		wizardInput: WizardInput;
+		wizardResult: WizardResult;
+		chosenOption: WizardTargetSelection;
+		selectedRate?: any;
+		onTargetSelected: (event: WizardTargetSelectionEvent) => void;
+	}
 
-	export let chosenOption: WizardTargetSelection;
-
-	export let selectedRate = undefined;
-
-	const dispatch = createEventDispatcher();
+	let {
+		wizardInput,
+		wizardResult,
+		chosenOption,
+		selectedRate = $bindable(undefined),
+		onTargetSelected
+	}: Props = $props();
 
 	let errors: WizardTargetError;
 	let errorEndDate: ValidationMessage = { valid: true };
@@ -51,7 +54,7 @@
 			}
 		};
 
-		dispatch('targetChange', parameters);
+		onTargetSelected(parameters);
 	};
 
 	const extractAndSelectWeightRate = (wizardTargetResult: WizardTargetWeightResult) => {
@@ -117,8 +120,8 @@
 							flexDirection="flex-col"
 							bind:value={selectedRate}
 							{choices}
-							on:change={(changed) =>
-								onWeightRateSelection(changed.detail.selection, getDateAsStr(new Date()), endDate)}
+							onRadioSelected={(value) =>
+								onWeightRateSelection(value, getDateAsStr(new Date()), endDate)}
 						/>
 						<div class="flex flex-col flex-grow justify-between">
 							<TargetComponent
@@ -153,7 +156,8 @@
 			currentWeight: wizardInput.weight,
 			height: wizardInput.height,
 			calculationGoal: wizardInput.calculationGoal,
-			targetDate: chosenOption.customDetails
+			targetDate: chosenOption.customDetails,
+			startDate: getDateAsStr(new Date())
 		}}
 		{#await calculateForTargetDate(chosenOptionDateInput)}
 			<p>Calculating...</p>
@@ -182,7 +186,7 @@
 								flexDirection="flex-col"
 								bind:value={selectedRate}
 								{choices}
-								on:change={(changed) => (selectedRate = changed.detail.selection)}
+								onRadioSelected={(value) => (selectedRate = value)}
 							/>
 						</div>
 						<div class="flex flex-col flex-grow justify-between">

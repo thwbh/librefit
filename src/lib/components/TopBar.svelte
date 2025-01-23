@@ -1,40 +1,30 @@
-<script>
-	import { AppBar, Avatar, getDrawerStore, ProgressBar } from '@skeletonlabs/skeleton';
+<script lang="ts">
+	import type { LibreUser } from '$lib/model';
+	import { AppBar, Avatar, getDrawerStore } from '@skeletonlabs/skeleton';
 	import { getContext } from 'svelte';
+	import type { Writable } from 'svelte/store';
+
 	const drawerStore = getDrawerStore();
+	const user: Writable<LibreUser> = getContext('user');
 
-	const user = getContext('user');
-	$: user;
-
-	const indicator = getContext('indicator');
-	$: indicator;
-
-	export const showDrawer = (e) => {
+	export const showDrawer = () => {
 		drawerStore.open({
 			width: 'xl:w-1/3 md:w-3/5 w-full'
 		});
 	};
 </script>
 
-<ProgressBar
-	class={$indicator.invisible}
-	height="h-1"
-	rounded="rounded-none"
-	value={$indicator.progress}
-	meter={$indicator.meter}
-	track={$indicator.track}
-/>
 <AppBar shadow="drop-shadow">
-	<svelte:fragment slot="lead">
-		<a href="/dashboard" class="h1 text-2xl">
+	{#snippet lead()}
+		<a href="/" class="h1 text-2xl">
 			<span class="flex flex-row gap-1">
 				<span class="text-primary-500"> Libre </span>
 				<span class="text-secondary-500"> Fit </span>
 			</span>
 		</a>
-	</svelte:fragment>
-	<svelte:fragment slot="trail">
-		<button on:click={showDrawer}>
+	{/snippet}
+	{#snippet trail()}
+		<button onclick={() => showDrawer()}>
 			<Avatar
 				src={$user.avatar}
 				initials="LU"
@@ -43,5 +33,5 @@
 				cursor="cursor-pointer"
 			/>
 		</button>
-	</svelte:fragment>
+	{/snippet}
 </AppBar>

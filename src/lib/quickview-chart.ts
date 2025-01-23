@@ -1,23 +1,24 @@
 import { display_date_format_day, getDateAsStr, parseStringAsDate } from '$lib/date';
 import type { CalorieTarget, CalorieTracker } from '$lib/model';
-import type { ChartData, ChartOptions } from 'chart.js';
+import type { ChartData } from 'chart.js';
+import type { ChartProps } from './props';
 
 const createCalorieTrackerQuickviewDataset = (
 	calories: Array<CalorieTracker>,
 	calorieTarget: CalorieTarget
-) => {
+): ChartData<'bar'> => {
 	const style = getComputedStyle(document.body);
 	const elemHtmlClasses = document.documentElement.classList;
 
-	let lineColor = style.getPropertyValue('--color-surface-500');
+	//let lineColor = style.getPropertyValue('--color-surface-500');
 	let borderColor = style.getPropertyValue('--color-surface-200');
-	let deficitColor = style.getPropertyValue('--color-primary-500');
-	let surplusColor = style.getPropertyValue('--color-warning-500');
-	let maximumColor = style.getPropertyValue('--color-error-500');
+	const deficitColor = style.getPropertyValue('--color-primary-500');
+	const surplusColor = style.getPropertyValue('--color-warning-500');
+	const maximumColor = style.getPropertyValue('--color-error-500');
 
 	if (elemHtmlClasses.contains('dark')) {
 		borderColor = style.getPropertyValue('--color-surface-500');
-		lineColor = style.getPropertyValue('--color-surface-200');
+		//lineColor = style.getPropertyValue('--color-surface-200');
 	}
 
 	const todayStr = getDateAsStr(new Date());
@@ -26,38 +27,43 @@ const createCalorieTrackerQuickviewDataset = (
 		return entry.added !== todayStr;
 	});
 
-	const sum = calories.reduce((acc, obj) => {
-		let key = obj.added;
-		if (!acc[key]) {
-			acc[key] = 0;
-		}
-		acc[key] += obj.amount;
-		return acc;
-	}, {});
+	const sumPerDate = new Map<string, number>();
 
-	const labels = [];
-	const data = [];
-	const lineData = [];
-	const colors = [];
-	const borderColors = [];
+	calories.forEach((tracker: CalorieTracker) => {
+		let sum = sumPerDate.get(tracker.added);
 
-	Object.keys(sum).forEach((dateStr) => {
-		let color;
+		if (!sum) sum = 0;
 
-		const total = sum[dateStr];
-		const date = parseStringAsDate(dateStr);
+		sum += tracker.amount;
 
-		if (total <= calorieTarget.targetCalories) {
+		sumPerDate.set(tracker.added, sum);
+	});
+
+	const labels: Array<string> = [];
+	const intakeData: Array<number> = [];
+	const targetData: Array<number> = [];
+
+	const colors: Array<string> = [];
+	const borderColors: Array<string> = [];
+
+	sumPerDate.forEach((value: number, key: string) => {
+		let color: string;
+
+		const date: Date = parseStringAsDate(key);
+
+		if (value <= calorieTarget.targetCalories) {
 			color = deficitColor;
-		} else if (total > calorieTarget.targetCalories && total <= calorieTarget.maximumCalories) {
+		} else if (value > calorieTarget.targetCalories && value <= calorieTarget.maximumCalories) {
 			color = surplusColor;
-		} else if (total > calorieTarget.maximumCalories) {
+		} else if (value > calorieTarget.maximumCalories) {
 			color = maximumColor;
 		}
 
 		labels.push(getDateAsStr(date, display_date_format_day));
-		data.push(total);
-		lineData.push(calorieTarget.targetCalories);
+
+		intakeData.push(value);
+		targetData.push(calorieTarget.targetCalories);
+
 		colors.push(`rgb(${color} / .7)`);
 		borderColors.push(`rgb(${borderColor})`);
 	});
@@ -65,20 +71,16 @@ const createCalorieTrackerQuickviewDataset = (
 	return {
 		labels: labels,
 		datasets: [
-			{
-				type: 'line',
-				label: 'Target (kcal)',
-				data: lineData,
-				borderColor: `rgb(${lineColor})`,
-				borderDash: [6],
-				pointRadius: 0,
-				pointHoverRadius: 10,
-				spanGaps: true
-			},
+			/*      {
+              type: 'line',
+              label: 'Target (kcal)',
+              data: targetData,
+              borderColor: `rgb(${lineColor})`,
+            }, */
 			{
 				type: 'bar',
 				label: 'Intake (kcal)',
-				data: data,
+				data: intakeData,
 				backgroundColor: colors,
 				borderColor: borderColors,
 				borderWidth: 2
@@ -90,7 +92,7 @@ const createCalorieTrackerQuickviewDataset = (
 export const paintCalorieTrackerQuickview = (
 	entries: Array<CalorieTracker>,
 	calorieTarget: CalorieTarget
-): BarChartConfig => {
+): ChartProps<'bar'> => {
 	const style = getComputedStyle(document.body);
 	const elemHtmlClasses = document.documentElement.classList;
 
@@ -108,11 +110,8 @@ export const paintCalorieTrackerQuickview = (
 
 	if (noNaN.length > 0) {
 		return {
-			chartData: {
-				labels: chartData.labels,
-				datasets: chartData.datasets
-			},
-			chartOptions: {
+			data: chartData,
+			options: {
 				indexAxis: 'y',
 				scales: {
 					y: {
@@ -134,10 +133,7 @@ export const paintCalorieTrackerQuickview = (
 				plugins: {
 					legend: {
 						display: false,
-						align: 'center',
-						label: {
-							color: `rgb(${labelTextColor})`
-						}
+						align: 'center'
 					}
 				}
 			}
@@ -145,12 +141,7 @@ export const paintCalorieTrackerQuickview = (
 	}
 
 	return {
-		chartData: undefined,
-		chartOptions: undefined
+		data: undefined,
+		options: undefined
 	};
 };
-
-export interface BarChartConfig {
-	chartData: ChartData<any>;
-	chartOptions: ChartOptions<any>;
-}

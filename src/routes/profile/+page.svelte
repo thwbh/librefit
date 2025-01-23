@@ -4,23 +4,20 @@
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
 	import type { Writable } from 'svelte/store';
 	import type { LibreUser } from '$lib/model';
-	import type { Indicator } from '$lib/indicator';
 	import { updateProfile } from '$lib/api/user';
 	import UserProfileComponent from '$lib/components/UserProfileComponent.svelte';
 
 	const user: Writable<LibreUser> = getContext('user');
-	$: user;
-
-	const indicator: Writable<Indicator> = getContext('indicator');
 
 	const toastStore = getToastStore();
+	const profileData = $user;
 
-	let btnSubmit: HTMLButtonElement;
+	const updateUserData = async (name: string, avatar: string) => {
+		const userData: LibreUser = $user;
+		$user.name = name;
+		$user.avatar = avatar;
 
-	const onUpdateProfile = async (_: any) => {
-		$indicator = $indicator.start(btnSubmit);
-
-		await updateProfile($user)
+		await updateProfile(userData)
 			.then(async (response) => {
 				showToastSuccess(toastStore, 'Successfully updated profile.');
 
@@ -34,8 +31,7 @@
 				} else {
 					showToastError(toastStore, error);
 				}
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+			});
 	};
 </script>
 
@@ -48,12 +44,10 @@
 		<h1 class="h1">Profile</h1>
 		<p>Change your user settings.</p>
 
-		<UserProfileComponent user={$user} />
-
-		<div class="flex justify-between">
-			<button on:click|preventDefault={onUpdateProfile} class="btn variant-filled-primary"
-				>Update</button
-			>
-		</div>
+		<UserProfileComponent
+			name={profileData.name}
+			avatar={profileData.avatar}
+			onUpdateProfile={updateUserData}
+		/>
 	</div>
 </section>

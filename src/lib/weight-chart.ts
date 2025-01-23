@@ -3,13 +3,14 @@ import { enGB } from 'date-fns/locale';
 import { DataViews } from './enum';
 import { getDateAsStr, parseStringAsDate } from './date';
 import type { WeightTracker } from './model';
+import type { ChartProps } from './props';
 
 export const createWeightChart = (view: DataViews, start: Date, entries: Array<WeightTracker>) => {
 	const legend = [];
 	const data = [];
 	const begin = 1;
 	let end: number | Date;
-	let displayFormat: String;
+	let displayFormat: string;
 	let duration: {
 		months?: number;
 		days?: number;
@@ -76,7 +77,7 @@ export const createWeightChart = (view: DataViews, start: Date, entries: Array<W
 	return { legend, data };
 };
 
-export const createWeightChartDataset = (weight: any) => {
+export const createWeightChartDataset = (weight: Array<number>) => {
 	const style = getComputedStyle(document.body);
 	const elemHtmlClasses = document.documentElement.classList;
 
@@ -102,13 +103,11 @@ export const createWeightChartDataset = (weight: any) => {
 	};
 };
 
-/**
- *
- * @param {Array<WeightTracker>} entries
- * @param {Date} date
- * @param {DataViews} filter
- */
-export const paintWeightTracker = (entries, date, filter) => {
+export const paintWeightTracker = (
+	entries: Array<WeightTracker>,
+	date: Date,
+	filter: DataViews
+): ChartProps<'line'> => {
 	const style = getComputedStyle(document.body);
 	const elemHtmlClasses = document.documentElement.classList;
 
@@ -129,11 +128,11 @@ export const paintWeightTracker = (entries, date, filter) => {
 		const dataset = createWeightChartDataset(chart.data);
 
 		return {
-			chartData: {
+			data: {
 				labels: chart.legend,
 				datasets: [dataset]
 			},
-			chartOptions: {
+			options: {
 				responsive: true,
 				scales: {
 					y: {
@@ -161,7 +160,10 @@ export const paintWeightTracker = (entries, date, filter) => {
 	}
 
 	return {
-		chartData: undefined,
-		chartOptions: undefined
+		data: {
+			labels: [],
+			datasets: []
+		},
+		options: undefined
 	};
 };

@@ -1,93 +1,27 @@
 <script lang="ts">
-	import Scale from '$lib/assets/icons/scale-outline.svg';
-	import { createEventDispatcher } from 'svelte';
-	import { getModalStore } from '@skeletonlabs/skeleton';
+	import Scale from '$lib/assets/icons/scale-outline.svg?component';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
-	import Target from '$lib/assets/icons/target-arrow.svg';
-	import type { WeightTarget, WeightTracker } from '$lib/model';
+	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/model';
+	import type { TrackerInputEvent } from '$lib/event';
+	import type { WeightTrackerCallback } from '$lib/api/tracker';
 
-	export let weightTarget: WeightTarget;
-	export let weightList: Array<WeightTracker>;
+	interface Props {
+		weightTarget: WeightTarget;
+		weightList: Array<WeightTracker>;
+		onAddWeight?: WeightTrackerCallback;
+		onUpdateWeight?: WeightTrackerCallback;
+		onDeleteWeight?: WeightTrackerCallback;
+	}
 
-	let weightQuickAdd: number;
-	let btnTarget: HTMLButtonElement;
+	let { weightTarget, weightList, onAddWeight }: Props = $props();
 
-	const modalStore = getModalStore();
-	const todayDateStr = getDateAsStr(new Date());
-	const dispatch = createEventDispatcher();
+	let weightQuickAdd: number = $state(undefined);
 
-	const addWeightQuickly = (e) => {
-		dispatch('addWeight', {
-			dateStr: todayDateStr,
-			value: e.detail.value,
-			callback: () => {
-				e.detail.callback();
-				weightQuickAdd = undefined;
-			}
-		});
-	};
+	const addWeightQuickly = (event: TrackerInputEvent<NewWeightTracker>) => {
+		const newWeight: NewWeightTracker = event.details;
 
-	const updateWeight = (e) => {
-		dispatch('updateWeight', {
-			id: e.detail.id,
-			dateStr: e.detail.dateStr,
-			value: e.detail.value,
-			target: e.detail.target,
-			callback: e.detail.callback
-		});
-	};
-
-	const deleteWeight = (e) => {
-		dispatch('deleteWeight', {
-			id: e.detail.id,
-			dateStr: e.detail.dateStr,
-			target: e.detail.target,
-			callback: e.detail.callback
-		});
-	};
-
-	const setTarget = (e) => {
-		dispatch('setTarget', {
-			weightTarget: e.weightTarget,
-			target: btnTarget
-		});
-	};
-
-	const onEdit = () => {
-		modalStore.trigger({
-			type: 'component',
-			component: 'weightModal',
-			meta: {
-				weightList: weightList
-			},
-			response: (e) => {
-				if (e) {
-					if (e.detail.type === 'update') updateWeight(e.detail);
-					else if (e.detail.type === 'remove') deleteWeight(e.detail);
-					if (e.detail.close) modalStore.close();
-				} else modalStore.close();
-			}
-		});
-	};
-
-	const onSetTarget = () => {
-		modalStore.trigger({
-			type: 'component',
-			component: 'targetModal',
-			meta: {
-				weightTarget: !weightTarget
-					? { initialWeight: !weightList ? undefined : weightList[0].amount }
-					: weightTarget
-			},
-			response: (e) => {
-				if (e && !e.cancelled) {
-					setTarget(e);
-				}
-
-				modalStore.close();
-			}
-		});
+		onAddWeight(newWeight, event.buttonEvent.callback);
 	};
 </script>
 
@@ -112,22 +46,19 @@
 		{:else}
 			<p>No target weight set.</p>
 		{/if}
-		<button class="btn-icon variant-filled w-8" bind:this={btnTarget} on:click={onSetTarget}>
-			<Target />
-		</button>
 	</div>
 
 	<div class="flex flex-col lg:w-1/3 w-full gap-4">
 		<TrackerInput
 			bind:value={weightQuickAdd}
-			on:add={addWeightQuickly}
+			onAdd={addWeightQuickly}
 			dateStr={getDateAsStr(new Date())}
 			compact={true}
 			unit={'kg'}
 		/>
 
 		{#if weightList && weightList.length > 0}
-			<button class="btn variant-filled grow" aria-label="edit weight" on:click={onEdit}>
+			<button class="btn variant-filled grow" aria-label="edit weight">
 				<span>
 					<Scale />
 				</span>

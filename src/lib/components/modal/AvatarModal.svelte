@@ -4,13 +4,13 @@
 
 	const modalStore = getModalStore();
 
-	let selected: string;
+	let selected: string = $state();
 
 	if ($modalStore[0] && $modalStore[0].meta) {
 		selected = $modalStore[0].meta.avatar;
 	}
 
-	const onSubmit = (_, unset?: boolean) => {
+	const onSubmit = (_: any, unset?: boolean) => {
 		if ($modalStore[0].response) {
 			$modalStore[0].response({
 				avatar: unset === true ? null : selected
@@ -32,19 +32,17 @@
 >
 	<header class="text-2xl font-bold">Choose avatar</header>
 
-	<AvatarPicker chosen={selected} on:chooseAvatar={(e) => (selected = e.detail.avatar)} />
+	<AvatarPicker chosen={selected} onAvatarSelected={(fileName: string) => (selected = fileName)} />
 
 	<footer class="modal-footer flex justify-between space-x-2">
 		<div>
-			<button on:click|preventDefault={(e) => onSubmit(e, true)} class="btn variant-ringed">
-				Unset
-			</button>
+			<button onclick={(e) => onSubmit(e, true)} class="btn variant-ringed"> Unset </button>
 		</div>
 
 		<div>
-			<button on:click|preventDefault={onCancel} class="btn variant-ringed"> Cancel </button>
+			<button onclick={() => onCancel()} class="btn variant-ringed"> Cancel </button>
 
-			<button on:click|preventDefault={onSubmit} class="btn variant-filled"> Submit </button>
+			<button onclick={(e: any) => onSubmit(e)} class="btn variant-filled"> Submit </button>
 		</div>
 	</footer>
 </div>

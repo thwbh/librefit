@@ -148,6 +148,7 @@ describe('paintWeightTracker function', () => {
 
     // Simulate weight data
     const entries = Array.from({ length: 12 }, (_, i) => ({
+      id: i,
       added: `2024-${String(i + 1).padStart(2, '0')}-15`,
       amount: 70 + i
     }));
@@ -159,12 +160,12 @@ describe('paintWeightTracker function', () => {
 
     const chart = paintWeightTracker(entries, date, DataViews.Month);
 
-    expect(chart.chartData.datasets[0].label).toBe('Weight (kg)'); // Ensuring a dataset got created
-    expect(chart.chartOptions.scales.y.suggestedMin).toBe(67.5); // Min 2.5 less than the smallest weight
-    expect(chart.chartOptions.scales.y.suggestedMax).toBe(83.5); // Max 2.5 more than the largest weight
-    expect(chart.chartOptions.scales.y.ticks.color).toBe('rgb(0,0,255)'); // Check colors
-    expect(chart.chartOptions.scales.x.ticks.color).toBe('rgb(0,0,255)');
-    expect(chart.chartOptions.plugins.legend.labels.color).toBe('rgb(0,0,255)');
+    expect(chart.data.datasets[0].label).toBe('Weight (kg)'); // Ensuring a dataset got created
+    expect(chart.options.scales.y.suggestedMin).toBe(67.5); // Min 2.5 less than the smallest weight
+    expect(chart.options.scales.y.suggestedMax).toBe(83.5); // Max 2.5 more than the largest weight
+    expect(chart.options.scales.y.ticks.color).toBe('rgb(0,0,255)'); // Check colors
+    expect(chart.options.scales.x.ticks.color).toBe('rgb(0,0,255)');
+    expect(chart.options.plugins.legend.labels.color).toBe('rgb(0,0,255)');
   });
 
   it('should paint weight tracker entires with light theme', () => {
@@ -182,6 +183,7 @@ describe('paintWeightTracker function', () => {
 
     // Simulate weight data
     const entries = Array.from({ length: 12 }, (_, i) => ({
+      id: i,
       added: `2024-${String(i + 1).padStart(2, '0')}-15`,
       amount: 70 + i
     }));
@@ -193,13 +195,13 @@ describe('paintWeightTracker function', () => {
 
     const chart = paintWeightTracker(entries, date, DataViews.Month);
 
-    expect(chart.chartData.datasets[0].label).toBe('Weight (kg)'); // Ensuring a dataset got created
-    expect(chart.chartOptions.scales.y.suggestedMin).toBe(67.5); // Min 2.5 less than the smallest weight
-    expect(chart.chartOptions.scales.y.suggestedMax).toBe(83.5); // Max 2.5 more than the largest weight
+    expect(chart.data.datasets[0].label).toBe('Weight (kg)'); // Ensuring a dataset got created
+    expect(chart.options.scales.y.suggestedMin).toBe(67.5); // Min 2.5 less than the smallest weight
+    expect(chart.options.scales.y.suggestedMax).toBe(83.5); // Max 2.5 more than the largest weight
 
     // Check colors - They should be using 'light' theme colors
-    expect(chart.chartOptions.scales.y.ticks.color).toBe('rgb(255,0,255)');
-    expect(chart.chartOptions.scales.x.ticks.color).toBe('rgb(255,0,255)');
-    expect(chart.chartOptions.plugins.legend.labels.color).toBe('rgb(255,0,255)');
+    expect(chart.options.scales.y.ticks.color).toBe('rgb(255,0,255)');
+    expect(chart.options.scales.x.ticks.color).toBe('rgb(255,0,255)');
+    expect(chart.options.plugins.legend.labels.color).toBe('rgb(255,0,255)');
   });
 });

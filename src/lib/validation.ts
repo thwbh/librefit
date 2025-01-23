@@ -8,7 +8,7 @@ import type {
 	WeightTarget
 } from './model';
 
-export const validateAmount = (amount): string => {
+export const validateAmount = (amount: number | undefined): string => {
 	if (!amount || amount <= 0) {
 		return 'Please enter a valid amount.';
 	}
@@ -37,8 +37,8 @@ export const validateCalorieTarget = (
 	targetCalories: ValidationMessage;
 	maximumCalories: ValidationMessage;
 } => {
-	let endDateValidation = validateEndDate(target.startDate, target.endDate);
-	let targetCaloriesValidation = validateTargetAmount({ value: target.targetCalories });
+	const endDateValidation = validateEndDate(target.startDate, target.endDate);
+	const targetCaloriesValidation = validateTargetAmount({ value: target.targetCalories });
 	let maximumCaloriesValidation = validateTargetAmount({ value: target.maximumCalories });
 
 	if (maximumCaloriesValidation.valid) {
@@ -62,9 +62,9 @@ export const validateWeightTarget = (
 	initialWeight: ValidationMessage;
 	targetWeight: ValidationMessage;
 } => {
-	let endDateValidation = validateEndDate(target.startDate, target.endDate);
-	let initialWeightMessage = validateTargetAmount({ value: target.initialWeight });
-	let targetWeightMessage = validateTargetAmount({ value: target.targetWeight });
+	const endDateValidation = validateEndDate(target.startDate, target.endDate);
+	const initialWeightMessage = validateTargetAmount({ value: target.initialWeight });
+	const targetWeightMessage = validateTargetAmount({ value: target.targetWeight });
 
 	return {
 		endDate: endDateValidation,
@@ -74,8 +74,8 @@ export const validateWeightTarget = (
 };
 
 export const validateEndDate = (startDateStr: string, endDateStr: string): ValidationMessage => {
-	let startDate = parseStringAsDate(startDateStr);
-	let endDate = parseStringAsDate(endDateStr);
+	const startDate = parseStringAsDate(startDateStr);
+	const endDate = parseStringAsDate(endDateStr);
 
 	if (isAfter(startDate, endDate)) {
 		return {

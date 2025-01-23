@@ -3,61 +3,46 @@
 	import { getContext } from 'svelte';
 	import { deleteWeight, listWeightRange, updateWeight } from '$lib/api/tracker';
 	import { showToastError, showToastSuccess, showToastWarning } from '$lib/toast';
-	import { goto } from '$app/navigation';
 	import { getToastStore, Paginator } from '@skeletonlabs/skeleton';
 	import ScaleOff from '$lib/assets/icons/scale-outline-off.svg?component';
 	import TrackerInput from '$lib/components/TrackerInput.svelte';
 	import { validateAmount } from '$lib/validation';
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 	import { subDays } from 'date-fns';
-	import type { Indicator } from '$lib/indicator.js';
 	import type { Writable } from 'svelte/store';
-	import type { LibreUser } from '$lib/model.js';
+	import type { LibreUser, WeightTracker } from '$lib/model.js';
+	import type { TrackerInputEvent } from '$lib/event';
 
 	const toastStore = getToastStore();
-	const indicator: Writable<Indicator> = getContext('indicator');
 	const user: Writable<LibreUser> = getContext('user');
 
-	if (!$user) goto('/');
+	let { data } = $props();
 
-	export let data;
-
-	let weightList = [];
-	let paginatedSource = [];
+	let weightList = $state([]);
 
 	let toDate = new Date();
 	let fromDate = subDays(toDate, 6);
 
-	$: weightList;
-
-	let paginationSettings = {
+	let paginationSettings = $state({
 		page: 0,
 		limit: 7,
 		size: data.weightWeekList.length,
 		amounts: [1, 7, 14, 31]
-	};
+	});
 
-	$: if (data) {
-		weightList = data.weightWeekList;
-	}
+	$effect(() => {
+		if (data) {
+			weightList = data.weightWeekList;
+		}
+	});
 
-	$: paginatedSource = weightList.slice(
-		paginationSettings.page * paginationSettings.limit,
-		paginationSettings.page * paginationSettings.limit + paginationSettings.limit
-	);
-
-	const onFilterChanged = async (event) => {
-		fromDate = event.detail.from;
-		toDate = event.detail.to;
-
+	const onFilterChanged = async (fromDate: Date, toDate: Date) => {
 		if (fromDate && toDate) {
 			await reload(fromDate, toDate);
 		}
 	};
 
-	const reload = async (fromDate, toDate) => {
-		$indicator = $indicator.start();
-
+	const reload = async (fromDate: Date, toDate: Date) => {
 		await listWeightRange(fromDate, toDate)
 			.then((response) => {
 				weightList = response;
@@ -65,19 +50,22 @@
 			})
 			.catch((e) => {
 				showToastError(toastStore, e);
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+			});
 	};
 
-	const updateWeightEntry = async (event) => {
-		const amountMessage = validateAmount(event.detail.value);
+	const updateWeightEntry = async (event: TrackerInputEvent<WeightTracker>) => {
+		const amountMessage = validateAmount(event.details.amount);
 
 		if (!amountMessage) {
-			$indicator = $indicator.start(event.detail.target);
+			const weight: WeightTracker = {
+				id: event.details.id,
+				amount: event.details.amount,
+				added: event.details.added
+			};
 
-			await updateWeight(event)
-				.then(async (response) => {
-					event.detail.callback();
+			await updateWeight(weight)
+				.then(async (_) => {
+					event.buttonEvent.callback();
 
 					showToastSuccess(toastStore, 'Successfully updated weight.');
 
@@ -85,21 +73,24 @@
 				})
 				.catch((e) => {
 					showToastError(toastStore, e);
-					event.detail.callback(true);
-				})
-				.finally(() => ($indicator = $indicator.finish()));
+					event.buttonEvent.callback();
+				});
 		} else {
 			showToastWarning(toastStore, amountMessage);
-			event.detail.callback(true);
+			event.buttonEvent.callback();
 		}
 	};
 
-	const deleteWeightEntry = async (event) => {
-		$indicator = $indicator.start(event.detail.target);
+	const deleteWeightEntry = async (event: TrackerInputEvent<WeightTracker>) => {
+		const weight: WeightTracker = {
+			id: event.details.id,
+			added: event.details.added,
+			amount: event.details.amount
+		};
 
-		await deleteWeight(event)
+		await deleteWeight(weight)
 			.then(async (_) => {
-				event.detail.callback();
+				event.buttonEvent.callback();
 
 				showToastSuccess(toastStore, `Deletion successful.`);
 
@@ -107,9 +98,8 @@
 			})
 			.catch((e) => {
 				showToastError(toastStore, e);
-				event.detail.callback(true);
-			})
-			.finally(() => ($indicator = $indicator.finish()));
+				event.buttonEvent.callback();
+			});
 	};
 </script>
 
@@ -124,9 +114,13 @@
 
 			{#if data.weightWeekList}
 				{#if weightList.length > 0}
+					{@const paginatedSource = weightList.slice(
+						paginationSettings.page * paginationSettings.limit,
+						paginationSettings.page * paginationSettings.limit + paginationSettings.limit
+					)}
 					<div class=" overflow-x-auto space-y-2">
 						<header>
-							<FilterComponent on:change={onFilterChanged} />
+							<FilterComponent {onFilterChanged} />
 						</header>
 						<table class="table table-hover table-compact table-auto w-full align-middle">
 							<thead>
@@ -149,8 +143,8 @@
 												value={entry.amount}
 												dateStr={entry.added}
 												category={entry.category}
-												on:update={updateWeightEntry}
-												on:remove={deleteWeightEntry}
+												onUpdate={updateWeightEntry}
+												onDelete={deleteWeightEntry}
 												existing={entry.sequence !== undefined}
 												disabled={entry.sequence !== undefined}
 												placeholder={''}

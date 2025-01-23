@@ -1,9 +1,14 @@
 <script lang="ts">
 	import { RadioGroup, RadioItem, RangeSlider, Step, Stepper } from '@skeletonlabs/skeleton';
 	import { CalculationGoal, CalculationSex, type WizardInput } from '$lib/model';
-	import { createEventDispatcher } from 'svelte';
 
-	const wizardInput: WizardInput = {
+	interface Props {
+		calculate: (input: WizardInput) => void;
+	}
+
+	let { calculate }: Props = $props();
+
+	const wizardInput: WizardInput = $state({
 		age: 30,
 		height: 160,
 		sex: CalculationSex.Female,
@@ -11,7 +16,7 @@
 		activityLevel: 1.25,
 		calculationGoal: CalculationGoal.Loss,
 		weeklyDifference: 3
-	};
+	});
 
 	const activityLevels = [
 		{ label: 'Mostly Sedentary', value: 1 },
@@ -30,17 +35,13 @@
 		{ label: 'Weight Loss', value: CalculationGoal.Loss },
 		{ label: 'Weight Gain', value: CalculationGoal.Gain }
 	];
-
-	const dispatch = createEventDispatcher();
-
-	const calculate = () => {
-		dispatch('calculate', { input: wizardInput });
-	};
 </script>
 
-<Stepper on:complete={calculate}>
+<Stepper on:complete={() => calculate(wizardInput)}>
 	<Step>
-		<svelte:fragment slot="header">Step 1: Body Metrics</svelte:fragment>
+		{#snippet header()}
+			Step 1: Body Metrics
+		{/snippet}
 		<p>
 			To find the optimal amount of how many calories you should consume per day to reach a specific
 			goal, it's a good idea to calculate your TDEE.
@@ -109,7 +110,9 @@
 	</Step>
 
 	<Step>
-		<svelte:fragment slot="header">Step 2: Activity Level</svelte:fragment>
+		{#snippet header()}
+			Step 2: Activity Level
+		{/snippet}
 
 		<p>How active are you during your day? Choose what describes your daily activity level best.</p>
 		<p>
@@ -171,7 +174,9 @@
 	</Step>
 
 	<Step>
-		<svelte:fragment slot="header">Step 3: Your Goal</svelte:fragment>
+		{#snippet header()}
+			Step 3: Your Goal
+		{/snippet}
 
 		<p>Do you aim for weight loss or weight gain?</p>
 

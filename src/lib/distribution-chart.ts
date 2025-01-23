@@ -1,12 +1,18 @@
 import { getAverageCategoryIntake } from './calorie-util';
 import type { CalorieTracker, FoodCategory } from '$lib/model';
 import type { ChartData, ChartOptions } from 'chart.js';
+import type { ChartProps } from './props';
+
+export interface PolarAreaChartConfig {
+	chartData: ChartData<'polarArea'>;
+	chartOptions: ChartOptions<'polarArea'>;
+}
 
 export const createDistributionChart = (
 	entries: Array<CalorieTracker>,
 	foodCategories: Array<FoodCategory>,
 	displayHistory: boolean
-): PolarAreaChartConfig => {
+): ChartProps<'polarArea'> => {
 	if (
 		!entries ||
 		(entries && entries.length <= 0) ||
@@ -14,8 +20,8 @@ export const createDistributionChart = (
 		(foodCategories && foodCategories.length <= 0)
 	) {
 		return {
-			chartData: undefined,
-			chartOptions: undefined
+			data: undefined,
+			options: undefined
 		};
 	}
 
@@ -36,8 +42,8 @@ export const createDistributionChart = (
 		labelTextColor = style.getPropertyValue('--color-surface-100');
 	}
 
-	const labels: any[] = [];
-	const values: any[] = [];
+	const labels: Array<string> = [];
+	const values: Array<number> = [];
 
 	const averageCategoryIntake = getAverageCategoryIntake(entries, foodCategories);
 
@@ -53,7 +59,7 @@ export const createDistributionChart = (
 	}
 
 	return {
-		chartData: {
+		data: {
 			labels: labels,
 			datasets: [
 				{
@@ -71,7 +77,7 @@ export const createDistributionChart = (
 				}
 			]
 		},
-		chartOptions: {
+		options: {
 			plugins: {
 				title: {
 					display: false,
@@ -96,8 +102,3 @@ export const createDistributionChart = (
 		}
 	};
 };
-
-export interface PolarAreaChartConfig {
-	chartData: ChartData<any>;
-	chartOptions: ChartOptions<any>;
-}

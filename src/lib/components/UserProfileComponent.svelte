@@ -1,21 +1,27 @@
 <script lang="ts">
-	import type { LibreUser } from '$lib/model';
 	import { Avatar, getModalStore } from '@skeletonlabs/skeleton';
 
 	const modalStore = getModalStore();
 
-	export let user: LibreUser;
+	interface Props {
+		name: string;
+		avatar: string;
+		showButton?: boolean;
+		onUpdateProfile?: (name: string, avatar: string) => void;
+	}
+
+	let { name, avatar, showButton = true, onUpdateProfile }: Props = $props();
 
 	const showAvatarPickerModal = () => {
 		modalStore.trigger({
 			type: 'component',
 			component: 'avatarModal',
 			meta: {
-				avatar: user.avatar
+				avatar: avatar
 			},
 			response: (e) => {
 				if (e && !e.cancelled) {
-					user.avatar = e.avatar;
+					avatar = e.avatar;
 				}
 
 				modalStore.close();
@@ -28,7 +34,7 @@
 	<label class="label">
 		<span>Nickname</span>
 		<input
-			bind:value={user.name}
+			bind:value={name}
 			name="username"
 			class="input"
 			type="text"
@@ -41,15 +47,23 @@
 
 		<div class="flex flex-row gap-4">
 			<div>
-				<Avatar src={user.avatar} initials="LU" />
+				<Avatar src={avatar} initials="LU" />
 			</div>
 
 			<div class="justify-center self-center">
-				<button on:click|preventDefault={showAvatarPickerModal} class="btn variant-filled-secondary"
+				<button onclick={() => showAvatarPickerModal()} class="btn variant-filled-secondary"
 					>Change</button
 				>
 			</div>
-			<input bind:value={user.avatar} name="avatar" type="text" style="visibility:hidden" />
+			<input value={avatar} name="avatar" type="text" style="visibility:hidden" />
 		</div>
 	</div>
+
+	{#if showButton === true}
+		<div class="flex justify-between">
+			<button onclick={() => onUpdateProfile(name, avatar)} class="btn variant-filled-primary"
+				>Update</button
+			>
+		</div>
+	{/if}
 </div>

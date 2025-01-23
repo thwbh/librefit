@@ -1,10 +1,8 @@
-import type { LibreUser } from '$lib/model';
-import { invoke } from '@tauri-apps/api/core';
+import { getDashboard } from '$lib/api/user';
+import type { PageLoad } from './$types';
 
-export const load = async (): Promise<{ userData: LibreUser }> => {
-	const user: Promise<LibreUser> = invoke('get_user');
-
+export const load: PageLoad = async () => {
 	return {
-		userData: await user
+		dashboardData: await getDashboard(new Date())
 	};
 };

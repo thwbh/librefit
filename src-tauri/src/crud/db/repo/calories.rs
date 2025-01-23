@@ -109,5 +109,6 @@ pub fn find_calorie_tracker_by_date_range(
 
     calorie_tracker
         .filter(added.ge(date_from).and(added.le(date_to)))
+        .order(added.desc())
         .load::<CalorieTracker>(conn)
 }

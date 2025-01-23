@@ -6,25 +6,25 @@ import purgeCss from 'vite-plugin-tailwind-purgecss';
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
-	plugins: [
-		sveltekit(),
-		purgeCss(),
-		svg({
-			includePaths: ['./src/lib/assets/icons/', './src/lib/assets/images/'],
-			svgoOptions: {
-				multipass: true,
-				plugins: [
-					{
-						name: 'preset-default',
-						// by default svgo removes the viewBox which prevents svg icons from scaling
-						// not a good idea! https://github.com/svg/svgo/pull/1461
-						params: { overrides: { removeViewBox: false } }
-					}
-				]
-			}
-		})
-	],
-   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
+  plugins: [
+    sveltekit(),
+    purgeCss(),
+    svg({
+      includePaths: ['./src/lib/assets/icons/', './src/lib/assets/images/'],
+      svgoOptions: {
+        multipass: true,
+        plugins: [
+          {
+            name: 'preset-default',
+            // by default svgo removes the viewBox which prevents svg icons from scaling
+            // not a good idea! https://github.com/svg/svgo/pull/1461
+            params: { overrides: { removeViewBox: false } }
+          }
+        ]
+      }
+    })
+  ],
+  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent vite from obscuring rust errors
   clearScreen: false,
@@ -35,17 +35,14 @@ export default defineConfig({
     host: host || false,
     hmr: host
       ? {
-          protocol: "ws",
-          host,
-          port: 1421,
-        }
+        protocol: "ws",
+        host,
+        port: 1421,
+      }
       : undefined,
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
   },
-	test: {
-		setupFiles: ['./tests/__mocks__/skeletonProxy.ts']
-	}
 });

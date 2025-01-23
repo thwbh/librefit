@@ -3,7 +3,11 @@
 
 	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 
-	export let wizardInput: WizardInput;
+	interface Props {
+		wizardInput: WizardInput;
+	}
+
+	let { wizardInput = $bindable() }: Props = $props();
 
 	const activityLevels = [
 		{ label: 'Mostly Sedentary', value: 1 },

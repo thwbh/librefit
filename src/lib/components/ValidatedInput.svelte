@@ -1,41 +1,16 @@
-<svelte:options accessors={true} />
-
 <script lang="ts">
 	import { CheckboxEventTarget } from '$lib/event';
 	import type { ValidationMessage } from '$lib/model';
-	import { createEventDispatcher } from 'svelte';
+	import type { ChangeEventHandler } from 'svelte/elements';
 
-	export let value: any = '';
-	export let name = 'control';
-	export let label = '';
-	export let type = 'text';
-	export let styling = 'input';
-	export let placeholder = '';
-	export let unit = '';
-
-	export let validateDetail = (e: any): ValidationMessage => {
-		return {
-			valid: false,
-			skip: true
-		};
-	};
-
-	export let emptyMessage = `${label ? label : 'Field'} is empty.`;
-	export let required = false;
-	export let errorMessage = undefined;
-
-	export let readonly = false;
-
-	const getType = (node: any) => {
-		node.type = type;
-	};
-
-	export let validate = () => {
+	const defaultValidate = () => {
 		let valid = false;
-		let detail = validateDetail({
+
+		let detail: ValidationMessage = this.validateDetail({
 			value: value,
 			label: label
 		});
+
 		if (required && isEmpty()) {
 			errorMessage = emptyMessage;
 		} else if (!detail.skip) {
@@ -48,6 +23,51 @@
 		return valid;
 	};
 
+	const defaultValidateDetail = (_: any): ValidationMessage => {
+		return {
+			valid: false,
+			skip: true
+		};
+	};
+
+	interface Props {
+		value: any;
+		name: string;
+		label: string;
+		type: string;
+		styling?: string;
+		placeholder?: string;
+		unit?: string;
+		validateDetail?: (e: any) => {};
+		emptyMessage?: string;
+		required?: boolean;
+		readonly?: boolean;
+		errorMessage?: string | undefined;
+		validate?: () => {};
+		onChange?: ChangeEventHandler<HTMLInputElement>;
+	}
+
+	let {
+		value = $bindable(''),
+		name = 'control',
+		label = '',
+		type = 'text',
+		styling = 'input',
+		placeholder = '',
+		unit = '',
+		emptyMessage = `${label ? label : 'Field'} is empty.`,
+		required = false,
+		errorMessage = undefined,
+		readonly = false,
+		validateDetail = defaultValidateDetail,
+		validate = defaultValidate,
+		onChange
+	}: Props = $props();
+
+	const getType = (node: any) => {
+		node.type = type;
+	};
+
 	const isEmpty = () => {
 		return value === undefined || value === null || value.length <= 0;
 	};
@@ -55,18 +75,6 @@
 	const handleCheckboxEvent = (e: Event) => {
 		this.checked = (<CheckboxEventTarget>e.target).checked;
 	};
-
-	const dispatch = createEventDispatcher();
-
-	const onChange = (e: any) => {
-		dispatch('change', e.detail);
-	};
-
-	$: value;
-	$: label;
-	$: type;
-	$: errorMessage;
-	$: validateDetail;
 </script>
 
 <label class="label">
@@ -97,8 +105,8 @@
 				{placeholder}
 				{required}
 				bind:value
-				on:change={onChange}
-				on:focusout={validate}
+				onchange={onChange}
+				onfocusout={validate}
 				{readonly}
 			/>
 		</div>
@@ -106,15 +114,15 @@
 		<span class="flex justify-between">
 			<span>
 				<span>
-					<slot />
+					{label}
 				</span>
 				<input
 					{name}
 					class={styling + (!errorMessage ? '' : ' input-error')}
 					use:getType
 					bind:value
-					on:change={handleCheckboxEvent}
-					on:focusout={validate}
+					onchange={handleCheckboxEvent}
+					onfocusout={validate}
 					{readonly}
 				/>
 			</span>
