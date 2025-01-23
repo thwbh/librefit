@@ -19,7 +19,6 @@
 	let { data } = $props();
 
 	let weightList = $state([]);
-	let paginatedSource = $state([]);
 
 	let toDate = new Date();
 	let fromDate = subDays(toDate, 6);
@@ -35,11 +34,6 @@
 		if (data) {
 			weightList = data.weightWeekList;
 		}
-
-		paginatedSource = weightList.slice(
-			paginationSettings.page * paginationSettings.limit,
-			paginationSettings.page * paginationSettings.limit + paginationSettings.limit
-		);
 	});
 
 	const onFilterChanged = async (fromDate: Date, toDate: Date) => {
@@ -120,6 +114,10 @@
 
 			{#if data.weightWeekList}
 				{#if weightList.length > 0}
+					{@const paginatedSource = weightList.slice(
+						paginationSettings.page * paginationSettings.limit,
+						paginationSettings.page * paginationSettings.limit + paginationSettings.limit
+					)}
 					<div class=" overflow-x-auto space-y-2">
 						<header>
 							<FilterComponent {onFilterChanged} />
