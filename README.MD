@@ -18,9 +18,9 @@ was born.
 
 ### Dependencies
 
-- rust 1.77.2
+- rust 1.84.0
 - diesel 2.2.6
-- tauro 2.0
+- tauri 2.0
 - sqlite 3
 - sveltekit 2.5.2
 - skeleton 2.9.0

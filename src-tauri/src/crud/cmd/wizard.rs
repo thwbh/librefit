@@ -49,7 +49,7 @@ pub fn wizard_calculate_for_target_date(
 
     log::info!(">>> result={:?}", wizard_result);
 
-    return wizard_result;
+    wizard_result
 }
 
 #[command]
@@ -62,5 +62,5 @@ pub fn wizard_calculate_for_target_weight(
 
     log::info!(">>> result={:?}", wizard_result);
 
-    return wizard_result;
+    wizard_result
 }

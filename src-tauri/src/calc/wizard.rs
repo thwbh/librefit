@@ -193,8 +193,8 @@ pub fn calculate(wizard_input: WizardInput) -> Result<WizardResult, ValidationEr
             let bmi = calculate_bmi(&wizard_input.weight, &wizard_input.height);
             let bmi_category = calculate_bmi_category(&bmi);
 
-            let target_bmi_lower = target_bmi_range.start().clone();
-            let target_bmi_upper = target_bmi_range.end().clone();
+            let target_bmi_lower = *target_bmi_range.start();
+            let target_bmi_upper = *target_bmi_range.end();
             let target_bmi = (target_bmi_upper + target_bmi_lower) / 2;
 
             let target_weight = calculate_target_weight(&target_bmi_range, &wizard_input.height);
@@ -254,7 +254,7 @@ pub fn calculate_for_target_date(
                 1
             };
 
-            let obese_list = vec![BmiCategory::Obese, BmiCategory::SeverelyObese];
+            let obese_classification = [BmiCategory::Obese, BmiCategory::SeverelyObese];
 
             let mut result_by_rate: HashMap<i32, WizardResult> = rates
                 .into_iter()
@@ -277,8 +277,8 @@ pub fn calculate_for_target_date(
                             }
                         }
                         _ => {
-                            if !obese_list.contains(&result_bmi_category)
-                                || obese_list.contains(&current_classification)
+                            if !obese_classification.contains(&result_bmi_category)
+                                || obese_classification.contains(&current_classification)
                             {
                                 Some((rate, result))
                             } else {
@@ -426,7 +426,7 @@ fn calculate_tdee(activity_level: &f32, bmr: &f32) -> f32 {
 }
 
 fn calculate_deficit(weekly_difference: &i32) -> f32 {
-    weekly_difference.clone() as f32 / 10.0 * 7000.0 / 7.0
+    *weekly_difference as f32 / 10.0 * 7000.0 / 7.0
 }
 
 fn calculate_target(calculation_goal: &CalculationGoal, tdee: &f32, deficit: &f32) -> f32 {

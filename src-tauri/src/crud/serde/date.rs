@@ -6,10 +6,10 @@ fn date_to_json(t: NaiveDate) -> String {
 }
 
 pub fn serialize<S: Serializer>(date: &NaiveDate, serializer: S) -> Result<S::Ok, S::Error> {
-    date_to_json(date.clone()).serialize(serializer)
+    date_to_json(*date).serialize(serializer)
 }
 
 pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<NaiveDate, D::Error> {
     let date: String = Deserialize::deserialize(deserializer)?;
-    Ok(NaiveDate::parse_from_str(&date, "%Y-%m-%d %H:%M:%S").map_err(Error::custom)?)
+    NaiveDate::parse_from_str(&date, "%Y-%m-%d %H:%M:%S").map_err(Error::custom)
 }

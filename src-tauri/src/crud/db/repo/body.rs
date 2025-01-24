@@ -13,7 +13,7 @@ pub fn update_body_data(
     age: &i32,
     height: &f32,
     weight: &f32,
-    sex: &String,
+    sex: &str,
 ) -> QueryResult<BodyData> {
     match body_data.first::<BodyData>(conn) {
         Ok(existing) => {
@@ -22,7 +22,7 @@ pub fn update_body_data(
                 age: *age,
                 height: *height,
                 weight: *weight,
-                sex: sex.clone(),
+                sex: sex.to_owned(),
             };
 
             diesel::update(body_data)
@@ -40,14 +40,14 @@ fn create_body_data(
     age: &i32,
     height: &f32,
     weight: &f32,
-    sex: &String,
+    sex: &str,
 ) -> QueryResult<BodyData> {
     let new_body_data = BodyData {
         id: 1,
         age: *age,
         height: *height,
         weight: *weight,
-        sex: sex.clone(),
+        sex: sex.to_owned(),
     };
 
     diesel::insert_into(body_data)
