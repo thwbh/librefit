@@ -87,6 +87,24 @@ Example command (works on my machine (tm)):
 RUSTFLAGS="-C link-arg=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/19/lib/linux/libclang_rt.builtins-x86_64-android.a" cargo tauri android dev
 ```
 
+## test
+
+This project uses [nextest-rs](https://nexte.st/) and [vitest](https://vitest.dev).
+
+To run vitest (svelte frontend), go to the project root and issue:
+
+```shell
+npm run test
+```
+
+To run nextest (rust backend), go to src-tauri/ and issue:
+
+```shell
+cargo nextest run
+```
+
+The github action should run with the `--profile ci` flag to enable reporting.
+
 ## Attribution
 
 The avatars were created with hotpot: https://hotpot.ai/art-generator
