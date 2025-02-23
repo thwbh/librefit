@@ -1,0 +1,43 @@
+name: 'Test'
+on: 
+  pull_request:
+
+jobs:
+  rust-test:
+    name: Run nextest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: cd src-tauri/
+      - run: mkdir -p ~/.cargo/bin
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+      - name: Run tests
+        run: |
+          ~/.cargo/bin/cargo-nextest nextest run --profile ci 
+
+  svelte-test:
+    name: Run vitest
+    runs-on: ubuntu-latest
+    
+    permissions:
+      # Required to checkout the code
+      contents: read
+      # Required to put a comment into the pull-request
+      pull-requests: write
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: 'Install Node'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    - name: 'Install Deps'
+      run: npm install
+    - name: 'Test'
+      run: npm run test:ci --coverage.enabled true
+    - name: 'Report Coverage'
+      if: always() 
+      uses:  davelosert/vitest-coverage-report-action@v2
