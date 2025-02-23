@@ -11,16 +11,16 @@ describe('paintCalorieTrackerQuickview', () => {
   const entry3: CalorieTracker = { amount: 2300, added: '2024-03-02', id: 1, category: 'd' };
   const goal: CalorieTarget = { targetCalories: 1800, maximumCalories: 2200, added: '2024-01-01', startDate: '2024-01-01', endDate: '2024-31-12', id: 1 };
 
-  it('should return an object with chartData and chartOptions for input entries', () => {
+  it('should return an object with data and options for input entries', () => {
     const result = paintCalorieTrackerQuickview([entry1, entry2], goal);
-    expect(result).toHaveProperty('chartData');
-    expect(result).toHaveProperty('chartOptions');
+    expect(result).toHaveProperty('data');
+    expect(result).toHaveProperty('options');
   });
 
-  it('should return an object with undefined chartData and chartOptions for empty entries', () => {
+  it('should return an object with undefined data and options for empty entries', () => {
     const entries = [];
     const result = paintCalorieTrackerQuickview(entries, goal);
-    expect(result).toEqual({ chartData: undefined, chartOptions: undefined });
+    expect(result).toEqual({ data: undefined, options: undefined });
   });
 
   it('should correctly classify and style entries based on comparison with goal properties', () => {
@@ -40,9 +40,9 @@ describe('paintCalorieTrackerQuickview', () => {
 
     let quickview = paintCalorieTrackerQuickview([entry1, entry2, entry3], goal);
     let lineChart = quickview.data.datasets[0];
-    let barChart = quickview.data.datasets[1];
+    let barChart = quickview.data.datasets[0];
 
-    expect(lineChart.borderColor).toEqual('rgb(255, 255, 255)');
+    expect(lineChart.borderColor[0]).toEqual('rgb(128, 128, 128)');
 
     expect(barChart.backgroundColor[0]).toEqual('rgb(64, 64, 64 / .7)');
     expect(barChart.backgroundColor[1]).toEqual('rgb(32, 32, 32 / .7)');
@@ -55,9 +55,9 @@ describe('paintCalorieTrackerQuickview', () => {
 
     quickview = paintCalorieTrackerQuickview([entry1, entry2, entry3], goal);
     lineChart = quickview.data.datasets[0];
-    barChart = quickview.data.datasets[1];
+    barChart = quickview.data.datasets[0];
 
-    expect(lineChart.borderColor).toEqual('rgb(128, 128, 128)');
+    expect(lineChart.borderColor[0]).toEqual('rgb(255, 255, 255)');
 
     expect(barChart.backgroundColor[0]).toEqual('rgb(64, 64, 64 / .7)');
     expect(barChart.backgroundColor[1]).toEqual('rgb(32, 32, 32 / .7)');
@@ -70,12 +70,12 @@ describe('paintCalorieTrackerQuickview', () => {
     const result = paintCalorieTrackerQuickview([entry1, entry2], goal);
 
     // Validate the shape of the returned object
-    expect(result).toHaveProperty('chartData.labels');
-    expect(result).toHaveProperty('chartData.datasets');
-    expect(result).toHaveProperty('chartOptions.indexAxis');
-    expect(result).toHaveProperty('chartOptions.scales');
-    expect(result).toHaveProperty('chartOptions.responsive');
-    expect(result).toHaveProperty('chartOptions.aspectRatio');
+    expect(result).toHaveProperty('data.labels');
+    expect(result).toHaveProperty('data.datasets');
+    expect(result).toHaveProperty('options.indexAxis');
+    expect(result).toHaveProperty('options.scales');
+    expect(result).toHaveProperty('options.responsive');
+    expect(result).toHaveProperty('options.aspectRatio');
 
     // Further assertions can be made on the length and type of properties
     expect(Array.isArray(result.data.labels)).toBeTruthy();

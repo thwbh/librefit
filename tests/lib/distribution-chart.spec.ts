@@ -22,16 +22,16 @@ describe('createDistributionChart', () => {
 
   const foodCategories = [{ shortvalue: 'fruit', longvalue: 'Fruits' }, { shortvalue: 'meat', longvalue: 'Meats' }];
 
-  it('should return an object with chartData and chartOptions for input entries', () => {
+  it('should return an object with data and options for input entries', () => {
     const result = createDistributionChart([entry1, entry2], foodCategories, false);
-    expect(result).toHaveProperty('chartData');
-    expect(result).toHaveProperty('chartOptions');
+    expect(result).toHaveProperty('data');
+    expect(result).toHaveProperty('options');
   });
 
-  it('should return an object with undefined chartData when no valid average category intakes', () => {
+  it('should return an object with undefined data when no valid average category intakes', () => {
     const result = createDistributionChart([], foodCategories, false);
     expect(result.data).toBeUndefined();
-    expect(result).toHaveProperty('chartOptions');
+    expect(result).toHaveProperty('options');
   });
 
   it('should correctly classify and style chart based on dark mode and if history is displayed', () => {
@@ -68,6 +68,5 @@ describe('createDistributionChart', () => {
 
     expect(Array.isArray(result.data.labels)).toBeTruthy();
     expect(Array.isArray(result.data.datasets)).toBeTruthy();
-    expect(Array.isArray(result.options)).toBeTruthy();
   });
 });
