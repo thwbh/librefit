@@ -70,10 +70,10 @@
 			meta: {
 				categories: categories
 			},
-			response: (e: TrackerInputEvent<NewCalorieTracker>) => {
+			response: (e) => {
 				if (e) {
-					if (e) addCalories(e);
-					modalStore.close();
+					if (e) addCalories(e.detail);
+					if (e.detail.close) modalStore.close();
 				} else modalStore.close();
 			}
 		});

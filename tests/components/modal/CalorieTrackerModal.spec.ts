@@ -58,17 +58,14 @@ describe('CalorieTrackerModal.svelte component', () => {
     await fireEvent.click(getByRole('button', { name: 'add' }));
     await tick();
 
-    expect(responseCallback).toHaveBeenCalledTimes(1);
-    expect(responseCallback).toHaveBeenCalledWith({
+    expect(responseCallback).toHaveBeenCalledExactlyOnceWith({
       detail: {
-        type: 'add',
         close: true,
         detail: {
-          value: 100,
+          amount: 100,
           category: 'd',
-          dateStr: '2022-02-02',
-          id: undefined,
-          callback: expect.any(Function)
+          added: '2022-02-02',
+          id: undefined
         }
       }
     });
@@ -108,16 +105,12 @@ describe('CalorieTrackerModal.svelte component', () => {
     await fireEvent.click(confirmButton);
     await tick();
 
-    expect(responseCallback).toHaveBeenCalledTimes(1);
-    expect(responseCallback).toHaveBeenCalledWith({
+    expect(responseCallback).toHaveBeenCalledExactlyOnceWith({
       detail: {
-        type: 'remove',
         close: true,
         detail: {
-          callback: expect.any(Function),
-          dateStr: lunch.added,
+          added: lunch.added,
           id: lunch.id,
-          target: null
         }
       }
     });
@@ -155,17 +148,14 @@ describe('CalorieTrackerModal.svelte component', () => {
     await fireEvent.click(getByRole('button', { name: 'confirm' }));
     await tick();
 
-    expect(responseCallback).toHaveBeenCalledTimes(1);
-    expect(responseCallback).toHaveBeenCalledWith({
+    expect(responseCallback).toHaveBeenCalledExactlyOnceWith({
       detail: {
-        type: 'update',
         close: true,
         detail: {
-          callback: expect.any(Function),
           id: 1,
-          dateStr: '2022-02-02',
+          added: '2022-02-02',
           category: 'b',
-          value: 600
+          amount: 600
         }
       }
     });

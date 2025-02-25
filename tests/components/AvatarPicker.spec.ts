@@ -23,9 +23,7 @@ describe('AvatarPicker.svelte', () => {
       fireEvent.click(button);
 
       expect(chooseAvatarMock).toHaveBeenCalledTimes(index + 1);
-      expect(chosenFile).toEqual({
-        avatar: files[index]
-      });
+      expect(chosenFile).toEqual(files[index]);
     });
   });
 
@@ -33,6 +31,11 @@ describe('AvatarPicker.svelte', () => {
     const fakeUser = {
       avatar: 'file3'
     };
+
+    render(AvatarPicker, {
+      props: { fileList: files, chosen: 'file3' }
+    });
+
     const avatarImg = document.querySelector(`img[src$="${fakeUser.avatar}" i]`);
     const avatarFigure = avatarImg.parentElement;
 

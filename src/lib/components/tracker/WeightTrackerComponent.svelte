@@ -14,7 +14,7 @@
 		onDeleteWeight?: WeightTrackerCallback;
 	}
 
-	let { weightTarget, weightList, onAddWeight }: Props = $props();
+	let { weightTarget, weightList, onAddWeight, onDeleteWeight }: Props = $props();
 
 	let weightQuickAdd: number = $state(undefined);
 
@@ -22,6 +22,10 @@
 		const newWeight: NewWeightTracker = event.details;
 
 		onAddWeight(newWeight, event.buttonEvent.callback);
+	};
+
+	const deleteWeight = (event: TrackerInputEvent<WeightTracker>) => {
+		onDeleteWeight(event.details, event.buttonEvent.callback);
 	};
 </script>
 
@@ -52,6 +56,7 @@
 		<TrackerInput
 			bind:value={weightQuickAdd}
 			onAdd={addWeightQuickly}
+			onDelete={deleteWeight}
 			dateStr={getDateAsStr(new Date())}
 			compact={true}
 			unit={'kg'}

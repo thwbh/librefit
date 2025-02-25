@@ -60,7 +60,7 @@
 		btnAdd.disabled = true;
 
 		onAdd({
-			callback: () => (btnAdd.disabled = false)
+			callback: postAction
 		});
 	};
 
