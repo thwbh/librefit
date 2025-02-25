@@ -9,10 +9,7 @@
 	import CancelEdit from '$lib/assets/icons/pencil-off.svg?component';
 	import type { TrackerButtonEvent } from '$lib/event';
 
-	let btnAdd: HTMLButtonElement = $state();
-	let btnConfirm: HTMLButtonElement = $state();
-	let btnCancel: HTMLButtonElement = $state();
-
+	let btnAdd: HTMLButtonElement = $state<HTMLButtonElement>();
 	let editing = $state(false);
 
 	interface Props {
@@ -32,7 +29,7 @@
 		existing = false,
 		disabled = $bindable(false),
 		unit,
-		previous = $bindable(),
+		previous = $bindable({ value: undefined, category: undefined }),
 		changeAction = $bindable(),
 		category = $bindable(),
 		value = $bindable(),
@@ -52,15 +49,10 @@
 	};
 
 	const postAction = (error?: string) => {
-		if (editing) {
-			btnConfirm.disabled = false;
-			btnCancel.disabled = false;
-		}
-
 		if (error) discard();
 		else {
 			disabled = true;
-			editing = false;
+			//editing = false;
 		}
 	};
 
@@ -72,22 +64,19 @@
 		});
 	};
 
-	const change = (action) => {
-		return () => {
-			disabled = false;
-			editing = true;
+	const change = (action: string) => {
+		disabled = false;
+		editing = true;
 
-			changeAction = action;
+		changeAction = action;
 
-			if (action === 'update') {
-				previous = { category, value };
-			}
-		};
+		if (action === 'update') {
+			previous = { category, value };
+		}
 	};
 
 	const update = () => {
-		btnConfirm.disabled = true;
-		btnCancel.disabled = true;
+		editing = true;
 
 		if (value !== previous.value || category !== previous.category) {
 			onUpdate({
@@ -99,11 +88,7 @@
 	};
 
 	const remove = () => {
-		btnConfirm.disabled = true;
-		btnCancel.disabled = true;
-
 		onDelete({
-			target: btnConfirm,
 			callback: postAction
 		});
 	};
@@ -130,7 +115,12 @@
 			</button>
 		</div>
 	{:else if !editing}
-		<button aria-label="edit" class="btn-icon variant-filled-secondary" onclick={() => update()}>
+		<!-- Pristine state -->
+		<button
+			aria-label="edit"
+			class="btn-icon variant-filled-secondary"
+			onclick={() => change('update')}
+		>
 			<span>
 				<Edit />
 			</span>
@@ -141,9 +131,9 @@
 			</span>
 		</button>
 	{:else}
+		<!-- Buttons to accept/discard changes -->
 		<button
 			aria-label="confirm"
-			bind:this={btnConfirm}
 			class="btn-icon variant-ghost-primary"
 			onclick={changeAction === 'update' ? update : remove}
 		>
@@ -151,12 +141,7 @@
 				<Check />
 			</span>
 		</button>
-		<button
-			aria-label="discard"
-			bind:this={btnCancel}
-			class="btn-icon variant-ghost-error"
-			onclick={() => discard()}
-		>
+		<button aria-label="discard" class="btn-icon variant-ghost-error" onclick={() => discard()}>
 			<span>
 				{#if changeAction === 'update'}
 					<CancelEdit />

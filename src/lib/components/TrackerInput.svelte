@@ -43,7 +43,7 @@
 		onDelete
 	}: Props = $props();
 
-	let previous: any = $state();
+	let previous: any = $state({ value: undefined, category: undefined });
 	let changeAction = $state();
 
 	const addCallback = (buttonEvent: TrackerButtonEvent) => {
