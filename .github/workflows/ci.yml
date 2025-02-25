@@ -10,6 +10,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install system packages
+        run: sudo apt-get install libglib2.0-dev
       - run: mkdir -p ~/.cargo/bin
       - name: Install nextest
         uses: taiki-e/install-action@nextest
