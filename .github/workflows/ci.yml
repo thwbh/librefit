@@ -35,7 +35,7 @@ jobs:
       - name: Build
         run: cd src-tauri/ && cargo build
       - name: Run tests
-        run: cargo nextest run --profile ci 
+        run: cd src-tauri/ && cargo nextest run --profile ci 
 
   svelte-test:
     name: Run vitest
