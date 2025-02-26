@@ -5,25 +5,23 @@ on:
 jobs:
   rust-test:
     name: Run nextest
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-        rust-version: ["1.84", stable]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust-version }}
-      - run: sudo apt install -y libwebkit2gtk-4.1-dev libsoup3.0-dev
+      - name: Set up Rust 
+        uses: actions-rs/toolchain@v1 
+        with: 
+          toolchain: stable 
+          profile: minimal 
+          override: true 
       - name: Install nextest
         uses: taiki-e/install-action@nextest
+      - name: Build
+        run: cd src-tauri/ && cargo build
       - name: Run tests
-        run: |
-          cd src-tauri/ && cargo nextest run --profile ci 
+        run: cargo nextest run --profile ci 
 
   svelte-test:
     name: Run vitest
