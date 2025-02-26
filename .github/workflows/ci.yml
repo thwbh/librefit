@@ -11,7 +11,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install build dependencies
-        run: sudo apt-get install -y libglib2.0-dev
+        run: sudo apt-get install -y libglib2.0-dev libgdk3.0-cil
       - name: Set up Rust 
         uses: actions-rs/toolchain@v1 
         with: 
