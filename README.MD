@@ -1,6 +1,7 @@
 # librefit
 
-![GitHub Release](https://img.shields.io/github/v/release/thwbh/librefit) ![Coverage](https://raw.githubusercontent.com/thwbh/librefit/badges/jacoco.svg)
+![GitHub Release](https://img.shields.io/github/v/release/thwbh/librefit)
+[![codecov](https://codecov.io/github/thwbh/librefit/graph/badge.svg?token=0WEOJOI3IJ)](https://codecov.io/github/thwbh/librefit)
 
 LibreFit is my hobby project that allows you to calculate your TDEE (Total Daily Energy Expenditure) based on your body
 metrics, create goals for weight loss or weight gain from that and encourages you to track your daily calorie intake.
