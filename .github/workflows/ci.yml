@@ -37,8 +37,11 @@ jobs:
       - name: 'Install cargo-llvm-cov'
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: 'Run tests'
-        run: cd src-tauri/ && cargo llvm-cov nextest --profile ci
-
+        run: cd src-tauri/ && cargo llvm-cov nextest --profile ci      
+      - name: 'Upload coverage reports to Codecov'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
   svelte-test:
     name: 'Run vitest'
     runs-on: ubuntu-latest
@@ -59,6 +62,7 @@ jobs:
       run: npm install
     - name: 'Test'
       run: npm run test:ci --coverage.enabled true
-    - name: 'Report Coverage'
-      if: always() 
-      uses:  davelosert/vitest-coverage-report-action@v2
+    - name: 'Upload coverage reports to Codecov'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
