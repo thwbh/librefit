@@ -34,10 +34,12 @@ jobs:
           override: true 
       - name: 'Install nextest'
         uses: taiki-e/install-action@nextest
+      - name: 'Install cargo-llvm-cov'
+        uses: taiki-e/install-action@cargo-llvm-cov
       - name: 'Build'
         run: cd src-tauri/ && cargo build
       - name: 'Run tests'
-        run: cd src-tauri/ && cargo nextest run --profile ci 
+        run: cd src-tauri/ && cargo llvm-cov nextest run --profile ci
 
   svelte-test:
     name: 'Run vitest'
