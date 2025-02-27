@@ -6,13 +6,13 @@ on:
     branches: [ "main", "develop" ]
 jobs:
   rust-test:
-    name: Run nextest
+    name: 'Run nextest'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Tauri dependencies
+      - name: 'Install Tauri dependencies'
         run: |
           sudo apt update && sudo apt install -y \
             libwebkit2gtk-4.1-dev \
@@ -26,21 +26,21 @@ jobs:
             librsvg2-dev \
             webkit2gtk-driver \
             xvfb
-      - name: Set up Rust 
+      - name: 'Set up Rust'
         uses: actions-rs/toolchain@v1 
         with: 
           toolchain: stable 
           profile: minimal 
           override: true 
-      - name: Install nextest
+      - name: 'Install nextest'
         uses: taiki-e/install-action@nextest
-      - name: Build
+      - name: 'Build'
         run: cd src-tauri/ && cargo build
-      - name: Run tests
+      - name: 'Run tests'
         run: cd src-tauri/ && cargo nextest run --profile ci 
 
   svelte-test:
-    name: Run vitest
+    name: 'Run vitest'
     runs-on: ubuntu-latest
     
     permissions:
