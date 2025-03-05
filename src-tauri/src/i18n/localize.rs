@@ -8,7 +8,7 @@ pub fn localize_validation_errors(validation_errors: &ValidationErrors) -> Valid
         .into_iter()
         .for_each(|(field, field_errors)| {
             field_errors.iter().for_each(|field_error| {
-                localized_validation_errors.add(field, localize_validation_error(&field_error))
+                localized_validation_errors.add(field, localize_validation_error(field_error))
             })
         });
 

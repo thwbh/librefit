@@ -45,6 +45,7 @@
 			dateStr={entry.added}
 			value={entry.amount}
 			onUpdate={onSubmit}
+			onDelete={onSubmit}
 			existing={entry.id !== undefined}
 			disabled={entry.id !== undefined}
 			unit={'kg'}

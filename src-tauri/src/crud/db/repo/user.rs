@@ -8,12 +8,12 @@ pub fn get_user(conn: &mut SqliteConnection) -> QueryResult<LibreUser> {
 
 pub fn update_user(
     conn: &mut SqliteConnection,
-    user_name: &String,
-    user_avatar: &String,
+    user_name: &str,
+    user_avatar: &str,
 ) -> QueryResult<LibreUser> {
     libre_user.first(conn).map(|mut user: LibreUser| {
-        user.name = Some(user_name.clone());
-        user.avatar = Some(user_avatar.clone());
+        user.name = Some(user_name.to_owned());
+        user.avatar = Some(user_avatar.to_owned());
 
         diesel::update(libre_user)
             .set(&user)

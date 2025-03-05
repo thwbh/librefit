@@ -1,6 +1,7 @@
 # librefit
 
-![GitHub Release](https://img.shields.io/github/v/release/thwbh/librefit) ![Coverage](https://raw.githubusercontent.com/thwbh/librefit/badges/jacoco.svg)
+![GitHub Release](https://img.shields.io/github/v/release/thwbh/librefit)
+[![codecov](https://codecov.io/github/thwbh/librefit/graph/badge.svg?token=0WEOJOI3IJ)](https://codecov.io/github/thwbh/librefit)
 
 LibreFit is my hobby project that allows you to calculate your TDEE (Total Daily Energy Expenditure) based on your body
 metrics, create goals for weight loss or weight gain from that and encourages you to track your daily calorie intake.
@@ -18,9 +19,9 @@ was born.
 
 ### Dependencies
 
-- rust 1.77.2
+- rust 1.84.0
 - diesel 2.2.6
-- tauro 2.0
+- tauri 2.0
 - sqlite 3
 - sveltekit 2.5.2
 - skeleton 2.9.0
@@ -86,6 +87,24 @@ Example command (works on my machine (tm)):
 ```shell
 RUSTFLAGS="-C link-arg=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/19/lib/linux/libclang_rt.builtins-x86_64-android.a" cargo tauri android dev
 ```
+
+## test
+
+This project uses [nextest-rs](https://nexte.st/) and [vitest](https://vitest.dev).
+
+To run vitest (svelte frontend), go to the project root and issue:
+
+```shell
+npm run test
+```
+
+To run nextest (rust backend), go to src-tauri/ and issue:
+
+```shell
+cargo nextest run
+```
+
+The github action should run with the `--profile ci` flag to enable reporting.
 
 ## Attribution
 

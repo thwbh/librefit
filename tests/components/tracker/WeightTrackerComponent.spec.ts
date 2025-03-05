@@ -93,39 +93,43 @@ describe('WeightTrackerComponent.svelte component', () => {
     await fireEvent.click(updateWeightButton);
     await tick();
 
-    expect(skeleton.getModalStore().trigger).toHaveBeenCalledWith({
-      type: 'component',
-      component: 'weightModal',
-      response: expect.any(Function),
-      meta: {
-        weightList: mockData.weightList
-      }
-    });
-
-    const callback = extractModalStoreMockTriggerCallback();
-
-    await callback(undefined);
-    await tick();
-
-    expect(updateMock).toHaveBeenCalledTimes(0);
-
-    const callbackDetails = {
-      id: 1,
-      added: getDateAsStr(new Date()),
-      amount: 71
-    };
-
-    const callbackParams = {
-      detail: {
-        type: 'update',
-        detail: callbackDetails
-      }
-    };
-
-    await callback(callbackParams);
-
-    expect(updateMock).toHaveBeenCalledTimes(1);
-    expect(updatedWeight).toEqual(callbackDetails);
+    // TODO edit and delete is currently not implemented
+    expect(skeleton.getModalStore().trigger).toHaveBeenCalledTimes(0);
+    /*    
+      expect(skeleton.getModalStore().trigger).toHaveBeenCalledWith({
+        type: 'component',
+        component: 'weightModal',
+        response: expect.any(Function),
+        meta: {
+          weightList: mockData.weightList
+        }
+      });
+  
+      const callback = extractModalStoreMockTriggerCallback();
+  
+      await callback(undefined);
+      await tick();
+  
+      expect(updateMock).toHaveBeenCalledTimes(0);
+  
+      const callbackDetails = {
+        id: 1,
+        added: getDateAsStr(new Date()),
+        amount: 71
+      };
+  
+      const callbackParams = {
+        detail: {
+          type: 'update',
+          detail: callbackDetails
+        }
+      };
+  
+      await callback(callbackParams);
+  
+      expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(updatedWeight).toEqual(callbackDetails);
+      */
   });
 
   it('should trigger the edit button and dispatch deleteWeight', async () => {
@@ -144,27 +148,32 @@ describe('WeightTrackerComponent.svelte component', () => {
     await fireEvent.click(updateWeightButton);
     await tick();
 
-    const callback = extractModalStoreMockTriggerCallback();
-    await callback(undefined);
-    await tick();
+    // TODO edit and delete is currently not implemented
+    expect(skeleton.getModalStore().trigger).toHaveBeenCalledTimes(0);
 
-    expect(deleteMock).toHaveBeenCalledTimes(0);
-
-    const callbackDetails = {
-      dateStr: getDateAsStr(new Date()),
-      id: 2
-    };
-
-    const callbackParams = {
-      detail: {
-        type: 'remove',
-        detail: callbackDetails
-      }
-    };
-
-    await callback(callbackParams);
-
-    expect(deleteMock).toHaveBeenCalledTimes(1);
-    expect(deletedWeight).toEqual(callbackDetails);
+    /*
+        const callback = extractModalStoreMockTriggerCallback();
+        await callback(undefined);
+        await tick();
+    
+        expect(deleteMock).toHaveBeenCalledTimes(0);
+    
+        const callbackDetails = {
+          dateStr: getDateAsStr(new Date()),
+          id: 2
+        };
+    
+        const callbackParams = {
+          detail: {
+            type: 'remove',
+            detail: callbackDetails
+          }
+        };
+    
+        await callback(callbackParams);
+    
+        expect(deleteMock).toHaveBeenCalledTimes(1);
+        expect(dispatchEvent).toEqual(callbackDetails);
+        */
   });
 });

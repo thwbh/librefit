@@ -1,4 +1,4 @@
-import { render, fireEvent, cleanup, screen } from '@testing-library/svelte';
+import { render, fireEvent, cleanup } from '@testing-library/svelte';
 import { afterEach, expect, describe, it, vi } from 'vitest';
 import TrackerInput from '$lib/components/TrackerInput.svelte';
 import { tick } from 'svelte';
@@ -27,25 +27,25 @@ describe('TrackerInput.svelte', () => {
       onAdd: addMock
     };
 
-    render(TrackerInput, { ...mockData });
+    let { getByRole, queryByRole, getByText } = render(TrackerInput, { ...mockData });
 
-    const unitDisplay = screen.getByText(mockData.unit);
-    const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
+    const unitDisplay = getByText(mockData.unit);
+    const amountInput = getByRole('spinbutton', { name: 'amount' });
 
     expect(unitDisplay).toBeDefined();
     expect(amountInput['placeholder']).toEqual('Amount...');
     expect(amountInput['value']).toBeFalsy();
 
     // check correct buttons being visible/invisible
-    expect(screen.queryByRole('button', { name: 'add' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).toBeNull();
+    expect(queryByRole('button', { name: 'add' })).toBeDefined();
+    expect(queryByRole('button', { name: 'edit' })).toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).toBeNull();
 
     // change amount and click 'add'
     await fireEvent.input(amountInput, { target: { value: 50 } });
-    await fireEvent.click(screen.getByRole('button', { name: 'add' }));
+    await fireEvent.click(getByRole('button', { name: 'add' }));
     await tick();
 
     expect(addMock).toHaveBeenCalledTimes(1);
@@ -76,11 +76,11 @@ describe('TrackerInput.svelte', () => {
     };
 
 
-    render(TrackerInput, { ...mockData });
+    let { getByRole, getByText, queryByRole } = render(TrackerInput, { ...mockData });
 
-    const unitDisplay = screen.getByText(mockData.unit);
-    const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
-    const categoryCombobox = screen.getByRole('combobox', { name: 'category' });
+    const unitDisplay = getByText(mockData.unit);
+    const amountInput = getByRole('spinbutton', { name: 'amount' });
+    const categoryCombobox = getByRole('combobox', { name: 'category' });
 
     // check values that can be set by the user
     expect(unitDisplay).toBeDefined();
@@ -89,11 +89,11 @@ describe('TrackerInput.svelte', () => {
     expect(categoryCombobox['value']).toStrictEqual('b');
 
     // check correct buttons being visible/invisible
-    expect(screen.queryByRole('button', { name: 'add' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).toBeNull();
+    expect(queryByRole('button', { name: 'add' })).toBeDefined();
+    expect(queryByRole('button', { name: 'edit' })).toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).toBeNull();
 
     // change amount + category and click 'add'
     await fireEvent.input(amountInput, { target: { value: 100 } });
@@ -102,7 +102,7 @@ describe('TrackerInput.svelte', () => {
     expect(amountInput['value']).toStrictEqual('100');
     expect(categoryCombobox['value']).toStrictEqual('d');
 
-    await fireEvent.click(screen.getByRole('button', { name: 'add' }));
+    await fireEvent.click(getByRole('button', { name: 'add' }));
     await tick();
 
     expect(addMock).toHaveBeenCalledTimes(1);
@@ -133,11 +133,11 @@ describe('TrackerInput.svelte', () => {
       value: 500
     };
 
-    render(TrackerInput, { ...mockData });
+    let { getByText, getByRole, queryByRole } = render(TrackerInput, { ...mockData, onAdd: addMock });
 
-    const unitDisplay = screen.getByText('kcal');
-    const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
-    const categoryCombobox = screen.getByRole('combobox', { name: 'category' });
+    const unitDisplay = getByText('kcal');
+    const amountInput = getByRole('spinbutton', { name: 'amount' });
+    const categoryCombobox = getByRole('combobox', { name: 'category' });
 
     // check values that can be set by the user
     expect(unitDisplay).toBeDefined();
@@ -146,11 +146,11 @@ describe('TrackerInput.svelte', () => {
     expect(categoryCombobox['value']).toStrictEqual('b');
 
     // check correct buttons being visible/invisible
-    expect(screen.queryByRole('button', { name: 'add' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).toBeNull();
+    expect(queryByRole('button', { name: 'add' })).toBeDefined();
+    expect(queryByRole('button', { name: 'edit' })).toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).toBeNull();
 
     // change amount + category and click 'add'
     await fireEvent.input(amountInput, { target: { value: 100 } });
@@ -159,7 +159,7 @@ describe('TrackerInput.svelte', () => {
     expect(amountInput['value']).toStrictEqual('100');
     expect(categoryCombobox['value']).toStrictEqual('d');
 
-    await fireEvent.click(screen.getByRole('button', { name: 'add' }));
+    await fireEvent.click(getByRole('button', { name: 'add' }));
     await tick();
 
     expect(addMock).toHaveBeenCalledTimes(1);
@@ -176,8 +176,7 @@ describe('TrackerInput.svelte', () => {
 
 
   it('should enter edit mode, change and confirm the change', async () => {
-    let updateEvent: TrackerInputEvent<WeightTracker>;
-    const updateMock = vi.fn((event: TrackerInputEvent<WeightTracker>) => (updateEvent = event));
+    const updateMock = vi.fn();
 
     const mockData = {
       value: 70,
@@ -187,38 +186,39 @@ describe('TrackerInput.svelte', () => {
       onUpdate: updateMock
     };
 
-    render(TrackerInput, { ...mockData });
+    let { getByRole, queryByRole } = render(TrackerInput, { ...mockData, onUpdate: updateMock, existing: true });
 
-    const editButton = screen.queryByRole('button', { name: 'edit' });
-    const deleteButton = screen.queryByRole('button', { name: 'delete' });
-    const confirmButton = screen.queryByRole('button', { name: 'confirm' });
-    const discardButton = screen.queryByRole('button', { name: 'discard' });
+    const editButton = queryByRole('button', { name: 'edit' });
+    const deleteButton = queryByRole('button', { name: 'delete' });
+    const confirmButton = queryByRole('button', { name: 'confirm' });
+    const discardButton = queryByRole('button', { name: 'discard' });
 
-    expect(screen.queryByRole('button', { name: 'add' })).toBeNull();
+    expect(queryByRole('button', { name: 'add' })).toBeNull();
     expect(editButton).toBeDefined();
     expect(deleteButton).toBeDefined();
     expect(confirmButton).toBeNull();
     expect(discardButton).toBeNull();
 
-    await fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+    await fireEvent.click(getByRole('button', { name: 'edit' }));
     await tick();
 
     // check correct buttons being visible/invisible
     // expected: edit and delete disappear from the dom, confirm and discard appear
-    expect(screen.queryByRole('button', { name: 'edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).toBeNull();
     expect(confirmButton).toBeDefined();
     expect(discardButton).toBeDefined();
 
-    await fireEvent.input(screen.getByRole('spinbutton', { name: 'amount' }), {
+    await fireEvent.input(getByRole('spinbutton', { name: 'amount' }), {
       target: { value: 100 }
     });
-    await fireEvent.click(screen.queryByRole('button', { name: 'confirm' }));
+
+    expect(getByRole('spinbutton', { name: 'amount' })['value']).toStrictEqual('100');
+
+    await fireEvent.click(queryByRole('button', { name: 'confirm' }));
     await tick();
 
-    expect(updateMock).toHaveBeenCalledTimes(1);
-
-    expect(updateEvent).toEqual({
+    expect(updateMock).toHaveBeenCalledExactlyOnceWith({
       details: {
         amount: 100,
         category: undefined,
@@ -251,35 +251,35 @@ describe('TrackerInput.svelte', () => {
       onUpdate: updateMock
     };
 
-    render(TrackerInput, { ...mockData });
+    let { getByRole, queryByRole } = render(TrackerInput, { ...mockData });
 
-    const amountInput = screen.getByRole('spinbutton', { name: 'amount' });
+    const amountInput = getByRole('spinbutton', { name: 'amount' });
 
-    expect(screen.queryByRole('button', { name: 'edit' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).toBeNull();
 
-    await fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+    await fireEvent.click(getByRole('button', { name: 'edit' }));
     await tick();
 
-    expect(screen.queryByRole('button', { name: 'edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).not.toBeNull();
 
     await fireEvent.input(amountInput, { target: { value: 100 } });
-    await fireEvent.click(screen.getByRole('button', { name: 'discard' }));
+    await fireEvent.click(getByRole('button', { name: 'discard' }));
     await tick();
 
     expect(updateMock).toHaveBeenCalledTimes(0);
     expect(updateEvent).toBeUndefined();
     expect(+amountInput['value']).toEqual(mockData.value);
 
-    expect(screen.queryByRole('button', { name: 'edit' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).toBeNull();
   });
 
   it('should enter delete mode and confirm the delete', async () => {
@@ -293,24 +293,24 @@ describe('TrackerInput.svelte', () => {
       onDelete: deleteMock
     };
 
-    render(TrackerInput, { ...mockData });
+    let { queryByRole } = render(TrackerInput, { ...mockData });
 
-    const deleteButton = screen.queryByRole('button', { name: 'delete' });
+    const deleteButton = queryByRole('button', { name: 'delete' });
 
-    expect(screen.queryByRole('button', { name: 'edit' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).not.toBeNull();
     expect(deleteButton).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).toBeNull();
 
     await fireEvent.click(deleteButton);
     await tick();
 
-    expect(screen.queryByRole('button', { name: 'edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'delete' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).not.toBeNull();
 
-    await fireEvent.click(screen.queryByRole('button', { name: 'confirm' }));
+    await fireEvent.click(queryByRole('button', { name: 'confirm' }));
     await tick();
 
     expect(deleteMock).toHaveBeenCalledTimes(1);
@@ -329,27 +329,27 @@ describe('TrackerInput.svelte', () => {
       dateStr: '2022-02-02'
     };
 
-    render(TrackerInput, { ...mockData });
+    let { getByRole, queryByRole } = render(TrackerInput, { ...mockData });
 
-    const deleteButton = screen.queryByRole('button', { name: 'delete' });
+    const deleteButton = queryByRole('button', { name: 'delete' });
 
     await fireEvent.click(deleteButton);
     await tick();
 
-    expect(screen.queryByRole('button', { name: 'delete' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'delete' })).toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).not.toBeNull();
 
-    await fireEvent.click(screen.getByRole('button', { name: 'discard' }));
+    await fireEvent.click(getByRole('button', { name: 'discard' }));
     await tick();
 
     expect(deleteMock).toHaveBeenCalledTimes(0);
     expect(deleteEvent).toBeUndefined();
 
     expect(deleteButton).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'edit' })).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'confirm' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'discard' })).toBeNull();
+    expect(queryByRole('button', { name: 'edit' })).not.toBeNull();
+    expect(queryByRole('button', { name: 'confirm' })).toBeNull();
+    expect(queryByRole('button', { name: 'discard' })).toBeNull();
   });
 });

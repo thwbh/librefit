@@ -1,0 +1,68 @@
+name: 'Test'
+on: 
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+jobs:
+  rust-test:
+    name: 'Run nextest'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: 'Install Tauri dependencies'
+        run: |
+          sudo apt update && sudo apt install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            webkit2gtk-driver \
+            xvfb
+      - name: 'Set up Rust'
+        uses: actions-rs/toolchain@v1 
+        with: 
+          toolchain: stable 
+          profile: minimal 
+          override: true 
+      - name: 'Install nextest'
+        uses: taiki-e/install-action@nextest
+      - name: 'Install cargo-llvm-cov'
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: 'Run tests'
+        run: cd src-tauri/ && cargo llvm-cov nextest --profile ci      
+      - name: 'Upload coverage reports to Codecov'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+  svelte-test:
+    name: 'Run vitest'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      # Required to checkout the code
+      contents: read
+      # Required to put a comment into the pull-request
+      pull-requests: write
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: 'Install Node'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    - name: 'Install Deps'
+      run: npm install
+    - name: 'Test'
+      run: npm run test:ci --coverage.enabled true
+    - name: 'Upload coverage reports to Codecov'
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

@@ -6,7 +6,6 @@ import { tick } from 'svelte';
 import { extractModalStoreMockTriggerCallback } from '../../__mocks__/skeletonProxy';
 import { getDateAsStr, getDaytimeFoodCategory } from '$lib/date';
 import type { CalorieTarget, CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
-import type { TrackerInputEvent } from '$lib/event';
 
 const mockCategories: Array<FoodCategory> = [
   { shortvalue: 'b', longvalue: 'Breakfast' },
@@ -72,11 +71,10 @@ describe('CalorieTrackerComponent.svelte component', () => {
   });
 
   it('should trigger the quick add button', async () => {
-    const { getByRole } = render(CalorieTrackerComponent);
+    const addMock = vi.fn();
 
-    let dispatchEvent: any;
-    const dispatchMock = vi.fn((e) => {
-      dispatchEvent = e.detail;
+    const { getByRole } = render(CalorieTrackerComponent, {
+      props: { onAddCalories: addMock }
     });
 
     const amountInput = getByRole('spinbutton', { name: 'amount' });
@@ -86,19 +84,16 @@ describe('CalorieTrackerComponent.svelte component', () => {
     await fireEvent.click(quickAddButton);
     await tick();
 
-    expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(dispatchEvent).toEqual({
-      callback: expect.any(Function),
-      value: 100,
+    expect(addMock).toHaveBeenCalledExactlyOnceWith({
+      amount: 100,
       category: getDaytimeFoodCategory(new Date()),
-      dateStr: getDateAsStr(new Date()),
-      target: undefined
-    });
+      added: getDateAsStr(new Date()),
+      description: ''
+    }, expect.any(Function));
   });
 
   it('should trigger the add button and dispatch addCalories', async () => {
-    let addEvent: TrackerInputEvent<NewCalorieTracker>;
-    const addMock = vi.fn((e) => { addEvent = e });
+    const addMock = vi.fn();
 
     const props = {
       categories: mockCategories,
@@ -118,46 +113,34 @@ describe('CalorieTrackerComponent.svelte component', () => {
       component: 'trackerModal',
       response: expect.any(Function),
       meta: {
-        categories: undefined
+        categories: mockCategories
       }
     });
 
     const callback = extractModalStoreMockTriggerCallback();
-    await callback({
-      detail: {
-        close: true
-      }
-    });
 
-    expect(addMock).toHaveBeenCalledTimes(0);
-
-    const callbackDetails = {
-      dateStr: getDateAsStr(new Date()),
-      value: 100,
-      category: getDaytimeFoodCategory(new Date())
+    const callbackDetails: NewCalorieTracker = {
+      added: getDateAsStr(new Date()),
+      amount: 100,
+      category: getDaytimeFoodCategory(new Date()),
+      description: ''
     };
 
     const callbackParams = {
       detail: {
         type: 'add',
-        detail: callbackDetails
+        details: callbackDetails,
+        buttonEvent: { callback }
       }
     };
 
     await callback(callbackParams);
 
-    expect(addMock).toHaveBeenCalledTimes(1);
-    expect(addEvent).toEqual(callbackDetails);
+    expect(addMock).toHaveBeenCalledExactlyOnceWith(callbackParams.detail.details, callbackParams.detail.buttonEvent.callback);
   });
 
   it('should trigger the edit button and dispatch updateCalories', async () => {
-    let updatedCalories: CalorieTracker;
-    let updateCallback: () => void;
-
-    const updateMock = vi.fn((calories: CalorieTracker, callback: () => void) => {
-      updatedCalories = calories;
-      updateCallback = callback;
-    });
+    const updateMock = vi.fn();
 
     const { getByText } = render(CalorieTrackerComponent, {
       categories: mockCategories,
@@ -199,25 +182,24 @@ describe('CalorieTrackerComponent.svelte component', () => {
     const callbackParams = {
       detail: {
         type: 'update',
-        detail: callbackDetails
+        details: callbackDetails,
+        buttonEvent: { callback }
       }
     };
 
     await callback(callbackParams);
 
-    expect(updateMock).toHaveBeenCalledTimes(1);
-    expect(updatedCalories).toEqual(callbackDetails);
+    expect(updateMock).toHaveBeenCalledExactlyOnceWith(callbackParams.detail.details, callbackParams.detail.buttonEvent.callback);
   });
 
   it('should trigger the edit button and dispatch deleteCalories', async () => {
-    let updateEvent: any;
-    const updateMock = vi.fn((e) => updateEvent = e);
+    const deleteMock = vi.fn();
 
     const { getByText } = render(CalorieTrackerComponent, {
       categories: mockCategories,
       calorieTracker: mockEntries,
       calorieTarget: mockCalorieTarget,
-      onUpdateCalories: updateMock
+      onDeleteCalories: deleteMock
     });
 
     const editButton = getByText('Edit');
@@ -225,6 +207,8 @@ describe('CalorieTrackerComponent.svelte component', () => {
     await tick();
 
     const callback = extractModalStoreMockTriggerCallback();
+
+    expect(callback).toBeTruthy();
 
     const callbackDetails = {
       dateStr: getDateAsStr(new Date()),
@@ -234,13 +218,13 @@ describe('CalorieTrackerComponent.svelte component', () => {
     const callbackParams = {
       detail: {
         type: 'remove',
-        detail: callbackDetails
+        details: callbackDetails,
+        buttonEvent: { callback }
       }
     };
 
     await callback(callbackParams);
 
-    expect(updateMock).toHaveBeenCalledTimes(1);
-    expect(updateEvent).toEqual(callbackDetails);
+    expect(deleteMock).toHaveBeenCalledExactlyOnceWith(callbackParams.detail.details, callbackParams.detail.buttonEvent.callback);
   });
 });

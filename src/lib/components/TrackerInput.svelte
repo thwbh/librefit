@@ -43,18 +43,20 @@
 		onDelete
 	}: Props = $props();
 
-	let previous: any = $state();
+	let previous: any = $state({ value: undefined, category: undefined });
 	let changeAction = $state();
 
 	const addCallback = (buttonEvent: TrackerButtonEvent) => {
-		const details: TrackerInputDetails = {
-			id: id,
-			added: dateStr,
-			amount: value,
-			category: category
-		};
+		onAdd({
+			details: {
+				id: id,
+				added: dateStr,
+				amount: value,
+				category: category
+			},
 
-		onAdd({ details, buttonEvent });
+			buttonEvent
+		});
 	};
 
 	const updateCallback = (buttonEvent: TrackerButtonEvent) => {

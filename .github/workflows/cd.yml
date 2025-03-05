@@ -1,0 +1,38 @@
+name: 'Release'
+on: workflow_dispatch
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  publish:
+    name: 'Package'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: 'Install Tauri dependencies'
+        run: |
+          sudo apt update && sudo apt install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            webkit2gtk-driver \
+            xvfb
+      - name: 'Set up Rust'
+        uses: actions-rs/toolchain@v1 
+        with: 
+          toolchain: stable 
+          profile: minimal 
+          override: true 
+      - name: 'Build'
+        run: cd src-tauri/ && cargo build
+
