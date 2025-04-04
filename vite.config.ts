@@ -1,7 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from 'vite';
-import svg from '@poppanator/sveltekit-svg';
-import purgeCss from 'vite-plugin-tailwind-purgecss';
 import { svelteTesting } from "@testing-library/svelte/vite";
 import tsconfigPaths from 'vite-tsconfig-paths';
 
@@ -9,23 +8,9 @@ const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     sveltekit(),
-    purgeCss(),
     tsconfigPaths(),
-    svg({
-      includePaths: ['./src/lib/assets/icons/', './src/lib/assets/images/'],
-      svgoOptions: {
-        multipass: true,
-        plugins: [
-          {
-            name: 'preset-default',
-            // by default svgo removes the viewBox which prevents svg icons from scaling
-            // not a good idea! https://github.com/svg/svgo/pull/1461
-            params: { overrides: { removeViewBox: false } }
-          }
-        ]
-      }
-    })
   ],
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
@@ -50,7 +35,6 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    setupFiles: ['./tests/__mocks__/skeletonProxy.ts'],
     coverage: {
       provider: 'v8',
       // you can include other reporters, but 'json-summary' is required, json is recommended
