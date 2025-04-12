@@ -19,6 +19,13 @@ pub fn update_body_data(
     sex: String,
 ) -> Result<BodyData, String> {
     let conn = &mut create_db_connection();
+    log::info!(
+        ">>> update_body_data: age={:?} height={:?} weight={:?} sex={:?}",
+        age,
+        height,
+        weight,
+        sex
+    );
 
     body::update_body_data(conn, &age, &height, &weight, &sex).map_err(handle_error)
 }

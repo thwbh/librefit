@@ -10,7 +10,6 @@ use super::math_f32::floor_f32;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Wizard {
-    pub selected_rate: i32,
     pub calorie_target: NewCalorieTarget,
     pub weight_target: NewWeightTarget,
     pub weight_tracker: NewWeightTracker,
