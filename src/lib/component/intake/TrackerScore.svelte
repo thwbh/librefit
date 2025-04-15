@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { CalorieTarget } from '$lib/model';
-  import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
+	import type { CalorieTarget } from '$lib/model';
+	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
 		calorieTarget: CalorieTarget;
@@ -17,11 +17,11 @@
 		),
 		total = $state(0);
 
-  let percentage = $state(0);
-  let ratio = $state(0);
-  let currentColor = $state('');
+	let percentage = $state(0);
+	let ratio = $state(0);
+	let currentColor = $state('');
 
-  $effect(() => {
+	$effect(() => {
 		if (entries && entries.length > 0) {
 			total = entries.reduce((a, b) => a + b);
 		}
@@ -31,54 +31,61 @@
 			maximum = calorieTarget.maximumCalories;
 		}
 
-    if (total !== undefined && maximum) {
-      ratio = total / limit;
-      percentage = Math.floor(ratio * 100);
+		if (total !== undefined && maximum) {
+			ratio = total / limit;
+			percentage = Math.floor(ratio * 100);
 
-      if (ratio == 0) {
-        currentColor = 'stat-desc';
-      } else if (ratio <= 1) {
-        currentColor = 'text-primary';
-      } else if (total <= maximum) {
-        currentColor = 'text-warning';
-      } else {
-        currentColor = 'text-error';
-      }
-    }
+			if (ratio == 0) {
+				currentColor = 'stat-desc';
+			} else if (ratio <= 1) {
+				currentColor = 'text-primary';
+			} else if (total <= maximum) {
+				currentColor = 'text-warning';
+			} else {
+				currentColor = 'text-error';
+			}
+		}
 	});
 </script>
 
 <div class="stat">
-  <div class="stat-figure">
-    <div class="radial-progress {currentColor}" style="--value:{percentage};--size:7rem;" role="progressbar">
-      <p class="text-neutral">{percentage}%</p>
-    </div>
-  </div> 
+	<div class="stat-figure">
+		<div
+			class="radial-progress {currentColor}"
+			style="--value:{percentage};--size:7rem;"
+			role="progressbar"
+		>
+			<p class="text-neutral">{percentage}%</p>
+		</div>
+	</div>
 
-  <div class="stat-title">Today's Intake</div>
-  <div class="stat-value">{total}<span class="text-sm">/{limit}</span></div> 
-  <div class="stat-desc flex items-center gap-1">
-    {#if ratio <= 1}
-      <ShieldCheckSolid width="20" height="20" class={currentColor} />
-      {#if ratio == 0}
-        Nothing tracked yet.
-      {:else}
-        All good. {limit - total}kcal left for today.
-      {/if}
-    {:else if ratio > 1}
-       {#if total <= calorieTarget.maximumCalories}    
-        <ShieldSolid width="20" height="20" class={currentColor} />
-        Warning. {maximum - total}kcal left for hardcap. 
-      {:else}
-        <ExclamationCircleSolid width="20" height="20" class={currentColor} /> 
-        Warning! {total - maximum}kcal over hardcap!
-      {/if} 
-    {/if}
-  </div>
+	<div class="stat-title">Today's Intake</div>
+	<div class="stat-value">{total}<span class="text-sm">/{limit}</span></div>
+	<div class="stat-desc flex items-center gap-1">
+		{#if ratio <= 1}
+			{#if ratio == 0}
+				<ShieldSolid width="20" height="20" class={currentColor} />
+
+				No intake tracked yet.
+			{:else}
+				<ShieldCheckSolid width="20" height="20" class={currentColor} />
+
+				All good. {limit - total}kcal left for today.
+			{/if}
+		{:else if ratio > 1}
+			{#if total <= calorieTarget.maximumCalories}
+				<ShieldSolid width="20" height="20" class={currentColor} />
+				Warning. {maximum - total}kcal left for hardcap.
+			{:else}
+				<ExclamationCircleSolid width="20" height="20" class={currentColor} />
+				Warning! {total - maximum}kcal over hardcap!
+			{/if}
+		{/if}
+	</div>
 </div>
 
 <style>
-  .stat-value {
-    font-size: 3rem;
-  }
+	.stat-value {
+		font-size: 3rem;
+	}
 </style>
