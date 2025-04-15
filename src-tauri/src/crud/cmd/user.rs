@@ -20,6 +20,8 @@ pub fn update_user(user_name: String, user_avatar: String) -> Result<LibreUser, 
 /// Return user data to determine if its a first time setup
 #[command]
 pub fn get_user() -> Result<LibreUser, String> {
+    log::info!(">>> get_user");
+
     let conn = &mut create_db_connection();
 
     user::get_user(conn).map_err(handle_error)

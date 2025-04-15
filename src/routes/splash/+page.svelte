@@ -1,5 +1,10 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import logo from '$lib/assets/logo/librefit-logo.png';
+
+	const onsetup = () => {
+		goto('/wizard');
+	};
 </script>
 
 <div class="flex flex-col h-screen justify-center gap-2">
@@ -31,7 +36,7 @@
 				<p>Hi there! Seems like you opened this app for the first time. Let's get you started.</p>
 			</div>
 			<div class="flex flex-col gap-4">
-				<button class="btn btn-primary w-full">Start</button>
+				<button class="btn btn-primary w-full" onclick={onsetup}>Start</button>
 				<button class="btn w-full"> How does this work? </button>
 			</div>
 		</div>
