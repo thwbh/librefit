@@ -1,22 +1,54 @@
 <script lang="ts">
-	import { parseStringAsDate } from '$lib/date';
-	import type { CalorieTarget, WeightTarget, WeightTracker } from '$lib/model';
+	import { display_date_format, getDateAsStr, parseStringAsDate } from '$lib/date';
+	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/model';
+	import { ModalDialog, ValidatedInput } from '@thwbh/veilchen';
 	import { differenceInDays } from 'date-fns';
 	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
 	import { PlusOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
-		weightTracker?: WeightTracker;
+		weightTracker?: NewWeightTracker | WeightTracker;
 		lastWeightTracker?: WeightTracker;
 		weightTarget: WeightTarget;
+		onadd: (weightTracker: NewWeightTracker) => Promise<WeightTracker>;
+		onedit: (weightTracker: WeightTracker) => Promise<WeightTracker>;
 	}
 
-	let { weightTracker = undefined, lastWeightTracker = undefined, weightTarget }: Props = $props();
+	let {
+		lastWeightTracker = undefined,
+		weightTracker = {
+			added: getDateAsStr(new Date()),
+			amount: lastWeightTracker ? lastWeightTracker.amount : undefined
+		},
+
+		weightTarget,
+		onadd = undefined,
+		onedit = undefined
+	}: Props = $props();
+
+	let dialog: HTMLDialogElement | undefined = $state();
+	let currentEntry = $derived({ ...weightTracker });
+
+	const show = () => {
+		dialog?.show();
+	};
+
+	const set = async () => {
+		if ('id' in currentEntry) {
+			await onedit?.(currentEntry as WeightTracker).then(
+				(updatedEntry: WeightTracker) => (weightTracker = updatedEntry)
+			);
+		} else {
+			await onadd?.(currentEntry as NewWeightTracker).then(
+				(newEntry: WeightTracker) => (weightTracker = newEntry)
+			);
+		}
+	};
 </script>
 
 <div class="stat">
 	<div class="stat-figure">
-		<button class="btn btn-primary btn-xl">
+		<button class="btn btn-primary btn-xl" aria-label="Set Weight" onclick={show}>
 			<PlusOutline height="1.5rem" width="1.5rem" />
 		</button>
 	</div>
@@ -24,7 +56,7 @@
 	<div class="stat-title">Current Weight</div>
 	<div class="stat-value">
 		<span>
-			{#if weightTracker}
+			{#if weightTracker && 'id' in weightTracker}
 				{weightTracker.amount}
 			{:else if lastWeightTracker}
 				{lastWeightTracker.amount}
@@ -35,7 +67,7 @@
 		</span>
 	</div>
 	<div class="stat-desc flex items-center gap-1">
-		{#if weightTracker}
+		{#if weightTracker && 'id' in weightTracker}
 			<ShieldCheckSolid width="20" height="20" class={'text-success'} />
 			Last update: Today.
 		{:else if lastWeightTracker}
@@ -66,6 +98,30 @@
 	</span>
 	<progress class="progress w-full" value="63" max="100"></progress>
 </div>
+
+<ModalDialog bind:dialog onconfirm={set}>
+	{#snippet title()}
+		<span> Set Weight </span>
+		<span class="text-xs">
+			Date: {getDateAsStr(new Date(), display_date_format)}
+		</span>
+	{/snippet}
+	{#snippet content()}
+		<fieldset class="fieldset rounded-box">
+			<ValidatedInput
+				bind:value={currentEntry.amount}
+				label="Current Weight"
+				type="number"
+				unit="kg"
+				errorInline={true}
+				min={30}
+				max={330}
+			>
+				Please enter a valid weight.
+			</ValidatedInput>
+		</fieldset>
+	{/snippet}
+</ModalDialog>
 
 <style>
 	.stat-value {

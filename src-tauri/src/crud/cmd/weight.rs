@@ -37,12 +37,9 @@ pub fn delete_weight_target(target_id: i32) -> Result<usize, String> {
 
 /// Create a new weight tracker entry and return tracker data for that day
 #[command]
-pub fn create_weight_tracker_entry(
-    new_entry: NewWeightTracker,
-) -> Result<Vec<WeightTracker>, String> {
+pub fn create_weight_tracker_entry(new_entry: NewWeightTracker) -> Result<WeightTracker, String> {
     let conn = &mut create_db_connection();
-    weight::create_weight_tracker_entry(conn, &new_entry).map_err(handle_error)?;
-    weight::find_weight_tracker_by_date(conn, &new_entry.added).map_err(handle_error)
+    weight::create_weight_tracker_entry(conn, &new_entry).map_err(handle_error)
 }
 
 /// Update a weight tracker entry by ID and return tracker data for that day
@@ -50,21 +47,16 @@ pub fn create_weight_tracker_entry(
 pub fn update_weight_tracker_entry(
     tracker_id: i32,
     updated_entry: NewWeightTracker,
-) -> Result<Vec<WeightTracker>, String> {
+) -> Result<WeightTracker, String> {
     let conn = &mut create_db_connection();
-    weight::update_weight_tracker_entry(conn, &tracker_id, &updated_entry).map_err(handle_error)?;
-    weight::find_weight_tracker_by_date(conn, &updated_entry.added).map_err(handle_error)
+    weight::update_weight_tracker_entry(conn, &tracker_id, &updated_entry).map_err(handle_error)
 }
 
 /// Delete a weight tracker entry by ID and return tracker data for that day
 #[command]
-pub fn delete_weight_tracker_entry(
-    tracker_id: i32,
-    added_str: String,
-) -> Result<Vec<WeightTracker>, String> {
+pub fn delete_weight_tracker_entry(tracker_id: i32) -> Result<usize, String> {
     let conn = &mut create_db_connection();
-    weight::delete_weight_tracker_entry(conn, tracker_id).map_err(handle_error)?;
-    weight::find_weight_tracker_by_date(conn, &added_str).map_err(handle_error)
+    weight::delete_weight_tracker_entry(conn, tracker_id).map_err(handle_error)
 }
 
 #[command]

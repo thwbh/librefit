@@ -38,8 +38,7 @@ export const updateCalories = (calories: CalorieTracker): Promise<CalorieTracker
 
 export const deleteCalories = (calories: CalorieTracker): Promise<number> => {
   return invoke('delete_calorie_tracker_entry', {
-    trackerId: calories.id,
-    addedStr: calories.added
+    trackerId: calories.id
   });
 };
 
@@ -103,11 +102,11 @@ export const listCaloriesFiltered = (filter: DataViews): Promise<Array<CalorieTr
   return listCalorieTrackerRange(fromDate, toDate);
 };
 
-export const addWeight = (newEntry: NewWeightTracker): Promise<Array<WeightTracker>> => {
+export const addWeight = (newEntry: NewWeightTracker): Promise<WeightTracker> => {
   return invoke('create_weight_tracker_entry', { newEntry });
 };
 
-export const updateWeight = (weight: WeightTracker): Promise<Array<WeightTracker>> => {
+export const updateWeight = (weight: WeightTracker): Promise<WeightTracker> => {
   const entry: NewWeightTracker = {
     added: weight.added,
     amount: weight.amount
@@ -119,10 +118,9 @@ export const updateWeight = (weight: WeightTracker): Promise<Array<WeightTracker
   });
 };
 
-export const deleteWeight = (weight: WeightTracker): Promise<Array<WeightTracker>> => {
+export const deleteWeight = (weight: WeightTracker): Promise<number> => {
   return invoke('delete_weight_tracker_entry', {
     trackerId: weight.id,
-    addedStr: weight.added
   });
 };
 

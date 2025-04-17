@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { addCalories, deleteCalories, updateCalories } from '$lib/api/tracker.js';
+	import {
+		addCalories,
+		addWeight,
+		deleteCalories,
+		updateCalories,
+		updateWeight
+	} from '$lib/api/tracker.js';
 	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import TrackerStack from '$lib/component/intake/TrackerStack.svelte';
@@ -30,7 +36,7 @@
 	);
 
 	if (!dashboard.userData) {
-		goto('/wizard');
+		goto('/splash');
 	}
 </script>
 
@@ -48,7 +54,13 @@
 	</div>
 
 	<div class="bg-base-200 flex flex-col items-center w-full">
-		<WeightScore {weightTracker} {lastWeightTracker} {weightTarget} />
+		<WeightScore
+			{weightTracker}
+			{lastWeightTracker}
+			{weightTarget}
+			onadd={addWeight}
+			onedit={updateWeight}
+		/>
 	</div>
 	<BottomDock />
 </div>
