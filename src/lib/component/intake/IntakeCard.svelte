@@ -1,14 +1,15 @@
 <script lang="ts">
-	import type { CalorieTracker } from '$lib/model';
+	import type { CalorieTracker, FoodCategory } from '$lib/model';
 	import { longpress } from '$lib/gesture/long-press';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
 
 	interface Props {
 		entry: CalorieTracker;
+		categories: Array<FoodCategory>;
 		onlongpress: () => void;
 	}
 
-	let { entry, onlongpress }: Props = $props();
+	let { entry, categories, onlongpress }: Props = $props();
 
 	let categoryLongvalue = $state('');
 
@@ -27,6 +28,6 @@
 
 <div class="card" use:longpress onlongpress={startEditing}>
 	<fieldset class="fieldset w-xs bg-base-200 border border-base-300 p-4 rounded-box">
-		<CalorieTrackerMask {entry} />
+		<CalorieTrackerMask {entry} {categories} onedit={startEditing} readonly={true} />
 	</fieldset>
 </div>

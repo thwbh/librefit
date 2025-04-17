@@ -24,6 +24,8 @@
 	$effect(() => {
 		if (entries && entries.length > 0) {
 			total = entries.reduce((a, b) => a + b);
+		} else {
+			total = 0;
 		}
 
 		if (calorieTarget) {

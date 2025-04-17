@@ -1,17 +1,26 @@
 <script lang="ts">
-	import type { CalorieTracker, NewCalorieTracker } from '$lib/model';
-	import { type SwipeCustomEvent } from 'svelte-gestures';
+	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
 	import IntakeCard from './IntakeCard.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
-	import { PlusOutline } from 'flowbite-svelte-icons';
-	import { AlertBox, AlertType, Stack } from '@thwbh/veilchen';
+	import { PlusOutline, TrashBinSolid } from 'flowbite-svelte-icons';
+	import { AlertBox, AlertType, ModalDialog, Stack } from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
+		categories: Array<FoodCategory>;
+		onadd?: (newIntake: NewCalorieTracker) => Promise<CalorieTracker>;
+		onedit?: (updatedIntake: CalorieTracker) => Promise<CalorieTracker>;
+		ondelete?: (deletedIntake: CalorieTracker) => Promise<number>;
 	}
 
-	let { entries = $bindable() }: Props = $props();
+	let {
+		entries = $bindable(),
+		categories,
+		onadd = undefined,
+		onedit = undefined,
+		ondelete = undefined
+	}: Props = $props();
 
 	let blankEntry: NewCalorieTracker = $state({
 		category: 'l',
@@ -20,76 +29,97 @@
 		description: ''
 	});
 
-	let focusedEntry: CalorieTracker | undefined = $state(undefined);
-
 	let index = $state(0);
-	let dialog: HTMLDialogElement | undefined = $state();
+	let focusedEntry = $derived(entries[index] ? { ...entries[index] } : undefined);
+	let editDialog: HTMLDialogElement | undefined = $state();
 	let createDialog: HTMLDialogElement | undefined = $state();
 
 	let isEditing = $state(false);
+	let enableDelete = $state(false);
 	let isNew = $state(false);
 
 	const startEditing = () => {
 		isEditing = true;
+		isNew = false;
 
-		dialog?.showModal();
+		editDialog?.showModal();
 	};
 
-	const create = (e: Event) => {
+	const create = () => {
 		isNew = true;
 
 		console.log('create!');
+
 		createDialog?.showModal();
 	};
 
-	const save = (e: Event) => {
+	const save = async () => {
 		console.log('save!');
 
 		console.log(blankEntry);
 
 		if (isNew) {
-			entries.push({
-				id: entries.length + 1,
-				category: blankEntry.category,
-				added: blankEntry.added,
-				amount: blankEntry.amount,
-				description: blankEntry.description
-			});
+			onadd?.(blankEntry).then((newEntry: CalorieTracker) => entries.push(newEntry));
 
-			console.log(entries);
+			index = 0;
+		} else if (isEditing) {
+			onedit?.(focusedEntry).then(
+				(updatedEntry: CalorieTracker) => (entries[index] = updatedEntry)
+			);
 		}
 
-		if (isEditing) dialog?.close();
-		if (isNew) createDialog?.close();
+		createDialog?.close();
+		editDialog?.close();
 	};
 
-	const cancel = (e: Event) => {
+	const deleteEntry = () => {
+		console.log('delete!');
+
+		ondelete?.(focusedEntry).then(() => {
+			if (entries.length === 1) {
+				entries = [];
+			} else {
+				let deletedIndex = index;
+
+				entries = entries.toSpliced(deletedIndex, 1);
+
+				if (index === entries.length && index > 0) {
+					index--;
+				} else index = 0;
+			}
+		});
+
+		enableDelete = false;
+
+		editDialog?.close();
+	};
+
+	const cancel = () => {
 		console.log('cancel!');
 
-		if (isEditing) dialog?.close();
-		if (isNew) createDialog?.close();
+		createDialog?.close();
+		editDialog?.close();
+
+		enableDelete = false;
 	};
 
-	const handler = (event: SwipeCustomEvent) => {
-		let direction = 0;
-
-		if (event.detail.direction === 'left') direction = 1;
-		else if (event.detail.direction === 'right') direction = -1;
-
-		index = (index + direction + entries.length) % entries.length;
-		focusedEntry = entries[index];
+	const handleSwipe = () => {
+		console.log(index);
+		console.log(focusedEntry);
 	};
 </script>
 
 <div class="flex flex-col items-center gap-2 p-4">
 	{#if entries && entries.length > 0}
 		<Stack
+			bind:index
 			size={entries.length}
 			swipeable={true}
 			swipeParams={{ timeframe: 300, minSwipeDistance: 60 }}
+			onswipe={handleSwipe}
 		>
 			{#snippet card(index: number)}
-				<IntakeCard entry={entries[index]} onlongpress={startEditing} />
+				<IntakeCard entry={entries[index]} {categories} onlongpress={startEditing} />
 			{/snippet}
 		</Stack>
 	{:else}
@@ -101,38 +131,51 @@
 	<button class="btn btn-neutral w-full" onclick={create}> Add Intake </button>
 </div>
 
-<dialog bind:this={dialog} id="intake-modal" class="modal modal-bottom sm:modal-middle">
-	<div class="modal-box">
-		<span class="dialog-header"> Edit Intake </span>
+<ModalDialog bind:dialog={createDialog} onconfirm={save} oncancel={cancel}>
+	{#snippet title()}
+		<span>Add Intake</span>
+		<span class="text-xs opacity-60">
+			Date: {convertDateStrToDisplayDateStr(blankEntry.added)}
+		</span>
+	{/snippet}
 
-		{#if focusedEntry !== undefined}
-			<CalorieTrackerMask bind:entry={focusedEntry} {isEditing} />
-		{/if}
-		<div class="flex flex-col gap-2">
-			<button class="btn btn-primary" onclick={save}>Save</button>
-			<button class="btn" onclick={cancel}>Cancel</button>
-		</div>
-	</div>
-</dialog>
+	{#snippet content()}
+		<CalorieTrackerMask
+			bind:entry={blankEntry}
+			{categories}
+			isEditing={true}
+			readonly={enableDelete}
+		/>
+	{/snippet}
+</ModalDialog>
 
-<dialog bind:this={createDialog} id="intake-modal" class="modal modal-bottom sm:modal-middle">
-	<div class="modal-box">
-		<div class="dialog-header border-base-300 pb-2 mb-2">
-			<span>Add Intake</span>
+<ModalDialog bind:dialog={editDialog} onconfirm={save} oncancel={cancel}>
+	{#snippet title()}
+		<span>Edit Intake</span>
+		<span>
 			<span class="text-xs opacity-60">
-				Date: {convertDateStrToDisplayDateStr(blankEntry.added)}
+				Added: {convertDateStrToDisplayDateStr(blankEntry.added)}
 			</span>
-		</div>
-		<CalorieTrackerMask bind:entry={blankEntry} isEditing={true} />
-		<div class="flex flex-col gap-2">
-			<button class="btn btn-primary" onclick={save}>Save</button>
-			<button class="btn" onclick={cancel}>Cancel</button>
-		</div>
-	</div>
-</dialog>
+			<span>
+				<button class="btn btn-xs btn-error">
+					<TrashBinSolid width="1rem" onclick={() => (enableDelete = true)} />
+				</button>
+			</span>
+		</span>
+	{/snippet}
 
-<style>
-	.dialog-header {
-		@apply flex justify-between items-center grow border-b border-dashed w-full;
-	}
-</style>
+	{#snippet content()}
+		{#if focusedEntry !== undefined}
+			<CalorieTrackerMask entry={focusedEntry} {categories} {isEditing} />
+		{/if}
+	{/snippet}
+
+	{#snippet footer()}
+		{#if enableDelete}
+			<button class="btn btn-error" onclick={deleteEntry}>Delete</button>
+		{:else}
+			<button class="btn btn-primary" onclick={save}>Save</button>
+		{/if}
+		<button class="btn" onclick={cancel}>Cancel</button>
+	{/snippet}
+</ModalDialog>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { addCalories, deleteCalories, updateCalories } from '$lib/api/tracker.js';
 	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import TrackerStack from '$lib/component/intake/TrackerStack.svelte';
@@ -24,7 +25,9 @@
 
 	const weightTracker: WeightTracker = $state(dashboard.weightTodayList[0]);
 
-	const caloriesToday: Array<number> = dashboard.caloriesTodayList.map((tracker) => tracker.amount);
+	let caloriesToday: Array<number> = $derived(
+		calorieTrackerEntries.map((tracker) => tracker.amount)
+	);
 
 	if (!dashboard.userData) {
 		goto('/wizard');
@@ -35,7 +38,13 @@
 	<div class="bg-base-200 flex flex-col items-center">
 		<TrackerScore {calorieTarget} entries={caloriesToday} />
 
-		<TrackerStack bind:entries={calorieTrackerEntries} />
+		<TrackerStack
+			bind:entries={calorieTrackerEntries}
+			categories={dashboard.foodCategories}
+			onadd={addCalories}
+			onedit={updateCalories}
+			ondelete={deleteCalories}
+		/>
 	</div>
 
 	<div class="bg-base-200 flex flex-col items-center w-full">

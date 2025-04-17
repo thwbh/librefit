@@ -1,14 +1,23 @@
 <script lang="ts">
-	import type { CalorieTracker, NewCalorieTracker } from '$lib/model';
+	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
 	import { ValidatedInput } from '@thwbh/veilchen';
 	import { PenSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
 		entry: CalorieTracker | NewCalorieTracker;
+		categories: Array<FoodCategory>;
+		readonly?: boolean;
 		isEditing?: boolean;
+		onedit?: () => void;
 	}
 
-	let { entry = $bindable(), isEditing = false }: Props = $props();
+	let {
+		entry = $bindable(),
+		categories,
+		isEditing = false,
+		readonly = false,
+		onedit = () => {}
+	}: Props = $props();
 
 	let categoryLongvalue = $state('');
 
@@ -26,29 +35,30 @@
 </script>
 
 <fieldset class="fieldset rounded-box">
-	<span> Category </span>
+	{#if !readonly}
+		<span> Category </span>
+	{/if}
 
 	<div class="flex flex-row items-center justify-between w-full grow">
 		{#if isEditing}
-			<button class="btn grow text-left" popovertarget="popover-1" style="anchor-name:--anchor-1">
-				{categoryLongvalue}
-			</button>
-			<ul
-				class="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
-				popover="auto"
-				id="popover-1"
-				style="position-anchor:--anchor-1"
-			>
-				<li><button class="btn btn-ghost" onclick={() => select('b')}>Breakfast</button></li>
-				<li><button class="btn btn-ghost" onclick={() => select('l')}>Lunch</button></li>
-				<li><button class="btn btn-ghost" onclick={() => select('d')}>Dinner</button></li>
-			</ul>
+			<div class="dropdown dropdown-center w-full">
+				<button tabindex="0" class="m-1 btn w-full" disabled={readonly}
+					><span class="text-left w-full">{categoryLongvalue}</span></button
+				>
+				<ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-full">
+					{#each categories as category}
+						<li>
+							<button onclick={() => select(category.shortvalue)}>{category.longvalue}</button>
+						</li>
+					{/each}
+				</ul>
+			</div>
 		{:else}
 			<p class="font-bold">
 				{categoryLongvalue}
 			</p>
 
-			<button class="btn btn-xs btn-ghost"
+			<button class="btn btn-xs btn-ghost" onclick={onedit}
 				><!-- Press to edit -->
 				<PenSolid height="1rem" width="1rem" />
 			</button>
@@ -65,10 +75,21 @@
 		errorInline={true}
 		min="1"
 		max="10000"
+		disabled={readonly}
 	>
 		Please enter a valid amount.
 	</ValidatedInput>
 
-	<textarea class="textarea w-full" placeholder="Description..." bind:value={entry.description}
+	<textarea
+		class="textarea w-full"
+		placeholder="Description..."
+		bind:value={entry.description}
+		disabled={readonly}
 	></textarea>
 </fieldset>
+
+<style>
+	:disabled {
+		color: var(--text-color);
+	}
+</style>

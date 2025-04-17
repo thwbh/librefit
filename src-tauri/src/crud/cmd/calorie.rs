@@ -11,38 +11,31 @@ pub fn create_calorie_target(new_target: NewCalorieTarget) -> Result<CalorieTarg
     calories::create_calorie_target(conn, &new_target).map_err(handle_error)
 }
 
-/// Create a new calorie tracker entry and return that day's tracker data
+/// Create a new calorie tracker entry and return the created one
 #[command]
 pub fn create_calorie_tracker_entry(
     new_entry: NewCalorieTracker,
-) -> Result<Vec<CalorieTracker>, String> {
+) -> Result<CalorieTracker, String> {
     let conn = &mut create_db_connection();
 
-    calories::create_calorie_tracker_entry(conn, &new_entry).map_err(handle_error)?;
-    calories::find_calorie_tracker_by_date(conn, &new_entry.added).map_err(handle_error)
+    calories::create_calorie_tracker_entry(conn, &new_entry).map_err(handle_error)
 }
 
-/// Update a calorie tracker entry by ID and return that day's tracker data
+/// Update a calorie tracker entry by ID and return it
 #[command]
 pub fn update_calorie_tracker_entry(
     tracker_id: i32,
     updated_entry: NewCalorieTracker,
-) -> Result<Vec<CalorieTracker>, String> {
+) -> Result<CalorieTracker, String> {
     let conn = &mut create_db_connection();
-    calories::update_calorie_tracker_entry(conn, tracker_id, &updated_entry)
-        .map_err(handle_error)?;
-    calories::find_calorie_tracker_by_date(conn, &updated_entry.added).map_err(handle_error)
+    calories::update_calorie_tracker_entry(conn, tracker_id, &updated_entry).map_err(handle_error)
 }
 
-/// Delete a calorie tracker entry by ID and return that day's tracker data
+/// Delete a calorie tracker entry by ID and return the deleted row count
 #[command]
-pub fn delete_calorie_tracker_entry(
-    tracker_id: i32,
-    added_str: String,
-) -> Result<Vec<CalorieTracker>, String> {
+pub fn delete_calorie_tracker_entry(tracker_id: i32) -> Result<usize, String> {
     let conn = &mut create_db_connection();
-    calories::delete_calorie_tracker_entry(conn, &tracker_id).map_err(handle_error)?;
-    calories::find_calorie_tracker_by_date(conn, &added_str).map_err(handle_error)
+    calories::delete_calorie_tracker_entry(conn, &tracker_id).map_err(handle_error)
 }
 
 #[command]
