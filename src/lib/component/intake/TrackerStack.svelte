@@ -113,7 +113,7 @@
 
 <div class="flex flex-col items-center gap-2 p-4 w-full">
 	{#if entries.length > 0}
-		<div in:fly>
+		<div in:fly={{ y: 500 }}>
 			<Stack
 				bind:index
 				size={entries.length}
@@ -121,8 +121,11 @@
 				swipeParams={{ timeframe: 300, minSwipeDistance: 60 }}
 				onswipe={handleSwipe}
 			>
-				{#snippet card(_: number, flyParams: FlyParams)}
-					<IntakeCard entry={focusedEntry} {categories} {flyParams} onlongpress={startEditing} />
+				{#snippet card(_: number, params: FlyParams)}
+					{@const flyParams = entries.length > 1 ? params : { y: 500 }}
+					<div transition:fly={flyParams}>
+						<IntakeCard entry={focusedEntry} {categories} {flyParams} onlongpress={startEditing} />
+					</div>
 				{/snippet}
 			</Stack>
 		</div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CalorieTarget } from '$lib/model';
+	import NumberFlow from '@number-flow/svelte';
 	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
@@ -62,7 +63,7 @@
 	</div>
 
 	<div class="stat-title">Today's Intake</div>
-	<div class="stat-value">{total}<span class="text-sm">/{limit}</span></div>
+	<div class="stat-value"><NumberFlow value={total} /><span class="text-sm">/{limit}</span></div>
 	<div class="stat-desc flex items-center gap-1">
 		{#if ratio <= 1}
 			{#if ratio == 0}

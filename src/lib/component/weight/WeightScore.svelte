@@ -2,6 +2,7 @@
 	import { display_date_format, getDateAsStr, parseStringAsDate } from '$lib/date';
 	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/model';
 	import { ModalDialog, ValidatedInput } from '@thwbh/veilchen';
+	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
 	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
 	import { PlusOutline } from 'flowbite-svelte-icons';
@@ -56,10 +57,12 @@
 	<div class="stat-title">Current Weight</div>
 	<div class="stat-value">
 		<span>
-			{#if weightTracker && 'id' in weightTracker}
-				{weightTracker.amount}
-			{:else if lastWeightTracker}
-				{lastWeightTracker.amount}
+			{#if weightTracker || lastWeightTracker}
+				<NumberFlow
+					value={weightTracker && 'id' in weightTracker
+						? weightTracker.amount
+						: (lastWeightTracker.amount ?? '-')}
+				/>
 			{:else}
 				-
 			{/if}
