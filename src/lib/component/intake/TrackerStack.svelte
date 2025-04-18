@@ -5,6 +5,8 @@
 	import { PlusOutline, TrashBinSolid } from 'flowbite-svelte-icons';
 	import { AlertBox, AlertType, ModalDialog, Stack } from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
+	import { fade, fly, type FlyParams } from 'svelte/transition';
+	import { cubicIn, cubicOut } from 'svelte/easing';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
@@ -15,7 +17,7 @@
 	}
 
 	let {
-		entries = $bindable(),
+		entries = $bindable([]),
 		categories,
 		onadd = undefined,
 		onedit = undefined,
@@ -109,25 +111,30 @@
 	};
 </script>
 
-<div class="flex flex-col items-center gap-2 p-4">
-	{#if entries && entries.length > 0}
-		<Stack
-			bind:index
-			size={entries.length}
-			swipeable={true}
-			swipeParams={{ timeframe: 300, minSwipeDistance: 60 }}
-			onswipe={handleSwipe}
-		>
-			{#snippet card(index: number)}
-				<IntakeCard entry={entries[index]} {categories} onlongpress={startEditing} />
-			{/snippet}
-		</Stack>
+<div class="flex flex-col items-center gap-2 p-4 w-full">
+	{#if entries.length > 0}
+		<div in:fly>
+			<Stack
+				bind:index
+				size={entries.length}
+				swipeable={true}
+				swipeParams={{ timeframe: 300, minSwipeDistance: 60 }}
+				onswipe={handleSwipe}
+			>
+				{#snippet card(_: number, flyParams: FlyParams)}
+					<IntakeCard entry={focusedEntry} {categories} {flyParams} onlongpress={startEditing} />
+				{/snippet}
+			</Stack>
+		</div>
 	{:else}
-		<AlertBox type={AlertType.Warning} alertClass="border-neutral border-dashed">
-			<strong>Nothing tracked today.</strong>
-			<span> Use the button below to add today's first entry. Stay strong! </span>
-		</AlertBox>
+		<div in:fade>
+			<AlertBox type={AlertType.Warning} alertClass="border-neutral border-dashed">
+				<strong>Nothing tracked today.</strong>
+				<span> Use the button below to add today's first entry. Stay strong! </span>
+			</AlertBox>
+		</div>
 	{/if}
+
 	<button class="btn btn-neutral w-full" onclick={create}> Add Intake </button>
 </div>
 

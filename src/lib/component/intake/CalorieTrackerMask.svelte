@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
 	import { ValidatedInput } from '@thwbh/veilchen';
 	import { PenSolid } from 'flowbite-svelte-icons';
@@ -6,6 +7,7 @@
 	interface Props {
 		entry: CalorieTracker | NewCalorieTracker;
 		categories: Array<FoodCategory>;
+		className?: string;
 		readonly?: boolean;
 		isEditing?: boolean;
 		onedit?: () => void;
@@ -14,27 +16,18 @@
 	let {
 		entry = $bindable(),
 		categories,
+		className = 'fieldset rounded-box',
 		isEditing = false,
 		readonly = false,
 		onedit = () => {}
 	}: Props = $props();
 
-	let categoryLongvalue = $state('');
-
 	const select = (categoryShortvalue: string) => {
 		entry.category = categoryShortvalue;
 	};
-
-	$effect(() => {
-		if (entry) {
-			if (entry.category === 'b') categoryLongvalue = 'Breakfast';
-			else if (entry.category === 'l') categoryLongvalue = 'Lunch';
-			else if (entry.category === 'd') categoryLongvalue = 'Dinner';
-		}
-	});
 </script>
 
-<fieldset class="fieldset rounded-box">
+<fieldset class={className}>
 	{#if !readonly}
 		<span> Category </span>
 	{/if}
@@ -43,7 +36,9 @@
 		{#if isEditing}
 			<div class="dropdown dropdown-center w-full">
 				<button tabindex="0" class="m-1 btn w-full" disabled={readonly}
-					><span class="text-left w-full">{categoryLongvalue}</span></button
+					><span class="text-left w-full"
+						>{getFoodCategoryLongvalue(categories, entry.category)}</span
+					></button
 				>
 				<ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-full">
 					{#each categories as category}
@@ -55,10 +50,10 @@
 			</div>
 		{:else}
 			<p class="font-bold">
-				{categoryLongvalue}
+				{getFoodCategoryLongvalue(categories, entry.category)}
 			</p>
 
-			<button class="btn btn-xs btn-ghost" onclick={onedit}
+			<button class="btn btn-xs btn-ghost" onclick={onedit} aria-label="press to edit"
 				><!-- Press to edit -->
 				<PenSolid height="1rem" width="1rem" />
 			</button>

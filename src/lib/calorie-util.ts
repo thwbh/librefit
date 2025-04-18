@@ -1,50 +1,51 @@
 import type { CalorieTracker, FoodCategory } from './model';
 
 export const getAverageCategoryIntake = (
-	entries: Array<CalorieTracker>,
-	foodCategories: Array<FoodCategory>
+  entries: Array<CalorieTracker>,
+  foodCategories: Array<FoodCategory>
 ) => {
-	const nonEmpty = entries.filter((e) => e.amount > 0);
+  const nonEmpty = entries.filter((e) => e.amount > 0);
 
-	if (nonEmpty.length > 0) {
-		const catMap = new Map();
+  if (nonEmpty.length > 0) {
+    const catMap = new Map();
 
-		const sum = nonEmpty.map((e) => e.amount).reduce((a, b) => a + b);
-		const dailyAverage = getAverageDailyIntake(entries);
+    const sum = nonEmpty.map((e) => e.amount).reduce((a, b) => a + b);
+    const dailyAverage = getAverageDailyIntake(entries);
 
-		foodCategories.forEach((cat) => {
-			const catEntries = nonEmpty.filter((e) => e.category === cat.shortvalue);
+    foodCategories.forEach((cat) => {
+      const catEntries = nonEmpty.filter((e) => e.category === cat.shortvalue);
 
-			if (catEntries.length > 0) {
-				const catSum = catEntries.map((e) => e.amount).reduce((a, b) => a + b);
+      if (catEntries.length > 0) {
+        const catSum = catEntries.map((e) => e.amount).reduce((a, b) => a + b);
 
-				catMap.set(cat.shortvalue, Math.round(dailyAverage * (catSum / sum)));
-			}
-		});
+        catMap.set(cat.shortvalue, Math.round(dailyAverage * (catSum / sum)));
+      }
+    });
 
-		return catMap;
-	}
+    return catMap;
+  }
 
-	return null;
+  return null;
 };
 
 export const getAverageDailyIntake = (entries: Array<CalorieTracker>): number => {
-	const nonEmpty = entries.filter((e) => e.amount > 0);
+  const nonEmpty = entries.filter((e) => e.amount > 0);
 
-	if (nonEmpty.length > 0) {
-		const days = new Set(nonEmpty.map((e) => e.added));
+  if (nonEmpty.length > 0) {
+    const days = new Set(nonEmpty.map((e) => e.added));
 
-		let sum = 0;
+    let sum = 0;
 
-		days.forEach((day) => {
-			sum += entries
-				.filter((e) => e.added === day)
-				.map((e) => e.amount)
-				.reduce((a, b) => a + b);
-		});
+    days.forEach((day) => {
+      sum += entries
+        .filter((e) => e.added === day)
+        .map((e) => e.amount)
+        .reduce((a, b) => a + b);
+    });
 
-		return Math.round(sum / days.size);
-	}
+    return Math.round(sum / days.size);
+  }
 
-	return 0;
+  return 0;
 };
+
