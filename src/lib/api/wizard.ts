@@ -90,7 +90,6 @@ export const createTargetDateTargets = (
   endDateStr: string,
   selectedRate: string
 ): { calorieTarget: NewCalorieTarget; weightTarget: NewWeightTarget } => {
-  console.log(customWizardResult);
   const multiplier = wizardInput.calculationGoal === CalculationGoal.Loss ? -1 : 1;
   const todayStr = getDateAsStr(new Date());
 

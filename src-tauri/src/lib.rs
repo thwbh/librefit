@@ -26,6 +26,7 @@ use dotenv::dotenv;
 use std::env;
 use tauri::path::BaseDirectory;
 use tauri::Manager;
+use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 pub mod calc;
 pub mod crud;
@@ -41,6 +42,7 @@ pub fn run() {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
+                        .with_colors(ColoredLevelConfig::default())
                         .build(),
                 )?;
             }
