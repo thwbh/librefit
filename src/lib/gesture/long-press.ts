@@ -1,3 +1,4 @@
+import { trace } from "@tauri-apps/plugin-log";
 import type { Action } from "svelte/action";
 
 export const longpress: Action<HTMLElement,
@@ -8,11 +9,10 @@ export const longpress: Action<HTMLElement,
   let timeoutPtr: number;
 
   const handleTouchStart = (e: TouchEvent) => {
-    console.log(e);
-
     window.addEventListener('touchmove', handleMoveBeforeLong);
     timeoutPtr = window.setTimeout(() => {
-      console.log("looooong press!");
+      trace("looooong press!");
+
       window.removeEventListener('touchmove', handleMoveBeforeLong);
       node.dispatchEvent(new CustomEvent('longpress'));
 
@@ -27,8 +27,6 @@ export const longpress: Action<HTMLElement,
   }
 
   const handleTouchEnd = (e: TouchEvent) => {
-    console.log(e);
-
     window.clearTimeout(timeoutPtr);
     window.removeEventListener('touchmove', handleMoveBeforeLong);
   }
