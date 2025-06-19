@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// Represents a user profile. There may be only one.
-#[derive(Queryable, Selectable, AsChangeset, Serialize, Deserialize)]
+#[derive(Queryable, Selectable, Insertable, AsChangeset, Serialize, Deserialize)]
 #[diesel(table_name = crate::crud::db::schema::libre_user)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]

@@ -18,6 +18,7 @@
 		WeightTarget,
 		WeightTracker
 	} from '$lib/model';
+	import { info } from '@tauri-apps/plugin-log';
 
 	let { data } = $props();
 
@@ -35,7 +36,11 @@
 		calorieTrackerEntries.map((tracker) => tracker.amount)
 	);
 
-	if (!dashboard.userData) {
+	info(`user profile=${JSON.stringify(data.userProfile)}`);
+
+	if (!data.userProfile) {
+		info(`redirecting to splash screen`);
+
 		goto('/splash');
 	}
 </script>

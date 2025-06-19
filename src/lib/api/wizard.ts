@@ -26,6 +26,14 @@ export const calculateTdee = async (wizardInput: WizardInput): Promise<WizardRes
 };
 
 export const postWizardResult = async (wizard: Wizard): Promise<void> => {
+  wizard.weightTarget.initialWeight = +wizard.weightTarget.initialWeight;
+  wizard.weightTarget.targetWeight = +wizard.weightTarget.targetWeight;
+
+  wizard.weightTracker.amount = +wizard.weightTracker.amount;
+
+  wizard.calorieTarget.targetCalories = +wizard.calorieTarget.targetCalories;
+  wizard.calorieTarget.maximumCalories = +wizard.calorieTarget.maximumCalories;
+
   return invoke('wizard_create_targets', {
     input: wizard
   });
