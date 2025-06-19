@@ -57,12 +57,12 @@
 	<div class="stat-title">Current Weight</div>
 	<div class="stat-value">
 		<span>
-			{#if weightTracker || lastWeightTracker}
-				<NumberFlow
-					value={weightTracker && 'id' in weightTracker
-						? weightTracker.amount
-						: (lastWeightTracker.amount ?? '-')}
-				/>
+			{#if (weightTracker && 'id' in weightTracker) || lastWeightTracker}
+				{#if weightTracker && 'id' in weightTracker}
+					<NumberFlow value={weightTracker.amount} />
+				{:else if lastWeightTracker}
+					<NumberFlow value={lastWeightTracker.amount} />
+				{/if}
 			{:else}
 				-
 			{/if}
@@ -94,10 +94,12 @@
 
 <div class="progress-container w-full">
 	<span class="flex flex-row justify-between items-center">
-		<p class="text-sm opacity-60">
-			{differenceInDays(parseStringAsDate(weightTarget.endDate), new Date())} days left.
-		</p>
-		<button class="btn btn-sm"> Review plan </button>
+		{#if weightTarget}
+			<p class="text-sm opacity-60">
+				{differenceInDays(parseStringAsDate(weightTarget.endDate), new Date())} days left.
+			</p>
+			<button class="btn btn-sm"> Review plan </button>
+		{/if}
 	</span>
 	<progress class="progress w-full" value="63" max="100"></progress>
 </div>
