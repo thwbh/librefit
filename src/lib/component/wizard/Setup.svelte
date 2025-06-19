@@ -5,6 +5,7 @@
 		CalculationGoal,
 		CalculationSex,
 		WizardRecommendation,
+		type LibreUser,
 		type NewCalorieTarget,
 		type NewWeightTarget,
 		type NewWeightTracker,
@@ -27,8 +28,17 @@
 	import Report from './body/Report.svelte';
 	import { setBodyData } from '$lib/api/body';
 	import { goto } from '$app/navigation';
+	import { error } from '@tauri-apps/plugin-log';
+	import Profile from '../profile/Profile.svelte';
+	import { updateProfile } from '$lib/api/user';
 
 	let currentStep = $state(1);
+
+	let userData: LibreUser = $state({
+		id: 1,
+		name: 'Arnie',
+		avatar: ''
+	});
 
 	let wizardInput: WizardInput = $state({
 		age: 30,
@@ -109,9 +119,10 @@
 	};
 
 	const onfinish = async () => {
+		await updateProfile(userData);
 		await setBodyData(wizardInput.age, wizardInput.sex, wizardInput.height, wizardInput.weight);
 		await postWizardResult({ weightTracker, weightTarget, calorieTarget }).catch((e) => {
-			console.error(e);
+			error(e);
 			finishError = true;
 		});
 
