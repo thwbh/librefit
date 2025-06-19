@@ -37,16 +37,19 @@ pub mod init;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .level(log::LevelFilter::Info)
+                .with_colors(ColoredLevelConfig::default())
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::LogDir {
+                        file_name: Some("app.log".to_string()),
+                    },
+                ))
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
+                .build(),
+        )
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .with_colors(ColoredLevelConfig::default())
-                        .build(),
-                )?;
-            }
-
             dotenv().ok();
 
             match env::var("DATABASE_URL") {
