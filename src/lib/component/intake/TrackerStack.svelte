@@ -2,11 +2,11 @@
 	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
 	import IntakeCard from './IntakeCard.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
-	import { PlusOutline, TrashBinSolid } from 'flowbite-svelte-icons';
+	import { TrashBinSolid } from 'flowbite-svelte-icons';
 	import { AlertBox, AlertType, ModalDialog, Stack } from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, fly, type FlyParams } from 'svelte/transition';
-	import { cubicIn, cubicOut } from 'svelte/easing';
+	import { info } from '@tauri-apps/plugin-log';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
@@ -50,15 +50,13 @@
 	const create = () => {
 		isNew = true;
 
-		console.log('create!');
+		info('create button triggered');
 
 		createDialog?.showModal();
 	};
 
 	const save = async () => {
-		console.log('save!');
-
-		console.log(blankEntry);
+		info('save button triggered');
 
 		if (isNew) {
 			onadd?.(blankEntry).then((newEntry: CalorieTracker) => entries.push(newEntry));
@@ -75,7 +73,7 @@
 	};
 
 	const deleteEntry = () => {
-		console.log('delete!');
+		info(`button triggered. focusedEntry=${focusedEntry}`);
 
 		ondelete?.(focusedEntry).then(() => {
 			if (entries.length === 1) {
@@ -97,7 +95,7 @@
 	};
 
 	const cancel = () => {
-		console.log('cancel!');
+		info('cancel button triggered');
 
 		createDialog?.close();
 		editDialog?.close();
@@ -106,8 +104,7 @@
 	};
 
 	const handleSwipe = () => {
-		console.log(index);
-		console.log(focusedEntry);
+		info(`swiping to ${index}`);
 	};
 </script>
 
