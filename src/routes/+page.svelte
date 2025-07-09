@@ -67,5 +67,5 @@
 			onedit={updateWeight}
 		/>
 	</div>
-	<BottomDock />
+	<BottomDock activeRoute="/" />
 </div>
