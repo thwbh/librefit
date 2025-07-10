@@ -1,6 +1,7 @@
 use crate::crud::db::model::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
 use crate::crud::db::schema::weight_target::dsl::weight_target;
 use crate::crud::db::schema::weight_tracker::dsl::weight_tracker;
+use diesel::dsl::Order;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 
@@ -111,5 +112,6 @@ pub fn find_weight_tracker_by_date_range(
 
     weight_tracker
         .filter(added.ge(date_from).and(added.le(date_to)))
+        .order(added.desc())
         .load::<WeightTracker>(conn)
 }
