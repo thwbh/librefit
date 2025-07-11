@@ -123,11 +123,17 @@
 				</div>
 			{/each}
 		</div>
+		<div class="stats">
+			<div class="stat">
+				<div class="stat-title">Weight</div>
 
-		<span>Weight</span>
-		<span>
-			{weightHistory}
-		</span>
+				{#if weightHistory.length > 0}
+					<div class="stat-value">{weightHistory[0].amount} kg</div>
+				{:else}
+					<div class="stat-value">No weight tracked.</div>
+				{/if}
+			</div>
+		</div>
 	</div>
 
 	<BottomDock activeRoute="/history" />
