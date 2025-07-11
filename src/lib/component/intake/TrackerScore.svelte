@@ -6,9 +6,10 @@
 	interface Props {
 		calorieTarget: CalorieTarget;
 		entries: Array<number>;
+		isHistory?: boolean;
 	}
 
-	let { calorieTarget, entries }: Props = $props();
+	let { calorieTarget, entries, isHistory = false }: Props = $props();
 
 	let limit = $state(
 			calorieTarget && calorieTarget.targetCalories ? calorieTarget.targetCalories : 0
@@ -62,7 +63,11 @@
 		</div>
 	</div>
 
-	<div class="stat-title">Today's Intake</div>
+	{#if !isHistory}
+		<div class="stat-title">Today's Intake</div>
+	{:else}
+		<div class="stat-title">Intake</div>
+	{/if}
 	<div class="stat-value"><NumberFlow value={total} /><span class="text-sm">/{limit}</span></div>
 	<div class="stat-desc flex items-center gap-1">
 		{#if ratio <= 1}
@@ -73,7 +78,8 @@
 			{:else}
 				<ShieldCheckSolid width="20" height="20" class={currentColor} />
 
-				All good. {limit - total}kcal left for today.
+				All good. {limit - total}kcal left{#if !isHistory}
+					for today.{:else}.{/if}
 			{/if}
 		{:else if ratio > 1}
 			{#if total <= calorieTarget.maximumCalories}

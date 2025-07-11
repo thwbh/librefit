@@ -7,9 +7,11 @@ use crate::crud::cmd::body::{get_body_data, update_body_data};
 use crate::crud::cmd::calorie::{
     create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
     get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range,
-    update_calorie_tracker_entry,
+    get_last_calorie_target, update_calorie_tracker_entry,
 };
 use crate::crud::cmd::dashboard::daily_dashboard;
+use crate::crud::cmd::food_category::get_food_categories;
+use crate::crud::cmd::tracker_history::get_tracker_history;
 use crate::crud::cmd::user::{get_user, update_user};
 use crate::crud::cmd::weight::{
     create_weight_target, create_weight_tracker_entry, delete_weight_tracker_entry,
@@ -70,6 +72,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             daily_dashboard,
+            get_tracker_history,
+            get_food_categories,
             create_calorie_tracker_entry,
             update_calorie_tracker_entry,
             delete_calorie_tracker_entry,
@@ -81,6 +85,7 @@ pub fn run() {
             get_weight_tracker_for_date_range,
             create_calorie_target,
             create_weight_target,
+            get_last_calorie_target,
             get_user,
             update_user,
             wizard_calculate_tdee,

@@ -45,8 +45,8 @@
 	}
 </script>
 
-<div class="flex flex-col gap-4">
-	<div class="bg-base-200 flex flex-col items-center">
+<div class="flex flex-col gap-4 bg-base-200">
+	<div class="flex flex-col items-center">
 		<TrackerScore {calorieTarget} entries={caloriesToday} />
 
 		<TrackerStack
@@ -58,7 +58,7 @@
 		/>
 	</div>
 
-	<div class="bg-base-200 flex flex-col items-center w-full">
+	<div class="flex flex-col items-center w-full">
 		<WeightScore
 			{weightTracker}
 			{lastWeightTracker}

@@ -1,7 +1,6 @@
 use crate::crud::db::model::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
 use crate::crud::db::schema::weight_target::dsl::weight_target;
 use crate::crud::db::schema::weight_tracker::dsl::weight_tracker;
-use diesel::dsl::Order;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 

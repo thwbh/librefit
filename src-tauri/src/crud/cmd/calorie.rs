@@ -11,6 +11,12 @@ pub fn create_calorie_target(new_target: NewCalorieTarget) -> Result<CalorieTarg
     calories::create_calorie_target(conn, &new_target).map_err(handle_error)
 }
 
+#[command]
+pub fn get_last_calorie_target() -> Result<CalorieTarget, String> {
+    let conn = &mut create_db_connection();
+    calories::find_last_calorie_target(conn).map_err(handle_error)
+}
+
 /// Create a new calorie tracker entry and return the created one
 #[command]
 pub fn create_calorie_tracker_entry(

@@ -3,6 +3,7 @@ pub mod calorie;
 pub mod dashboard;
 pub mod error_handler;
 pub mod food_category;
+pub mod tracker_history;
 pub mod user;
 pub mod weight;
 pub mod wizard;
