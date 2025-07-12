@@ -18,6 +18,7 @@
 	},
 	"dependencies": {
 		"@tauri-apps/api": "^2",
+		"@tauri-apps/plugin-haptics": "^2.3.0",
 		"@tauri-apps/plugin-opener": "^2"
 	},
 	"devDependencies": {

@@ -51,6 +51,7 @@ pub fn run() {
                 .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
                 .build(),
         )
+        .plugin(tauri_plugin_haptics::init())
         .setup(|app| {
             dotenv().ok();
 

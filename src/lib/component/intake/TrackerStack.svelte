@@ -7,6 +7,7 @@
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, fly, type FlyParams } from 'svelte/transition';
 	import { info } from '@tauri-apps/plugin-log';
+	import { vibrate } from '@tauri-apps/plugin-haptics';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
@@ -40,7 +41,9 @@
 	let enableDelete = $state(false);
 	let isNew = $state(false);
 
-	const startEditing = () => {
+	const startEditing = async () => {
+		await vibrate(1);
+
 		isEditing = true;
 		isNew = false;
 

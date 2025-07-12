@@ -74,8 +74,11 @@
 			{#if ratio == 0}
 				<ShieldSolid width="20" height="20" class={currentColor} />
 
-				No intake tracked{#if !isHistory}
-					yet.{:else}.{/if}
+				{#if !isHistory}
+					No intake tracked yet.
+				{:else}
+					No intake tracked.
+				{/if}
 			{:else}
 				<ShieldCheckSolid width="20" height="20" class={currentColor} />
 

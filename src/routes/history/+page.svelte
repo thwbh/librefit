@@ -2,12 +2,24 @@
 	import { getTrackerHistory } from '$lib/api/tracker-history';
 	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
-	import { getDateAsStr, parseStringAsDate } from '$lib/date.js';
-	import type { CalorieTarget, CalorieTracker, TrackerHistory, WeightTracker } from '$lib/model.js';
+	import { convertDateStrToDisplayDateStr, getDateAsStr, parseStringAsDate } from '$lib/date.js';
+	import type {
+		CalorieTarget,
+		CalorieTracker,
+		NewCalorieTracker,
+		TrackerHistory,
+		WeightTracker
+	} from '$lib/model.js';
 	import NumberFlow from '@number-flow/svelte';
 	import { info } from '@tauri-apps/plugin-log';
 	import { addDays, subDays } from 'date-fns';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
+	import { CaretLeftSolid, CaretRightSolid, TrashBinSolid } from 'flowbite-svelte-icons';
+	import { ModalDialog } from '@thwbh/veilchen';
+	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
+	import { longpress } from '$lib/gesture/long-press';
+	import { addCalories, deleteCalories, updateCalories } from '$lib/api/tracker.js';
+	import { vibrate } from '@tauri-apps/plugin-haptics';
 
 	let { data } = $props();
 
@@ -26,6 +38,12 @@
 	let weightHistory: Array<WeightTracker> = $derived([
 		...trackerHistory.weightHistory[selectedDateStr]
 	]);
+
+	// entry for modal dialog
+	let focusedCalories: NewCalorieTracker | CalorieTracker = $state();
+	let enableDelete = $state(false);
+	let isEditing = $state(false);
+	let editDialog: HTMLDialogElement = $state();
 
 	const selectHistory = (dateStr: string) => {
 		info(`selectHistory dateStr={${dateStr}}`);
@@ -51,47 +69,97 @@
 
 	const updateRange = async (dateFrom: Date, dateTo: Date) => {
 		trackerHistory = await getTrackerHistory(dateFrom, dateTo);
+
+		focusedCalories = undefined;
 	};
 
 	const getActiveClass = (dateStr: string) =>
 		dateStr === selectedDateStr ? 'bg-primary text-primary-content' : '';
 
 	const getRightDisabled = () => selectedDateStr === getDateAsStr(new Date());
+
+	const create = () => {
+		focusedCalories = {
+			added: selectedDateStr,
+			amount: undefined,
+			category: 't',
+			description: ''
+		};
+
+		editDialog?.showModal();
+	};
+
+	const edit = async (calories: CalorieTracker) => {
+		await vibrate(1);
+
+		console.log('longpress');
+		focusedCalories = calories;
+		editDialog?.showModal();
+	};
+
+	const save = async () => {
+		if ('id' in focusedCalories) await updateCalories(focusedCalories as CalorieTracker);
+		else await addCalories(focusedCalories as NewCalorieTracker);
+
+		editDialog?.close();
+
+		focusedCalories = undefined;
+	};
+
+	const cancel = () => {
+		editDialog?.close();
+
+		focusedCalories = undefined;
+	};
+
+	const deleteEntry = async () => {
+		await deleteCalories(focusedCalories as CalorieTracker);
+
+		editDialog?.close();
+
+		focusedCalories = undefined;
+	};
 </script>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-4">
 	<h1 class="sr-only">History</h1>
 
-	{#if selectedDateStr}
-		{@const selectedDate = parseStringAsDate(selectedDateStr)}
-		<div class="flex items-center mx-auto p-4">
-			<span class="text-xl font-bold">
-				{getDateAsStr(selectedDate, 'MMMM yyyy')}
-			</span>
-		</div>
-	{/if}
-	<div
-		class="border-b-base-300 flex flex-row border-b border-dashed pb-3 overflow-x-scroll justify-between"
-	>
-		<button class="btn" onclick={scrollLeft}> left </button>
-
-		{#each dates as dateStr}
-			{@const dayNumber = getDateAsStr(parseStringAsDate(dateStr), 'dd')}
-			{@const dayName = getDateAsStr(parseStringAsDate(dateStr), 'EE')}
-			<button
-				onclick={() => selectHistory(dateStr)}
-				class="btn-ghost rounded-field flex flex-col items-center px-2 py-1 {getActiveClass(
-					dateStr
-				)}"
-			>
-				<span class="text-sm font-semibold">
-					{dayNumber}
+	<div class="flex flex-col pt-4">
+		{#if selectedDateStr}
+			{@const selectedDate = parseStringAsDate(selectedDateStr)}
+			<div class="flex items-center mx-auto pt-4 pb-2">
+				<span class="text-xl font-bold">
+					{getDateAsStr(selectedDate, 'MMMM yyyy')}
 				</span>
-				<span class="text-[10px] font-semibold opacity-50">{dayName}</span>
+			</div>
+		{/if}
+		<div
+			class="border-b-base-300 flex flex-row border-b border-dashed pb-3 overflow-x-scroll justify-between p-4"
+		>
+			<button class="btn-ghost w-4" onclick={scrollLeft}>
+				<span><CaretLeftSolid height="1em" /></span>
 			</button>
-		{/each}
 
-		<button class="btn" onclick={scrollRight} disabled={getRightDisabled()}> right </button>
+			{#each dates as dateStr}
+				{@const dayNumber = getDateAsStr(parseStringAsDate(dateStr), 'dd')}
+				{@const dayName = getDateAsStr(parseStringAsDate(dateStr), 'EE')}
+				<button
+					onclick={() => selectHistory(dateStr)}
+					class="btn-ghost rounded-field flex flex-col items-center px-2 py-1 {getActiveClass(
+						dateStr
+					)}"
+				>
+					<span class="text-sm font-semibold">
+						{dayNumber}
+					</span>
+					<span class="text-[10px] font-semibold opacity-50">{dayName}</span>
+				</button>
+			{/each}
+
+			<button class="btn-ghost w-fit" onclick={scrollRight} disabled={getRightDisabled()}>
+				<CaretRightSolid height="1em" />
+			</button>
+		</div>
 	</div>
 
 	<div class="flex flex-col">
@@ -108,6 +176,8 @@
 			{#each caloriesHistory as calories}
 				<div
 					class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
+					use:longpress
+					onlongpress={() => edit(calories)}
 				>
 					<div class="flex flex-col">
 						<span class="text-lg">
@@ -122,13 +192,15 @@
 					>
 				</div>
 			{/each}
+
+			<button class="btn btn-neutral w-full" onclick={create}> Add Intake </button>
 		</div>
 		<div class="stats">
 			<div class="stat">
 				<div class="stat-title">Weight</div>
 
 				{#if weightHistory.length > 0}
-					<div class="stat-value">{weightHistory[0].amount} kg</div>
+					<div class="stat-value">{weightHistory[0].amount} <span class="text-sm">kg</span></div>
 				{:else}
 					<div class="stat-value">No weight tracked.</div>
 				{/if}
@@ -138,3 +210,36 @@
 
 	<BottomDock activeRoute="/history" />
 </div>
+
+<ModalDialog bind:dialog={editDialog} onconfirm={save} oncancel={cancel}>
+	{#snippet title()}
+		{#if focusedCalories}
+			<span>Edit Intake</span>
+			<span>
+				<span class="text-xs opacity-60">
+					Added: {convertDateStrToDisplayDateStr(focusedCalories.added)}
+				</span>
+				<span>
+					<button class="btn btn-xs btn-error">
+						<TrashBinSolid width="1rem" onclick={() => (enableDelete = true)} />
+					</button>
+				</span>
+			</span>
+		{/if}
+	{/snippet}
+
+	{#snippet content()}
+		{#if focusedCalories !== undefined}
+			<CalorieTrackerMask entry={focusedCalories} categories={data.foodCategories} {isEditing} />
+		{/if}
+	{/snippet}
+
+	{#snippet footer()}
+		{#if enableDelete}
+			<button class="btn btn-error" onclick={deleteEntry}>Delete</button>
+		{:else}
+			<button class="btn btn-primary" onclick={save}>Save</button>
+		{/if}
+		<button class="btn" onclick={cancel}>Cancel</button>
+	{/snippet}
+</ModalDialog>
