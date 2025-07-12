@@ -5,7 +5,7 @@ import { getLastCalorieTarget } from "$lib/api/target";
 import { getFoodCategories } from "$lib/api/food-categories";
 
 export const load: PageLoad = async () => {
-  const dateTo = new Date();
+  const dateTo = subDays(new Date(), 1);
   const dateFrom = subDays(dateTo, 7);
 
   return {

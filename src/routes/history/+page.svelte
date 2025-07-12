@@ -31,12 +31,12 @@
 
 	let selectedDateStr: string = $derived(dates[dates.length - 1]);
 
-	let caloriesHistory: Array<CalorieTracker> = $derived.by(() => [
-		...trackerHistory.caloriesHistory[selectedDateStr]
+	let caloriesHistory: Array<CalorieTracker> = $derived([
+		...trackerHistory?.caloriesHistory[selectedDateStr]
 	]);
 
 	let weightHistory: Array<WeightTracker> = $derived([
-		...trackerHistory.weightHistory[selectedDateStr]
+		...trackerHistory?.weightHistory[selectedDateStr]
 	]);
 
 	// entry for modal dialog
@@ -162,7 +162,7 @@
 		</div>
 	</div>
 
-	<div class="flex flex-col">
+	<div class="flex flex-col overflow-y-scroll">
 		<div class="stats">
 			<div class="stat">
 				<div class="stat-title">Average calories</div>
@@ -180,7 +180,7 @@
 					onlongpress={() => edit(calories)}
 				>
 					<div class="flex flex-col">
-						<span class="text-lg">
+						<span class="text-lg font-semibold">
 							{calories.description}
 						</span>
 						<span class="stat-desc">
@@ -193,7 +193,7 @@
 				</div>
 			{/each}
 
-			<button class="btn btn-neutral w-full" onclick={create}> Add Intake </button>
+			<button class="btn btn-neutral w-full mt-4" onclick={create}> Add Intake </button>
 		</div>
 		<div class="stats">
 			<div class="stat">
