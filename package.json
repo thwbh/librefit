@@ -32,7 +32,7 @@
 		"@tauri-apps/plugin-log": "^2.5.0",
 		"@testing-library/dom": "^10.2.0",
 		"@testing-library/svelte": "^5.1.0",
-		"@thwbh/veilchen": "^0.0.21",
+    "@thwbh/veilchen": "^0.0.22",
 		"@tsconfig/svelte": "^5.0.4",
 		"@types/date-fns": "^2.6.0",
 		"@types/node": "^22.10.1",

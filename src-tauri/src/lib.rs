@@ -11,6 +11,7 @@ use crate::crud::cmd::calorie::{
 };
 use crate::crud::cmd::dashboard::daily_dashboard;
 use crate::crud::cmd::food_category::get_food_categories;
+use crate::crud::cmd::progress::get_tracker_progress;
 use crate::crud::cmd::tracker_history::get_tracker_history;
 use crate::crud::cmd::user::{get_user, update_user};
 use crate::crud::cmd::weight::{
@@ -73,6 +74,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             daily_dashboard,
+            get_tracker_progress,
             get_tracker_history,
             get_food_categories,
             create_calorie_tracker_entry,

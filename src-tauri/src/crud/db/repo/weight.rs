@@ -22,6 +22,12 @@ pub fn get_weight_targets(conn: &mut SqliteConnection) -> QueryResult<Vec<Weight
     weight_target.load::<WeightTarget>(conn)
 }
 
+pub fn get_latest_weight_target(conn: &mut SqliteConnection) -> QueryResult<WeightTarget> {
+    use crate::crud::db::schema::weight_target::dsl::id;
+
+    weight_target.order(id.desc()).first::<WeightTarget>(conn)
+}
+
 /// Update a weight target by ID
 pub fn update_weight_target(
     conn: &mut SqliteConnection,

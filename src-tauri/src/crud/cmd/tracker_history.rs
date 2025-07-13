@@ -13,7 +13,7 @@ use chrono::{Duration, NaiveDate, ParseResult};
 use std::collections::BTreeMap;
 use tauri::command;
 
-#[command()]
+#[command]
 pub fn get_tracker_history(
     date_from_str: String,
     date_to_str: String,

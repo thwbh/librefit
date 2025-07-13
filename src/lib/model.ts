@@ -37,6 +37,16 @@ export interface Dashboard {
   foodCategories: FoodCategory[];
 }
 
+export interface TrackerProgress {
+  averageCalories: number;
+  averageWeight: number;
+  daysCaloriesTracked: number;
+  daysWeightTracked: number;
+  daysPassed: number;
+  calorieTracker: Array<CalorieTracker>;
+  weightTracker: Array<WeightTracker>;
+}
+
 export interface TrackerHistory {
   caloriesHistory: Map<string, Array<CalorieTracker>>;
   caloriesAverage: number;

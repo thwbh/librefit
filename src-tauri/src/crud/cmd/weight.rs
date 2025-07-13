@@ -18,6 +18,13 @@ pub fn get_weight_targets() -> Result<Vec<WeightTarget>, String> {
     weight::get_weight_targets(conn).map_err(handle_error)
 }
 
+/// Retrieve last weight target
+#[command]
+pub fn get_last_weight_target() -> Result<WeightTarget, String> {
+    let conn = &mut create_db_connection();
+    weight::get_latest_weight_target(conn).map_err(handle_error)
+}
+
 /// Update a weight target by ID
 #[command]
 pub fn update_weight_target(
