@@ -1,9 +1,14 @@
+use std::collections::BTreeMap;
+
 use chrono::{NaiveDate, Utc};
 use tauri::command;
 
-use crate::crud::db::{
-    comp::progress::Progress,
-    model::{CalorieTracker, WeightTracker},
+use crate::{
+    calc::math_f32,
+    crud::db::{
+        comp::progress::Progress,
+        model::{CalorieTracker, WeightTracker},
+    },
 };
 
 use super::{
@@ -11,9 +16,10 @@ use super::{
     weight::{get_last_weight_target, get_weight_tracker_for_date_range},
 };
 
+/// load initial tracker progress with start and end date of the last valid calorie_target
 #[command]
 pub fn get_tracker_progress() -> Result<Progress, String> {
-    log::info!("get_tracker_progress >>>");
+    log::info!(">>> get_tracker_progress");
 
     match (get_last_calorie_target(), get_last_weight_target()) {
         (Ok(calorie_target), Ok(weight_target)) => {
@@ -35,9 +41,16 @@ pub fn get_tracker_progress() -> Result<Progress, String> {
                     )
                     .unwrap_or_default();
 
-                    let (average_calories, min_calories, max_calories) =
-                        process_calories(&calorie_tracker);
-                    let (average_weight, min_weight, max_weight) = process_weight(&weight_tracker);
+                    let (
+                        average_calories,
+                        min_calories,
+                        max_calories,
+                        calories_legend,
+                        calories_values,
+                    ) = process_calories(&calorie_tracker);
+
+                    let (average_weight, min_weight, max_weight, weight_legend, weight_values) =
+                        process_weight(&weight_tracker);
 
                     let days_passed: i32 = if today_date < calorie_target_end_date {
                         today_date
@@ -61,8 +74,10 @@ pub fn get_tracker_progress() -> Result<Progress, String> {
                         days_passed,
                         calorie_tracker,
                         weight_tracker,
-                        calories_legend: vec![],
-                        weight_legend: vec![],
+                        calories_legend,
+                        calories_values,
+                        weight_legend,
+                        weight_values,
                     })
                 }
                 _ => Err("Error parsing dates.".to_string()),
@@ -72,40 +87,77 @@ pub fn get_tracker_progress() -> Result<Progress, String> {
     }
 }
 
-fn process_calories(calorie_tracker: &[CalorieTracker]) -> (f32, i32, i32) {
+/// process calorie_tracker to prepare for client side graph rendering
+fn process_calories(calorie_tracker: &[CalorieTracker]) -> (f32, i32, i32, Vec<String>, Vec<i32>) {
     if calorie_tracker.is_empty() {
-        (0., 0, 0)
+        (0., 0, 0, vec![], vec![])
     } else {
         let mut sum = 0;
         let mut min = i32::MAX;
         let mut max = 0;
+        let mut progress_map: BTreeMap<String, i32> = BTreeMap::new();
 
         for calories in calorie_tracker {
             sum += calories.amount;
 
             max = i32::max(max, calories.amount);
             min = i32::min(min, calories.amount);
+
+            *progress_map.entry(calories.added.clone()).or_insert(0) += calories.amount;
         }
 
-        (sum as f32 / calorie_tracker.len() as f32, min, max)
+        let (legend, sums): (Vec<String>, Vec<i32>) = progress_map.into_iter().unzip();
+
+        (
+            sum as f32 / calorie_tracker.len() as f32,
+            min,
+            max,
+            legend,
+            sums,
+        )
     }
 }
 
-fn process_weight(weight_tracker: &[WeightTracker]) -> (f32, f32, f32) {
+/// process weight_tracker to prepare for client side graph rendering
+fn process_weight(weight_tracker: &[WeightTracker]) -> (f32, f32, f32, Vec<String>, Vec<f32>) {
     if weight_tracker.is_empty() {
-        (0., 0., 0.)
+        (0., 0., 0., vec![], vec![])
     } else {
         let mut sum = 0.0;
         let mut min = f32::MAX;
         let mut max = 0.0;
+
+        // store date -> (weight_sum, entry_len)
+        let mut progress_map: BTreeMap<String, (f32, u32)> = BTreeMap::new();
 
         for weight in weight_tracker {
             sum += weight.amount;
 
             max = f32::max(max, weight.amount);
             min = f32::min(min, weight.amount);
+
+            progress_map
+                .entry(weight.added.clone())
+                .and_modify(|(sum, count)| {
+                    *sum += weight.amount;
+                    *count += 1;
+                })
+                .or_insert((weight.amount, 1));
         }
 
-        (sum / weight_tracker.len() as f32, min, max)
+        let (legend, averages): (Vec<String>, Vec<f32>) = progress_map
+            .into_iter()
+            .map(|(date, (weight_sum, count))| {
+                (date, math_f32::floor_f32(weight_sum / count as f32, 1))
+            })
+            .unzip();
+
+        (
+            sum / weight_tracker.len() as f32,
+            min,
+            max,
+            legend,
+            averages,
+        )
     }
 }

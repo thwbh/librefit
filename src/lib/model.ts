@@ -39,12 +39,20 @@ export interface Dashboard {
 
 export interface TrackerProgress {
   averageCalories: number;
+  minCalories: number;
+  maxCalories: number;
   averageWeight: number;
-  daysCaloriesTracked: number;
-  daysWeightTracked: number;
+  maxWeight: number;
+  minWeight: number;
+  daysTrackedCalories: number;
+  daysTrackedWeight: number;
   daysPassed: number;
   calorieTracker: Array<CalorieTracker>;
   weightTracker: Array<WeightTracker>;
+  caloriesLegend: Array<string>;
+  caloriesValues: Array<number>;
+  weightLegend: Array<string>;
+  weightValues: Array<number>;
 }
 
 export interface TrackerHistory {

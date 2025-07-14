@@ -17,5 +17,7 @@ pub struct Progress {
     pub calorie_tracker: Vec<CalorieTracker>,
     pub weight_tracker: Vec<WeightTracker>,
     pub calories_legend: Vec<String>,
+    pub calories_values: Vec<i32>,
     pub weight_legend: Vec<String>,
+    pub weight_values: Vec<f32>,
 }

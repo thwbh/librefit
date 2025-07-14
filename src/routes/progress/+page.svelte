@@ -1,22 +1,29 @@
 <script lang="ts">
 	import BottomDock from '$lib/component/BottomDock.svelte';
-	import { LineChart } from '@thwbh/veilchen';
+	import { ButtonGroup, LineChart } from '@thwbh/veilchen';
 
 	let { data } = $props();
 
 	let progress = $state(data.trackerProgress);
 
-	const legend = ['1', '2', '3', '4', '5', '6', '7'];
-	const axisLabel = 'Value (Mt)';
-	const lineData = [19, 45, 100, 98, 99, 35, 31];
+	const entries = [
+		{ key: 'w', value: 'Week' },
+		{ key: 'm', value: 'Month' },
+		{ key: 'o', value: 'Overall' }
+	];
+
+	let value = $state('o'); // Default to 'Option A'
+
+	const axisLabel = 'Weight (kg)';
 
 	const lineChartData = {
 		data: {
-			labels: legend,
+			labels: data.trackerProgress.weightLegend,
 			datasets: [
 				{
 					label: axisLabel,
-					data: lineData
+					data: data.trackerProgress.weightValues,
+					tension: 0.4
 				}
 			]
 		},
@@ -28,8 +35,6 @@
 
 <div class="flex flex-col gap-4">
 	<LineChart data={lineChartData.data} options={lineChartData.options} />
-
-	{JSON.stringify(progress)}
 
 	<BottomDock activeRoute="/progress" />
 </div>
