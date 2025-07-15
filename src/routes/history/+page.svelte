@@ -58,7 +58,7 @@
 	const scrollLeft = () => {
 		const firstDate = parseStringAsDate(dates[0]);
 
-		updateRange(subDays(firstDate, 7), firstDate);
+		updateRange(subDays(firstDate, 6), firstDate);
 
 		selectedDateStr = dates[dates.length - 1];
 	};
@@ -68,7 +68,7 @@
 
 		if (lastDate) lastDate = addDays(lastDate, 1);
 
-		updateRange(lastDate, addDays(lastDate, 7));
+		updateRange(lastDate, addDays(lastDate, 6));
 	};
 
 	const updateRange = async (dateFrom: Date, dateTo: Date) => {

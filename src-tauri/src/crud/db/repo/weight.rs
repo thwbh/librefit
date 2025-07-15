@@ -116,7 +116,7 @@ pub fn find_weight_tracker_by_date_range(
     use crate::crud::db::schema::weight_tracker::dsl::added;
 
     weight_tracker
-        .filter(added.ge(date_from).and(added.le(date_to)))
+        .filter(added.between(date_from, date_to))
         .order(added.desc())
         .load::<WeightTracker>(conn)
 }

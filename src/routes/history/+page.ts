@@ -6,7 +6,7 @@ import { getFoodCategories } from "$lib/api/food-categories";
 
 export const load: PageLoad = async () => {
   const dateTo = subDays(new Date(), 1);
-  const dateFrom = subDays(dateTo, 7);
+  const dateFrom = subDays(dateTo, 6);
 
   return {
     trackerHistory: await getTrackerHistory(dateFrom, dateTo),

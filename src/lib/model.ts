@@ -47,12 +47,17 @@ export interface TrackerProgress {
   daysTrackedCalories: number;
   daysTrackedWeight: number;
   daysPassed: number;
+  daysTotal: number;
   calorieTracker: Array<CalorieTracker>;
   weightTracker: Array<WeightTracker>;
   caloriesLegend: Array<string>;
   caloriesValues: Array<number>;
+  caloriesCategoryAverage: Map<string, number>;
+  caloriesDailyAverage: number;
   weightLegend: Array<string>;
   weightValues: Array<number>;
+  calorieTarget: CalorieTarget;
+  weightTarget: WeightTarget;
 }
 
 export interface TrackerHistory {

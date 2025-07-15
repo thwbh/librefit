@@ -10,3 +10,10 @@ pub fn get_food_categories() -> Result<Vec<FoodCategory>, String> {
 
     food_category::get_food_categories(conn).map_err(handle_error)
 }
+
+#[command]
+pub fn get_food_category(shortvalue: String) -> Result<FoodCategory, String> {
+    let conn = &mut create_db_connection();
+
+    food_category::get_food_category(conn, shortvalue).map_err(handle_error)
+}
