@@ -31,13 +31,17 @@
 
 	let selectedDateStr: string = $derived(dates[dates.length - 1]);
 
-	let caloriesHistory: Array<CalorieTracker> = $derived([
-		...trackerHistory?.caloriesHistory[selectedDateStr]
-	]);
+	let caloriesHistory: Array<CalorieTracker> = $derived.by(() => {
+		if (!trackerHistory || !trackerHistory.caloriesHistory[selectedDateStr]) return [];
 
-	let weightHistory: Array<WeightTracker> = $derived([
-		...trackerHistory?.weightHistory[selectedDateStr]
-	]);
+		return [...trackerHistory?.caloriesHistory[selectedDateStr]];
+	});
+
+	let weightHistory: Array<WeightTracker> = $derived.by(() => {
+		if (!trackerHistory || !trackerHistory.weightHistory[selectedDateStr]) return [];
+
+		return [...trackerHistory?.weightHistory[selectedDateStr]];
+	});
 
 	// entry for modal dialog
 	let focusedCalories: NewCalorieTracker | CalorieTracker = $state();
