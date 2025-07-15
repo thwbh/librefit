@@ -90,7 +90,7 @@
 	};
 </script>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-4 p-4 pt-8">
 	<h1 class="sr-only">Progress</h1>
 	<span class="text-xl font-bold text-center">
 		Day {data.trackerProgress.daysPassed}
@@ -139,8 +139,45 @@
 		</div>
 	</div>
 
-	<!--
-	<PolarAreaChart data={distributionChartData.data} options={distributionChartData.options} /> -->
+	<div class="text-center font-bold">
+		<span>Average distribution</span>
+	</div>
+
+	<div class="w-2xs self-center">
+		<PolarAreaChart data={distributionChartData.data} options={distributionChartData.options} />
+	</div>
+
+	<div class="flex flex-col pb-16 w-fit self-center">
+		<div
+			class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
+		>
+			<div class="flex flex-col">
+				<span class="text-lg font-semibold">
+					{data.trackerProgress.averageCalories} kcal
+				</span>
+				<span class="stat-desc"> Average single intake </span>
+			</div>
+			<span class="badge badge-xs badge-primary">avg</span>
+		</div>
+		<div
+			class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
+		>
+			<div class="flex flex-col">
+				<span class="text-lg font-semibold"> {data.trackerProgress.minCalories} kcal </span>
+				<span class="stat-desc"> Smallest single intake </span>
+			</div>
+			<span class="badge badge-xs badge-info">min</span>
+		</div>
+		<div
+			class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
+		>
+			<div class="flex flex-col">
+				<span class="text-lg font-semibold"> {data.trackerProgress.maxCalories} kcal </span>
+				<span class="stat-desc"> Largest single intake </span>
+			</div>
+			<span class="badge badge-xs badge-error">max</span>
+		</div>
+	</div>
 
 	<BottomDock activeRoute="/progress" />
 </div>
