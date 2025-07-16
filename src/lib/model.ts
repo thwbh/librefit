@@ -37,27 +37,31 @@ export interface Dashboard {
   foodCategories: FoodCategory[];
 }
 
+export interface CalorieChartData {
+  avg: number;
+  min: number;
+  max: number;
+  legend: Array<string>;
+  values: Array<number>;
+  categoryAverage: Map<string, number>;
+  dailyAverage: number;
+}
+
+export interface WeightChartData {
+  avg: number;
+  min: number;
+  max: number;
+  legend: Array<string>;
+  values: Array<number>;
+}
+
 export interface TrackerProgress {
-  averageCalories: number;
-  minCalories: number;
-  maxCalories: number;
-  averageWeight: number;
-  maxWeight: number;
-  minWeight: number;
-  daysTrackedCalories: number;
-  daysTrackedWeight: number;
-  daysPassed: number;
-  daysTotal: number;
-  calorieTracker: Array<CalorieTracker>;
-  weightTracker: Array<WeightTracker>;
-  caloriesLegend: Array<string>;
-  caloriesValues: Array<number>;
-  caloriesCategoryAverage: Map<string, number>;
-  caloriesDailyAverage: number;
-  weightLegend: Array<string>;
-  weightValues: Array<number>;
   calorieTarget: CalorieTarget;
   weightTarget: WeightTarget;
+  daysPassed: number;
+  daysTotal: number;
+  calorieChartData: CalorieChartData;
+  weightChartData: WeightChartData;
 }
 
 export interface TrackerHistory {

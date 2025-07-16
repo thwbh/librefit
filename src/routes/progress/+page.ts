@@ -3,6 +3,6 @@ import type { PageLoad } from '../$types';
 
 export const load: PageLoad = async () => {
   return {
-    trackerProgress: await getTrackerProgress(),
+    trackerProgress: await getTrackerProgress(new Date()),
   };
 };

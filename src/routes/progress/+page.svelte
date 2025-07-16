@@ -1,31 +1,16 @@
 <script lang="ts">
-	import { getTrackerProgress } from '$lib/api/progress';
 	import BottomDock from '$lib/component/BottomDock.svelte';
-	import { convertDateStrToDisplayDateStr } from '$lib/date';
-	import { ButtonGroup, LineChart, PolarAreaChart } from '@thwbh/veilchen';
-	import { elements } from 'chart.js';
+	import { LineChart } from '@thwbh/veilchen';
 
 	let { data } = $props();
 
-	let progress = $state(data.trackerProgress);
-
-	const entries = [
-		{ key: 'w', value: 'Week' },
-		{ key: 'm', value: 'Month' },
-		{ key: 'o', value: 'Overall' }
-	];
-
-	let value = $state('o'); // Default to 'Option A'
-
-	const axisLabel = 'Weight (kg)';
-
-	const lineChartData = {
+	const weightChartData = {
 		data: {
-			labels: data.trackerProgress.weightLegend,
+			labels: data.trackerProgress.weightChartData.legend,
 			datasets: [
 				{
-					label: axisLabel,
-					data: data.trackerProgress.weightValues,
+					label: 'Weight (kg)',
+					data: data.trackerProgress.weightChartData.values,
 					tension: 0.4
 				}
 			]
@@ -36,30 +21,42 @@
 				point: {
 					radius: 0
 				}
+			},
+			scales: {
+				y: {
+					suggestedMin: data.trackerProgress.weightChartData.min - 2,
+					suggestedMax: data.trackerProgress.weightChartData.max + 2
+				}
 			}
 		}
 	};
 
 	const calorieChartData = {
 		data: {
-			labels: data.trackerProgress.caloriesLegend,
+			labels: data.trackerProgress.calorieChartData.legend,
 			datasets: [
 				{
-					label: 'Calories',
-					data: data.trackerProgress.caloriesValues,
+					label: 'Actual',
+					data: data.trackerProgress.calorieChartData.values,
 					tension: 0.4
 				},
 				{
 					label: 'Maximum',
-					data: data.trackerProgress.caloriesLegend.map(
+					data: data.trackerProgress.calorieChartData.legend.map(
 						(_) => data.trackerProgress.calorieTarget.maximumCalories
 					),
 					tension: 0.4
 				},
 				{
 					label: 'Target',
-					data: data.trackerProgress.caloriesLegend.map(
+					data: data.trackerProgress.calorieChartData.legend.map(
 						(_) => data.trackerProgress.calorieTarget.targetCalories
+					)
+				},
+				{
+					label: 'Average',
+					data: data.trackerProgress.calorieChartData.legend.map(
+						(_) => data.trackerProgress.calorieChartData.avg
 					)
 				}
 			]
@@ -70,22 +67,13 @@
 				point: {
 					radius: 0
 				}
-			}
-		}
-	};
-
-	const distributionChartData = {
-		data: {
-			labels: Object.keys(data.trackerProgress.caloriesCategoryAverage),
-			datasets: [
-				{
-					label: '∅ kcal',
-					data: Object.values(data.trackerProgress.caloriesCategoryAverage)
+			},
+			scales: {
+				y: {
+					suggestedMin: data.trackerProgress.calorieChartData.min - 50,
+					suggestedMax: data.trackerProgress.calorieChartData.max + 50
 				}
-			]
-		},
-		options: {
-			responsive: true
+			}
 		}
 	};
 </script>
@@ -96,19 +84,21 @@
 		Day {data.trackerProgress.daysPassed}
 	</span>
 
-	<LineChart data={lineChartData.data} options={lineChartData.options} />
+	<LineChart data={weightChartData.data} options={weightChartData.options} />
 
 	<div class="flex flex-row justify-between">
 		<div class="stat">
 			<div class="stat-title">Starting weight</div>
 			<div class="stat-value">
-				{data.trackerProgress.weightValues[0]}<span class="text-sm">kg</span>
+				{data.trackerProgress.weightChartData.values[0]}<span class="text-sm">kg</span>
 			</div>
 		</div>
 		<div class="stat">
 			<div class="stat-title text-right">Current weight</div>
 			<div class="stat-value text-right">
-				{data.trackerProgress.weightValues[data.trackerProgress.weightValues.length - 1]}
+				{data.trackerProgress.weightChartData.values[
+					data.trackerProgress.weightChartData.values.length - 1
+				]}
 				<span class="text-sm">kg</span>
 			</div>
 		</div>
@@ -120,7 +110,7 @@
 		<div class="stat">
 			<div class="stat-title">Average per day</div>
 			<div class="stat-value">
-				{data.trackerProgress.caloriesDailyAverage}
+				{data.trackerProgress.calorieChartData.avg}
 				<span class="text-sm">kcal</span>
 			</div>
 			<div class="stat-desc">Target: {data.trackerProgress.calorieTarget.targetCalories}kcal</div>
@@ -129,53 +119,13 @@
 			<div class="stat-title text-right">∅ Deficit</div>
 			<div class="stat-value text-right">
 				{data.trackerProgress.calorieTarget.maximumCalories -
-					data.trackerProgress.caloriesDailyAverage}
+					data.trackerProgress.calorieChartData.dailyAverage}
 				<span class="text-sm">kcal</span>
 			</div>
 			<div class="stat-desc text-right">
 				target: {data.trackerProgress.calorieTarget.maximumCalories -
 					data.trackerProgress.calorieTarget.targetCalories}
 			</div>
-		</div>
-	</div>
-
-	<div class="text-center font-bold">
-		<span>Average distribution</span>
-	</div>
-
-	<div class="w-2xs self-center">
-		<PolarAreaChart data={distributionChartData.data} options={distributionChartData.options} />
-	</div>
-
-	<div class="flex flex-col pb-16 w-fit self-center">
-		<div
-			class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
-		>
-			<div class="flex flex-col">
-				<span class="text-lg font-semibold">
-					{data.trackerProgress.averageCalories} kcal
-				</span>
-				<span class="stat-desc"> Average single intake </span>
-			</div>
-			<span class="badge badge-xs badge-primary">avg</span>
-		</div>
-		<div
-			class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
-		>
-			<div class="flex flex-col">
-				<span class="text-lg font-semibold"> {data.trackerProgress.minCalories} kcal </span>
-				<span class="stat-desc"> Smallest single intake </span>
-			</div>
-			<span class="badge badge-xs badge-info">min</span>
-		</div>
-		<div
-			class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
-		>
-			<div class="flex flex-col">
-				<span class="text-lg font-semibold"> {data.trackerProgress.maxCalories} kcal </span>
-				<span class="stat-desc"> Largest single intake </span>
-			</div>
-			<span class="badge badge-xs badge-error">max</span>
 		</div>
 	</div>
 
