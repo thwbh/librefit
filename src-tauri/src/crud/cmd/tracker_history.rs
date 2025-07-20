@@ -65,6 +65,7 @@ pub fn get_tracker_history(
                         calories_history,
                         calories_average,
                         weight_history,
+                        date_last_str: date_to_str.clone(),
                     })
                 }
                 _ => Err("Error".parse().unwrap()),
@@ -112,7 +113,7 @@ fn interpolate_history(
 ) {
     let mut current_date = date_from;
 
-    while current_date < date_to {
+    while current_date <= date_to {
         let current_date_str = NaiveDate::format(&current_date, "%Y-%m-%d").to_string();
 
         calorie_map.entry(current_date_str.clone()).or_default();

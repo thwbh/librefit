@@ -10,4 +10,5 @@ pub struct TrackerHistory {
     pub calories_history: BTreeMap<String, Vec<CalorieTracker>>,
     pub calories_average: f32,
     pub weight_history: BTreeMap<String, Vec<WeightTracker>>,
+    pub date_last_str: String,
 }

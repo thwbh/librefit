@@ -68,6 +68,7 @@ export interface TrackerHistory {
   caloriesHistory: Map<string, Array<CalorieTracker>>;
   caloriesAverage: number;
   weightHistory: Map<string, Array<WeightTracker>>;
+  dateLastStr: string;
 }
 
 export interface LibreUser {

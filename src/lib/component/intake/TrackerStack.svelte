@@ -42,7 +42,7 @@
 	let isNew = $state(false);
 
 	const startEditing = async () => {
-		await vibrate(1);
+		await vibrate(2);
 
 		isEditing = true;
 		isNew = false;

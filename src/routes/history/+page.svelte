@@ -12,7 +12,7 @@
 	} from '$lib/model.js';
 	import NumberFlow from '@number-flow/svelte';
 	import { info } from '@tauri-apps/plugin-log';
-	import { addDays, subDays } from 'date-fns';
+	import { addDays, compareAsc, subDays } from 'date-fns';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import { CaretLeftSolid, CaretRightSolid, TrashBinSolid } from 'flowbite-svelte-icons';
 	import { ModalDialog } from '@thwbh/veilchen';
@@ -23,11 +23,19 @@
 
 	let { data } = $props();
 
+	info(JSON.stringify(data));
+
 	// default history is 1 week
 	let trackerHistory: TrackerHistory = $state(data.trackerHistory);
 	let calorieTarget: CalorieTarget = data.calorieTarget;
+	let lastDateStr = data.trackerHistory.dateLastStr;
 
 	let dates = $derived(Object.keys(trackerHistory?.caloriesHistory));
+
+	// ensure history can't be scrolled into the future
+	let showRightCaret: boolean = $derived(
+		compareAsc(parseStringAsDate(lastDateStr), parseStringAsDate(dates[dates.length - 1])) === 1
+	);
 
 	let selectedDateStr: string = $derived(dates[dates.length - 1]);
 
@@ -58,7 +66,7 @@
 	const scrollLeft = () => {
 		const firstDate = parseStringAsDate(dates[0]);
 
-		updateRange(subDays(firstDate, 6), firstDate);
+		updateRange(subDays(firstDate, 7), subDays(firstDate, 1));
 
 		selectedDateStr = dates[dates.length - 1];
 	};
@@ -80,8 +88,6 @@
 	const getActiveClass = (dateStr: string) =>
 		dateStr === selectedDateStr ? 'bg-primary text-primary-content' : '';
 
-	const getRightDisabled = () => selectedDateStr === getDateAsStr(new Date());
-
 	const create = () => {
 		focusedCalories = {
 			added: selectedDateStr,
@@ -94,7 +100,7 @@
 	};
 
 	const edit = async (calories: CalorieTracker) => {
-		await vibrate(1);
+		await vibrate(2);
 
 		console.log('longpress');
 		focusedCalories = calories;
@@ -137,10 +143,13 @@
 				</span>
 			</div>
 		{/if}
+		<!-- <div -->
+		<!-- 	class="border-b-base-300 flex flex-row border-b border-dashed pb-3 overflow-x-scroll justify-between p-4" -->
+		<!-- > -->
 		<div
-			class="border-b-base-300 flex flex-row border-b border-dashed pb-3 overflow-x-scroll justify-between p-4"
+			class="border-b-base-300 grid grid-cols-9 gap-2 border-b border-dashed- pb-3 overflow-x-scroll p-4"
 		>
-			<button class="btn-ghost w-4" onclick={scrollLeft}>
+			<button class="btn-ghost w-fit place-self-center" onclick={scrollLeft}>
 				<span><CaretLeftSolid height="1em" /></span>
 			</button>
 
@@ -160,9 +169,13 @@
 				</button>
 			{/each}
 
-			<button class="btn-ghost w-fit" onclick={scrollRight} disabled={getRightDisabled()}>
-				<CaretRightSolid height="1em" />
-			</button>
+			{#if showRightCaret}
+				<button class="btn-ghost w-fit place-self-center" onclick={scrollRight}>
+					<CaretRightSolid height="1em" />
+				</button>
+			{:else}
+				<div></div>
+			{/if}
 		</div>
 	</div>
 
