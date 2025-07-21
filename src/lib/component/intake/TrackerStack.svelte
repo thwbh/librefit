@@ -62,9 +62,10 @@
 		info('save button triggered');
 
 		if (isNew) {
-			onadd?.(blankEntry).then((newEntry: CalorieTracker) => entries.push(newEntry));
-
-			index = 0;
+			onadd?.(blankEntry).then((newEntry: CalorieTracker) => {
+				entries.push(newEntry);
+				index = entries.length - 1;
+			});
 		} else if (isEditing) {
 			onedit?.(focusedEntry).then(
 				(updatedEntry: CalorieTracker) => (entries[index] = updatedEntry)
