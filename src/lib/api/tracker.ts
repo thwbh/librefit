@@ -1,4 +1,3 @@
-import { DataViews } from '../enum';
 import { getDateAsStr } from '../date';
 import { invoke } from '@tauri-apps/api/core';
 import type {
@@ -60,7 +59,7 @@ export const updateWeight = (weight: WeightTracker): Promise<WeightTracker> => {
 
 export const deleteWeight = (weight: WeightTracker): Promise<number> => {
   return invoke('delete_weight_tracker_entry', {
-    trackerId: weight.id,
+    trackerId: weight.id
   });
 };
 

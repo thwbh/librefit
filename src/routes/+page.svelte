@@ -61,7 +61,7 @@
 		/>
 	</div>
 
-	<div class="flex flex-col items-center w-full">
+	<div class="flex flex-col items-center w-full pb-12">
 		<WeightScore
 			{weightTracker}
 			{lastWeightTracker}

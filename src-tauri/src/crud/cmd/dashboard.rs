@@ -67,14 +67,14 @@ pub fn daily_dashboard(date_str: String) -> Result<Dashboard, String> {
 
                         Ok(Dashboard {
                             user_data: user,
-                            calorie_target: calorie_target,
+                            calorie_target,
                             calories_today_list: calories_today_vec,
                             calories_week_list: calories_week_vec,
-                            weight_target: weight_target,
+                            weight_target,
                             weight_today_list: weight_today_vec,
                             weight_month_list: weight_month_vec,
                             food_categories: food_categories_vec,
-                            current_day: current_day,
+                            current_day,
                         })
                     }
                     _ => Err("Invalid date format".to_string()),

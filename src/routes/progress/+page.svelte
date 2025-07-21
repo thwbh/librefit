@@ -80,7 +80,7 @@
 
 <div class="flex flex-col gap-4 p-4 pt-8">
 	<h1 class="sr-only">Progress</h1>
-	<span class="text-xl font-bold text-center"> Progress </span>
+	<span class="text-xl font-bold text-center"> Your progress </span>
 
 	<LineChart data={weightChartData.data} options={weightChartData.options} />
 
@@ -104,7 +104,7 @@
 
 	<LineChart data={calorieChartData.data} options={calorieChartData.options} />
 
-	<div class="flex flex-row justify-between">
+	<div class="flex flex-row justify-between pb-8">
 		<div class="stat">
 			<div class="stat-title">Average per day</div>
 			<div class="stat-value">

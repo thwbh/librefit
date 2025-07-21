@@ -17,6 +17,15 @@
 		ondelete?: (deletedIntake: CalorieTracker) => Promise<number>;
 	}
 
+	const getBlankEntry = (): NewCalorieTracker => {
+		return {
+			category: 'l',
+			added: getDateAsStr(new Date()),
+			amount: undefined,
+			description: ''
+		};
+	};
+
 	let {
 		entries = $bindable([]),
 		categories,
@@ -25,12 +34,7 @@
 		ondelete = undefined
 	}: Props = $props();
 
-	let blankEntry: NewCalorieTracker = $state({
-		category: 'l',
-		added: getDateAsStr(new Date()),
-		amount: 0,
-		description: ''
-	});
+	let blankEntry: NewCalorieTracker = $state(getBlankEntry());
 
 	let index = $state(0);
 	let focusedEntry = $derived(entries[index] ? { ...entries[index] } : undefined);
@@ -65,6 +69,7 @@
 			onadd?.(blankEntry).then((newEntry: CalorieTracker) => {
 				entries.push(newEntry);
 				index = entries.length - 1;
+				blankEntry = getBlankEntry();
 			});
 		} else if (isEditing) {
 			onedit?.(focusedEntry).then(
@@ -105,6 +110,7 @@
 		editDialog?.close();
 
 		enableDelete = false;
+		blankEntry = getBlankEntry();
 	};
 
 	const handleSwipe = () => {

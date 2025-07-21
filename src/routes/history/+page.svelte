@@ -200,7 +200,7 @@
 		</div>
 	</div>
 
-	<div class="flex flex-col overflow-y-scroll">
+	<div class="flex flex-col overflow-y-scroll pb-12">
 		<div class="stats">
 			<div class="stat">
 				<div class="stat-title">Average calories</div>
