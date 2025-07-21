@@ -52,9 +52,11 @@
 	});
 
 	// entry for modal dialog
-	let focusedCalories: NewCalorieTracker | CalorieTracker = $state();
+	let newEntry: NewCalorieTracker = $state();
+	let focusedCalories: CalorieTracker = $state();
 	let enableDelete = $state(false);
 	let isEditing = $state(false);
+	let createDialog: HTMLDialogElement = $state();
 	let editDialog: HTMLDialogElement = $state();
 
 	const selectHistory = (dateStr: string) => {
@@ -89,41 +91,63 @@
 		dateStr === selectedDateStr ? 'bg-primary text-primary-content' : '';
 
 	const create = () => {
-		focusedCalories = {
+		newEntry = {
 			added: selectedDateStr,
 			amount: undefined,
 			category: 't',
 			description: ''
 		};
 
-		editDialog?.showModal();
+		createDialog?.showModal();
 	};
 
 	const edit = async (calories: CalorieTracker) => {
 		await vibrate(2);
 
-		console.log('longpress');
 		focusedCalories = calories;
 		editDialog?.showModal();
 	};
 
 	const save = async () => {
-		if ('id' in focusedCalories) await updateCalories(focusedCalories as CalorieTracker);
-		else await addCalories(focusedCalories as NewCalorieTracker);
+		if (focusedCalories) {
+			await updateCalories(focusedCalories).then((updatedCalories) => {
+				info(
+					`added new entry to selectedDateStr={${selectedDateStr}} entry={${JSON.stringify(updatedCalories)}}`
+				);
 
+				caloriesHistory.push(updatedCalories);
+				caloriesHistory = [...caloriesHistory];
+				trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+			});
+		} else if (newEntry) {
+			await addCalories(newEntry).then((addedCalories) => {
+				info(
+					`added new entry to selectedDateStr={${selectedDateStr}} entry={${JSON.stringify(addedCalories)}}`
+				);
+
+				caloriesHistory.push(addedCalories);
+				caloriesHistory = [...caloriesHistory];
+				trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+			});
+		}
+
+		createDialog?.close();
 		editDialog?.close();
 
+		newEntry = undefined;
 		focusedCalories = undefined;
 	};
 
 	const cancel = () => {
+		createDialog?.close();
 		editDialog?.close();
 
+		newEntry = undefined;
 		focusedCalories = undefined;
 	};
 
 	const deleteEntry = async () => {
-		await deleteCalories(focusedCalories as CalorieTracker);
+		await deleteCalories(focusedCalories);
 
 		editDialog?.close();
 
@@ -143,9 +167,6 @@
 				</span>
 			</div>
 		{/if}
-		<!-- <div -->
-		<!-- 	class="border-b-base-300 flex flex-row border-b border-dashed pb-3 overflow-x-scroll justify-between p-4" -->
-		<!-- > -->
 		<div
 			class="border-b-base-300 grid grid-cols-9 gap-2 border-b border-dashed- pb-3 overflow-x-scroll p-4"
 		>
@@ -227,6 +248,23 @@
 
 	<BottomDock activeRoute="/history" />
 </div>
+
+<ModalDialog bind:dialog={createDialog} onconfirm={save} oncancel={cancel}>
+	{#snippet title()}
+		{#if newEntry}
+			<span>Add Intake</span>
+			<span class="text-xs opacity-60">
+				Date: {convertDateStrToDisplayDateStr(selectedDateStr)}
+			</span>
+		{/if}
+	{/snippet}
+
+	{#snippet content()}
+		{#if newEntry}
+			<CalorieTrackerMask bind:entry={newEntry} categories={data.foodCategories} isEditing={true} />
+		{/if}
+	{/snippet}
+</ModalDialog>
 
 <ModalDialog bind:dialog={editDialog} onconfirm={save} oncancel={cancel}>
 	{#snippet title()}

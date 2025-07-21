@@ -61,6 +61,12 @@ pub fn get_calorie_tracker_dates_in_range(
     date_from_str: String,
     date_to_str: String,
 ) -> Result<Vec<String>, String> {
+    log::info!(
+        ">>> get_calorie_tracker_dates_in_range date_from_str={:?} date_to_str={:?}",
+        date_from_str,
+        date_to_str
+    );
+
     let conn = &mut create_db_connection();
 
     match calories::find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str) {
