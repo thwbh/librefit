@@ -35,6 +35,7 @@ export interface Dashboard {
   weightTodayList: WeightTracker[];
   weightMonthList: WeightTracker[];
   foodCategories: FoodCategory[];
+  currentDay: number;
 }
 
 export interface CalorieChartData {

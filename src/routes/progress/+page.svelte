@@ -80,9 +80,7 @@
 
 <div class="flex flex-col gap-4 p-4 pt-8">
 	<h1 class="sr-only">Progress</h1>
-	<span class="text-xl font-bold text-center">
-		Day {data.trackerProgress.daysPassed}
-	</span>
+	<span class="text-xl font-bold text-center"> Progress </span>
 
 	<LineChart data={weightChartData.data} options={weightChartData.options} />
 

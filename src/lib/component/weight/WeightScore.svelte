@@ -6,6 +6,7 @@
 	import { differenceInDays } from 'date-fns';
 	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
 	import { PlusOutline } from 'flowbite-svelte-icons';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		weightTracker?: NewWeightTracker | WeightTracker;
@@ -98,7 +99,7 @@
 			<p class="text-sm opacity-60">
 				{differenceInDays(parseStringAsDate(weightTarget.endDate), new Date())} days left.
 			</p>
-			<button class="btn btn-sm"> Review plan </button>
+			<button class="btn btn-sm" onclick={() => goto('/progress')}> Review plan </button>
 		{/if}
 	</span>
 	<progress class="progress w-full" value="63" max="100"></progress>

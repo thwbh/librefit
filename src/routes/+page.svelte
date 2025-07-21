@@ -45,7 +45,10 @@
 	}
 </script>
 
-<div class="flex flex-col gap-4 bg-base-200">
+<div class="flex flex-col gap-4 bg-base-200 pt-8">
+	<h1 class="sr-only">Dashboard</h1>
+	<span class="text-xl font-bold text-center"> Day {data.dashboardData.currentDay} </span>
+
 	<div class="flex flex-col items-center">
 		<TrackerScore {calorieTarget} entries={caloriesToday} />
 
