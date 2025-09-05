@@ -26,6 +26,14 @@ export const calculateTdee = async (wizardInput: WizardInput): Promise<WizardRes
 };
 
 export const postWizardResult = async (wizard: Wizard): Promise<void> => {
+	wizard.weightTarget.initialWeight = +wizard.weightTarget.initialWeight;
+	wizard.weightTarget.targetWeight = +wizard.weightTarget.targetWeight;
+
+	wizard.weightTracker.amount = +wizard.weightTracker.amount;
+
+	wizard.calorieTarget.targetCalories = +wizard.calorieTarget.targetCalories;
+	wizard.calorieTarget.maximumCalories = +wizard.calorieTarget.maximumCalories;
+
 	return invoke('wizard_create_targets', {
 		input: wizard
 	});
@@ -55,7 +63,7 @@ export const createTargetWeightTargets = (
 	customWizardResult: WizardTargetWeightResult,
 	startDate: Date,
 	targetWeight: number,
-	selectedRate: string
+	selectedRate: number
 ): { calorieTarget: NewCalorieTarget; weightTarget: NewWeightTarget } => {
 	const multiplier = targetWeight < wizardInput.weight ? -1 : 1;
 	const todayStr = getDateAsStr(new Date());
@@ -64,7 +72,7 @@ export const createTargetWeightTargets = (
 		added: todayStr,
 		startDate: getDateAsStr(startDate),
 		endDate: customWizardResult.dateByRate[selectedRate],
-		targetCalories: wizardResult.tdee + multiplier * parseFloat(selectedRate),
+		targetCalories: wizardResult.tdee + multiplier * selectedRate,
 		maximumCalories: wizardResult.tdee
 	};
 
@@ -90,7 +98,6 @@ export const createTargetDateTargets = (
 	endDateStr: string,
 	selectedRate: string
 ): { calorieTarget: NewCalorieTarget; weightTarget: NewWeightTarget } => {
-	console.log(customWizardResult);
 	const multiplier = wizardInput.calculationGoal === CalculationGoal.Loss ? -1 : 1;
 	const todayStr = getDateAsStr(new Date());
 

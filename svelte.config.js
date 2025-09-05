@@ -8,9 +8,7 @@ const config = {
   // for more information about preprocessors
   preprocess: [
     vitePreprocess({ script: true }),
-    sveltePreprocess({
-      postcss: true
-    })
+    sveltePreprocess()
   ],
 
   ssr: {

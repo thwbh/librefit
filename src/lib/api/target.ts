@@ -10,6 +10,10 @@ export const createCalorieTarget = async (
 	return invoke('create_calorie_target', { newTarget: calorieTarget });
 };
 
+export const getLastCalorieTarget = async (): Promise<CalorieTarget> => {
+	return invoke('get_last_calorie_target');
+};
+
 export const createWeightTarget = async (weightTarget: NewWeightTarget): Promise<WeightTarget> => {
 	weightTarget.targetWeight = +weightTarget.targetWeight;
 	weightTarget.initialWeight = +weightTarget.initialWeight;

@@ -11,3 +11,6 @@ vite.config.ts.timestamp-*
 /.cache/
 coverage/
 */**/tracker.db
+app-keystore.jks
+src-tauri/gen/android/keystore.properties
+

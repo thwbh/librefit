@@ -35,6 +35,41 @@ export interface Dashboard {
 	weightTodayList: WeightTracker[];
 	weightMonthList: WeightTracker[];
 	foodCategories: FoodCategory[];
+	currentDay: number;
+}
+
+export interface CalorieChartData {
+	avg: number;
+	min: number;
+	max: number;
+	legend: Array<string>;
+	values: Array<number>;
+	categoryAverage: Map<string, number>;
+	dailyAverage: number;
+}
+
+export interface WeightChartData {
+	avg: number;
+	min: number;
+	max: number;
+	legend: Array<string>;
+	values: Array<number>;
+}
+
+export interface TrackerProgress {
+	calorieTarget: CalorieTarget;
+	weightTarget: WeightTarget;
+	daysPassed: number;
+	daysTotal: number;
+	calorieChartData: CalorieChartData;
+	weightChartData: WeightChartData;
+}
+
+export interface TrackerHistory {
+	caloriesHistory: Map<string, Array<CalorieTracker>>;
+	caloriesAverage: number;
+	weightHistory: Map<string, Array<WeightTracker>>;
+	dateLastStr: string;
 }
 
 export interface LibreUser {
