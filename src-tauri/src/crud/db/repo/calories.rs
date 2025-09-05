@@ -108,7 +108,7 @@ pub fn find_calorie_tracker_by_date_range(
     use crate::crud::db::schema::calorie_tracker::dsl::added;
 
     calorie_tracker
-        .filter(added.ge(date_from).and(added.le(date_to)))
+        .filter(added.between(date_from, date_to))
         .order(added.desc())
         .load::<CalorieTracker>(conn)
 }

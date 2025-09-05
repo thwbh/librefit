@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import ErrorBot from '$lib/assets/icons/error-bot.svg?component';
+	import ErrorBot from '$lib/assets/icons/error-bot.svg';
 	import { goto } from '$app/navigation';
 </script>
 
@@ -10,7 +10,7 @@
 		<p>Whoops. Seems like that took a wrong turn.</p>
 		<button class="btn variant-filled-primary" onclick={() => goto('/')}>Back</button>
 		<div class="flex justify-center">
-			<ErrorBot height="60vh" />
+			<!--			<ErrorBot height="60" /> -->
 		</div>
 	</div>
 </section>

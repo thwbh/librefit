@@ -10,7 +10,7 @@ VALUES ('b', 'Breakfast'),
        ('u', 'Unset');
 
 
-INSERT INTO weight_tracker (id, added, amount)
+INSERT INTO weight_tracker (added, amount)
 VALUES ( DATE('now', '-58 days'), 100.0),
        ( DATE('now', '-57 days'), 100.0),
        ( DATE('now', '-56 days'), 100.0),
@@ -41,7 +41,7 @@ VALUES ( DATE('now', '-58 days'), 100.0),
        ( DATE('now', '-31 days'), 97.0),
        ( DATE('now', '-30 days'), 97.0);
 
-INSERT INTO calorie_tracker (id, added, amount, category, description)
+INSERT INTO calorie_tracker (added, amount, category, description)
 VALUES ( DATE('now', '-58 days'), 240, 'b', 'Breakfast'),
        ( DATE('now', '-58 days'), 270, 'l', 'Lunch'),
        ( DATE('now', '-58 days'), 900, 'd', 'Dinner'),
@@ -296,10 +296,10 @@ VALUES (NULL, DATE('now', '-30 day'), 97),
        (NULL, DATE('now', '-1 day'), 93),
        (NULL, DATE('now'), 93);
 
-INSERT INTO calorie_target (id, added, start_date, end_date, target_calories, maximum_calories)
+INSERT INTO calorie_target (added, start_date, end_date, target_calories, maximum_calories)
 VALUES ( DATE('now', '-58 day'), DATE('now', '-58 day'),
         DATE('now', '+307 day'), 1849, 2398);
 
-INSERT INTO weight_target (id, added, start_date, end_date, initial_weight, target_weight)
+INSERT INTO weight_target (added, start_date, end_date, initial_weight, target_weight)
 VALUES ( DATE('now', '-58 day'), DATE('now', '-58 day'),
         DATE('now', '+307 day'), 104, 77);
