@@ -1,9 +1,10 @@
-import { getDashboard, getProfile } from '$lib/api/user';
+import { dailyDashboard, getUser } from '$lib/api/gen';
+import { getDateAsStr } from '$lib/date';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async () => {
-	return {
-		userProfile: await getProfile(),
-		dashboardData: await getDashboard(new Date())
-	};
+  return {
+    userProfile: await getUser(),
+    dashboardData: await dailyDashboard({ dateStr: getDateAsStr(new Date()) })
+  };
 };

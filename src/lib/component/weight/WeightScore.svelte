@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { display_date_format, getDateAsStr, parseStringAsDate } from '$lib/date';
-	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/model';
+	import type {
+		CreateWeightTrackerEntryParams,
+		NewWeightTracker,
+		UpdateWeightTrackerEntryParams,
+		WeightTarget,
+		WeightTracker
+	} from '$lib/api/gen';
 	import { ModalDialog, ValidatedInput } from '@thwbh/veilchen';
 	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
@@ -12,15 +18,15 @@
 		weightTracker?: NewWeightTracker | WeightTracker;
 		lastWeightTracker?: WeightTracker;
 		weightTarget: WeightTarget;
-		onadd: (weightTracker: NewWeightTracker) => Promise<WeightTracker>;
-		onedit: (weightTracker: WeightTracker) => Promise<WeightTracker>;
+		onadd?: (params: CreateWeightTrackerEntryParams) => Promise<WeightTracker>;
+		onedit?: (params: UpdateWeightTrackerEntryParams) => Promise<WeightTracker>;
 	}
 
 	let {
 		lastWeightTracker = undefined,
 		weightTracker = {
 			added: getDateAsStr(new Date()),
-			amount: lastWeightTracker ? lastWeightTracker.amount : undefined
+			amount: lastWeightTracker ? lastWeightTracker.amount : 0
 		},
 
 		weightTarget,
@@ -37,13 +43,14 @@
 
 	const set = async () => {
 		if ('id' in currentEntry) {
-			await onedit?.(currentEntry as WeightTracker).then(
-				(updatedEntry: WeightTracker) => (weightTracker = updatedEntry)
-			);
+			await onedit?.({
+				trackerId: currentEntry.id,
+				updatedEntry: currentEntry
+			}).then((updatedEntry: WeightTracker) => (weightTracker = updatedEntry));
 		} else {
-			await onadd?.(currentEntry as NewWeightTracker).then(
-				(newEntry: WeightTracker) => (weightTracker = newEntry)
-			);
+			await onadd?.({
+				newEntry: currentEntry
+			}).then((newEntry: WeightTracker) => (weightTracker = newEntry));
 		}
 	};
 </script>

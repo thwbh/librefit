@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LibreUser } from '$lib/model';
+	import type { LibreUser } from '$lib/api/gen';
 	import { ValidatedInput } from '@thwbh/veilchen';
 
 	interface Props {

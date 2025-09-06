@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CalorieTracker, FoodCategory } from '$lib/model';
+	import type { CalorieTracker, FoodCategory } from '$lib/api/gen';
 	import { longpress } from '$lib/gesture/long-press';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
 	import { fly, type FlyParams } from 'svelte/transition';

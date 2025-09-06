@@ -9,7 +9,7 @@
 	import { goto } from '$app/navigation';
 
 	interface Props {
-		activeRoute: string;
+		activeRoute?: string;
 	}
 
 	let { activeRoute = undefined }: Props = $props();
