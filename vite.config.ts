@@ -39,6 +39,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
     coverage: {
       provider: 'v8',
       // you can include other reporters, but 'json-summary' is required, json is recommended
