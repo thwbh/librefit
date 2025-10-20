@@ -197,14 +197,27 @@ pub struct NewWeightTarget {
 }
 
 /// Represents the body data upon profile creation.
-#[derive(Insertable, Queryable, Selectable, AsChangeset, Serialize, Deserialize, Debug)]
+#[derive(
+    Insertable, Queryable, Selectable, AsChangeset, Serialize, Deserialize, Debug, Validate,
+)]
 #[diesel(table_name = crate::crud::db::schema::body_data)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
 pub struct BodyData {
     pub id: i32,
+    #[validate(range(min = 18, max = 99, message = "Age must be between 18 and 99 years."))]
     pub age: i32,
+    #[validate(range(
+        min = 100.0,
+        max = 220.0,
+        message = "Height must be between 100 and 220cm."
+    ))]
     pub height: f32,
+    #[validate(range(
+        min = 30.0,
+        max = 330.0,
+        message = "Weight must be btween 30 and 330kg."
+    ))]
     pub weight: f32,
     pub sex: String,
 }
