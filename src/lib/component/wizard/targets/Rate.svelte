@@ -5,8 +5,8 @@
 	interface Props {
 		value: number;
 		rates: Array<number>;
-		targetDates: Map<number, string>;
-		targetProgress: Map<number, number>;
+		targetDates: Record<number, string>;
+		targetProgress: Record<number, number>;
 	}
 
 	let { value = $bindable(), rates, targetDates, targetProgress }: Props = $props();
@@ -15,8 +15,8 @@
 		return {
 			value: rate,
 			header: `${rate} kcal`,
-			description: `With a deficit of ${rate} kcal per day, you will lose ${targetProgress.get(rate)} kg per week. 
-          Following through, your plan ends on ${convertDateStrToDisplayDateStr(targetDates.get(rate)!)}.`,
+			description: `With a deficit of ${rate} kcal per day, you will lose ${targetProgress[rate]} kg per week.
+          Following through, your plan ends on ${convertDateStrToDisplayDateStr(targetDates[rate]!)}.`,
 			label: rate === 500 ? { text: 'Recommended', className: 'badge-primary' } : undefined
 		};
 	});
