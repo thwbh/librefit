@@ -1,5 +1,12 @@
 <script lang="ts">
-	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
+	import type {
+		CalorieTracker,
+		CreateCalorieTrackerEntryParams,
+		DeleteCalorieTrackerEntryParams,
+		FoodCategory,
+		NewCalorieTracker,
+		UpdateCalorieTrackerEntryParams
+	} from '$lib/api/gen';
 	import IntakeCard from './IntakeCard.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
 	import { TrashBinSolid } from 'flowbite-svelte-icons';
@@ -12,16 +19,16 @@
 	interface Props {
 		entries: Array<CalorieTracker>;
 		categories: Array<FoodCategory>;
-		onadd?: (newIntake: NewCalorieTracker) => Promise<CalorieTracker>;
-		onedit?: (updatedIntake: CalorieTracker) => Promise<CalorieTracker>;
-		ondelete?: (deletedIntake: CalorieTracker) => Promise<number>;
+		onadd?: (params: CreateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
+		onedit?: (params: UpdateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
+		ondelete?: (params: DeleteCalorieTrackerEntryParams) => Promise<number>;
 	}
 
 	const getBlankEntry = (): NewCalorieTracker => {
 		return {
 			category: 'l',
 			added: getDateAsStr(new Date()),
-			amount: undefined,
+			amount: 0,
 			description: ''
 		};
 	};
@@ -66,15 +73,16 @@
 		info('save button triggered');
 
 		if (isNew) {
-			onadd?.(blankEntry).then((newEntry: CalorieTracker) => {
+			onadd?.({ newEntry: blankEntry }).then((newEntry: CalorieTracker) => {
 				entries.push(newEntry);
 				index = entries.length - 1;
 				blankEntry = getBlankEntry();
 			});
-		} else if (isEditing) {
-			onedit?.(focusedEntry).then(
-				(updatedEntry: CalorieTracker) => (entries[index] = updatedEntry)
-			);
+		} else if (isEditing && focusedEntry) {
+			onedit?.({
+				trackerId: focusedEntry.id,
+				updatedEntry: focusedEntry
+			}).then((updatedEntry: CalorieTracker) => (entries[index] = updatedEntry));
 		}
 
 		createDialog?.close();
@@ -84,7 +92,9 @@
 	const deleteEntry = () => {
 		info(`button triggered. focusedEntry=${focusedEntry}`);
 
-		ondelete?.(focusedEntry).then(() => {
+		ondelete?.({
+			trackerId: focusedEntry!!.id
+		}).then(() => {
 			if (entries.length === 1) {
 				entries = [];
 			} else {
@@ -131,7 +141,12 @@
 				{#snippet card(_: number, params: FlyParams)}
 					{@const flyParams = entries.length > 1 ? params : { y: 500 }}
 					<div transition:fly={flyParams}>
-						<IntakeCard entry={focusedEntry} {categories} {flyParams} onlongpress={startEditing} />
+						<IntakeCard
+							entry={focusedEntry as CalorieTracker}
+							{categories}
+							{flyParams}
+							onlongpress={startEditing}
+						/>
 					</div>
 				{/snippet}
 			</Stack>

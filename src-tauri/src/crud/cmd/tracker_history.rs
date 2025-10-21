@@ -2,7 +2,7 @@ use crate::{
     calc::math_f32::floor_f32,
     crud::db::{
         comp::tracker_history::TrackerHistory,
-        connection::create_db_connection,
+        connection::with_db_connection,
         model::{CalorieTracker, WeightTracker},
         repo::{
             calories::find_calorie_tracker_by_date_range, weight::find_weight_tracker_by_date_range,
@@ -24,8 +24,6 @@ pub fn get_tracker_history(
         date_to_str
     );
 
-    let conn = &mut create_db_connection();
-
     let date_from_parse_result: ParseResult<NaiveDate> =
         NaiveDate::parse_from_str(&date_from_str, "%Y-%m-%d");
     let date_to_parse_result: ParseResult<NaiveDate> =
@@ -33,43 +31,41 @@ pub fn get_tracker_history(
 
     match (date_from_parse_result, date_to_parse_result) {
         (Ok(date_from), Ok(date_to)) => {
-            let calories_range =
-                find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str);
+            with_db_connection(|conn| {
+                let calories_range =
+                    find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str)?;
 
-            let weight_range =
-                find_weight_tracker_by_date_range(conn, &date_from_str, &date_to_str);
+                let weight_range =
+                    find_weight_tracker_by_date_range(conn, &date_from_str, &date_to_str)?;
 
-            match (calories_range, weight_range) {
-                (Ok(calories_range), Ok(weight_range)) => {
-                    let mut calories_history = interpolate_calories(calories_range);
-                    let mut weight_history = interpolate_weight(weight_range);
+                let mut calories_history = interpolate_calories(calories_range);
+                let mut weight_history = interpolate_weight(weight_range);
 
-                    interpolate_history(
-                        date_from,
-                        date_to,
-                        &mut calories_history,
-                        &mut weight_history,
-                    );
+                interpolate_history(
+                    date_from,
+                    date_to,
+                    &mut calories_history,
+                    &mut weight_history,
+                );
 
-                    let calories_average: f32 = match calories_history
-                        .values()
-                        .flatten()
-                        .map(|c| c.amount)
-                        .reduce(|acc, a| acc + a)
-                    {
-                        Some(sum) => floor_f32(sum as f32 / calories_history.len() as f32, 1),
-                        None => 0.0,
-                    };
+                let calories_average: f32 = match calories_history
+                    .values()
+                    .flatten()
+                    .map(|c| c.amount)
+                    .reduce(|acc, a| acc + a)
+                {
+                    Some(sum) => floor_f32(sum as f32 / calories_history.len() as f32, 1),
+                    None => 0.0,
+                };
 
-                    Ok(TrackerHistory {
-                        calories_history,
-                        calories_average,
-                        weight_history,
-                        date_last_str: date_to_str.clone(),
-                    })
-                }
-                _ => Err("Error".parse().unwrap()),
-            }
+                Ok(TrackerHistory {
+                    calories_history,
+                    calories_average,
+                    weight_history,
+                    date_last_str: date_to_str.clone(),
+                })
+            })
+            .map_err(|_| "Error".to_string())
         }
         _ => Err("Invalid date format".parse().unwrap()),
     }

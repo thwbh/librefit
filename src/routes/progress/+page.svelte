@@ -43,20 +43,20 @@
 				{
 					label: 'Maximum',
 					data: data.trackerProgress.calorieChartData.legend.map(
-						(_) => data.trackerProgress.calorieTarget.maximumCalories
+						(_: any) => data.trackerProgress.calorieTarget.maximumCalories
 					),
 					tension: 0.4
 				},
 				{
 					label: 'Target',
 					data: data.trackerProgress.calorieChartData.legend.map(
-						(_) => data.trackerProgress.calorieTarget.targetCalories
+						(_: any) => data.trackerProgress.calorieTarget.targetCalories
 					)
 				},
 				{
 					label: 'Average',
 					data: data.trackerProgress.calorieChartData.legend.map(
-						(_) => data.trackerProgress.calorieChartData.avg
+						(_: any) => data.trackerProgress.calorieChartData.avg
 					)
 				}
 			]

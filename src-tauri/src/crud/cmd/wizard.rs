@@ -6,7 +6,7 @@ use calc::wizard::{
     WizardTargetWeightInput, WizardTargetWeightResult,
 };
 use crud::db;
-use crud::db::connection::create_db_connection;
+use crud::db::connection::with_db_connection;
 use diesel::Connection;
 use tauri::command;
 use validator::ValidationErrors;
@@ -26,17 +26,16 @@ pub fn wizard_calculate_tdee(input: WizardInput) -> Result<WizardResult, Validat
 pub fn wizard_create_targets(input: Wizard) -> Result<(), String> {
     log::info!(">>> wizard_create_targets: {:?}", input);
 
-    let manager = &mut create_db_connection();
-
-    manager
-        .transaction(|conn| {
+    with_db_connection(|conn| {
+        conn.transaction(|conn| {
             db::repo::weight::create_weight_target(conn, &input.weight_target)?;
             db::repo::weight::create_weight_tracker_entry(conn, &input.weight_tracker)?;
             db::repo::calories::create_calorie_target(conn, &input.calorie_target)?;
 
             Ok(())
         })
-        .map_err(handle_error)
+    })
+    .map_err(handle_error)
 }
 
 #[command]

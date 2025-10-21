@@ -1,8 +1,8 @@
 import { assert, beforeAll, describe, expect, it } from 'vitest';
 import { mockIPC } from '@tauri-apps/api/mocks';
 import { randomFillSync } from 'crypto';
-import { createCalorieTarget, createWeightTarget } from '../../../src/lib/api/target';
-import type { CalorieTarget, NewCalorieTarget, NewWeightTarget, WeightTarget } from '../../../src/lib/model';
+import { createCalorieTarget, createWeightTarget } from '../../../src/lib/api/gen';
+import type { CalorieTarget, NewCalorieTarget, NewWeightTarget, WeightTarget } from '../../../src/lib/api/gen';
 
 const mockCalorieTarget: NewCalorieTarget = {
   added: '2022-08-12',
@@ -32,7 +32,7 @@ describe('createTarget functions', () => {
       return mockCalorieTarget;
     });
 
-    const result = await createCalorieTarget(mockCalorieTarget);
+    const result = await createCalorieTarget({ newTarget: mockCalorieTarget });
     expect(result).toEqual(mockCalorieTarget);
   });
 
@@ -50,7 +50,7 @@ describe('createTarget functions', () => {
       return mockWeightTarget;
     });
 
-    const result = await createWeightTarget(mockWeightTarget);
+    const result = await createWeightTarget({ newTarget: mockWeightTarget });
     expect(result).toEqual(mockWeightTarget);
   });
 });

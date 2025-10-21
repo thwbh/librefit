@@ -14,3 +14,6 @@ coverage/
 app-keystore.jks
 src-tauri/gen/android/keystore.properties
 
+# Generated API
+src/lib/api/gen/
+src/lib/api/gen/*

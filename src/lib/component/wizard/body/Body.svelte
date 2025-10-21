@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ButtonGroup, RangeInput } from '@thwbh/veilchen';
 	import type { KeyValuePair } from '@thwbh/veilchen';
-	import { CalculationSex, type WizardInput } from '$lib/model';
+	import { CalculationSexSchema, type WizardInput } from '$lib/api/gen';
 
 	interface Props {
 		wizardInput: WizardInput;
@@ -10,8 +10,8 @@
 	let { wizardInput = $bindable() }: Props = $props();
 
 	let sexSelection: Array<KeyValuePair> = [
-		{ key: CalculationSex.Male, value: 'Male' },
-		{ key: CalculationSex.Female, value: 'Female' }
+		{ key: CalculationSexSchema.enum.MALE, value: 'Male' },
+		{ key: CalculationSexSchema.enum.FEMALE, value: 'Female' }
 	];
 </script>
 

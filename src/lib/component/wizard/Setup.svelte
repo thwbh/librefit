@@ -2,9 +2,14 @@
 	import { AlertBox, AlertType, Stepper } from '@thwbh/veilchen';
 	import Body from './body/Body.svelte';
 	import {
-		CalculationGoal,
-		CalculationSex,
-		WizardRecommendation,
+		CalculationGoalSchema,
+		CalculationSexSchema,
+		updateBodyData,
+		updateUser,
+		wizardCalculateForTargetWeight,
+		wizardCalculateTdee,
+		wizardCreateTargets,
+		WizardRecommendationSchema,
 		type LibreUser,
 		type NewCalorieTarget,
 		type NewWeightTarget,
@@ -12,25 +17,21 @@
 		type WizardInput,
 		type WizardResult,
 		type WizardTargetWeightResult
-	} from '$lib/model';
+	} from '$lib/api/gen';
 	import type { WizardTargetSelection } from '$lib/types';
 	import { WizardOptions } from '$lib/enum';
 	import Finish from './Finish.svelte';
-	import {
-		calculateForTargetWeight,
-		calculateTdee,
-		createTargetWeightTargets,
-		postWizardResult
-	} from '$lib/api/wizard';
 	import ActivityLevel from './activity/ActivityLevel.svelte';
 	import { getDateAsStr } from '$lib/date';
 	import Rate from './targets/Rate.svelte';
 	import Report from './body/Report.svelte';
-	import { setBodyData } from '$lib/api/body';
 	import { goto } from '$app/navigation';
 	import { error } from '@tauri-apps/plugin-log';
-	import Profile from '../profile/Profile.svelte';
-	import { updateProfile } from '$lib/api/user';
+	import { createTargetWeightTargets } from '$lib/api/util';
+
+	const CalculationGoal = CalculationGoalSchema.enum;
+	const CalculationSex = CalculationSexSchema.enum;
+	const WizardRecommendation = WizardRecommendationSchema.enum;
 
 	let currentStep = $state(1);
 
@@ -42,27 +43,27 @@
 
 	let wizardInput: WizardInput = $state({
 		age: 30,
-		sex: CalculationSex.Male,
+		sex: CalculationSex.MALE,
 		weight: 85,
 		height: 180,
 		activityLevel: 1,
 		weeklyDifference: 1,
-		calculationGoal: CalculationGoal.Loss
+		calculationGoal: CalculationGoal.LOSS
 	});
 
-	let wizardResult: WizardResult = $state();
-	let weightTracker: NewWeightTracker = $state();
+	let wizardResult: WizardResult | undefined = $state();
+	let weightTracker: NewWeightTracker | undefined = $state();
 
 	let chosenOption: WizardTargetSelection = $state({
 		customDetails: 76,
 		userChoice: WizardOptions.Custom_weight
 	});
 
-	let wizardTargetWeightResult: WizardTargetWeightResult = $state();
+	let wizardTargetWeightResult: WizardTargetWeightResult | undefined = $state();
 	let chosenRate: number = $state(500);
 
-	let weightTarget: NewWeightTarget = $state();
-	let calorieTarget: NewCalorieTarget = $state();
+	let weightTarget: NewWeightTarget | undefined = $state();
+	let calorieTarget: NewCalorieTarget | undefined = $state();
 
 	let finished: boolean = $state(false);
 	let finishError: boolean = $state(false);
@@ -76,11 +77,13 @@
 		}
 
 		if (currentStep === 3) {
-			wizardResult = await calculateTdee(wizardInput);
+			wizardResult = await wizardCalculateTdee({
+				input: wizardInput
+			});
 
-			if (wizardResult.recommendation === WizardRecommendation.Lose) {
+			if (wizardResult.recommendation === WizardRecommendation.LOSE) {
 				chosenOption.customDetails = wizardResult.targetWeightUpper;
-			} else if (wizardResult.recommendation === WizardRecommendation.Hold) {
+			} else if (wizardResult.recommendation === WizardRecommendation.HOLD) {
 				chosenOption.customDetails = wizardResult.targetWeight;
 			} else {
 				chosenOption.customDetails = wizardResult.targetWeightLower;
@@ -88,23 +91,25 @@
 		}
 
 		if (currentStep === 4) {
-			wizardTargetWeightResult = await calculateForTargetWeight({
-				age: wizardInput.age,
-				sex: wizardInput.sex,
-				currentWeight: wizardInput.weight,
-				height: wizardInput.height,
-				targetWeight: wizardResult.targetWeight,
-				startDate: getDateAsStr(new Date())
+			wizardTargetWeightResult = await wizardCalculateForTargetWeight({
+				input: {
+					age: wizardInput.age,
+					sex: wizardInput.sex,
+					currentWeight: wizardInput.weight,
+					height: wizardInput.height,
+					targetWeight: wizardResult!.targetWeight,
+					startDate: getDateAsStr(new Date())
+				}
 			});
 		}
 
 		if (currentStep === 5) {
 			const targets = createTargetWeightTargets(
 				wizardInput,
-				wizardResult,
-				wizardTargetWeightResult,
+				wizardResult!,
+				wizardTargetWeightResult!,
 				new Date(),
-				wizardResult.targetWeightUpper,
+				wizardResult!.targetWeightUpper,
 				chosenRate
 			);
 
@@ -119,9 +124,23 @@
 	};
 
 	const onfinish = async () => {
-		await updateProfile(userData);
-		await setBodyData(wizardInput.age, wizardInput.sex, wizardInput.height, wizardInput.weight);
-		await postWizardResult({ weightTracker, weightTarget, calorieTarget }).catch((e) => {
+		await updateUser({
+			userName: userData.name!,
+			userAvatar: userData.avatar!
+		});
+		await updateBodyData({
+			age: wizardInput.age,
+			sex: wizardInput.sex,
+			height: wizardInput.height,
+			weight: wizardInput.weight
+		});
+		await wizardCreateTargets({
+			input: {
+				weightTracker: weightTracker!,
+				weightTarget: weightTarget!,
+				calorieTarget: calorieTarget!
+			}
+		}).catch((e) => {
 			error(e);
 			finishError = true;
 		});
