@@ -157,24 +157,44 @@
 
 <Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
 	{#snippet step1()}
-		<strong>Body Parameters</strong>
+		<div class="mb-6">
+			<h2 class="text-2xl font-bold text-base-content mb-2">📋 Body Parameters</h2>
+			<p class="text-sm text-base-content opacity-60">
+				Let's start with some basic information about you
+			</p>
+		</div>
 		<Body bind:wizardInput />
 	{/snippet}
 
 	{#snippet step2()}
-		<strong>Activity Level</strong>
+		<div class="mb-6">
+			<h2 class="text-2xl font-bold text-base-content mb-2">💪 Activity Level</h2>
+			<p class="text-sm text-base-content opacity-60">
+				How active are you during your day? Choose what describes your daily activity level best.
+			</p>
+		</div>
 		<ActivityLevel bind:value={wizardInput.activityLevel} />
 	{/snippet}
 
 	{#snippet step3()}
-		<strong>Result</strong>
+		<div class="mb-6">
+			<h2 class="text-2xl font-bold text-base-content mb-2">📊 Your Results</h2>
+			<p class="text-sm text-base-content opacity-60">
+				Here's what your body composition and metabolism look like
+			</p>
+		</div>
 		{#if wizardResult}
 			<Report {wizardInput} {wizardResult} />
 		{/if}
 	{/snippet}
 
 	{#snippet step4()}
-		<strong>Next Steps</strong>
+		<div class="mb-6">
+			<h2 class="text-2xl font-bold text-base-content mb-2">🎯 Choose Your Pace</h2>
+			<p class="text-sm text-base-content opacity-60">
+				Select a calorie deficit that fits your lifestyle and goals
+			</p>
+		</div>
 		{#if wizardTargetWeightResult}
 			{@const rates = Object.keys(wizardTargetWeightResult.dateByRate).map((v) => +v)}
 			{@const targetDates = wizardTargetWeightResult.dateByRate}
@@ -184,9 +204,13 @@
 	{/snippet}
 
 	{#snippet step5()}
-		<strong>You're set!</strong>
+		<div class="mb-6">
+			<h2 class="text-2xl font-bold text-base-content mb-2">🎉 You're All Set!</h2>
+			<p class="text-sm text-base-content opacity-60 mb-4">
+				Review your plan and click finish when you're ready to begin
+			</p>
+		</div>
 		<Finish {wizardResult} {chosenRate} {weightTarget} {calorieTarget} />
-		<p class="text-xs">Click finish to proceed. You will be redirected to the dashboard.</p>
 	{/snippet}
 </Stepper>
 

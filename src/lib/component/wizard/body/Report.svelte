@@ -34,106 +34,173 @@
 	};
 </script>
 
-<div class="flex flex-col gap-4">
-	<table class="table table-sm" aria-label="result table">
-		<thead>
-			<tr>
-				<th>Description</th>
-				<th>Value</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>Age</td>
-				<td>{wizardInput.age}</td>
-			</tr>
+<div class="flex flex-col gap-6">
+	<!-- Key Metrics Cards -->
+	<div class="grid grid-cols-2 gap-4">
+		<!-- BMI Card -->
+		<div class="bg-base-100 rounded-box p-4 shadow">
+			<p class="text-sm text-base-content opacity-60 mb-1">Body Mass Index</p>
+			<p class="text-3xl font-bold text-base-content">{wizardResult.bmi}</p>
+			<span class="badge {getClassificationStyle(wizardResult.bmiCategory)} badge-sm mt-2">
+				{getBmiCategoryDisplayValue(wizardResult.bmiCategory)}
+			</span>
+		</div>
 
-			<tr>
-				<td>Height</td>
-				<td>{wizardInput.height} cm</td>
-			</tr>
+		<!-- Goal Card -->
+		<div class="bg-base-100 rounded-box p-4 shadow">
+			<p class="text-sm text-base-content opacity-60 mb-1">Recommendation</p>
+			<p class="text-3xl font-bold text-base-content capitalize">
+				{wizardResult.recommendation.toLowerCase()}
+			</p>
+			<span class="badge badge-primary badge-sm mt-2">
+				{wizardInput.weight} kg
+			</span>
+		</div>
+	</div>
 
-			<tr>
-				<td>Weight</td>
-				<td class="flex flex-row justify-between items-center">
-					{wizardInput.weight} kg
-					<span class="badge badge-primary text-xs"
-						>{wizardResult.recommendation.toLowerCase()}</span
-					>
-				</td>
-			</tr>
+	<!-- Detailed Metrics Table -->
+	<div class="bg-base-100 rounded-box p-6 shadow">
+		<h3 class="text-lg font-semibold text-base-content mb-4">Your Metabolic Profile</h3>
+		<table class="table table-sm">
+			<tbody>
+				<tr>
+					<td class="text-base-content opacity-70">Age</td>
+					<td class="text-right font-semibold">{wizardInput.age} years</td>
+				</tr>
 
-			<tr>
-				<td>Body Mass Index</td>
-				<td class="flex flex-row justify-between items-center">
-					{wizardResult.bmi}
-					<span class="badge {getClassificationStyle(wizardResult.bmiCategory)} text-xs">
-						{getBmiCategoryDisplayValue(wizardResult.bmiCategory)}
-					</span>
-				</td>
-			</tr>
+				<tr>
+					<td class="text-base-content opacity-70">Height</td>
+					<td class="text-right font-semibold">{wizardInput.height} cm</td>
+				</tr>
 
-			<tr>
-				<td>Basal Metabolic Rate</td>
-				<td>{wizardResult.bmr} kcal</td>
-			</tr>
+				<tr>
+					<td class="text-base-content opacity-70">Current Weight</td>
+					<td class="text-right font-semibold">{wizardInput.weight} kg</td>
+				</tr>
 
-			<tr>
-				<td>Total Daily Energy Expediture</td>
-				<td>{wizardResult.tdee} kcal</td>
-			</tr>
-		</tbody>
-	</table>
+				<tr class="border-t border-base-300">
+					<td class="text-base-content opacity-70">Basal Metabolic Rate</td>
+					<td class="text-right font-semibold text-primary">{wizardResult.bmr} kcal</td>
+				</tr>
 
-	<p>
-		Based on your input, your basal metabolic rate is {wizardResult.bmr}kcal. Your daily calorie
-		consumption to hold your weight should be around {wizardResult.tdee}kcal.
-	</p>
+				<tr>
+					<td class="text-base-content opacity-70">Total Daily Energy Expenditure</td>
+					<td class="text-right font-semibold text-primary">{wizardResult.tdee} kcal</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
 
-	<p>
-		Having {wizardInput.weight}kg at {wizardInput.height}cm height means you have a BMI of
-		{wizardResult.bmi}.
+	<!-- Analysis & Recommendations -->
+	<div class="bg-base-200 rounded-box p-6">
+		<h3 class="text-lg font-semibold text-base-content mb-4">📊 Your Analysis</h3>
 
-		{#if wizardResult.targetBmi}
-			At your age of {wizardInput.age},
+		<div class="space-y-3 text-base-content opacity-80">
+			<p class="leading-relaxed">
+				Your <span class="font-semibold text-base-content">basal metabolic rate</span> is <span
+					class="font-semibold text-primary">{wizardResult.bmr} kcal</span
+				>. To maintain your current weight, you should consume approximately <span
+					class="font-semibold text-primary">{wizardResult.tdee} kcal</span
+				> per day.
+			</p>
 
-			{#if wizardResult.targetBmiLower <= wizardResult.bmi && wizardResult.bmi <= wizardResult.targetBmiUpper}
-				you are currently in
-			{:else}
-				you are out of
+			{#if wizardResult.targetBmi}
+				<div class="divider"></div>
+
+				<p class="leading-relaxed">
+					At {wizardInput.height}cm and {wizardInput.weight}kg, your BMI is <span
+						class="font-semibold text-base-content">{wizardResult.bmi}</span
+					>. For your age ({wizardInput.age} years), the optimal BMI range is
+					<span class="font-semibold"
+						>{wizardResult.targetBmiLower} - {wizardResult.targetBmiUpper}</span
+					>.
+				</p>
+
+				{#if wizardResult.targetBmiLower <= wizardResult.bmi && wizardResult.bmi <= wizardResult.targetBmiUpper}
+					<div class="alert alert-success">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="stroke-current shrink-0 h-6 w-6"
+							fill="none"
+							viewBox="0 0 24 24"
+							><path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+							/></svg
+						>
+						<span
+							>You are currently <span class="font-bold">in the healthy weight range</span>!</span
+						>
+					</div>
+				{:else}
+					<div class="alert alert-warning">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="stroke-current shrink-0 h-6 w-6"
+							fill="none"
+							viewBox="0 0 24 24"
+							><path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/></svg
+						>
+						<div>
+							<span class="font-semibold">Outside healthy range</span>
+							<p class="text-sm">
+								Your target weight should be between <span class="font-semibold"
+									>{wizardResult.targetWeightLower}kg - {wizardResult.targetWeightUpper}kg</span
+								>.
+							</p>
+						</div>
+					</div>
+				{/if}
+
+				{#if wizardResult.bmiCategory !== BmiCategory.StandardWeight && wizardResult.bmiCategory !== BmiCategory.Overweight}
+					<div class="alert alert-info">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							class="stroke-current shrink-0 w-6 h-6"
+							><path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+							></path></svg
+						>
+						<span>It is recommended to consult with a healthcare professional.</span>
+					</div>
+				{/if}
 			{/if}
 
-			the optimal BMI range of {wizardResult.targetBmiLower} to {wizardResult.targetBmiUpper},
-			leaving you
-			<span class="font-bold">
-				{getBmiCategoryDisplayValue(wizardResult.bmiCategory).toLowerCase()}.
-			</span>
-
-			<span class="underline">
-				{#if wizardResult.bmiCategory !== BmiCategory.StandardWeight && wizardResult.bmiCategory !== BmiCategory.Overweight}
-					It is recommended to consult with a healthcare professional.
-				{/if}
-			</span>
-
-			Your weight should be around {wizardResult.targetWeight}kg or between
-			{wizardResult.targetWeightLower}kg and {wizardResult.targetWeightUpper}kg.
-		{/if}
-	</p>
-
-	{#if wizardResult.bmiCategory === BmiCategory.Underweight}
-		<p>
-			To reach the lower bound of the optimal weight within your standard weight range ({wizardResult.targetWeightLower}kg
-			- {wizardResult.targetWeightUpper}kg), you will need to consume calories at a surplus of {wizardResult.deficit}kcal
-			for {wizardResult.durationDaysLower}
-			days. Your caloric intake should be around {wizardResult.target}kcal during that time.
-		</p>
-	{:else if classificationLose.safeParse(wizardResult.bmiCategory).success}
-		<p>
-			To reach the optimal weight within the standard weight range ({wizardResult.targetWeightLower}kg
-			- {wizardResult.targetWeightUpper}kg), you will need to consume calories at a difference of {wizardResult.deficit}kcal
-			for
-			{wizardResult.durationDaysUpper} days. Your caloric intake should be around {wizardResult.target}kcal
-			during that time.
-		</p>
-	{/if}
+			{#if wizardResult.bmiCategory === BmiCategory.Underweight}
+				<div class="divider"></div>
+				<p class="leading-relaxed">
+					To reach a healthy weight ({wizardResult.targetWeightLower}kg), you should consume <span
+						class="font-semibold text-success">{wizardResult.deficit} kcal surplus</span
+					>
+					per day (approximately <span class="font-semibold text-success"
+						>{wizardResult.target} kcal total</span
+					>) for about
+					<span class="font-semibold">{wizardResult.durationDaysLower} days</span>.
+				</p>
+			{:else if classificationLose.safeParse(wizardResult.bmiCategory).success}
+				<div class="divider"></div>
+				<p class="leading-relaxed">
+					To reach a healthy weight ({wizardResult.targetWeightUpper}kg), you should maintain a <span
+						class="font-semibold text-warning">{wizardResult.deficit} kcal deficit</span
+					>
+					per day (approximately <span class="font-semibold text-warning"
+						>{wizardResult.target} kcal total</span
+					>) for about
+					<span class="font-semibold">{wizardResult.durationDaysUpper} days</span>.
+				</p>
+			{/if}
+		</div>
+	</div>
 </div>

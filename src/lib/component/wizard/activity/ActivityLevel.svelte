@@ -50,11 +50,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<ListPicker bind:value {data}>
-		{#snippet header()}
-			How active are you during your day? Choose what describes your daily activity level best.
-		{/snippet}
-	</ListPicker>
+	<ListPicker bind:value {data} />
 
 	<AlertBox type={AlertType.Info}>
 		<strong>Please be honest.</strong>
