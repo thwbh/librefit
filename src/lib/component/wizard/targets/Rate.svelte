@@ -15,8 +15,8 @@
 		return {
 			value: rate,
 			header: `${rate} kcal`,
-			description: `With a deficit of ${rate} kcal per day, you will lose ${targetProgress[rate]} kg per week. 
-          Following through, your plan ends on ${convertDateStrToDisplayDateStr(targetDates[rate])}.`,
+			description: `With a deficit of ${rate} kcal per day, you will lose ${targetProgress.get(rate)} kg per week. 
+          Following through, your plan ends on ${convertDateStrToDisplayDateStr(targetDates.get(rate)!)}.`,
 			label: rate === 500 ? { text: 'Recommended', className: 'badge-primary' } : undefined
 		};
 	});

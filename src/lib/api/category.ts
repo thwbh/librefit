@@ -1,4 +1,4 @@
-import type { CalorieTracker, FoodCategory } from '../model';
+import type { FoodCategory } from '$lib/api/gen';
 
 export const getFoodCategoryLongvalue = (
   foodCategories: Array<FoodCategory>,

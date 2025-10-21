@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/model';
+	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/api/gen';
 	import { ValidatedInput } from '@thwbh/veilchen';
 	import { PenSolid } from 'flowbite-svelte-icons';
 

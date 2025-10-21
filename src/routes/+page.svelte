@@ -1,23 +1,21 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import {
-		addCalories,
-		addWeight,
-		deleteCalories,
-		updateCalories,
-		updateWeight
-	} from '$lib/api/tracker.js';
 	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import TrackerStack from '$lib/component/intake/TrackerStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
-	import type {
-		CalorieTarget,
-		CalorieTracker,
-		Dashboard,
-		WeightTarget,
-		WeightTracker
-	} from '$lib/model';
+	import {
+		createCalorieTrackerEntry,
+		createWeightTrackerEntry,
+		deleteCalorieTrackerEntry,
+		updateCalorieTrackerEntry,
+		updateWeightTrackerEntry,
+		type CalorieTarget,
+		type CalorieTracker,
+		type Dashboard,
+		type WeightTarget,
+		type WeightTracker
+	} from '$lib/api/gen';
 	import { info } from '@tauri-apps/plugin-log';
 
 	let { data } = $props();
@@ -55,9 +53,9 @@
 		<TrackerStack
 			bind:entries={calorieTrackerEntries}
 			categories={dashboard.foodCategories}
-			onadd={addCalories}
-			onedit={updateCalories}
-			ondelete={deleteCalories}
+			onadd={createCalorieTrackerEntry}
+			onedit={updateCalorieTrackerEntry}
+			ondelete={deleteCalorieTrackerEntry}
 		/>
 	</div>
 
@@ -66,8 +64,8 @@
 			{weightTracker}
 			{lastWeightTracker}
 			{weightTarget}
-			onadd={addWeight}
-			onedit={updateWeight}
+			onadd={createWeightTrackerEntry}
+			onedit={updateWeightTrackerEntry}
 		/>
 	</div>
 	<BottomDock activeRoute="/" />

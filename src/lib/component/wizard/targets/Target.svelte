@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 	import { WizardOptions } from '$lib/enum';
-	import { WizardRecommendation } from '$lib/model';
+	import { WizardRecommendationSchema } from '$lib/api/gen';
 	import { ListPicker } from '@thwbh/veilchen';
+
+	const WizardRecommendation = WizardRecommendationSchema.enum;
 
 	interface Props {
 		value: WizardOptions;
 		details: unknown;
-		recommendation: WizardRecommendation;
+		recommendation: string;
 	}
 
 	let { value = $bindable(), details, recommendation }: Props = $props();
@@ -22,7 +24,7 @@
 			value: WizardOptions.Recommended,
 			header: `I'll take your recommendation.`,
 			description: `I want to ${recommendation.toLowerCase()}
-			${recommendation === WizardRecommendation.Hold ? 'my' : 'some'}
+			${recommendation === WizardRecommendation.HOLD ? 'my' : 'some'}
 			weight. Create a target for that.`,
 			label: {
 				text: 'Recommended',

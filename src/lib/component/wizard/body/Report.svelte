@@ -1,18 +1,30 @@
 <script lang="ts">
-	import { BmiCategory, type WizardInput, type WizardResult } from '$lib/model';
+	import {
+		BmiCategorySchema,
+		type BmiCategory,
+		type WizardInput,
+		type WizardResult
+	} from '$lib/api/gen';
 	import { getBmiCategoryDisplayValue } from '$lib/enum';
+	import { z } from 'zod';
 
 	interface Props {
 		wizardResult: WizardResult;
 		wizardInput: WizardInput;
 	}
 
+	const BmiCategory = BmiCategorySchema.enum;
+
 	let { wizardResult, wizardInput }: Props = $props();
 
-	let classificationLose = [BmiCategory.Obese, BmiCategory.Severely_obese, BmiCategory.Overweight];
+	let classificationLose = z.enum([
+		BmiCategory.Obese,
+		BmiCategory.SeverelyObese,
+		BmiCategory.Overweight
+	]);
 
 	const getClassificationStyle = (category: BmiCategory) => {
-		if (classificationLose.indexOf(category) > -1) {
+		if (classificationLose.safeParse(category).success) {
 			return 'badge-error';
 		} else if (category === BmiCategory.Underweight) {
 			return 'badge-warning';
@@ -98,7 +110,7 @@
 			</span>
 
 			<span class="underline">
-				{#if wizardResult.bmiCategory !== BmiCategory.Standard_Weight && wizardResult.bmiCategory !== BmiCategory.Overweight}
+				{#if wizardResult.bmiCategory !== BmiCategory.StandardWeight && wizardResult.bmiCategory !== BmiCategory.Overweight}
 					It is recommended to consult with a healthcare professional.
 				{/if}
 			</span>
@@ -115,7 +127,7 @@
 			for {wizardResult.durationDaysLower}
 			days. Your caloric intake should be around {wizardResult.target}kcal during that time.
 		</p>
-	{:else if classificationLose.indexOf(wizardResult.bmiCategory) > -1}
+	{:else if classificationLose.safeParse(wizardResult.bmiCategory).success}
 		<p>
 			To reach the optimal weight within the standard weight range ({wizardResult.targetWeightLower}kg
 			- {wizardResult.targetWeightUpper}kg), you will need to consume calories at a difference of {wizardResult.deficit}kcal

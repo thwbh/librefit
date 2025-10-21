@@ -3,6 +3,10 @@ use std::env;
 fn main() {
     setup_android_llvm();
 
+    // Generate TypeScript bindings from Tauri commands
+    tauri_plugin_typegen::BuildSystem::generate_at_build_time()
+        .expect("Failed to generate TypeScript bindings");
+
     tauri_build::build()
 }
 

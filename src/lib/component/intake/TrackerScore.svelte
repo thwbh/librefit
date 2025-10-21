@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CalorieTarget } from '$lib/model';
+	import type { CalorieTarget } from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
 

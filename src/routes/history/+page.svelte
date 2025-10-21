@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { getTrackerHistory } from '$lib/api/tracker-history';
+	import {
+		createCalorieTrackerEntry,
+		deleteCalorieTrackerEntry,
+		getTrackerHistory,
+		updateCalorieTrackerEntry
+	} from '$lib/api/gen';
 	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import { convertDateStrToDisplayDateStr, getDateAsStr, parseStringAsDate } from '$lib/date.js';
@@ -9,7 +14,7 @@
 		NewCalorieTracker,
 		TrackerHistory,
 		WeightTracker
-	} from '$lib/model.js';
+	} from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { info } from '@tauri-apps/plugin-log';
 	import { addDays, compareAsc, subDays } from 'date-fns';
@@ -18,7 +23,6 @@
 	import { ModalDialog } from '@thwbh/veilchen';
 	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
 	import { longpress } from '$lib/gesture/long-press';
-	import { addCalories, deleteCalories, updateCalories } from '$lib/api/tracker.js';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 
 	let { data } = $props();
@@ -52,12 +56,12 @@
 	});
 
 	// entry for modal dialog
-	let newEntry: NewCalorieTracker = $state();
-	let focusedCalories: CalorieTracker = $state();
+	let newEntry: NewCalorieTracker | undefined = $state();
+	let focusedCalories: CalorieTracker | undefined = $state();
 	let enableDelete = $state(false);
 	let isEditing = $state(false);
-	let createDialog: HTMLDialogElement = $state();
-	let editDialog: HTMLDialogElement = $state();
+	let createDialog: HTMLDialogElement | undefined = $state();
+	let editDialog: HTMLDialogElement | undefined = $state();
 
 	const selectHistory = (dateStr: string) => {
 		info(`selectHistory dateStr={${dateStr}}`);
@@ -82,7 +86,10 @@
 	};
 
 	const updateRange = async (dateFrom: Date, dateTo: Date) => {
-		trackerHistory = await getTrackerHistory(dateFrom, dateTo);
+		trackerHistory = await getTrackerHistory({
+			dateFromStr: getDateAsStr(dateFrom),
+			dateToStr: getDateAsStr(dateTo)
+		});
 
 		focusedCalories = undefined;
 	};
@@ -93,7 +100,7 @@
 	const create = () => {
 		newEntry = {
 			added: selectedDateStr,
-			amount: undefined,
+			amount: 0,
 			category: 't',
 			description: ''
 		};
@@ -110,7 +117,10 @@
 
 	const save = async () => {
 		if (focusedCalories) {
-			await updateCalories(focusedCalories).then((updatedCalories) => {
+			await updateCalorieTrackerEntry({
+				trackerId: focusedCalories.id,
+				updatedEntry: focusedCalories
+			}).then((updatedCalories) => {
 				info(
 					`added new entry to selectedDateStr={${selectedDateStr}} entry={${JSON.stringify(updatedCalories)}}`
 				);
@@ -120,7 +130,7 @@
 				trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
 			});
 		} else if (newEntry) {
-			await addCalories(newEntry).then((addedCalories) => {
+			await createCalorieTrackerEntry({ newEntry }).then((addedCalories) => {
 				info(
 					`added new entry to selectedDateStr={${selectedDateStr}} entry={${JSON.stringify(addedCalories)}}`
 				);
@@ -147,7 +157,7 @@
 	};
 
 	const deleteEntry = async () => {
-		await deleteCalories(focusedCalories);
+		await deleteCalorieTrackerEntry({ trackerId: focusedCalories!.id });
 
 		editDialog?.close();
 

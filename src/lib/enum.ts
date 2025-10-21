@@ -1,4 +1,4 @@
-import { BmiCategory } from '$lib/model';
+import type { BmiCategory } from '$lib/api/gen';
 
 export enum WizardOptions {
   Default = 'DEFAULT',

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import type { FoodCategory } from '../../../src/lib/model';
+import type { FoodCategory } from '../../../src/lib/api/gen';
 import { getFoodCategoryLongvalue } from '../../../src/lib/api/category';
 
 describe('category', () => {

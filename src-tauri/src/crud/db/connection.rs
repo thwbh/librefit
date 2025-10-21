@@ -10,3 +10,11 @@ pub fn create_db_connection() -> SqliteConnection {
     SqliteConnection::establish(&db_url)
         .unwrap_or_else(|_| panic!("Error connecting to database {}", db_url))
 }
+
+pub fn with_db_connection<F, R>(f: F) -> Result<R, diesel::result::Error>
+where
+    F: FnOnce(&mut SqliteConnection) -> Result<R, diesel::result::Error>,
+{
+    let conn = &mut create_db_connection();
+    f(conn)
+}
