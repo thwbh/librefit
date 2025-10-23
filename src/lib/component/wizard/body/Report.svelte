@@ -5,6 +5,7 @@
 		type WizardInput,
 		type WizardResult
 	} from '$lib/api/gen';
+	import { StatCard } from '@thwbh/veilchen';
 	import { getBmiCategoryDisplayValue } from '$lib/enum';
 	import { z } from 'zod';
 
@@ -36,26 +37,20 @@
 
 <div class="flex flex-col gap-6">
 	<!-- Key Metrics Cards -->
-	<div class="grid grid-cols-2 gap-4">
-		<!-- BMI Card -->
-		<div class="bg-base-100 rounded-box p-4 shadow">
-			<p class="text-sm text-base-content opacity-60 mb-1">Body Mass Index</p>
-			<p class="text-3xl font-bold text-base-content">{wizardResult.bmi}</p>
-			<span class="badge {getClassificationStyle(wizardResult.bmiCategory)} badge-sm mt-2">
-				{getBmiCategoryDisplayValue(wizardResult.bmiCategory)}
-			</span>
-		</div>
-
-		<!-- Goal Card -->
-		<div class="bg-base-100 rounded-box p-4 shadow">
-			<p class="text-sm text-base-content opacity-60 mb-1">Recommendation</p>
-			<p class="text-3xl font-bold text-base-content capitalize">
-				{wizardResult.recommendation.toLowerCase()}
-			</p>
-			<span class="badge badge-primary badge-sm mt-2">
-				{wizardInput.weight} kg
-			</span>
-		</div>
+	<div class="stats stats-horizontal shadow w-full flex-col">
+		<StatCard
+			title="Body Mass Index"
+			value={wizardResult.bmi}
+			description={getBmiCategoryDisplayValue(wizardResult.bmiCategory)}
+			descClass="badge {getClassificationStyle(wizardResult.bmiCategory)} badge-sm mt-2"
+		/>
+		<StatCard
+			title="Recommendation"
+			value={wizardResult.recommendation.toLowerCase()}
+			valueClass="capitalize"
+			description={`${wizardInput.weight} kg`}
+			descClass="badge badge-primary badge-sm mt-2"
+		/>
 	</div>
 
 	<!-- Detailed Metrics Table -->
@@ -93,24 +88,23 @@
 
 	<!-- Analysis & Recommendations -->
 	<div class="bg-base-200 rounded-box p-6">
-		<h3 class="text-lg font-semibold text-base-content mb-4">📊 Your Analysis</h3>
+		<h3 class="text-lg font-semibold text-base-content mb-4">Your Analysis</h3>
 
 		<div class="space-y-3 text-base-content opacity-80">
 			<p class="leading-relaxed">
-				Your <span class="font-semibold text-base-content">basal metabolic rate</span> is <span
-					class="font-semibold text-primary">{wizardResult.bmr} kcal</span
-				>. To maintain your current weight, you should consume approximately <span
-					class="font-semibold text-primary">{wizardResult.tdee} kcal</span
-				> per day.
+				Your <span class="font-semibold text-base-content">basal metabolic rate</span> is
+				<span class="font-semibold text-primary">{wizardResult.bmr} kcal</span>. To maintain your
+				current weight, you should consume approximately
+				<span class="font-semibold text-primary">{wizardResult.tdee} kcal</span> per day.
 			</p>
 
 			{#if wizardResult.targetBmi}
 				<div class="divider"></div>
 
 				<p class="leading-relaxed">
-					At {wizardInput.height}cm and {wizardInput.weight}kg, your BMI is <span
-						class="font-semibold text-base-content">{wizardResult.bmi}</span
-					>. For your age ({wizardInput.age} years), the optimal BMI range is
+					At {wizardInput.height}cm and {wizardInput.weight}kg, your BMI is
+					<span class="font-semibold text-base-content">{wizardResult.bmi}</span>. For your age ({wizardInput.age}
+					years), the optimal BMI range is
 					<span class="font-semibold"
 						>{wizardResult.targetBmiLower} - {wizardResult.targetBmiUpper}</span
 					>.
@@ -181,23 +175,21 @@
 			{#if wizardResult.bmiCategory === BmiCategory.Underweight}
 				<div class="divider"></div>
 				<p class="leading-relaxed">
-					To reach a healthy weight ({wizardResult.targetWeightLower}kg), you should consume <span
-						class="font-semibold text-success">{wizardResult.deficit} kcal surplus</span
-					>
-					per day (approximately <span class="font-semibold text-success"
-						>{wizardResult.target} kcal total</span
-					>) for about
+					To reach a healthy weight ({wizardResult.targetWeightLower}kg), you should consume
+					<span class="font-semibold text-primary">{wizardResult.deficit} kcal surplus</span>
+					per day (approximately
+					<span class="font-semibold text-primary">{wizardResult.target} kcal total</span>) for
+					about
 					<span class="font-semibold">{wizardResult.durationDaysLower} days</span>.
 				</p>
 			{:else if classificationLose.safeParse(wizardResult.bmiCategory).success}
 				<div class="divider"></div>
 				<p class="leading-relaxed">
-					To reach a healthy weight ({wizardResult.targetWeightUpper}kg), you should maintain a <span
-						class="font-semibold text-warning">{wizardResult.deficit} kcal deficit</span
-					>
-					per day (approximately <span class="font-semibold text-warning"
-						>{wizardResult.target} kcal total</span
-					>) for about
+					To reach a healthy weight ({wizardResult.targetWeightUpper}kg), you should maintain a
+					<span class="font-semibold text-primary">{wizardResult.deficit} kcal deficit</span>
+					per day (approximately
+					<span class="font-semibold text-primary">{wizardResult.target} kcal total</span>) for
+					about
 					<span class="font-semibold">{wizardResult.durationDaysUpper} days</span>.
 				</p>
 			{/if}

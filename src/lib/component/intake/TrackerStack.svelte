@@ -10,11 +10,12 @@
 	import IntakeCard from './IntakeCard.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
 	import { TrashBinSolid } from 'flowbite-svelte-icons';
-	import { AlertBox, AlertType, ModalDialog, Stack } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, ModalDialog, Stack, StackCard } from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, fly, type FlyParams } from 'svelte/transition';
 	import { info } from '@tauri-apps/plugin-log';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
+	import { longpress } from '$lib/gesture/long-press';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
@@ -122,46 +123,31 @@
 		enableDelete = false;
 		blankEntry = getBlankEntry();
 	};
-
-	const handleSwipe = () => {
-		info(`swiping to ${index}`);
-	};
 </script>
 
-<div class="flex flex-col items-center gap-2 p-4 w-full">
-	{#if entries.length > 0}
-		<div in:fly={{ y: 500 }}>
-			<Stack
-				bind:index
-				size={entries.length}
-				swipeable={true}
-				swipeParams={{ timeframe: 300, minSwipeDistance: 60 }}
-				onswipe={handleSwipe}
-			>
-				{#snippet card(_: number, params: FlyParams)}
-					{@const flyParams = entries.length > 1 ? params : { y: 500 }}
-					<div transition:fly={flyParams}>
-						<IntakeCard
-							entry={focusedEntry as CalorieTracker}
-							{categories}
-							{flyParams}
-							onlongpress={startEditing}
-						/>
-					</div>
-				{/snippet}
-			</Stack>
-		</div>
-	{:else}
-		<div in:fade>
-			<AlertBox type={AlertType.Warning} alertClass="border-neutral border-dashed">
-				<strong>Nothing tracked today.</strong>
-				<span> Use the button below to add today's first entry. Stay strong! </span>
-			</AlertBox>
-		</div>
-	{/if}
+{#if entries.length > 0}
+	<Stack
+		bind:index
+		size={entries.length}
+		swipeable={true}
+		onswipe={(direction: string) => console.log('swiped ', direction)}
+	>
+		{#snippet card(cardKey: number, outFlyParams: FlyParams, inFlyParams: FlyParams)}
+			<StackCard isActive={cardKey === index} {cardKey} {outFlyParams} {inFlyParams}>
+				<IntakeCard entry={entries[cardKey]} {categories} onlongpress={startEditing} />
+			</StackCard>
+		{/snippet}
+	</Stack>
+{:else}
+	<div in:fade>
+		<AlertBox type={AlertType.Warning} class="border-neutral border-dashed">
+			<strong>Nothing tracked today.</strong>
+			<span> Use the button below to add today's first entry. Stay strong! </span>
+		</AlertBox>
+	</div>
+{/if}
 
-	<button class="btn btn-neutral w-full" onclick={create}> Add Intake </button>
-</div>
+<button class="btn btn-neutral w-full" onclick={create}> Add Intake </button>
 
 <ModalDialog bind:dialog={createDialog} onconfirm={save} oncancel={cancel}>
 	{#snippet title()}

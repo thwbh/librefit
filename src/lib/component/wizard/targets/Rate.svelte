@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
-	import { AlertBox, AlertType, ListPicker, type ListPickerData } from '@thwbh/veilchen';
+	import {
+		AlertBox,
+		AlertType,
+		OptionCards,
+		RangeInput,
+		StatCard,
+		type OptionCardData
+	} from '@thwbh/veilchen';
 
 	interface Props {
 		value: number;
@@ -11,23 +18,54 @@
 
 	let { value = $bindable(), rates, targetDates, targetProgress }: Props = $props();
 
-	const data: Array<ListPickerData> = rates.map((rate) => {
-		return {
-			value: rate,
-			header: `${rate} kcal`,
-			description: `With a deficit of ${rate} kcal per day, you will lose ${targetProgress[rate]} kg per week.
-          Following through, your plan ends on ${convertDateStrToDisplayDateStr(targetDates[rate]!)}.`,
-			label: rate === 500 ? { text: 'Recommended', className: 'badge-primary' } : undefined
-		};
+	const difficultyConfig: Record<
+		number,
+		{ badge: { text: string; color: 'success' | 'info' | 'warning' | 'error' } }
+	> = {
+		100: { badge: { text: 'Very Easy', color: 'success' } },
+		200: { badge: { text: 'Easy', color: 'success' } },
+		300: { badge: { text: 'Moderate', color: 'info' } },
+		400: { badge: { text: 'Moderate', color: 'info' } },
+		500: { badge: { text: 'Challenging', color: 'warning' } },
+		600: { badge: { text: 'Hard', color: 'warning' } },
+		700: { badge: { text: 'Very Hard', color: 'error' } }
+	};
+
+	const data: Array<OptionCardData> = $derived.by(() => {
+		const rate = value;
+		const isRecommended = rate === 500;
+
+		return [
+			{
+				value: rate,
+				header: `${rate} kcal/day`,
+				badge: difficultyConfig[rate].badge,
+				highlight: isRecommended ? { text: 'Recommended', color: 'primary' } : undefined,
+				metrics: [
+					{
+						label: 'Weekly Loss',
+						value: `${targetProgress[rate]} kg/week`
+					},
+					{
+						label: 'Target Date',
+						value: convertDateStrToDisplayDateStr(targetDates[rate]!).split(',')[0]
+					}
+				]
+			}
+		];
 	});
 </script>
 
-<AlertBox type={AlertType.Info} alertClass="alert-soft">
-	<strong>Please review and choose.</strong>
-	<span class="text-xs">
-		A higher deficit means faster weight loss, but is also harder to maintain. Many people consider
-		a value around 500 kcal as sweet spot.
-	</span>
-</AlertBox>
+<div class="flex flex-col gap-4">
+	<RangeInput bind:value step={100} min={100} max={700} unit="kcal" label="Deficit" />
 
-<ListPicker bind:value {data} />
+	<OptionCards bind:value {data} maxHeight="50vh" />
+
+	<AlertBox type={AlertType.Info}>
+		<strong>Find your sweet spot.</strong>
+		<p class="text-sm">
+			A higher deficit means faster weight loss, but is also harder to maintain. Many people
+			consider a value around 500 kcal as the sweet spot.
+		</p>
+	</AlertBox>
+</div>

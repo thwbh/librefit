@@ -2,7 +2,7 @@
 	import type { CalorieTracker, FoodCategory } from '$lib/api/gen';
 	import { longpress } from '$lib/gesture/long-press';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
-	import { fly, type FlyParams } from 'svelte/transition';
+	import { type FlyParams } from 'svelte/transition';
 
 	interface Props {
 		entry: CalorieTracker;
@@ -18,12 +18,12 @@
 	};
 </script>
 
-<div class="card w-full" use:longpress onlongpress={startEditing} {...props}>
+<div class="w-full" use:longpress onlongpress={startEditing} {...props}>
 	<CalorieTrackerMask
 		{entry}
 		{categories}
 		onedit={startEditing}
 		readonly={true}
-		className="fieldset w-xs bg-base-200 border border-base-300 p-4 rounded-box w-full"
+		className="fieldset w-xs p-4 rounded-box w-full"
 	/>
 </div>

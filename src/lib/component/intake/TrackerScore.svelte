@@ -2,6 +2,7 @@
 	import type { CalorieTarget } from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
+	import { CircularProgress, StatCard } from '@thwbh/veilchen';
 
 	interface Props {
 		calorieTarget: CalorieTarget;
@@ -50,55 +51,51 @@
 			}
 		}
 	});
+
+	let descText = $derived(
+		ratio == 0
+			? isHistory
+				? 'No intake tracked.'
+				: 'No intake tracked yet.'
+			: ratio <= 1
+				? `All good. ${limit - total}kcal left${isHistory ? '.' : ' for today.'}`
+				: total <= calorieTarget.maximumCalories
+					? `Warning. ${maximum - total}kcal left for hardcap.`
+					: `Warning! ${total - maximum}kcal over hardcap!`
+	);
 </script>
 
 <div class="stat">
 	<div class="stat-figure">
-		<div
-			class="radial-progress {currentColor}"
-			style="--value:{percentage};--size:7rem;"
-			role="progressbar"
-		>
+		<CircularProgress value={percentage} size="7rem" color={currentColor}>
 			<p class="text-neutral">{percentage}%</p>
-		</div>
+		</CircularProgress>
 	</div>
 
-	{#if !isHistory}
-		<div class="stat-title">Today's Intake</div>
-	{:else}
-		<div class="stat-title">Intake</div>
-	{/if}
-	<div class="stat-value"><NumberFlow value={total} /><span class="text-sm">/{limit}</span></div>
+	<div class="stat-title">{isHistory ? 'Intake' : "Today's Intake"}</div>
+	<div class="stat-value text-stat-value">
+		<NumberFlow value={total} /><span class="text-sm">/{limit}</span>
+	</div>
 	<div class="stat-desc flex items-center gap-1">
 		{#if ratio <= 1}
 			{#if ratio == 0}
 				<ShieldSolid width="20" height="20" class={currentColor} />
-
-				{#if !isHistory}
-					No intake tracked yet.
-				{:else}
-					No intake tracked.
-				{/if}
 			{:else}
 				<ShieldCheckSolid width="20" height="20" class={currentColor} />
-
-				All good. {limit - total}kcal left{#if !isHistory}
-					for today.{:else}.{/if}
 			{/if}
-		{:else if ratio > 1}
+		{:else}
 			{#if total <= calorieTarget.maximumCalories}
 				<ShieldSolid width="20" height="20" class={currentColor} />
-				Warning. {maximum - total}kcal left for hardcap.
 			{:else}
 				<ExclamationCircleSolid width="20" height="20" class={currentColor} />
-				Warning! {total - maximum}kcal over hardcap!
 			{/if}
 		{/if}
+		{descText}
 	</div>
 </div>
 
 <style>
-	.stat-value {
+	.text-stat-value {
 		font-size: 3rem;
 	}
 </style>

@@ -158,7 +158,7 @@
 <Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
 	{#snippet step1()}
 		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">📋 Body Parameters</h2>
+			<h2 class="text-2xl font-bold text-base-content mb-2">Body Parameters</h2>
 			<p class="text-sm text-base-content opacity-60">
 				Let's start with some basic information about you
 			</p>
@@ -168,7 +168,7 @@
 
 	{#snippet step2()}
 		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">💪 Activity Level</h2>
+			<h2 class="text-2xl font-bold text-base-content mb-2">Activity Level</h2>
 			<p class="text-sm text-base-content opacity-60">
 				How active are you during your day? Choose what describes your daily activity level best.
 			</p>
@@ -178,7 +178,7 @@
 
 	{#snippet step3()}
 		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">📊 Your Results</h2>
+			<h2 class="text-2xl font-bold text-base-content mb-2">Your Results</h2>
 			<p class="text-sm text-base-content opacity-60">
 				Here's what your body composition and metabolism look like
 			</p>
@@ -190,7 +190,7 @@
 
 	{#snippet step4()}
 		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">🎯 Choose Your Pace</h2>
+			<h2 class="text-2xl font-bold text-base-content mb-2">Choose Your Pace</h2>
 			<p class="text-sm text-base-content opacity-60">
 				Select a calorie deficit that fits your lifestyle and goals
 			</p>
@@ -205,9 +205,9 @@
 
 	{#snippet step5()}
 		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">🎉 You're All Set!</h2>
-			<p class="text-sm text-base-content opacity-60 mb-4">
-				Review your plan and click finish when you're ready to begin
+			<h2 class="text-2xl font-bold text-base-content mb-2">Your Personalized Plan</h2>
+			<p class="text-sm text-base-content opacity-60">
+				Here's your customized fitness journey roadmap
 			</p>
 		</div>
 		<Finish {wizardResult} {chosenRate} {weightTarget} {calorieTarget} />
@@ -216,12 +216,12 @@
 
 {#if finished}
 	{#if finishError}
-		<AlertBox type={AlertType.Error} alertClass="alert-soft">
+		<AlertBox type={AlertType.Error} class="alert-soft">
 			<strong>Error</strong>
 			<p>An error occurred. Please try again later.</p>
 		</AlertBox>
 	{:else}
-		<AlertBox type={AlertType.Success} alertClass="alert-soft">
+		<AlertBox type={AlertType.Success} class="alert-soft">
 			<strong>Success</strong>
 			<p>
 				Successfully created your plan. You will be redirected to the <a href="/" class="link"
