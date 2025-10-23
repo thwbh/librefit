@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import TrackerStack from '$lib/component/intake/TrackerStack.svelte';
@@ -35,12 +34,6 @@
 	);
 
 	info(`user profile=${JSON.stringify(data.userProfile)}`);
-
-	if (!data.userProfile) {
-		info(`redirecting to splash screen`);
-
-		goto('/splash');
-	}
 </script>
 
 <div class="flex flex-col gap-6 overflow-x-hidden p-4">
