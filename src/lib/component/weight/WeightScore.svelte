@@ -10,8 +10,8 @@
 	import { ModalDialog, ValidatedInput } from '@thwbh/veilchen';
 	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
-	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
-	import { PlusOutline } from 'flowbite-svelte-icons';
+	import { Shield, ShieldCheck, ShieldWarning } from 'phosphor-svelte';
+	import { Plus } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
 
 	interface Props {
@@ -57,8 +57,8 @@
 
 <div class="stat">
 	<div class="stat-figure">
-		<button class="btn btn-primary btn-xl" aria-label="Set Weight" onclick={show}>
-			<PlusOutline height="1.5rem" width="1.5rem" />
+		<button class="btn btn-primary w-16 h-16" aria-label="Set Weight" onclick={show}>
+			<Plus size="1.5rem" />
 		</button>
 	</div>
 
@@ -79,7 +79,7 @@
 	</div>
 	<div class="stat-desc flex items-center gap-1">
 		{#if weightTracker && 'id' in weightTracker}
-			<ShieldCheckSolid width="20" height="20" class={'text-success'} />
+			<ShieldCheck size="20" class={'text-success'} />
 			Last update: Today.
 		{:else if lastWeightTracker}
 			{@const lastEntryDayDiff = differenceInDays(
@@ -87,14 +87,14 @@
 				parseStringAsDate(lastWeightTracker.added)
 			)}
 			{#if lastEntryDayDiff > 2}
-				<ExclamationCircleSolid width="20" height="20" class={'text-error'} />
+				<ShieldWarning size="1.5em" weight="fill" color={'var(--color-error)'} />
 				Last update was {lastEntryDayDiff} days ago!
 			{:else}
-				<ShieldSolid width="20" height="20" class={'text-warning'} />
+				<Shield size="1.5em" weight="fill" color={'var(--color-warning)'} />
 				Last update: {lastEntryDayDiff} days ago.
 			{/if}
 		{:else}
-			<ShieldSolid width="20" height="20" class={'stat-desc'} />
+			<Shield size="20" class={'stat-desc'} />
 			Nothing tracked yet.
 		{/if}
 	</div>

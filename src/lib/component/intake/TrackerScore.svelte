@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { CalorieTarget } from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
-	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
+	import { Shield, ShieldCheck, ShieldWarning } from 'phosphor-svelte';
 	import { CircularProgress, StatCard } from '@thwbh/veilchen';
 
 	interface Props {
@@ -79,16 +79,14 @@
 	<div class="stat-desc flex items-center gap-1">
 		{#if ratio <= 1}
 			{#if ratio == 0}
-				<ShieldSolid width="20" height="20" class={currentColor} />
+				<Shield size="1.5em" weight="fill" class={currentColor} />
 			{:else}
-				<ShieldCheckSolid width="20" height="20" class={currentColor} />
+				<ShieldCheck size="1.5em" weight="fill" class={currentColor} />
 			{/if}
+		{:else if total <= calorieTarget.maximumCalories}
+			<Shield size="1.5em" weight="fill" class={currentColor} />
 		{:else}
-			{#if total <= calorieTarget.maximumCalories}
-				<ShieldSolid width="20" height="20" class={currentColor} />
-			{:else}
-				<ExclamationCircleSolid width="20" height="20" class={currentColor} />
-			{/if}
+			<ShieldWarning size="1.5em" weight="fill" class={currentColor} />
 		{/if}
 		{descText}
 	</div>

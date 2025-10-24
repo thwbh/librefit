@@ -19,8 +19,8 @@
 	import { info } from '@tauri-apps/plugin-log';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import { CaretLeftSolid, CaretRightSolid, TrashBinSolid } from 'flowbite-svelte-icons';
-	import { ModalDialog } from '@thwbh/veilchen';
+	import { CaretLeft, CaretRight, Trash } from 'phosphor-svelte';
+	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
 	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
@@ -181,7 +181,7 @@
 			class="border-b-base-300 grid grid-cols-9 gap-2 border-b border-dashed- pb-3 overflow-x-scroll p-4"
 		>
 			<button class="btn-ghost w-fit place-self-center" onclick={scrollLeft}>
-				<span><CaretLeftSolid height="1em" /></span>
+				<span><CaretLeft size="1em" /></span>
 			</button>
 
 			{#each dates as dateStr}
@@ -202,7 +202,7 @@
 
 			{#if showRightCaret}
 				<button class="btn-ghost w-fit place-self-center" onclick={scrollRight}>
-					<CaretRightSolid height="1em" />
+					<CaretRight size="1em" />
 				</button>
 			{:else}
 				<div></div>
@@ -222,6 +222,37 @@
 
 		<div class="flex flex-col text-xs p-6">
 			{#each caloriesHistory as calories}
+				<SwipeableListItem
+					onleft={() => edit(calories)}
+					onright={() => console.log('delete calories')}
+				>
+					{#snippet leftAction()}
+						<span> left </span>
+					{/snippet}
+
+					{#snippet rightAction()}
+						<span> right </span>
+					{/snippet}
+
+					<div
+						class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
+						use:longpress
+						onlongpress={() => edit(calories)}
+					>
+						<div class="flex flex-col">
+							<span class="text-lg font-semibold">
+								{calories.description}
+							</span>
+							<span class="stat-desc">
+								{calories.amount} kcal
+							</span>
+						</div>
+						<span class="badge badge-xs badge-info"
+							>{getFoodCategoryLongvalue(data.foodCategories, calories.category)}</span
+						>
+					</div></SwipeableListItem
+				>
+				<!--
 				<div
 					class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
 					use:longpress
@@ -238,7 +269,7 @@
 					<span class="badge badge-xs badge-info"
 						>{getFoodCategoryLongvalue(data.foodCategories, calories.category)}</span
 					>
-				</div>
+				</div>-->
 			{/each}
 
 			<button class="btn btn-neutral w-full mt-4" onclick={create}> Add Intake </button>
@@ -286,7 +317,7 @@
 				</span>
 				<span>
 					<button class="btn btn-xs btn-error">
-						<TrashBinSolid width="1rem" onclick={() => (enableDelete = true)} />
+						<Trash size="1rem" onclick={() => (enableDelete = true)} />
 					</button>
 				</span>
 			</span>

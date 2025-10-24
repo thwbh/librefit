@@ -9,7 +9,7 @@
 	} from '$lib/api/gen';
 	import IntakeCard from './IntakeCard.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
-	import { TrashBinSolid } from 'flowbite-svelte-icons';
+	import { Trash } from 'phosphor-svelte';
 	import { AlertBox, AlertType, ModalDialog, Stack, StackCard } from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, fly, type FlyParams } from 'svelte/transition';
@@ -176,7 +176,7 @@
 			</span>
 			<span>
 				<button class="btn btn-xs btn-error">
-					<TrashBinSolid width="1rem" onclick={() => (enableDelete = true)} />
+					<Trash size="1rem" onclick={() => (enableDelete = true)} />
 				</button>
 			</span>
 		</span>

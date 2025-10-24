@@ -1,10 +1,5 @@
 <script lang="ts">
-	import {
-		ChartMixedOutline,
-		DotsVerticalOutline,
-		HomeOutline,
-		ListOutline
-	} from 'flowbite-svelte-icons';
+	import { House, ChartLine, ListBullets, DotsThreeVertical } from 'phosphor-svelte';
 	import Settings from './settings/Settings.svelte';
 	import { goto } from '$app/navigation';
 
@@ -24,23 +19,23 @@
 {#if activeRoute}
 	<div class="dock dock-md">
 		<button class={activeClass('/')} onclick={() => goto('/')}>
-			<HomeOutline width="24px" height="24px" />
+			<House size="1.25em" weight="bold" />
 			<span class="dock-label">Home</span>
 		</button>
 
 		<button class={activeClass('/progress')} onclick={() => navigate('/progress')}>
-			<ChartMixedOutline width="24px" height="24px" />
+			<ChartLine size="1.25em" weight="bold" />
 			<span class="dock-label">Progress</span>
 		</button>
 
 		<button class={activeClass('/history')} onclick={() => navigate('/history')}>
-			<ListOutline width="24px" height="24px" />
+			<ListBullets size="1.25em" weight="bold" />
 			<span class="dock-label">History</span>
 		</button>
 
 		<div class="dropdown dropdown-top">
 			<div tabindex="0" role="button" class="flex flex-col items-center p-2">
-				<DotsVerticalOutline width="24px" height="24px" />
+				<DotsThreeVertical size="1.25em" weight="bold" />
 				<span class="dock-label">Settings</span>
 			</div>
 			<Settings />

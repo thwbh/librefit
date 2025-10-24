@@ -2,7 +2,7 @@
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/api/gen';
 	import { ValidatedInput } from '@thwbh/veilchen';
-	import { PenSolid } from 'flowbite-svelte-icons';
+	import { PencilSimple } from 'phosphor-svelte';
 
 	interface Props {
 		entry: CalorieTracker | NewCalorieTracker;
@@ -55,7 +55,7 @@
 
 			<button class="btn btn-xs btn-ghost" onclick={onedit} aria-label="press to edit"
 				><!-- Press to edit -->
-				<PenSolid height="1rem" width="1rem" />
+				<PencilSimple size="1rem" />
 			</button>
 		{/if}
 	</div>
