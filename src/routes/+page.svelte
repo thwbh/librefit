@@ -33,6 +33,7 @@
 		calorieTrackerEntries.map((tracker) => tracker.amount)
 	);
 
+	info(`dashboardData=${JSON.stringify(dashboard)}`);
 	info(`user profile=${JSON.stringify(data.userProfile)}`);
 </script>
 
