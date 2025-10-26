@@ -35,7 +35,7 @@
 
 	let currentStep = $state(1);
 
-	let userData: LibreUser = $state({
+	let userInput: LibreUser = $state({
 		id: 1,
 		name: 'Arnie',
 		avatar: ''
@@ -125,8 +125,8 @@
 
 	const onfinish = async () => {
 		await updateUser({
-			userName: userData.name!,
-			userAvatar: userData.avatar!
+			userName: userInput.name!,
+			userAvatar: userInput.avatar!
 		});
 		await updateBodyData({
 			age: wizardInput.age,
@@ -163,7 +163,7 @@
 				Let's start with some basic information about you
 			</p>
 		</div>
-		<Body bind:wizardInput />
+		<Body bind:wizardInput bind:userInput />
 	{/snippet}
 
 	{#snippet step2()}
