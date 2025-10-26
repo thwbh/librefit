@@ -9,9 +9,8 @@
 		SwipeableListItem,
 		type AvatarOption
 	} from '@thwbh/veilchen';
-	import { createAvatar } from '@dicebear/core';
-	import { lorelei } from '@dicebear/collection';
 	import { ArrowUUpLeft, HandSwipeLeft, HandSwipeRight, Shuffle } from 'phosphor-svelte';
+	import { getAvatar } from '$lib/avatar';
 
 	interface Props {
 		userInput: LibreUser;
@@ -68,35 +67,6 @@
 	};
 
 	const defaults = ['Bryan', 'Kimberbly', 'Andrea', 'Aidan', 'Jude', 'Jack', 'George'];
-
-	const getAvatar = (seed: string): string => {
-		return createAvatar(lorelei, {
-			seed,
-			flip: true,
-			glassesProbability: 50,
-			hairAccessoriesProbability: 0,
-			mouth: [
-				'happy01',
-				'happy02',
-				'happy03',
-				'happy04',
-				'happy05',
-				'happy06',
-				'happy07',
-				'happy08',
-				'happy09',
-				'happy10',
-				'happy11',
-				'happy12',
-				'happy13',
-				'happy14',
-				'happy15',
-				'happy16',
-				'happy17',
-				'happy18'
-			]
-		}).toDataUri();
-	};
 
 	// Temp avatar shown in modal while user is picking
 	let tempRandomAvatar = $derived(getAvatar(tempRandomSeed));

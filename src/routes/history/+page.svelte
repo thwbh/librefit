@@ -19,7 +19,7 @@
 	import { info } from '@tauri-apps/plugin-log';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import { CaretLeft, CaretRight, Trash } from 'phosphor-svelte';
+	import { CaretLeft, CaretRight, Pencil, Trash } from 'phosphor-svelte';
 	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
 	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
 	import { longpress } from '$lib/gesture/long-press';
@@ -220,18 +220,18 @@
 
 		<TrackerScore {calorieTarget} entries={caloriesHistory.map((c) => c.amount)} isHistory={true} />
 
-		<div class="flex flex-col text-xs p-6">
+		<div class="divide-base-300 divide-y p-6">
 			{#each caloriesHistory as calories}
 				<SwipeableListItem
 					onleft={() => edit(calories)}
 					onright={() => console.log('delete calories')}
 				>
 					{#snippet leftAction()}
-						<span> left </span>
+						<span><Pencil size="2em" color={'var(--color-primary)'} /></span>
 					{/snippet}
 
 					{#snippet rightAction()}
-						<span> right </span>
+						<span><Trash size="2em" color={'var(--color-error)'} /> </span>
 					{/snippet}
 
 					<div
@@ -252,24 +252,6 @@
 						>
 					</div></SwipeableListItem
 				>
-				<!--
-				<div
-					class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
-					use:longpress
-					onlongpress={() => edit(calories)}
-				>
-					<div class="flex flex-col">
-						<span class="text-lg font-semibold">
-							{calories.description}
-						</span>
-						<span class="stat-desc">
-							{calories.amount} kcal
-						</span>
-					</div>
-					<span class="badge badge-xs badge-info"
-						>{getFoodCategoryLongvalue(data.foodCategories, calories.category)}</span
-					>
-				</div>-->
 			{/each}
 
 			<button class="btn btn-neutral w-full mt-4" onclick={create}> Add Intake </button>

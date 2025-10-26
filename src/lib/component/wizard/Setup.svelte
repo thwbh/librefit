@@ -210,7 +210,14 @@
 				Here's your customized fitness journey roadmap
 			</p>
 		</div>
-		<Finish {wizardResult} {chosenRate} {weightTarget} {calorieTarget} />
+		<Finish
+			{wizardResult}
+			{wizardInput}
+			{userInput}
+			{chosenRate}
+			{weightTarget}
+			{calorieTarget}
+		/>
 	{/snippet}
 </Stepper>
 
