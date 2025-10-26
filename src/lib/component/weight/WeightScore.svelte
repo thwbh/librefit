@@ -79,7 +79,7 @@
 	</div>
 	<div class="stat-desc flex items-center gap-1">
 		{#if weightTracker && 'id' in weightTracker}
-			<ShieldCheck size="20" class={'text-success'} />
+			<ShieldCheck size="20" weight="fill" class={'text-success'} />
 			Last update: Today.
 		{:else if lastWeightTracker}
 			{@const lastEntryDayDiff = differenceInDays(
