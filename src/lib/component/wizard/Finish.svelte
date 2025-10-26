@@ -8,7 +8,7 @@
 		WizardInput,
 		WizardResult
 	} from '$lib/api/gen';
-	import { getAvatarFromUser } from '$lib/avatar';
+	import { getAvatar } from '$lib/avatar';
 	import { getActivityLevelInfo } from '$lib/activity';
 
 	interface Props {
@@ -23,7 +23,7 @@
 	let { wizardResult, wizardInput, userInput, chosenRate, weightTarget, calorieTarget }: Props =
 		$props();
 
-	let avatarSrc = $derived(getAvatarFromUser(userInput?.name || '', userInput?.avatar));
+	let avatarSrc = $derived(getAvatar(userInput?.avatar!));
 	let activityInfo = $derived(getActivityLevelInfo(wizardInput?.activityLevel || 1));
 	let ActivityIcon = $derived(activityInfo.icon);
 </script>

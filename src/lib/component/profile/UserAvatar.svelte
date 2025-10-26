@@ -18,6 +18,8 @@
 
 	let { userInput = $bindable() }: Props = $props();
 
+	let hasOpenedPicker = $state(false);
+
 	let dialog: HTMLDialogElement | undefined = $state();
 
 	// Temporary state for modal (only committed on confirm)
@@ -25,21 +27,27 @@
 	let tempRandomSeed = $state('');
 
 	// Current confirmed avatar (derived from userInput)
+	// Dynamically shows name-based avatar until picker is opened
 	let currentAvatar = $derived.by(() => {
 		let avatar = userInput.avatar;
 		let username = userInput.name!;
 
-		// user picked a default avatar
-		if (avatar && defaults.indexOf(avatar) > -1) {
-			return getAvatar(avatar);
-		} else if (avatar) {
+		if (avatar) {
 			return getAvatar(avatar);
 		} else {
+			// Show dynamic name-based avatar before picker is opened
 			return getAvatar(username);
 		}
 	});
 
 	const openModal = () => {
+		hasOpenedPicker = true;
+
+		// Lock in the avatar to current name if not yet set
+		if (!userInput.avatar) {
+			userInput.avatar = userInput.name!;
+		}
+
 		// Initialize temp state with current confirmed state
 		const isDefaultAvatar = userInput.avatar && defaults.indexOf(userInput.avatar) > -1;
 

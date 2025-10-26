@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { AlertBox, AlertType, Stepper } from '@thwbh/veilchen';
+	import { Stepper } from '@thwbh/veilchen';
 	import Body from './body/Body.svelte';
+	import SetupComplete from './SetupComplete.svelte';
 	import {
 		CalculationGoalSchema,
 		CalculationSexSchema,
@@ -65,10 +66,20 @@
 	let weightTarget: NewWeightTarget | undefined = $state();
 	let calorieTarget: NewCalorieTarget | undefined = $state();
 
-	let finished: boolean = $state(false);
+	let showCompletion: boolean = $state(false);
+	let isProcessing: boolean = $state(false);
+	let processingStep: string = $state('');
 	let finishError: boolean = $state(false);
+	let isFadingOut: boolean = $state(false);
 
 	const onnext = async () => {
+		if (currentStep === 1) {
+			// Lock in avatar to name if user never opened the picker
+			if (!userInput.avatar) {
+				userInput.avatar = userInput.name!;
+			}
+		}
+
 		if (currentStep === 2) {
 			weightTracker = {
 				added: getDateAsStr(new Date()),
@@ -120,121 +131,146 @@
 
 	const onback = () => {
 		finishError = false;
-		finished = false;
+	};
+
+	const performSetup = async () => {
+		showCompletion = true;
+		isProcessing = true;
+		finishError = false;
+
+		try {
+			processingStep = 'Saving your profile...';
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			await updateUser({
+				userName: userInput.name!,
+				userAvatar: userInput.avatar!
+			});
+
+			processingStep = 'Recording body measurements...';
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			await updateBodyData({
+				age: wizardInput.age,
+				sex: wizardInput.sex,
+				height: wizardInput.height,
+				weight: wizardInput.weight
+			});
+
+			processingStep = 'Creating your personalized plan...';
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			await wizardCreateTargets({
+				input: {
+					weightTracker: weightTracker!,
+					weightTarget: weightTarget!,
+					calorieTarget: calorieTarget!
+				}
+			});
+
+			processingStep = 'All set! Taking you to your dashboard...';
+			isProcessing = false;
+
+			// Wait a moment to show success message
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			// Start fade out transition
+			isFadingOut = true;
+
+			// Wait for fade out animation to complete
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			goto('/');
+		} catch (e) {
+			error(`Error during setup: ${e}`);
+			finishError = true;
+			isProcessing = false;
+			processingStep = 'An error occurred. Please try again.';
+		}
 	};
 
 	const onfinish = async () => {
-		await updateUser({
-			userName: userInput.name!,
-			userAvatar: userInput.avatar!
-		});
-		await updateBodyData({
-			age: wizardInput.age,
-			sex: wizardInput.sex,
-			height: wizardInput.height,
-			weight: wizardInput.weight
-		});
-		await wizardCreateTargets({
-			input: {
-				weightTracker: weightTracker!,
-				weightTarget: weightTarget!,
-				calorieTarget: calorieTarget!
-			}
-		}).catch((e) => {
-			error(e);
-			finishError = true;
-		});
+		await performSetup();
+	};
 
-		finished = true;
-
-		if (!finishError) {
-			setTimeout(() => {
-				goto('/');
-			}, 5000);
-		}
+	const handleRetry = () => {
+		isFadingOut = false;
+		performSetup();
 	};
 </script>
 
-<Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
-	{#snippet step1()}
-		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">Body Parameters</h2>
-			<p class="text-sm text-base-content opacity-60">
-				Let's start with some basic information about you
-			</p>
-		</div>
-		<Body bind:wizardInput bind:userInput />
-	{/snippet}
+{#if !showCompletion}
+	<Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
+		{#snippet step1()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Body Parameters</h2>
+				<p class="text-sm text-base-content opacity-60">
+					Let's start with some basic information about you
+				</p>
+			</div>
+			<Body bind:wizardInput bind:userInput />
+		{/snippet}
 
-	{#snippet step2()}
-		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">Activity Level</h2>
-			<p class="text-sm text-base-content opacity-60">
-				How active are you during your day? Choose what describes your daily activity level best.
-			</p>
-		</div>
-		<ActivityLevel bind:value={wizardInput.activityLevel} />
-	{/snippet}
+		{#snippet step2()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Activity Level</h2>
+				<p class="text-sm text-base-content opacity-60">
+					How active are you during your day? Choose what describes your daily activity level best.
+				</p>
+			</div>
+			<ActivityLevel bind:value={wizardInput.activityLevel} />
+		{/snippet}
 
-	{#snippet step3()}
-		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">Your Results</h2>
-			<p class="text-sm text-base-content opacity-60">
-				Here's what your body composition and metabolism look like
-			</p>
-		</div>
-		{#if wizardResult}
-			<Report {wizardInput} {wizardResult} />
-		{/if}
-	{/snippet}
+		{#snippet step3()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Your Results</h2>
+				<p class="text-sm text-base-content opacity-60">
+					Here's what your body composition and metabolism look like
+				</p>
+			</div>
+			{#if wizardResult}
+				<Report {wizardInput} {wizardResult} />
+			{/if}
+		{/snippet}
 
-	{#snippet step4()}
-		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">Choose Your Pace</h2>
-			<p class="text-sm text-base-content opacity-60">
-				Select a calorie deficit that fits your lifestyle and goals
-			</p>
-		</div>
-		{#if wizardTargetWeightResult}
-			{@const rates = Object.keys(wizardTargetWeightResult.dateByRate).map((v) => +v)}
-			{@const targetDates = wizardTargetWeightResult.dateByRate}
-			{@const targetProgress = wizardTargetWeightResult.progressByRate}
-			<Rate bind:value={chosenRate} {rates} {targetDates} {targetProgress} />
-		{/if}
-	{/snippet}
+		{#snippet step4()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Choose Your Pace</h2>
+				<p class="text-sm text-base-content opacity-60">
+					Select a calorie deficit that fits your lifestyle and goals
+				</p>
+			</div>
+			{#if wizardTargetWeightResult}
+				{@const rates = Object.keys(wizardTargetWeightResult.dateByRate).map((v) => +v)}
+				{@const targetDates = wizardTargetWeightResult.dateByRate}
+				{@const targetProgress = wizardTargetWeightResult.progressByRate}
+				<Rate bind:value={chosenRate} {rates} {targetDates} {targetProgress} />
+			{/if}
+		{/snippet}
 
-	{#snippet step5()}
-		<div class="mb-6">
-			<h2 class="text-2xl font-bold text-base-content mb-2">Your Personalized Plan</h2>
-			<p class="text-sm text-base-content opacity-60">
-				Here's your customized fitness journey roadmap
-			</p>
-		</div>
-		<Finish
-			{wizardResult}
-			{wizardInput}
-			{userInput}
-			{chosenRate}
-			{weightTarget}
-			{calorieTarget}
-		/>
-	{/snippet}
-</Stepper>
+		{#snippet step5()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Your Personalized Plan</h2>
+				<p class="text-sm text-base-content opacity-60">
+					Here's your customized fitness journey roadmap
+				</p>
+			</div>
+			<Finish
+				{wizardResult}
+				{wizardInput}
+				{userInput}
+				{chosenRate}
+				{weightTarget}
+				{calorieTarget}
+			/>
+		{/snippet}
+	</Stepper>
+{/if}
 
-{#if finished}
-	{#if finishError}
-		<AlertBox type={AlertType.Error} class="alert-soft">
-			<strong>Error</strong>
-			<p>An error occurred. Please try again later.</p>
-		</AlertBox>
-	{:else}
-		<AlertBox type={AlertType.Success} class="alert-soft">
-			<strong>Success</strong>
-			<p>
-				Successfully created your plan. You will be redirected to the <a href="/" class="link"
-					>dashboard</a
-				>.
-			</p>
-		</AlertBox>
-	{/if}
+{#if showCompletion}
+	<SetupComplete
+		{isProcessing}
+		{processingStep}
+		{isFadingOut}
+		hasError={finishError}
+		{userInput}
+		onRetry={handleRetry}
+	/>
 {/if}
