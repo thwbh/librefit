@@ -1,5 +1,13 @@
 <script lang="ts">
 	import { AlertBox, AlertType, OptionCards, type OptionCardData } from '@thwbh/veilchen';
+	import {
+		Barbell,
+		OfficeChair,
+		PersonSimpleRun,
+		PersonSimpleTaiChi,
+		Trophy
+	} from 'phosphor-svelte';
+	import { createRawSnippet } from 'svelte';
 
 	interface Props {
 		value: number;
@@ -42,7 +50,24 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<OptionCards bind:value {data} scrollable={false} />
+	<OptionCards bind:value {data} scrollable={false}>
+		{#snippet icon(option)}
+			{@const size = '2.75em'}
+			<span class="p-4">
+				{#if option.value === 1}
+					<OfficeChair {size} />
+				{:else if option.value === 1.25}
+					<PersonSimpleTaiChi {size} />
+				{:else if option.value === 1.5}
+					<PersonSimpleRun {size} />
+				{:else if option.value === 1.75}
+					<Barbell {size} />
+				{:else if option.value === 2}
+					<Trophy {size} />
+				{/if}
+			</span>
+		{/snippet}
+	</OptionCards>
 
 	<AlertBox type={AlertType.Info}>
 		<strong>Please be honest.</strong>
