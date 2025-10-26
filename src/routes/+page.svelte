@@ -36,11 +36,11 @@
 	info(`user profile=${JSON.stringify(data.userProfile)}`);
 </script>
 
-<div class="flex flex-col gap-6 overflow-x-hidden p-4">
+<div class="flex flex-col gap-6 overflow-x-hidden p-2">
 	<h1 class="sr-only">Dashboard</h1>
 	<span class="text-xl font-bold text-center"> Day {data.dashboardData.currentDay} </span>
 
-	<div class="flex flex-col items-center">
+	<div class="flex flex-col items-center gap-2">
 		<TrackerScore {calorieTarget} entries={caloriesToday} />
 
 		<TrackerStack
