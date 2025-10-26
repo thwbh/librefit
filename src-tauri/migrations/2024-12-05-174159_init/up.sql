@@ -5,9 +5,6 @@ CREATE TABLE libre_user
     name   TEXT
 );
 
---- initial entry to be present on first startup
-INSERT INTO libre_user (id, avatar, name) VALUES (NULL, NULL, NULL);
-
 CREATE TABLE calorie_tracker
 (
     id          INTEGER NOT NULL PRIMARY KEY,
