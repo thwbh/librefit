@@ -1,9 +1,16 @@
-import { getBodyData, getUser } from '$lib/api/gen';
-import type { PageLoad } from '../$types';
+import { getBodyData } from '$lib/api/gen';
+import type { PageLoad } from './$types';
 
-export const load: PageLoad = async () => {
+/**
+ * Profile page loader
+ *
+ * User profile is loaded at layout level and available via parent().
+  */
+export const load: PageLoad = async ({ parent }) => {
+  // Wait for layout data to be available
+  await parent();
+
   return {
-    userProfile: await getUser(),
     bodyData: await getBodyData()
-  }
-}
+  };
+};

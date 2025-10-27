@@ -24,8 +24,11 @@
 	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
+	import { getCategoriesContext } from '$lib/context';
 
 	let { data } = $props();
+
+	const foodCategories = getCategoriesContext();
 
 	info(JSON.stringify(data));
 
@@ -248,7 +251,7 @@
 							</span>
 						</div>
 						<span class="badge badge-xs badge-info"
-							>{getFoodCategoryLongvalue(data.foodCategories, calories.category)}</span
+							>{getFoodCategoryLongvalue(foodCategories, calories.category)}</span
 						>
 					</div></SwipeableListItem
 				>
@@ -284,7 +287,7 @@
 
 	{#snippet content()}
 		{#if newEntry}
-			<CalorieTrackerMask bind:entry={newEntry} categories={data.foodCategories} isEditing={true} />
+			<CalorieTrackerMask bind:entry={newEntry} categories={foodCategories} isEditing={true} />
 		{/if}
 	{/snippet}
 </ModalDialog>
@@ -308,7 +311,7 @@
 
 	{#snippet content()}
 		{#if focusedCalories !== undefined}
-			<CalorieTrackerMask entry={focusedCalories} categories={data.foodCategories} {isEditing} />
+			<CalorieTrackerMask entry={focusedCalories} categories={foodCategories} {isEditing} />
 		{/if}
 	{/snippet}
 

@@ -1,9 +1,17 @@
 import { subDays } from 'date-fns';
-import type { PageLoad } from '../$types';
-import { getTrackerHistory, getLastCalorieTarget, getFoodCategories } from '$lib/api/gen';
+import type { PageLoad } from './$types';
+import { getTrackerHistory, getLastCalorieTarget } from '$lib/api/gen';
 import { getDateAsStr } from '$lib/date';
 
-export const load: PageLoad = async () => {
+/**
+ * History page loader
+ *
+ * This loader only fetches history-specific data.
+ */
+export const load: PageLoad = async ({ parent }) => {
+  // Wait for layout data to be available
+  await parent();
+
   const dateTo = subDays(new Date(), 1);
   const dateFrom = subDays(dateTo, 6);
 
@@ -12,7 +20,6 @@ export const load: PageLoad = async () => {
 
   return {
     trackerHistory: await getTrackerHistory({ dateFromStr, dateToStr }),
-    calorieTarget: await getLastCalorieTarget(),
-    foodCategories: await getFoodCategories()
+    calorieTarget: await getLastCalorieTarget()
   };
 };

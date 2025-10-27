@@ -1,9 +1,11 @@
 <script lang="ts">
 	import Profile from '$lib/component/profile/Profile.svelte';
+	import { getUserContext } from '$lib/context';
 
 	let { data } = $props();
 
-	let userData = $state(data.userProfile);
+	const userProfile = getUserContext();
+	let userData = $state(userProfile);
 	const bodyData = data.bodyData;
 </script>
 
