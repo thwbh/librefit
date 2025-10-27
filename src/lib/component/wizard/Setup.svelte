@@ -29,6 +29,7 @@
 	import { goto } from '$app/navigation';
 	import { error } from '@tauri-apps/plugin-log';
 	import { createTargetWeightTargets } from '$lib/api/util';
+	import { setWizardContext } from '$lib/context';
 
 	const CalculationGoal = CalculationGoalSchema.enum;
 	const CalculationSex = CalculationSexSchema.enum;
@@ -71,6 +72,28 @@
 	let processingStep: string = $state('');
 	let finishError: boolean = $state(false);
 	let isFadingOut: boolean = $state(false);
+
+	// Set wizard context for child components to access
+	setWizardContext({
+		get wizardResult() {
+			return wizardResult;
+		},
+		get wizardInput() {
+			return wizardInput;
+		},
+		get userInput() {
+			return userInput;
+		},
+		get chosenRate() {
+			return chosenRate;
+		},
+		get weightTarget() {
+			return weightTarget;
+		},
+		get calorieTarget() {
+			return calorieTarget;
+		}
+	});
 
 	const onnext = async () => {
 		if (currentStep === 1) {
@@ -252,14 +275,7 @@
 					Here's your customized fitness journey roadmap
 				</p>
 			</div>
-			<Finish
-				{wizardResult}
-				{wizardInput}
-				{userInput}
-				{chosenRate}
-				{weightTarget}
-				{calorieTarget}
-			/>
+			<Finish />
 		{/snippet}
 	</Stepper>
 {/if}

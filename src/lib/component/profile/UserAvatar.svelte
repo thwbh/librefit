@@ -14,9 +14,10 @@
 
 	interface Props {
 		userInput: LibreUser;
+		onAvatarChange?: (newAvatar: string) => void;
 	}
 
-	let { userInput = $bindable() }: Props = $props();
+	let { userInput, onAvatarChange }: Props = $props();
 
 	let hasOpenedPicker = $state(false);
 
@@ -43,23 +44,19 @@
 	const openModal = () => {
 		hasOpenedPicker = true;
 
-		// Lock in the avatar to current name if not yet set
-		if (!userInput.avatar) {
-			userInput.avatar = userInput.name!;
-		}
-
 		// Initialize temp state with current confirmed state
-		const isDefaultAvatar = userInput.avatar && defaults.indexOf(userInput.avatar) > -1;
+		const currentAvatarValue = userInput.avatar || userInput.name!;
+		const isDefaultAvatar = currentAvatarValue && defaults.indexOf(currentAvatarValue) > -1;
 
 		// If user selected a default avatar, show username in random slot to avoid duplicates
 		// Otherwise show the current avatar (username or randomized)
 		if (isDefaultAvatar) {
 			tempRandomSeed = userInput.name!;
 		} else {
-			tempRandomSeed = userInput.avatar ? userInput.avatar : userInput.name!;
+			tempRandomSeed = currentAvatarValue;
 		}
 
-		tempSelectedAvatar = userInput.avatar ? userInput.avatar : userInput.name!;
+		tempSelectedAvatar = currentAvatarValue;
 		dialog?.showModal();
 	};
 
@@ -70,8 +67,8 @@
 	};
 
 	const handleConfirm = () => {
-		// Commit the selected avatar
-		userInput.avatar = tempSelectedAvatar;
+		// Commit the selected avatar via callback
+		onAvatarChange?.(tempSelectedAvatar);
 	};
 
 	const defaults = ['Bryan', 'Kimberbly', 'Andrea', 'Aidan', 'Jude', 'Jack', 'George'];

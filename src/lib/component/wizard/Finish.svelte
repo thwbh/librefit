@@ -1,30 +1,17 @@
 <script lang="ts">
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
 	import { AlertBox, AlertType, Avatar, StatCard } from '@thwbh/veilchen';
-	import type {
-		LibreUser,
-		NewCalorieTarget,
-		NewWeightTarget,
-		WizardInput,
-		WizardResult
-	} from '$lib/api/gen';
 	import { getAvatar } from '$lib/avatar';
 	import { getActivityLevelInfo } from '$lib/activity';
+	import { getWizardContext } from '$lib/context';
 
-	interface Props {
-		wizardResult?: WizardResult;
-		wizardInput?: WizardInput;
-		userInput?: LibreUser;
-		chosenRate?: number;
-		weightTarget?: NewWeightTarget;
-		calorieTarget?: NewCalorieTarget;
-	}
+	// Get wizard state from context instead of props
+	const wizardState = getWizardContext();
+	const { wizardResult, wizardInput, userInput, chosenRate, weightTarget, calorieTarget } =
+		wizardState;
 
-	let { wizardResult, wizardInput, userInput, chosenRate, weightTarget, calorieTarget }: Props =
-		$props();
-
-	let avatarSrc = $derived(getAvatar(userInput?.avatar!));
-	let activityInfo = $derived(getActivityLevelInfo(wizardInput?.activityLevel || 1));
+	let avatarSrc = $derived(getAvatar(userInput.avatar!));
+	let activityInfo = $derived(getActivityLevelInfo(wizardInput.activityLevel || 1));
 	let ActivityIcon = $derived(activityInfo.icon);
 </script>
 

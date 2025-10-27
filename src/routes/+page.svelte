@@ -48,7 +48,6 @@
 
 		<TrackerStack
 			bind:entries={calorieTrackerEntries}
-			categories={dashboard.foodCategories}
 			onadd={createCalorieTrackerEntry}
 			onedit={updateCalorieTrackerEntry}
 			ondelete={deleteCalorieTrackerEntry}

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/api/gen';
+	import type { CalorieTracker, NewCalorieTracker } from '$lib/api/gen';
 	import { ValidatedInput } from '@thwbh/veilchen';
 	import { PencilSimple } from 'phosphor-svelte';
+	import { getCategoriesContext } from '$lib/context';
 
 	interface Props {
 		entry: CalorieTracker | NewCalorieTracker;
-		categories: Array<FoodCategory>;
 		className?: string;
 		readonly?: boolean;
 		isEditing?: boolean;
@@ -15,12 +15,14 @@
 
 	let {
 		entry = $bindable(),
-		categories,
 		className = 'fieldset rounded-box',
 		isEditing = false,
 		readonly = false,
 		onedit = () => {}
 	}: Props = $props();
+
+	// Get categories from context instead of props
+	const categories = getCategoriesContext();
 
 	const select = (categoryShortvalue: string) => {
 		entry.category = categoryShortvalue;

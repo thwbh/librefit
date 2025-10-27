@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import IntakeCard from '../../../src/lib/component/intake/IntakeCard.svelte';
 import type { CalorieTracker, FoodCategory } from '$lib/api/gen';
+import { setContext } from 'svelte';
 
 // Mock the CalorieTrackerMask component
 vi.mock('../../../src/lib/component/intake/CalorieTrackerMask.svelte', () => ({
@@ -27,6 +28,15 @@ vi.mock('$lib/gesture/long-press', () => ({
 	})
 }));
 
+// Mock the categories context
+vi.mock('$lib/context', () => ({
+	getCategoriesContext: vi.fn(() => [
+		{ longvalue: 'Breakfast', shortvalue: 'b' },
+		{ longvalue: 'Lunch', shortvalue: 'l' },
+		{ longvalue: 'Dinner', shortvalue: 'd' }
+	])
+}));
+
 describe('IntakeCard Component', () => {
 	const mockEntry: CalorieTracker = {
 		id: 1,
@@ -48,7 +58,6 @@ describe('IntakeCard Component', () => {
 		const { container } = render(IntakeCard, {
 			props: {
 				entry: mockEntry,
-				categories: mockCategories,
 				onlongpress: mockOnLongPress
 			}
 		});
@@ -62,7 +71,6 @@ describe('IntakeCard Component', () => {
 		const { container } = render(IntakeCard, {
 			props: {
 				entry: mockEntry,
-				categories: mockCategories,
 				onlongpress: mockOnLongPress
 			}
 		});
@@ -78,7 +86,6 @@ describe('IntakeCard Component', () => {
 		const { container } = render(IntakeCard, {
 			props: {
 				entry: mockEntry,
-				categories: mockCategories,
 				onlongpress: mockOnLongPress,
 				'data-testid': 'custom-intake-card',
 				'aria-label': 'Calorie entry'
@@ -104,21 +111,6 @@ describe('IntakeCard Component', () => {
 		const { container } = render(IntakeCard, {
 			props: {
 				entry: minimalEntry,
-				categories: mockCategories,
-				onlongpress: mockOnLongPress
-			}
-		});
-
-		expect(container).toBeInTheDocument();
-	});
-
-	it('should handle empty categories array', () => {
-		const mockOnLongPress = vi.fn();
-
-		const { container } = render(IntakeCard, {
-			props: {
-				entry: mockEntry,
-				categories: [],
 				onlongpress: mockOnLongPress
 			}
 		});

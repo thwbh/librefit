@@ -25,6 +25,7 @@
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
+	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 
 	let { data } = $props();
 
@@ -58,13 +59,37 @@
 		return [...trackerHistory?.weightHistory[selectedDateStr]];
 	});
 
-	// entry for modal dialog
-	let newEntry: NewCalorieTracker | undefined = $state();
-	let focusedCalories: CalorieTracker | undefined = $state();
-	let enableDelete = $state(false);
-	let isEditing = $state(false);
-	let createDialog: HTMLDialogElement | undefined = $state();
-	let editDialog: HTMLDialogElement | undefined = $state();
+	// Modal composition for CRUD operations
+	const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
+		onCreate: async (entry) => await createCalorieTrackerEntry({ newEntry: entry }),
+		onUpdate: async (id, entry) =>
+			await updateCalorieTrackerEntry({ trackerId: id, updatedEntry: entry }),
+		onDelete: async (id) => {
+			await deleteCalorieTrackerEntry({ trackerId: id });
+		},
+		getBlankEntry: () => ({
+			added: selectedDateStr,
+			amount: 0,
+			category: 't',
+			description: ''
+		}),
+		onCreateSuccess: (newEntry) => {
+			caloriesHistory = [...caloriesHistory, newEntry];
+			trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+		},
+		onUpdateSuccess: (updatedEntry) => {
+			const idx = caloriesHistory.findIndex((e) => e.id === updatedEntry.id);
+			if (idx !== -1) {
+				caloriesHistory[idx] = updatedEntry;
+				caloriesHistory = [...caloriesHistory];
+				trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+			}
+		},
+		onDeleteSuccess: (id) => {
+			caloriesHistory = caloriesHistory.filter((e) => e.id !== id);
+			trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+		}
+	});
 
 	const selectHistory = (dateStr: string) => {
 		info(`selectHistory dateStr={${dateStr}}`);
@@ -93,78 +118,14 @@
 			dateFromStr: getDateAsStr(dateFrom),
 			dateToStr: getDateAsStr(dateTo)
 		});
-
-		focusedCalories = undefined;
 	};
 
 	const getActiveClass = (dateStr: string) =>
 		dateStr === selectedDateStr ? 'bg-primary text-primary-content' : '';
 
-	const create = () => {
-		newEntry = {
-			added: selectedDateStr,
-			amount: 0,
-			category: 't',
-			description: ''
-		};
-
-		createDialog?.showModal();
-	};
-
 	const edit = async (calories: CalorieTracker) => {
 		await vibrate(2);
-
-		focusedCalories = calories;
-		editDialog?.showModal();
-	};
-
-	const save = async () => {
-		if (focusedCalories) {
-			await updateCalorieTrackerEntry({
-				trackerId: focusedCalories.id,
-				updatedEntry: focusedCalories
-			}).then((updatedCalories) => {
-				info(
-					`added new entry to selectedDateStr={${selectedDateStr}} entry={${JSON.stringify(updatedCalories)}}`
-				);
-
-				caloriesHistory.push(updatedCalories);
-				caloriesHistory = [...caloriesHistory];
-				trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
-			});
-		} else if (newEntry) {
-			await createCalorieTrackerEntry({ newEntry }).then((addedCalories) => {
-				info(
-					`added new entry to selectedDateStr={${selectedDateStr}} entry={${JSON.stringify(addedCalories)}}`
-				);
-
-				caloriesHistory.push(addedCalories);
-				caloriesHistory = [...caloriesHistory];
-				trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
-			});
-		}
-
-		createDialog?.close();
-		editDialog?.close();
-
-		newEntry = undefined;
-		focusedCalories = undefined;
-	};
-
-	const cancel = () => {
-		createDialog?.close();
-		editDialog?.close();
-
-		newEntry = undefined;
-		focusedCalories = undefined;
-	};
-
-	const deleteEntry = async () => {
-		await deleteCalorieTrackerEntry({ trackerId: focusedCalories!.id });
-
-		editDialog?.close();
-
-		focusedCalories = undefined;
+		modal.openEdit(calories);
 	};
 </script>
 
@@ -257,7 +218,7 @@
 				>
 			{/each}
 
-			<button class="btn btn-neutral w-full mt-4" onclick={create}> Add Intake </button>
+			<button class="btn btn-neutral w-full mt-4" onclick={modal.openCreate}> Add Intake </button>
 		</div>
 		<div class="stats">
 			<div class="stat">
@@ -275,34 +236,32 @@
 	<BottomDock activeRoute="/history" />
 </div>
 
-<ModalDialog bind:dialog={createDialog} onconfirm={save} oncancel={cancel}>
+<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
-		{#if newEntry}
-			<span>Add Intake</span>
-			<span class="text-xs opacity-60">
-				Date: {convertDateStrToDisplayDateStr(selectedDateStr)}
-			</span>
-		{/if}
+		<span>Add Intake</span>
+		<span class="text-xs opacity-60">
+			Date: {convertDateStrToDisplayDateStr(selectedDateStr)}
+		</span>
 	{/snippet}
 
 	{#snippet content()}
-		{#if newEntry}
-			<CalorieTrackerMask bind:entry={newEntry} categories={foodCategories} isEditing={true} />
+		{#if modal.currentEntry}
+			<CalorieTrackerMask bind:entry={modal.currentEntry} isEditing={true} />
 		{/if}
 	{/snippet}
 </ModalDialog>
 
-<ModalDialog bind:dialog={editDialog} onconfirm={save} oncancel={cancel}>
+<ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
-		{#if focusedCalories}
+		{#if modal.currentEntry}
 			<span>Edit Intake</span>
 			<span>
 				<span class="text-xs opacity-60">
-					Added: {convertDateStrToDisplayDateStr(focusedCalories.added)}
+					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as CalorieTracker).added)}
 				</span>
 				<span>
 					<button class="btn btn-xs btn-error">
-						<Trash size="1rem" onclick={() => (enableDelete = true)} />
+						<Trash size="1rem" onclick={modal.requestDelete} />
 					</button>
 				</span>
 			</span>
@@ -310,17 +269,17 @@
 	{/snippet}
 
 	{#snippet content()}
-		{#if focusedCalories !== undefined}
-			<CalorieTrackerMask entry={focusedCalories} categories={foodCategories} {isEditing} />
+		{#if modal.currentEntry}
+			<CalorieTrackerMask entry={modal.currentEntry as CalorieTracker} isEditing={modal.isEditing} />
 		{/if}
 	{/snippet}
 
 	{#snippet footer()}
-		{#if enableDelete}
-			<button class="btn btn-error" onclick={deleteEntry}>Delete</button>
+		{#if modal.enableDelete}
+			<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
 		{:else}
-			<button class="btn btn-primary" onclick={save}>Save</button>
+			<button class="btn btn-primary" onclick={modal.save}>Save</button>
 		{/if}
-		<button class="btn" onclick={cancel}>Cancel</button>
+		<button class="btn" onclick={modal.cancel}>Cancel</button>
 	{/snippet}
 </ModalDialog>

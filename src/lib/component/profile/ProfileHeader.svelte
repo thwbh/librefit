@@ -86,7 +86,10 @@
 			{/if}
 
 			<div class="flex flex-col items-center gap-4">
-				<UserAvatar bind:userInput={editedUser} />
+				<UserAvatar
+					userInput={editedUser}
+					onAvatarChange={(newAvatar) => (editedUser.avatar = newAvatar)}
+				/>
 				<p class="text-sm opacity-70">Tap avatar to change</p>
 			</div>
 
