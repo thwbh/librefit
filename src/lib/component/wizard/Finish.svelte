@@ -4,15 +4,34 @@
 	import { getAvatar } from '$lib/avatar';
 	import { getActivityLevelInfo } from '$lib/activity';
 	import { getWizardContext } from '$lib/context';
+	import { Confetti, RocketLaunch } from 'phosphor-svelte';
 
 	// Get wizard state from context instead of props
 	const wizardState = getWizardContext();
 	const { wizardResult, wizardInput, userInput, chosenRate, weightTarget, calorieTarget } =
 		wizardState;
 
-	let avatarSrc = $derived(getAvatar(userInput.avatar!));
+	let avatarSrc = $derived(getAvatar(userInput.avatar || userInput.name!));
 	let activityInfo = $derived(getActivityLevelInfo(wizardInput.activityLevel || 1));
 	let ActivityIcon = $derived(activityInfo.icon);
+
+	// Determine if user is gaining, losing, or maintaining weight
+	const recommendation = wizardResult?.recommendation || 'LOSE';
+	const isGaining = recommendation === 'GAIN';
+	const isHolding = recommendation === 'HOLD';
+
+	// Dynamic labels based on goal
+	const rateLabel = isGaining ? 'Daily Surplus' : isHolding ? 'Daily Adjustment' : 'Daily Deficit';
+	const targetLabel = isGaining
+		? 'Target Intake (Gain)'
+		: isHolding
+			? 'Target Intake (Maintain)'
+			: 'Target Intake (Loss)';
+	const maximumLabel = isGaining
+		? 'Maximum Intake'
+		: isHolding
+			? 'Maximum Flexibility'
+			: 'Maximum Limit';
 </script>
 
 <div class="flex flex-col gap-6">
@@ -57,19 +76,31 @@
 			Calorie Plan
 		</h3>
 		<div class="space-y-3">
+			{#if !isHolding || chosenRate !== 0}
+				<div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
+					<span class="text-base-content opacity-70">{rateLabel}</span>
+					<span class="font-bold text-primary">{chosenRate} kcal</span>
+				</div>
+			{/if}
 			<div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
-				<span class="text-base-content opacity-70">Daily Deficit</span>
-				<span class="font-bold text-primary">{chosenRate} kcal</span>
-			</div>
-			<div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
-				<span class="text-base-content opacity-70">Target Intake</span>
+				<span class="text-base-content opacity-70">{targetLabel}</span>
 				<span class="font-bold">{calorieTarget!.targetCalories} kcal</span>
 			</div>
 			<div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
-				<span class="text-base-content opacity-70">Maximum Limit</span>
-				<span class="font-bold text-error">{calorieTarget!.maximumCalories} kcal</span>
+				<span class="text-base-content opacity-70">{maximumLabel}</span>
+				<span class="font-bold" class:text-error={!isGaining && !isHolding}
+					>{calorieTarget!.maximumCalories} kcal</span
+				>
 			</div>
 		</div>
+		{#if isHolding}
+			<div class="mt-4 p-3 bg-info/10 rounded-lg">
+				<p class="text-sm text-base-content opacity-80">
+					Your calorie target is set to maintain your current weight. Stay within this range to keep
+					your weight stable.
+				</p>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Timeline Card -->
@@ -80,7 +111,7 @@
 				<div
 					class="flex-shrink-0 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center"
 				>
-					<span class="text-primary font-bold">🚀</span>
+					<RocketLaunch size="1.5em" />
 				</div>
 				<div class="flex-1">
 					<p class="text-sm text-base-content opacity-60">Start Date</p>
@@ -96,7 +127,7 @@
 				<div
 					class="flex-shrink-0 w-12 h-12 rounded-full bg-success/20 flex items-center justify-center"
 				>
-					<span class="text-success font-bold">🎉</span>
+					<Confetti size="1.5em" />
 				</div>
 				<div class="flex-1">
 					<p class="text-sm text-base-content opacity-60">Target Date</p>

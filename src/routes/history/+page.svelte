@@ -127,6 +127,11 @@
 		await vibrate(2);
 		modal.openEdit(calories);
 	};
+
+	const remove = async (calories: CalorieTracker) => {
+		await vibrate(2);
+		modal.openDelete(calories);
+	};
 </script>
 
 <div class="flex flex-col gap-4">
@@ -186,10 +191,7 @@
 
 		<div class="divide-base-300 divide-y p-6">
 			{#each caloriesHistory as calories}
-				<SwipeableListItem
-					onleft={() => edit(calories)}
-					onright={() => console.log('delete calories')}
-				>
+				<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
 					{#snippet leftAction()}
 						<span><Pencil size="2em" color={'var(--color-primary)'} /></span>
 					{/snippet}
@@ -270,7 +272,10 @@
 
 	{#snippet content()}
 		{#if modal.currentEntry}
-			<CalorieTrackerMask entry={modal.currentEntry as CalorieTracker} isEditing={modal.isEditing} />
+			<CalorieTrackerMask
+				entry={modal.currentEntry as CalorieTracker}
+				isEditing={modal.isEditing}
+			/>
 		{/if}
 	{/snippet}
 
@@ -280,6 +285,26 @@
 		{:else}
 			<button class="btn btn-primary" onclick={modal.save}>Save</button>
 		{/if}
+		<button class="btn" onclick={modal.cancel}>Cancel</button>
+	{/snippet}
+</ModalDialog>
+
+<ModalDialog bind:dialog={modal.deleteDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
+	{#snippet title()}
+		{#if modal.currentEntry}
+			<span>Delete Intake</span>
+			<span>
+				<span> Do you really want to delete this entry? </span>
+			</span>
+		{/if}
+	{/snippet}
+
+	{#snippet content()}
+		<span>{modal.currentEntry?.description}</span>
+	{/snippet}
+
+	{#snippet footer()}
+		<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
 		<button class="btn" onclick={modal.cancel}>Cancel</button>
 	{/snippet}
 </ModalDialog>

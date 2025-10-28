@@ -29,7 +29,7 @@
 	import { goto } from '$app/navigation';
 	import { error } from '@tauri-apps/plugin-log';
 	import { createTargetWeightTargets } from '$lib/api/util';
-	import { setWizardContext } from '$lib/context';
+	import { setWizardContext, tryGetUserContext } from '$lib/context';
 
 	const CalculationGoal = CalculationGoalSchema.enum;
 	const CalculationSex = CalculationSexSchema.enum;
@@ -63,6 +63,7 @@
 
 	let wizardTargetWeightResult: WizardTargetWeightResult | undefined = $state();
 	let chosenRate: number = $state(500);
+	let chosenTargetWeight: number = $state(76); // For HOLD/GAIN users to select target weight
 
 	let weightTarget: NewWeightTarget | undefined = $state();
 	let calorieTarget: NewCalorieTarget | undefined = $state();
@@ -118,9 +119,12 @@
 			if (wizardResult.recommendation === WizardRecommendation.LOSE) {
 				chosenOption.customDetails = wizardResult.targetWeightUpper;
 			} else if (wizardResult.recommendation === WizardRecommendation.HOLD) {
-				chosenOption.customDetails = wizardResult.targetWeight;
-			} else {
+				// Initialize target weight to current weight for HOLD users
+				chosenTargetWeight = wizardInput.weight;
+			} else if (wizardResult.recommendation === WizardRecommendation.GAIN) {
 				chosenOption.customDetails = wizardResult.targetWeightLower;
+				// Also initialize for potential override to HOLD
+				chosenTargetWeight = wizardInput.weight;
 			}
 		}
 
@@ -131,19 +135,33 @@
 					sex: wizardInput.sex,
 					currentWeight: wizardInput.weight,
 					height: wizardInput.height,
-					targetWeight: wizardResult!.targetWeight,
+					targetWeight: chosenTargetWeight,
 					startDate: getDateAsStr(new Date())
 				}
 			});
 		}
 
 		if (currentStep === 5) {
+			// For GAIN users, check if they selected target weight equal to current weight (maintain)
+			const isGainUserMaintaining =
+				wizardResult!.recommendation === WizardRecommendation.GAIN &&
+				chosenTargetWeight === wizardInput.weight;
+
+			// Determine effective recommendation
+			const effectiveRecommendation = isGainUserMaintaining
+				? WizardRecommendation.HOLD
+				: wizardResult!.recommendation;
+
 			const targets = createTargetWeightTargets(
 				wizardInput,
 				wizardResult!,
 				wizardTargetWeightResult!,
 				new Date(),
-				wizardResult!.targetWeightUpper,
+				effectiveRecommendation === WizardRecommendation.HOLD
+					? chosenTargetWeight
+					: effectiveRecommendation === WizardRecommendation.LOSE
+						? wizardResult!.targetWeightUpper
+						: chosenTargetWeight, // Use selected target weight for GAIN
 				chosenRate
 			);
 
@@ -155,6 +173,28 @@
 	const onback = () => {
 		finishError = false;
 	};
+
+	// Recalculate when target weight changes for GAIN users
+	$effect(() => {
+		if (
+			currentStep === 4 &&
+			wizardResult?.recommendation === WizardRecommendation.GAIN &&
+			chosenTargetWeight !== wizardInput.weight
+		) {
+			wizardCalculateForTargetWeight({
+				input: {
+					age: wizardInput.age,
+					sex: wizardInput.sex,
+					currentWeight: wizardInput.weight,
+					height: wizardInput.height,
+					targetWeight: chosenTargetWeight,
+					startDate: getDateAsStr(new Date())
+				}
+			}).then((result) => {
+				wizardTargetWeightResult = result;
+			});
+		}
+	});
 
 	const performSetup = async () => {
 		showCompletion = true;
@@ -168,6 +208,16 @@
 				userName: userInput.name!,
 				userAvatar: userInput.avatar!
 			});
+
+			// Update user context so the profile page reflects new data
+			const userContext = tryGetUserContext();
+			if (userContext) {
+				userContext.updateUser({
+					id: userInput.id,
+					name: userInput.name!,
+					avatar: userInput.avatar!
+				});
+			}
 
 			processingStep = 'Recording body measurements...';
 			await new Promise((resolve) => setTimeout(resolve, 800));
@@ -255,16 +305,30 @@
 
 		{#snippet step4()}
 			<div class="mb-6">
-				<h2 class="text-2xl font-bold text-base-content mb-2">Choose Your Pace</h2>
+				{#if wizardResult?.recommendation === WizardRecommendation.HOLD}
+					<h2 class="text-2xl font-bold text-base-content mb-2">Select Your Target Weight</h2>
+				{:else}
+					<h2 class="text-2xl font-bold text-base-content mb-2">Choose Your Pace</h2>
+				{/if}
 				<p class="text-sm text-base-content opacity-60">
-					Select a calorie deficit that fits your lifestyle and goals
+					{#if wizardResult?.recommendation === WizardRecommendation.HOLD}
+						Choose a target weight within your healthy weight range
+					{:else}
+						Select a calorie deficit that fits your lifestyle and goals
+					{/if}
 				</p>
 			</div>
 			{#if wizardTargetWeightResult}
 				{@const rates = Object.keys(wizardTargetWeightResult.dateByRate).map((v) => +v)}
 				{@const targetDates = wizardTargetWeightResult.dateByRate}
 				{@const targetProgress = wizardTargetWeightResult.progressByRate}
-				<Rate bind:value={chosenRate} {rates} {targetDates} {targetProgress} />
+				<Rate
+					bind:value={chosenRate}
+					{rates}
+					{targetDates}
+					{targetProgress}
+					bind:targetWeight={chosenTargetWeight}
+				/>
 			{/if}
 		{/snippet}
 

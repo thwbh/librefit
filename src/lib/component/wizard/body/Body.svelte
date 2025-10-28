@@ -31,7 +31,7 @@
 						required
 					/>
 				</div>
-				<UserAvatar bind:userInput />
+				<UserAvatar {userInput} onAvatarChange={(newAvatar) => (userInput.avatar = newAvatar)} />
 			</div>
 		</div>
 

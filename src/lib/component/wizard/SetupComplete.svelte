@@ -15,7 +15,7 @@
 
 	let { isProcessing, processingStep, hasError, isFadingOut, userInput, onRetry }: Props = $props();
 
-	let avatarSrc = $derived(getAvatar(userInput.avatar!));
+	let avatarSrc = $derived(getAvatar(userInput.avatar || userInput.name!));
 </script>
 
 <div

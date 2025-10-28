@@ -21,7 +21,7 @@
 	let { data } = $props();
 
 	const dashboard: Dashboard = data.dashboardData;
-	const userProfile = getUserContext();
+	const userContext = getUserContext();
 
 	let calorieTrackerEntries: Array<CalorieTracker> = $state(dashboard.caloriesTodayList);
 	let lastWeightTracker = $state(dashboard.weightMonthList[0]);
@@ -36,7 +36,7 @@
 	);
 
 	info(`dashboardData=${JSON.stringify(dashboard)}`);
-	info(`user profile=${JSON.stringify(userProfile)}`);
+	info(`user profile=${JSON.stringify(userContext.user)}`);
 </script>
 
 <div class="flex flex-col gap-6 overflow-x-hidden p-2">

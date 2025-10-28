@@ -1,13 +1,16 @@
 <script lang="ts">
 	import {
 		BmiCategorySchema,
+		WizardRecommendationSchema,
 		type BmiCategory,
 		type WizardInput,
 		type WizardResult
 	} from '$lib/api/gen';
-	import { StatCard } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, StatCard } from '@thwbh/veilchen';
 	import { getBmiCategoryDisplayValue } from '$lib/enum';
 	import { z } from 'zod';
+	import { Info } from 'phosphor-svelte';
+	import { Warning } from 'postcss';
 
 	interface Props {
 		wizardResult: WizardResult;
@@ -15,8 +18,17 @@
 	}
 
 	const BmiCategory = BmiCategorySchema.enum;
+	const WizardRecommendation = WizardRecommendationSchema.enum;
 
 	let { wizardResult, wizardInput }: Props = $props();
+
+	// Check if user is in low-normal BMI range (18.5-19.9)
+	// This is when they're in healthy range but have GAIN recommendation
+	let isLowNormalBmi = $derived(
+		wizardResult.bmi >= 18.5 &&
+			wizardResult.bmi < 20 &&
+			wizardResult.recommendation === WizardRecommendation.GAIN
+	);
 
 	let classificationLose = z.enum([
 		BmiCategory.Obese,
@@ -110,7 +122,25 @@
 					>.
 				</p>
 
-				{#if wizardResult.targetBmiLower <= wizardResult.bmi && wizardResult.bmi <= wizardResult.targetBmiUpper}
+				{#if isLowNormalBmi}
+					<!-- Low-normal BMI: In healthy range (18.5+) but below optimal (20-25) -->
+					<AlertBox type={AlertType.Info}>
+						<strong> You are currently in the healthy weight range</strong>
+						<p class="text-sm mt-1">
+							Your BMI of <span class="font-semibold">{wizardResult.bmi}</span> is in the healthy
+							range (18.5-24.9). However, research shows the lowest health risks occur in the
+							optimal range of <span class="font-semibold">20-25</span> (approximately
+							<span class="font-semibold"
+								>{wizardResult.targetWeightLower}kg - {wizardResult.targetWeightUpper}kg</span
+							>).
+						</p>
+						<p class="text-sm mt-2">
+							<strong>In the next step</strong>, you can choose whether to maintain your current
+							weight or gain towards the optimal range.
+						</p>
+					</AlertBox>
+				{:else if wizardResult.targetBmiLower <= wizardResult.bmi && wizardResult.bmi <= wizardResult.targetBmiUpper}
+					<!-- In optimal BMI range -->
 					<div class="alert alert-success">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -129,46 +159,20 @@
 						>
 					</div>
 				{:else}
-					<div class="alert alert-warning">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="stroke-current shrink-0 h-6 w-6"
-							fill="none"
-							viewBox="0 0 24 24"
-							><path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-							/></svg
-						>
-						<div>
-							<span class="font-semibold">Outside healthy range</span>
-							<p class="text-sm">
-								Your target weight should be between <span class="font-semibold"
-									>{wizardResult.targetWeightLower}kg - {wizardResult.targetWeightUpper}kg</span
-								>.
-							</p>
-						</div>
-					</div>
+					<AlertBox type={AlertType.Warning}>
+						<strong>Outside healthy range</strong>
+						<p class="text-sm">
+							Your target weight should be between <span class="font-semibold"
+								>{wizardResult.targetWeightLower}kg - {wizardResult.targetWeightUpper}kg</span
+							>.
+						</p>
+					</AlertBox>
 				{/if}
 
 				{#if wizardResult.bmiCategory !== BmiCategory.StandardWeight && wizardResult.bmiCategory !== BmiCategory.Overweight}
-					<div class="alert alert-info">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							class="stroke-current shrink-0 w-6 h-6"
-							><path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-							></path></svg
-						>
+					<AlertBox type={AlertType.Info}>
 						<span>It is recommended to consult with a healthcare professional.</span>
-					</div>
+					</AlertBox>
 				{/if}
 			{/if}
 
@@ -176,21 +180,25 @@
 				<div class="divider"></div>
 				<p class="leading-relaxed">
 					To reach a healthy weight ({wizardResult.targetWeightLower}kg), you should consume
-					<span class="font-semibold text-primary">{wizardResult.deficit} kcal surplus</span>
+					<span class="font-semibold text-primary"
+						>{Math.abs(wizardResult.deficit)} kcal surplus</span
+					>
 					per day (approximately
 					<span class="font-semibold text-primary">{wizardResult.target} kcal total</span>) for
 					about
-					<span class="font-semibold">{wizardResult.durationDaysLower} days</span>.
+					<span class="font-semibold">{Math.abs(wizardResult.durationDaysLower)} days</span>.
 				</p>
 			{:else if classificationLose.safeParse(wizardResult.bmiCategory).success}
 				<div class="divider"></div>
 				<p class="leading-relaxed">
 					To reach a healthy weight ({wizardResult.targetWeightUpper}kg), you should maintain a
-					<span class="font-semibold text-primary">{wizardResult.deficit} kcal deficit</span>
+					<span class="font-semibold text-primary"
+						>{Math.abs(wizardResult.deficit)} kcal deficit</span
+					>
 					per day (approximately
 					<span class="font-semibold text-primary">{wizardResult.target} kcal total</span>) for
 					about
-					<span class="font-semibold">{wizardResult.durationDaysUpper} days</span>.
+					<span class="font-semibold">{Math.abs(wizardResult.durationDaysUpper)} days</span>.
 				</p>
 			{/if}
 		</div>

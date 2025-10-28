@@ -4,8 +4,8 @@
 
 	let { data } = $props();
 
-	const userProfile = getUserContext();
-	let userData = $state(userProfile);
+	const userContext = getUserContext();
+	let userData = $state(userContext.user);
 	const bodyData = data.bodyData;
 </script>
 

@@ -1,14 +1,6 @@
 <script lang="ts">
 	import type { LibreUser } from '$lib/api/gen';
-	import {
-		AlertBox,
-		AlertType,
-		Avatar,
-		AvatarPicker,
-		ModalDialog,
-		SwipeableListItem,
-		type AvatarOption
-	} from '@thwbh/veilchen';
+	import { Avatar, AvatarPicker, ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
 	import { ArrowUUpLeft, HandSwipeLeft, HandSwipeRight, Shuffle } from 'phosphor-svelte';
 	import { getAvatar } from '$lib/avatar';
 

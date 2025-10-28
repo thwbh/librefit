@@ -202,7 +202,7 @@ pub fn calculate(wizard_input: WizardInput) -> Result<WizardResult, ValidationEr
             let target_weight_upper =
                 calculate_target_weight_upper(&target_bmi_range, &wizard_input.height);
 
-            let recommendation = calculate_recommendation(&bmi_category);
+            let recommendation = calculate_recommendation(&bmi);
 
             let mut wizard_result = WizardResult {
                 bmr: floor_f32(bmr, 2),
@@ -451,15 +451,11 @@ fn calculate_bmi_category(bmi: &f32) -> BmiCategory {
     }
 }
 
-fn calculate_target_bmi(age: &i32) -> std::ops::RangeInclusive<i32> {
-    match age {
-        19..=24 => 19..=24,
-        25..=34 => 20..=25,
-        35..=44 => 21..=26,
-        45..=54 => 22..=27,
-        55..=64 => 23..=28,
-        _ => 24..=29,
-    }
+/// Calculate target BMI range based on WHO/CDC standards.
+/// Returns fixed range of 20-25 for all adults, representing optimal BMI for health and longevity.
+/// This is based on mortality research showing lowest death rates at BMI 20-25.
+fn calculate_target_bmi(_age: &i32) -> std::ops::RangeInclusive<i32> {
+    20..=25
 }
 
 fn calculate_target_weight(target_bmi: &std::ops::RangeInclusive<i32>, height: &f32) -> f32 {
@@ -517,12 +513,23 @@ fn calculate_duration_days(weight: f32, target_weight: f32, deficit: f32) -> i32
     floor_f32((weight - target_weight) * 7000.0 / deficit, 0) as i32
 }
 
-fn calculate_recommendation(bmi_category: &BmiCategory) -> WizardRecommendation {
-    match bmi_category {
-        BmiCategory::StandardWeight => WizardRecommendation::HOLD,
-        BmiCategory::Underweight => WizardRecommendation::GAIN,
-        BmiCategory::Overweight => WizardRecommendation::LOSE,
-        BmiCategory::Obese => WizardRecommendation::LOSE,
-        BmiCategory::SeverelyObese => WizardRecommendation::LOSE,
+/// Calculate recommendation based on WHO/CDC fixed BMI categories with optimal range consideration.
+/// Uses standard thresholds: <18.5 (Underweight), 18.5-24.9 (Normal), 25-29.9 (Overweight), ≥30 (Obese)
+/// Within "Normal" range, recommends GAIN if BMI < 20 (below optimal mortality range)
+fn calculate_recommendation(bmi: &f32) -> WizardRecommendation {
+    let bmi_rounded = floor_f32(*bmi, 1);
+
+    if bmi_rounded < 18.5 {
+        WizardRecommendation::GAIN
+    } else if bmi_rounded < 20.0 {
+        // Low-normal: In healthy range (18.5+) but below optimal (20-25)
+        // Recommend gentle gain to reach optimal range
+        WizardRecommendation::GAIN
+    } else if bmi_rounded <= 25.0 {
+        // Optimal range: maintain
+        WizardRecommendation::HOLD
+    } else {
+        // Overweight or obese: lose weight
+        WizardRecommendation::LOSE
     }
 }
