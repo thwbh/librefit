@@ -22,6 +22,7 @@
 	import { CaretLeft, CaretRight, Pencil, Trash } from 'phosphor-svelte';
 	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
 	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
+	import CalorieTrackerDisplay from '$lib/component/intake/CalorieTrackerDisplay.svelte';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
@@ -291,16 +292,16 @@
 
 <ModalDialog bind:dialog={modal.deleteDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
-		{#if modal.currentEntry}
-			<span>Delete Intake</span>
-			<span>
-				<span> Do you really want to delete this entry? </span>
-			</span>
-		{/if}
+		<span>Delete Intake</span>
+		<span class="text-sm font-normal opacity-70">
+			Do you really want to delete this entry?
+		</span>
 	{/snippet}
 
 	{#snippet content()}
-		<span>{modal.currentEntry?.description}</span>
+		{#if modal.currentEntry}
+			<CalorieTrackerDisplay entry={modal.currentEntry as CalorieTracker} />
+		{/if}
 	{/snippet}
 
 	{#snippet footer()}

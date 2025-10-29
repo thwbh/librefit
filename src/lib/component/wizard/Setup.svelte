@@ -74,6 +74,9 @@
 	let finishError: boolean = $state(false);
 	let isFadingOut: boolean = $state(false);
 
+	// Get user context during component initialization (not in async function)
+	const userContext = tryGetUserContext();
+
 	// Set wizard context for child components to access
 	setWizardContext({
 		get wizardResult() {
@@ -210,7 +213,6 @@
 			});
 
 			// Update user context so the profile page reflects new data
-			const userContext = tryGetUserContext();
 			if (userContext) {
 				userContext.updateUser({
 					id: userInput.id,

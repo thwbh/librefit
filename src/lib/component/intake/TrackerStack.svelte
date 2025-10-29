@@ -6,7 +6,7 @@
 		NewCalorieTracker,
 		UpdateCalorieTrackerEntryParams
 	} from '$lib/api/gen';
-	import IntakeCard from './IntakeCard.svelte';
+	import CalorieTrackerDisplay from './CalorieTrackerDisplay.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
 	import { Trash } from 'phosphor-svelte';
 	import { AlertBox, AlertType, ModalDialog, Stack, StackCard } from '@thwbh/veilchen';
@@ -94,8 +94,8 @@
 		onswipe={(direction: string) => console.log('swiped ', direction)}
 	>
 		{#snippet card(cardKey: number, outFlyParams: FlyParams, inFlyParams: FlyParams)}
-			<StackCard isActive={cardKey === index} {cardKey} {outFlyParams} {inFlyParams}>
-				<IntakeCard entry={entries[cardKey]} onlongpress={startEditing} />
+			<StackCard isActive={cardKey === index} {cardKey} {outFlyParams} {inFlyParams} class="w-full">
+				<CalorieTrackerDisplay entry={entries[cardKey]} />
 			</StackCard>
 		{/snippet}
 	</Stack>
