@@ -1,5 +1,4 @@
 <script lang="ts">
-	import BottomDock from '$lib/component/BottomDock.svelte';
 	import { LineChart } from '@thwbh/veilchen';
 
 	let { data } = $props();
@@ -104,7 +103,7 @@
 
 	<LineChart data={calorieChartData.data} options={calorieChartData.options} />
 
-	<div class="flex flex-row justify-between pb-8">
+	<div class="flex flex-row justify-between">
 		<div class="stat">
 			<div class="stat-title">Average per day</div>
 			<div class="stat-value">
@@ -126,6 +125,4 @@
 			</div>
 		</div>
 	</div>
-
-	<BottomDock activeRoute="/progress" />
 </div>

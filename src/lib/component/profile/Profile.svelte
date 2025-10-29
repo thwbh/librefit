@@ -17,10 +17,7 @@
 
 <div class="space-y-6">
 	<!-- Profile Header with swipe-to-edit -->
-	<div>
-		<h2 class="text-xl font-bold mb-4">Profile</h2>
-		<ProfileHeader user={userData} onUpdate={handleUserUpdate} />
-	</div>
+	<ProfileHeader user={userData} onUpdate={handleUserUpdate} />
 
 	<!-- Body Data Display (read-only) -->
 	<BodyDataDisplay {bodyData} />

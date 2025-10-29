@@ -5,7 +5,6 @@
 		getTrackerHistory,
 		updateCalorieTrackerEntry
 	} from '$lib/api/gen';
-	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import { convertDateStrToDisplayDateStr, getDateAsStr, parseStringAsDate } from '$lib/date.js';
 	import type {
@@ -180,7 +179,7 @@
 		</div>
 	</div>
 
-	<div class="flex flex-col overflow-y-scroll pb-12">
+	<div class="flex flex-col overflow-y-scroll">
 		<div class="stats">
 			<div class="stat">
 				<div class="stat-title">Average calories</div>
@@ -235,8 +234,6 @@
 			</div>
 		</div>
 	</div>
-
-	<BottomDock activeRoute="/history" />
 </div>
 
 <ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>

@@ -26,7 +26,7 @@
 	import { getDateAsStr } from '$lib/date';
 	import Rate from './targets/Rate.svelte';
 	import Report from './body/Report.svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { error } from '@tauri-apps/plugin-log';
 	import { createTargetWeightTargets } from '$lib/api/util';
 	import { setWizardContext, tryGetUserContext } from '$lib/context';
@@ -251,6 +251,9 @@
 
 			// Wait for fade out animation to complete
 			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			// Invalidate all layout data to refetch user profile
+			await invalidateAll();
 
 			goto('/');
 		} catch (e) {

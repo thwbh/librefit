@@ -1,5 +1,4 @@
 <script lang="ts">
-	import BottomDock from '$lib/component/BottomDock.svelte';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import TrackerStack from '$lib/component/intake/TrackerStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
@@ -54,7 +53,7 @@
 		/>
 	</div>
 
-	<div class="flex flex-col items-center w-full pb-12">
+	<div class="flex flex-col items-center w-full">
 		<WeightScore
 			{weightTracker}
 			{lastWeightTracker}
@@ -63,5 +62,4 @@
 			onedit={updateWeightTrackerEntry}
 		/>
 	</div>
-	<BottomDock activeRoute="/" />
 </div>

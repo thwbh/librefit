@@ -3,6 +3,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import logo from '$lib/assets/logo/librefit-logo.png';
+	import { LockLaminated, LockSimple } from 'phosphor-svelte';
 
 	let mounted = false;
 	onMount(() => {
@@ -100,7 +101,9 @@
 				in:fly={{ y: 20, duration: 400, delay: 400 }}
 			>
 				<div class="flex items-center gap-3 text-sm">
-					<span class="text-2xl">🔒</span>
+					<span class="text-2xl">
+						<LockLaminated size="1em" />
+					</span>
 					<div>
 						<p class="font-semibold text-info-content">Your data stays on your device</p>
 						<p class="text-info-content opacity-80">No ads • No tracking • Open source</p>
