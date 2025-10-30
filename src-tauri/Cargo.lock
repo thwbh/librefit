@@ -4142,9 +4142,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-typegen"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "553497e0775479adba44ae4241dfb9099a596382b22c18f1c9ee359761f7c750"
+checksum = "008451604542c97d35902af44e086ffc4a402983a4f9ad56cdfa3a2d4bd3d840"
 dependencies = [
  "chrono",
  "clap",
