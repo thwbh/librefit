@@ -2,14 +2,7 @@
 	import { page } from '$app/state';
 	import { AppShell } from '@thwbh/veilchen';
 	import type { BottomNavItem } from '@thwbh/veilchen';
-	import {
-		ChartLine,
-		DotsThreeVertical,
-		Gear,
-		House,
-		IdentificationCard,
-		ListBullets
-	} from 'phosphor-svelte';
+	import { ChartLine, DotsThreeVertical, House, ListBullets } from 'phosphor-svelte';
 	import Settings from '$lib/component/settings/Settings.svelte';
 
 	let { children } = $props();

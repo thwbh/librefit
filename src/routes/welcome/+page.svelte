@@ -11,7 +11,7 @@
 	});
 
 	function start() {
-		goto('/wizard');
+		goto('/setup');
 	}
 </script>
 

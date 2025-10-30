@@ -4,14 +4,14 @@ import type { LayoutLoad } from './$types';
 /**
  * App layout loader
  *
- * Requires authentication - redirects to /about if no user exists
+ * Requires authentication - redirects to /welcome if no user exists
  */
 export const load: LayoutLoad = async ({ parent }) => {
 	const { userProfile, foodCategories } = await parent();
 
-	// Redirect to about/splash if no user exists
+	// Redirect to welcome page if no user exists
 	if (!userProfile) {
-		throw redirect(307, '/about');
+		throw redirect(307, '/welcome');
 	}
 
 	return {
