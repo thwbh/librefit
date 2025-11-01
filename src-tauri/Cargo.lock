@@ -2139,7 +2139,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-haptics",
  "tauri-plugin-log",
- "tauri-plugin-typegen",
+ "tauri-typegen",
  "validator",
 ]
 
@@ -4141,27 +4141,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-typegen"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "008451604542c97d35902af44e086ffc4a402983a4f9ad56cdfa3a2d4bd3d840"
-dependencies = [
- "chrono",
- "clap",
- "indicatif",
- "proc-macro2",
- "quote",
- "regex",
- "serde",
- "serde_json",
- "syn 2.0.106",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.11",
- "walkdir",
-]
-
-[[package]]
 name = "tauri-runtime"
 version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4208,6 +4187,27 @@ dependencies = [
  "webview2-com",
  "windows",
  "wry",
+]
+
+[[package]]
+name = "tauri-typegen"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9948f7ea3e3bfd5e9ffb04a446947ee6300215f7374e2c216ec7bb031bf1af9b"
+dependencies = [
+ "chrono",
+ "clap",
+ "indicatif",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "serde",
+ "serde_json",
+ "syn 2.0.106",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.11",
+ "walkdir",
 ]
 
 [[package]]
