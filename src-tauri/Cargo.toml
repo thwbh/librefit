@@ -33,7 +33,6 @@ rust-i18n = "3.1.2"
 libmath = "0.2.1"
 tauri-plugin-fs = "2"
 tauri-plugin-haptics = "2.3.0"
-tauri-typegen = "0.2.0"
 
 # satisfy linker for sqlite3 required by diesel
 [dependencies.libsqlite3-sys]
