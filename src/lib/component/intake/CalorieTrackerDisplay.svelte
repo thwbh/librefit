@@ -15,8 +15,8 @@
 	// Get category details
 	let categoryData = $derived(
 		categories.find((cat) => cat.shortvalue === entry.category) || {
-			key: entry.category,
-			value: entry.category
+			shortvalue: entry.category,
+			longvalue: entry.category
 		}
 	);
 
