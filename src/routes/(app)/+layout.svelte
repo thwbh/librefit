@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { AppShell } from '@thwbh/veilchen';
+	import { AppShell, ToastContainer, createRefreshContext } from '@thwbh/veilchen';
 	import type { BottomNavItem } from '@thwbh/veilchen';
 	import { ChartLine, DotsThreeVertical, House, ListBullets } from 'phosphor-svelte';
 	import Settings from '$lib/component/settings/Settings.svelte';
@@ -15,43 +15,48 @@
 			label: 'Home',
 			href: '/',
 			icon: House,
-			iconProps: { size: '1.25em' }
+			iconProps: { size: '1.25em', weight: 'bold' }
 		},
 		{
 			id: 'progress',
 			label: 'Progress',
 			href: '/progress',
 			icon: ChartLine,
-			iconProps: { size: '1.25em' }
+			iconProps: { size: '1.25em', weight: 'bold' }
 		},
 		{
 			id: 'history',
 			label: 'History',
 			href: '/history',
 			icon: ListBullets,
-			iconProps: { size: '1.25em' }
+			iconProps: { size: '1.25em', weight: 'bold' }
 		},
 		{
 			id: 'settings',
 			label: 'Settings',
 			icon: DotsThreeVertical,
-			iconProps: { size: '1.25em' },
+			iconProps: { size: '1.25em', weight: 'bold' },
 			onclick: () => {
 				isSettingsOpen = !isSettingsOpen;
 			}
 		}
 	];
 
+	const refresh = createRefreshContext();
+
 	const activeId = $derived(
 		navItems.find(
 			(item) =>
-				page.url.pathname === item.href ||
-				(page.url.pathname.startsWith(item.href) && item.href !== '/')
+				item.href &&
+				(page.url.pathname === item.href ||
+					(page.url.pathname.startsWith(item.href) && item.href !== '/'))
 		)?.id
 	);
 </script>
 
-<AppShell items={navItems} {activeId}>
+<ToastContainer position="top" align="center" />
+
+<AppShell items={navItems} {activeId} onrefresh={refresh.handler} refreshing={refresh.isRefreshing}>
 	{@render children()}
 </AppShell>
 

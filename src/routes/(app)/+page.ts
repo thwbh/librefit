@@ -8,7 +8,10 @@ import type { PageLoad } from './$types';
  * User profile is loaded at layout level and available via parent().
  * This loader only fetches dashboard-specific data.
  */
-export const load: PageLoad = async () => {
+export const load: PageLoad = async ({ depends }) => {
+
+  depends('data:dashboardData');
+
   return {
     dashboardData: await dailyDashboard({ dateStr: getDateAsStr(new Date()) })
   };
