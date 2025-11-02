@@ -13,9 +13,12 @@
 		type Dashboard,
 		type WeightTarget,
 		type WeightTracker
-	} from '$lib/api/gen';
+	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { info } from '@tauri-apps/plugin-log';
+	import { useRefresh } from '@thwbh/veilchen';
+	import { onDestroy } from 'svelte';
+	import { invalidate } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -36,6 +39,8 @@
 
 	info(`dashboardData=${JSON.stringify(dashboard)}`);
 	info(`user profile=${JSON.stringify(userContext.user)}`);
+
+	useRefresh(() => invalidate('data:dashboardData'));
 </script>
 
 <div class="flex flex-col gap-6 overflow-x-hidden p-2">
@@ -47,9 +52,9 @@
 
 		<TrackerStack
 			bind:entries={calorieTrackerEntries}
-			onadd={createCalorieTrackerEntry}
-			onedit={updateCalorieTrackerEntry}
-			ondelete={deleteCalorieTrackerEntry}
+			onadd={(params) => createCalorieTrackerEntry(params)}
+			onedit={(params) => updateCalorieTrackerEntry(params)}
+			ondelete={(params) => deleteCalorieTrackerEntry(params)}
 		/>
 	</div>
 
@@ -58,8 +63,8 @@
 			{weightTracker}
 			{lastWeightTracker}
 			{weightTarget}
-			onadd={createWeightTrackerEntry}
-			onedit={updateWeightTrackerEntry}
+			onadd={(entry) => createWeightTrackerEntry({ newEntry: entry })}
+			onedit={(id, entry) => updateWeightTrackerEntry({ trackerId: id, updatedEntry: entry })}
 		/>
 	</div>
 </div>

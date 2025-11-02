@@ -5,11 +5,11 @@
 	import { getAvatar } from '$lib/avatar';
 
 	interface Props {
-		userInput: LibreUser;
+		userData: LibreUser;
 		onAvatarChange?: (newAvatar: string) => void;
 	}
 
-	let { userInput, onAvatarChange }: Props = $props();
+	let { userData, onAvatarChange }: Props = $props();
 
 	let hasOpenedPicker = $state(false);
 
@@ -19,11 +19,11 @@
 	let tempSelectedAvatar = $state('');
 	let tempRandomSeed = $state('');
 
-	// Current confirmed avatar (derived from userInput)
+	// Current confirmed avatar (derived from userData)
 	// Dynamically shows name-based avatar until picker is opened
 	let currentAvatar = $derived.by(() => {
-		let avatar = userInput.avatar;
-		let username = userInput.name!;
+		let avatar = userData.avatar;
+		let username = userData.name!;
 
 		if (avatar) {
 			return getAvatar(avatar);
@@ -37,13 +37,13 @@
 		hasOpenedPicker = true;
 
 		// Initialize temp state with current confirmed state
-		const currentAvatarValue = userInput.avatar || userInput.name!;
+		const currentAvatarValue = userData.avatar || userData.name!;
 		const isDefaultAvatar = currentAvatarValue && defaults.indexOf(currentAvatarValue) > -1;
 
 		// If user selected a default avatar, show username in random slot to avoid duplicates
 		// Otherwise show the current avatar (username or randomized)
 		if (isDefaultAvatar) {
-			tempRandomSeed = userInput.name!;
+			tempRandomSeed = userData.name!;
 		} else {
 			tempRandomSeed = currentAvatarValue;
 		}
@@ -94,8 +94,8 @@
 	};
 
 	const reset = () => {
-		tempRandomSeed = userInput.name!;
-		tempSelectedAvatar = userInput.name!;
+		tempRandomSeed = userData.name!;
+		tempSelectedAvatar = userData.name!;
 	};
 
 	// Avatar options shown in picker (random + presets)

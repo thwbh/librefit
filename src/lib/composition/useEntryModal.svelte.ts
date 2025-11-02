@@ -2,33 +2,46 @@
  * Reusable composition for managing CRUD modals (Create, Edit, Delete)
  *
  * This hook encapsulates the common pattern of managing entry modals with
- * create, edit, and delete operations. It handles all the state management
- * and provides clean callbacks for the actual API operations.
+ * create, edit, and delete operations. It handles all the state management,
+ * validation errors, and provides clean callbacks for the actual API operations.
+ *
+ * When validation errors occur, the error message is displayed and event propagation
+ * is stopped to prevent the modal from closing.
  *
  * @example
  * ```typescript
+ * import { createCalorieTrackerEntry, updateCalorieTrackerEntry, deleteCalorieTrackerEntry } from '$lib/api/gen/commands';
+ *
  * const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
- *   onCreate: async (entry) => await createCalorieTrackerEntry({ newEntry: entry }),
- *   onUpdate: async (id, entry) => await updateCalorieTrackerEntry({ trackerId: id, updatedEntry: entry }),
- *   onDelete: async (id) => { await deleteCalorieTrackerEntry({ trackerId: id }); },
+ *   onCreate: (entry, hooks) => createCalorieTrackerEntry({ newEntry: entry }, hooks),
+ *   onUpdate: (id, entry, hooks) => updateCalorieTrackerEntry({ trackerId: id, updatedEntry: entry }, hooks),
+ *   onDelete: (id, hooks) => deleteCalorieTrackerEntry({ trackerId: id }, hooks),
  *   getBlankEntry: () => ({ added: '2024-01-01', amount: 0, category: 'l', description: '' })
  * });
  *
  * // In template:
  * <button onclick={modal.openCreate}>Add Entry</button>
- * <ModalDialog bind:dialog={modal.createDialog} onconfirm={modal.save} oncancel={modal.cancel}>
+ * <ModalDialog
+ *   bind:dialog={modal.createDialog}
+ *   onconfirm={modal.save}
+ *   oncancel={modal.cancel}
+ * >
  *   <CalorieTrackerMask bind:entry={modal.currentEntry} isEditing={true} />
  * </ModalDialog>
  * ```
  */
 
+import type { CommandHooks } from '$lib/api/gen/commands';
+import { type ZodError } from 'zod';
+import { formatZodError, formatInvokeError, formatError } from '$lib/api/error-formatter';
+
 export interface UseEntryModalOptions<T extends { id?: number }, N = T> {
-  /** Called when creating a new entry */
-  onCreate: (entry: N) => Promise<T>;
-  /** Called when updating an existing entry */
-  onUpdate: (id: number, entry: T) => Promise<T>;
-  /** Called when deleting an entry */
-  onDelete: (id: number) => Promise<number>;
+  /** Called when creating a new entry - receives optional hooks for error/success handling */
+  onCreate: (entry: N, hooks?: CommandHooks<T>) => Promise<T>;
+  /** Called when updating an existing entry - receives optional hooks for error/success handling */
+  onUpdate: (id: number, entry: T, hooks?: CommandHooks<T>) => Promise<T>;
+  /** Called when deleting an entry - receives optional hooks for error/success handling */
+  onDelete: (id: number, hooks?: CommandHooks<number>) => Promise<number>;
   /** Returns a blank entry for the create form */
   getBlankEntry: () => N;
   /** Optional callback after successful create */
@@ -60,6 +73,10 @@ export function useEntryModal<T extends { id?: number }, N = T>(
   let enableDelete = $state(false);
   let isProcessing = $state(false);
 
+  // Error handling
+  let errorMessage = $state<string | undefined>();
+  let validationError = $state<ZodError | undefined>();
+
   /**
    * Open create modal with a blank entry
    */
@@ -67,6 +84,8 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     mode = 'create';
     currentEntry = getBlankEntry();
     enableDelete = false;
+    errorMessage = undefined;
+    validationError = undefined;
     createDialog?.showModal();
   };
 
@@ -78,11 +97,13 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     editingEntry = entry;
     currentEntry = { ...entry }; // Copy to avoid mutating original
     enableDelete = false;
+    errorMessage = undefined;
+    validationError = undefined;
     editDialog?.showModal();
   };
 
 
-  /** 
+  /**
    * Open delete modal with an existing entry
    */
   const openDelete = (entry: T) => {
@@ -90,36 +111,100 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     editingEntry = entry;
     currentEntry = { ...entry };
     enableDelete = true;
+    errorMessage = undefined;
+    validationError = undefined;
     deleteDialog?.showModal();
   }
 
   /**
    * Save the current entry (create or update)
+   * Returns true if successful, false if validation error occurred
    */
-  const save = async () => {
-    if (isProcessing) return;
+  const save = async (event?: Event): Promise<boolean> => {
+    if (isProcessing) return false;
 
+    // Clear previous errors
+    errorMessage = undefined;
+    validationError = undefined;
     isProcessing = true;
 
     try {
       if (mode === 'create') {
-        const created = await onCreate(currentEntry as N);
-        onCreateSuccess?.(created);
-        createDialog?.close();
+        let success = false;
+
+        try {
+          const data = await onCreate(currentEntry as N);
+
+          success = true;
+
+          onCreateSuccess?.(data);
+          createDialog?.close();
+
+          currentEntry = undefined;
+          editingEntry = undefined;
+          enableDelete = false;
+        } catch (error: unknown) {
+          event?.preventDefault();
+          event?.stopPropagation();
+
+          errorMessage = formatError(error);
+          success = false;
+        }
+
+        return success;
+
       } else if (mode === 'edit' && editingEntry?.id !== undefined) {
-        const updated = await onUpdate(editingEntry.id, currentEntry as T);
-        onUpdateSuccess?.(updated);
-        editDialog?.close();
+        let success = false;
+
+        try {
+          const data = await onUpdate(editingEntry.id!, editingEntry);
+
+          success = true;
+
+          onUpdateSuccess?.(data);
+          editDialog?.close();
+
+          currentEntry = undefined;
+          editingEntry = undefined;
+          enableDelete = false;
+        } catch (error: unknown) {
+          event?.preventDefault();
+          event?.stopPropagation();
+          errorMessage = formatError(error);
+
+          success = false;
+        }
+
+        return success;
+
       } else if (mode === 'delete' && editingEntry?.id !== undefined) {
-        const deleted = await onDelete(editingEntry.id);
-        onDeleteSuccess?.(deleted);
-        deleteDialog?.close();
+        let success = false;
+
+        try {
+          const id = await onDelete(editingEntry.id);
+
+          success = true;
+
+          onDeleteSuccess?.(id);
+          deleteDialog?.close();
+
+
+          currentEntry = undefined;
+          editingEntry = undefined;
+
+          enableDelete = false;
+        } catch (error: unknown) {
+          event?.preventDefault();
+          event?.stopPropagation();
+          errorMessage = formatError(error);
+
+          success = false;
+        }
+
+        return success;
       }
 
-      // Reset state
-      currentEntry = undefined;
-      editingEntry = undefined;
-      enableDelete = false;
+      return false;
     } finally {
       isProcessing = false;
     }
@@ -136,25 +221,52 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     currentEntry = undefined;
     editingEntry = undefined;
     enableDelete = false;
+    errorMessage = undefined;
+    validationError = undefined;
   };
 
   /**
    * Delete the current entry
    */
-  const deleteEntry = async () => {
-    if (isProcessing || !editingEntry?.id) return;
+  const deleteEntry = async (event?: Event): Promise<boolean> => {
+    if (isProcessing || !editingEntry?.id) return false;
 
+    // Clear previous errors
+    errorMessage = undefined;
+    validationError = undefined;
     isProcessing = true;
 
     try {
-      await onDelete(editingEntry.id);
-      onDeleteSuccess?.(editingEntry.id);
-      editDialog?.close();
-      deleteDialog?.close();
+      let success = false;
 
-      currentEntry = undefined;
-      editingEntry = undefined;
-      enableDelete = false;
+      const result = await onDelete(editingEntry.id, {
+        onValidationError: (error) => {
+          // Stop event propagation to prevent modal from closing
+          event?.preventDefault();
+          event?.stopPropagation();
+          errorMessage = formatZodError(error);
+          validationError = error;
+        },
+        onInvokeError: (error) => {
+          // Stop event propagation to prevent modal from closing
+          event?.preventDefault();
+          event?.stopPropagation();
+          errorMessage = formatInvokeError(error);
+        },
+        onSuccess: (id) => {
+          success = true;
+          onDeleteSuccess?.(id);
+          editDialog?.close();
+          deleteDialog?.close();
+
+          // Reset state on success
+          currentEntry = undefined;
+          editingEntry = undefined;
+          enableDelete = false;
+        }
+      });
+
+      return success;
     } finally {
       isProcessing = false;
     }
@@ -165,6 +277,14 @@ export function useEntryModal<T extends { id?: number }, N = T>(
    */
   const requestDelete = () => {
     enableDelete = true;
+  };
+
+  /**
+   * Clear error message
+   */
+  const clearError = () => {
+    errorMessage = undefined;
+    validationError = undefined;
   };
 
   return {
@@ -190,6 +310,11 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     get isProcessing() { return isProcessing; },
     get isEditing() { return mode === 'edit'; },
 
+    // Error state
+    get errorMessage() { return errorMessage; },
+    get validationError() { return validationError; },
+    get hasError() { return errorMessage !== undefined; },
+
     // Actions
     openCreate,
     openEdit,
@@ -197,6 +322,7 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     save,
     cancel,
     deleteEntry,
-    requestDelete
+    requestDelete,
+    clearError
   };
 }

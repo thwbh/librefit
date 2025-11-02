@@ -9,13 +9,13 @@
 		processingStep: string;
 		hasError: boolean;
 		isFadingOut: boolean;
-		userInput: LibreUser;
+		userData: LibreUser;
 		onRetry: () => void;
 	}
 
-	let { isProcessing, processingStep, hasError, isFadingOut, userInput, onRetry }: Props = $props();
+	let { isProcessing, processingStep, hasError, isFadingOut, userData, onRetry }: Props = $props();
 
-	let avatarSrc = $derived(getAvatar(userInput.avatar || userInput.name!));
+	let avatarSrc = $derived(getAvatar(userData.avatar || userData.name!));
 </script>
 
 <div

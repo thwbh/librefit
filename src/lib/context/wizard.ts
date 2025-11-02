@@ -13,7 +13,7 @@ import type {
 export interface WizardState {
   wizardResult?: WizardResult;
   wizardInput: WizardInput;
-  userInput: LibreUser;
+  userData: LibreUser;
   chosenRate: number;
   weightTarget?: NewWeightTarget;
   calorieTarget?: NewCalorieTarget;

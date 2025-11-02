@@ -4,11 +4,12 @@
 	import type { BreadcrumbItem } from '@thwbh/veilchen';
 	import { getUserContext } from '$lib/context';
 	import { Gear, IdentificationCard } from 'phosphor-svelte';
+	import type { LibreUser } from '$lib/api/index.js';
 
 	let { data } = $props();
 
 	const userContext = getUserContext();
-	let userData = $state(userContext.user);
+	let userData: LibreUser = $state(userContext.user)!;
 	const bodyData = data.bodyData;
 
 	const items: BreadcrumbItem[] = [

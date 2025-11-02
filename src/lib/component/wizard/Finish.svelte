@@ -8,10 +8,10 @@
 
 	// Get wizard state from context instead of props
 	const wizardState = getWizardContext();
-	const { wizardResult, wizardInput, userInput, chosenRate, weightTarget, calorieTarget } =
+	const { wizardResult, wizardInput, userData, chosenRate, weightTarget, calorieTarget } =
 		wizardState;
 
-	let avatarSrc = $derived(getAvatar(userInput.avatar || userInput.name!));
+	let avatarSrc = $derived(getAvatar(userData.avatar || userData.name!));
 	let activityInfo = $derived(getActivityLevelInfo(wizardInput.activityLevel || 1));
 	let ActivityIcon = $derived(activityInfo.icon);
 
@@ -41,7 +41,7 @@
 			<div class="flex-1 space-y-3">
 				<div>
 					<p class="text-sm text-base-content opacity-60">Nickname</p>
-					<p class="text-xl font-bold text-base-content">{userInput?.name}</p>
+					<p class="text-xl font-bold text-base-content">{userData?.name}</p>
 				</div>
 				<div class="flex items-center gap-3">
 					<div>

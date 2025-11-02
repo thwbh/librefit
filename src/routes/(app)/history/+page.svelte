@@ -1,19 +1,13 @@
 <script lang="ts">
 	import {
-		createCalorieTrackerEntry,
-		deleteCalorieTrackerEntry,
-		getTrackerHistory,
-		updateCalorieTrackerEntry
-	} from '$lib/api/gen';
+		type CalorieTarget,
+		type CalorieTracker,
+		type NewCalorieTracker,
+		type TrackerHistory,
+		type WeightTracker
+	} from '$lib/api';
 	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import { convertDateStrToDisplayDateStr, getDateAsStr, parseStringAsDate } from '$lib/date.js';
-	import type {
-		CalorieTarget,
-		CalorieTracker,
-		NewCalorieTracker,
-		TrackerHistory,
-		WeightTracker
-	} from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { info } from '@tauri-apps/plugin-log';
 	import { addDays, compareAsc, subDays } from 'date-fns';
@@ -26,6 +20,12 @@
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
+	import {
+		createCalorieTrackerEntry,
+		deleteCalorieTrackerEntry,
+		getTrackerHistory,
+		updateCalorieTrackerEntry
+	} from '$lib/api/gen/commands.js';
 
 	let { data } = $props();
 
@@ -61,12 +61,9 @@
 
 	// Modal composition for CRUD operations
 	const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
-		onCreate: async (entry) => await createCalorieTrackerEntry({ newEntry: entry }),
-		onUpdate: async (id, entry) =>
-			await updateCalorieTrackerEntry({ trackerId: id, updatedEntry: entry }),
-		onDelete: async (id) => {
-			await deleteCalorieTrackerEntry({ trackerId: id });
-		},
+		onCreate: (entry) => createCalorieTrackerEntry({ newEntry: entry }),
+		onUpdate: (id, entry) => updateCalorieTrackerEntry({ trackerId: id, updatedEntry: entry }),
+		onDelete: (id) => deleteCalorieTrackerEntry({ trackerId: id }),
 		getBlankEntry: () => ({
 			added: selectedDateStr,
 			amount: 0,
@@ -114,10 +111,14 @@
 	};
 
 	const updateRange = async (dateFrom: Date, dateTo: Date) => {
-		trackerHistory = await getTrackerHistory({
+		const result = await getTrackerHistory({
 			dateFromStr: getDateAsStr(dateFrom),
 			dateToStr: getDateAsStr(dateTo)
 		});
+
+		if (result) {
+			trackerHistory = result;
+		}
 	};
 
 	const getActiveClass = (dateStr: string) =>
@@ -290,9 +291,7 @@
 <ModalDialog bind:dialog={modal.deleteDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
 		<span>Delete Intake</span>
-		<span class="text-sm font-normal opacity-70">
-			Do you really want to delete this entry?
-		</span>
+		<span class="text-sm font-normal opacity-70"> Do you really want to delete this entry? </span>
 	{/snippet}
 
 	{#snippet content()}

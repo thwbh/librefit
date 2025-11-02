@@ -3,22 +3,26 @@
 	import Body from './body/Body.svelte';
 	import SetupComplete from './SetupComplete.svelte';
 	import {
+		updateUser,
+		updateBodyData,
+		wizardCreateTargets,
+		wizardCalculateTdee,
+		wizardCalculateForTargetWeight
+	} from '$lib/api/gen/commands';
+	import {
 		CalculationGoalSchema,
 		CalculationSexSchema,
-		updateBodyData,
-		updateUser,
-		wizardCalculateForTargetWeight,
-		wizardCalculateTdee,
-		wizardCreateTargets,
-		WizardRecommendationSchema,
-		type LibreUser,
-		type NewCalorieTarget,
-		type NewWeightTarget,
-		type NewWeightTracker,
-		type WizardInput,
-		type WizardResult,
-		type WizardTargetWeightResult
-	} from '$lib/api/gen';
+		WizardRecommendationSchema
+	} from '$lib/api/gen/types';
+	import type {
+		LibreUser,
+		NewCalorieTarget,
+		NewWeightTarget,
+		NewWeightTracker,
+		WizardInput,
+		WizardResult,
+		WizardTargetWeightResult
+	} from '$lib/api';
 	import type { WizardTargetSelection } from '$lib/types';
 	import { WizardOptions } from '$lib/enum';
 	import Finish from './Finish.svelte';
@@ -31,17 +35,23 @@
 	import { createTargetWeightTargets } from '$lib/api/util';
 	import { setWizardContext, tryGetUserContext } from '$lib/context';
 
+	interface Props {
+		userData?: LibreUser;
+	}
+
+	let {
+		userData = {
+			id: 1,
+			name: 'Arnie',
+			avatar: ''
+		}
+	}: Props = $props();
+
 	const CalculationGoal = CalculationGoalSchema.enum;
 	const CalculationSex = CalculationSexSchema.enum;
 	const WizardRecommendation = WizardRecommendationSchema.enum;
 
 	let currentStep = $state(1);
-
-	let userInput: LibreUser = $state({
-		id: 1,
-		name: 'Arnie',
-		avatar: ''
-	});
 
 	let wizardInput: WizardInput = $state({
 		age: 30,
@@ -85,8 +95,8 @@
 		get wizardInput() {
 			return wizardInput;
 		},
-		get userInput() {
-			return userInput;
+		get userData() {
+			return userData;
 		},
 		get chosenRate() {
 			return chosenRate;
@@ -102,8 +112,8 @@
 	const onnext = async () => {
 		if (currentStep === 1) {
 			// Lock in avatar to name if user never opened the picker
-			if (!userInput.avatar) {
-				userInput.avatar = userInput.name!;
+			if (!userData.avatar) {
+				userData.avatar = userData.name!;
 			}
 		}
 
@@ -115,24 +125,28 @@
 		}
 
 		if (currentStep === 3) {
-			wizardResult = await wizardCalculateTdee({
+			const result = await wizardCalculateTdee({
 				input: wizardInput
 			});
 
-			if (wizardResult.recommendation === WizardRecommendation.LOSE) {
-				chosenOption.customDetails = wizardResult.targetWeightUpper;
-			} else if (wizardResult.recommendation === WizardRecommendation.HOLD) {
-				// Initialize target weight to current weight for HOLD users
-				chosenTargetWeight = wizardInput.weight;
-			} else if (wizardResult.recommendation === WizardRecommendation.GAIN) {
-				chosenOption.customDetails = wizardResult.targetWeightLower;
-				// Also initialize for potential override to HOLD
-				chosenTargetWeight = wizardInput.weight;
+			if (result) {
+				wizardResult = result;
+
+				if (result.recommendation === WizardRecommendation.LOSE) {
+					chosenOption.customDetails = result.targetWeightUpper;
+				} else if (result.recommendation === WizardRecommendation.HOLD) {
+					// Initialize target weight to current weight for HOLD users
+					chosenTargetWeight = wizardInput.weight;
+				} else if (result.recommendation === WizardRecommendation.GAIN) {
+					chosenOption.customDetails = result.targetWeightLower;
+					// Also initialize for potential override to HOLD
+					chosenTargetWeight = wizardInput.weight;
+				}
 			}
 		}
 
 		if (currentStep === 4) {
-			wizardTargetWeightResult = await wizardCalculateForTargetWeight({
+			const result = await wizardCalculateForTargetWeight({
 				input: {
 					age: wizardInput.age,
 					sex: wizardInput.sex,
@@ -142,6 +156,10 @@
 					startDate: getDateAsStr(new Date())
 				}
 			});
+
+			if (result) {
+				wizardTargetWeightResult = result;
+			}
 		}
 
 		if (currentStep === 5) {
@@ -194,7 +212,9 @@
 					startDate: getDateAsStr(new Date())
 				}
 			}).then((result) => {
-				wizardTargetWeightResult = result;
+				if (result) {
+					wizardTargetWeightResult = result;
+				}
 			});
 		}
 	});
@@ -207,17 +227,17 @@
 		try {
 			processingStep = 'Saving your profile...';
 			await new Promise((resolve) => setTimeout(resolve, 800));
-			await updateUser({
-				userName: userInput.name!,
-				userAvatar: userInput.avatar!
+			const userResult = await updateUser({
+				userName: userData.name!,
+				userAvatar: userData.avatar!
 			});
 
 			// Update user context so the profile page reflects new data
-			if (userContext) {
+			if (userContext && userResult) {
 				userContext.updateUser({
-					id: userInput.id,
-					name: userInput.name!,
-					avatar: userInput.avatar!
+					id: userResult.id,
+					name: userResult.name!,
+					avatar: userResult.avatar!
 				});
 			}
 
@@ -283,7 +303,7 @@
 					Let's start with some basic information about you
 				</p>
 			</div>
-			<Body bind:wizardInput bind:userInput />
+			<Body bind:wizardInput bind:userData />
 		{/snippet}
 
 		{#snippet step2()}
@@ -355,7 +375,7 @@
 		{processingStep}
 		{isFadingOut}
 		hasError={finishError}
-		{userInput}
+		{userData}
 		onRetry={handleRetry}
 	/>
 {/if}

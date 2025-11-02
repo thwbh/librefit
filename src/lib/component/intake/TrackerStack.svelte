@@ -12,7 +12,6 @@
 	import { AlertBox, AlertType, ModalDialog, Stack, StackCard } from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, type FlyParams } from 'svelte/transition';
-	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 
 	interface Props {
@@ -39,21 +38,20 @@
 	}: Props = $props();
 
 	let index = $state(0);
-	let focusedEntry = $derived(entries[index]);
 
 	// Use modal composition hook
 	const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
-		onCreate: async (entry) => {
+		onCreate: (entry) => {
 			if (!onadd) throw new Error('onadd not provided');
-			return await onadd({ newEntry: entry });
+			return onadd({ newEntry: entry });
 		},
-		onUpdate: async (id, entry) => {
+		onUpdate: (id, entry) => {
 			if (!onedit) throw new Error('onedit not provided');
-			return await onedit({ trackerId: id, updatedEntry: entry });
+			return onedit({ trackerId: id, updatedEntry: entry });
 		},
-		onDelete: async (id) => {
+		onDelete: (id) => {
 			if (!ondelete) throw new Error('ondelete not provided');
-			await ondelete({ trackerId: id });
+			return ondelete({ trackerId: id });
 		},
 		getBlankEntry,
 		onCreateSuccess: (newEntry) => {
@@ -77,13 +75,6 @@
 			}
 		}
 	});
-
-	const startEditing = async () => {
-		await vibrate(2);
-		if (focusedEntry) {
-			modal.openEdit(focusedEntry);
-		}
-	};
 </script>
 
 {#if entries.length > 0}

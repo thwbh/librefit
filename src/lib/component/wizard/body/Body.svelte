@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { Avatar, ButtonGroup, RangeInput, ValidatedInput } from '@thwbh/veilchen';
+	import { ButtonGroup, RangeInput, ValidatedInput } from '@thwbh/veilchen';
 	import type { KeyValuePair } from '@thwbh/veilchen';
 	import { CalculationSexSchema, type LibreUser, type WizardInput } from '$lib/api/gen';
 	import UserAvatar from '$lib/component/profile/UserAvatar.svelte';
 
 	interface Props {
 		wizardInput: WizardInput;
-		userInput: LibreUser;
+		userData: LibreUser;
 	}
 
-	let { wizardInput = $bindable(), userInput = $bindable() }: Props = $props();
+	let { wizardInput = $bindable(), userData = $bindable() }: Props = $props();
 
 	let sexSelection: Array<KeyValuePair> = [
 		{ key: CalculationSexSchema.enum.MALE, value: 'Male' },
@@ -26,12 +26,12 @@
 						type="text"
 						minlength={2}
 						maxlength={40}
-						bind:value={userInput.name!}
+						bind:value={userData.name!}
 						label="Nickname"
 						required
 					/>
 				</div>
-				<UserAvatar {userInput} onAvatarChange={(newAvatar) => (userInput.avatar = newAvatar)} />
+				<UserAvatar {userData} onAvatarChange={(newAvatar) => (userData.avatar = newAvatar)} />
 			</div>
 		</div>
 
