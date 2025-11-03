@@ -9,10 +9,18 @@
 	import CalorieTrackerDisplay from './CalorieTrackerDisplay.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
 	import { Trash } from 'phosphor-svelte';
-	import { AlertBox, AlertType, ModalDialog, Stack, StackCard } from '@thwbh/veilchen';
+	import {
+		AlertBox,
+		AlertType,
+		LongPressContainer,
+		ModalDialog,
+		Stack,
+		StackCard
+	} from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, type FlyParams } from 'svelte/transition';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
+	import QuickSelectCalorieInput from './QuickSelectCalorieInput.svelte';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
@@ -86,7 +94,9 @@
 	>
 		{#snippet card(cardKey: number, outFlyParams: FlyParams, inFlyParams: FlyParams)}
 			<StackCard isActive={cardKey === index} {cardKey} {outFlyParams} {inFlyParams} class="w-full">
-				<CalorieTrackerDisplay entry={entries[cardKey]} />
+				<LongPressContainer onlongpress={() => modal.openEdit(entries[cardKey])}>
+					<CalorieTrackerMask entry={entries[cardKey]} readonly />
+				</LongPressContainer>
 			</StackCard>
 		{/snippet}
 	</Stack>
