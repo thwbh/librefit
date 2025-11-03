@@ -6,7 +6,6 @@
 		NewCalorieTracker,
 		UpdateCalorieTrackerEntryParams
 	} from '$lib/api/gen';
-	import CalorieTrackerDisplay from './CalorieTrackerDisplay.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
 	import { Trash } from 'phosphor-svelte';
 	import {
@@ -20,7 +19,6 @@
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, type FlyParams } from 'svelte/transition';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
-	import QuickSelectCalorieInput from './QuickSelectCalorieInput.svelte';
 
 	interface Props {
 		entries: Array<CalorieTracker>;

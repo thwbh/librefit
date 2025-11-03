@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { display_date_format, getDateAsStr, parseStringAsDate } from '$lib/date';
 	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/api/gen';
-	import { ModalDialog, ValidatedInput } from '@thwbh/veilchen';
+	import { ModalDialog, NumberStepper } from '@thwbh/veilchen';
 	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
 	import { Shield, ShieldCheck, ShieldWarning } from 'phosphor-svelte';
@@ -126,17 +126,17 @@
 				</div>
 			{/if}
 			{#if modal.currentEntry}
-				<ValidatedInput
+				<NumberStepper
 					bind:value={modal.currentEntry.amount}
 					label="Current Weight"
-					type="number"
 					unit="kg"
-					errorInline={true}
 					min={30}
 					max={330}
-				>
-					Please enter a valid weight.
-				</ValidatedInput>
+					incrementSteps={[0.5, 1, 2, 5]}
+					decrementSteps={[0.5, 1, 2, 5]}
+					initialIncrementStep={1}
+					initialDecrementStep={1}
+				/>
 			{/if}
 		</fieldset>
 	{/snippet}
