@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { CalorieTracker } from '$lib/api/gen';
 	import { getCategoriesContext } from '$lib/context';
-	import { convertDateStrToDisplayTimeStr } from '$lib/date';
-	import { Fire, Calendar, TagChevron, Timer } from 'phosphor-svelte';
+	import { Fire, TagChevron } from 'phosphor-svelte';
 
 	interface Props {
 		entry: CalorieTracker;
@@ -19,42 +18,33 @@
 			longvalue: entry.category
 		}
 	);
-
-	// Format date display
-	let dateDisplay = $derived(convertDateStrToDisplayTimeStr(entry.added));
 </script>
 
-<div class="h-full w-full">
-	<!-- Calorie Display - Hero Section -->
-	<div class="flex flex-col items-center justify-center py-8 px-6 bg-primary/5 flex-shrink-0">
-		<div class="flex items-baseline gap-2 mb-2">
-			<span class="text-6xl font-extrabold text-primary tracking-tight">{entry.amount}</span>
-			<span class="text-xl font-medium text-primary/70">kcal</span>
+<div class="h-full w-full flex flex-col p-6 gap-4">
+	<!-- Header: Calories + Category -->
+	<div class="flex items-center justify-between">
+		<!-- Calorie Amount -->
+		<div class="flex items-baseline gap-2">
+			<Fire size="1.5rem" weight="fill" class="text-primary" />
+			<span class="text-4xl font-bold text-primary">{entry.amount}</span>
+			<span class="text-lg font-medium text-base-content/60">kcal</span>
 		</div>
-		<Fire size="2rem" weight="fill" class="text-primary/40" />
-	</div>
 
-	<!-- Content Section -->
-	<div class="flex-1 flex flex-col justify-between px-6 py-4 space-y-4">
 		<!-- Category Badge -->
-		<div class="flex items-center justify-center">
-			<div class="badge badge-secondary badge-lg gap-2 px-4 py-3">
-				<TagChevron size="1.2rem" weight="fill" />
-				<span class="font-semibold">{categoryData.longvalue}</span>
-			</div>
-		</div>
-
-		<!-- Description -->
-		{#if entry.description && entry.description.trim().length > 0}
-			<div class="bg-base-300/30 rounded-xl p-4 border-l-4 border-secondary">
-				<p class="text-base-content/90 leading-relaxed">{entry.description}</p>
-			</div>
-		{/if}
-
-		<!-- Date Footer -->
-		<div class="flex items-center justify-center gap-2 pt-2">
-			<Timer size="1rem" class="opacity-50" />
-			<span class="text-xs font-medium opacity-60 uppercase tracking-wide">{dateDisplay}</span>
+		<div class="badge badge-secondary gap-2 px-3 py-2.5">
+			<TagChevron size="1rem" weight="fill" />
+			<span class="font-semibold text-sm">{categoryData.longvalue}</span>
 		</div>
 	</div>
+
+	<!-- Description -->
+	{#if entry.description && entry.description.trim().length > 0}
+		<div class="bg-base-200/50 rounded-lg p-4">
+			<p class="text-base-content/80 text-sm leading-relaxed">{entry.description}</p>
+		</div>
+	{:else}
+		<div class="flex-1 flex items-center justify-center opacity-40">
+			<p class="text-sm italic">No description</p>
+		</div>
+	{/if}
 </div>
