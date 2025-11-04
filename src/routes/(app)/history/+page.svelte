@@ -15,7 +15,6 @@
 	import { CaretLeft, CaretRight, Pencil, Trash } from 'phosphor-svelte';
 	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
 	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
-	import CalorieTrackerDisplay from '$lib/component/intake/CalorieTrackerDisplay.svelte';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
@@ -50,7 +49,9 @@
 	let caloriesHistory: Array<CalorieTracker> = $derived.by(() => {
 		if (!trackerHistory || !trackerHistory.caloriesHistory[selectedDateStr]) return [];
 
-		return [...trackerHistory?.caloriesHistory[selectedDateStr]];
+		const result = [...trackerHistory?.caloriesHistory[selectedDateStr]];
+		info(`[History] caloriesHistory derived - count: ${result.length}`);
+		return result;
 	});
 
 	let weightHistory: Array<WeightTracker> = $derived.by(() => {
@@ -71,20 +72,49 @@
 			description: ''
 		}),
 		onCreateSuccess: (newEntry) => {
-			caloriesHistory = [...caloriesHistory, newEntry];
-			trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+			trackerHistory = {
+				...trackerHistory,
+				caloriesHistory: {
+					...trackerHistory.caloriesHistory,
+					[selectedDateStr]: [...trackerHistory.caloriesHistory[selectedDateStr], newEntry]
+				}
+			};
 		},
 		onUpdateSuccess: (updatedEntry) => {
-			const idx = caloriesHistory.findIndex((e) => e.id === updatedEntry.id);
+			const entries = [...trackerHistory.caloriesHistory[selectedDateStr]];
+			const idx = entries.findIndex((e) => e.id === updatedEntry.id);
 			if (idx !== -1) {
-				caloriesHistory[idx] = updatedEntry;
-				caloriesHistory = [...caloriesHistory];
-				trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+				entries[idx] = updatedEntry;
+				trackerHistory = {
+					...trackerHistory,
+					caloriesHistory: {
+						...trackerHistory.caloriesHistory,
+						[selectedDateStr]: entries
+					}
+				};
 			}
 		},
 		onDeleteSuccess: (id) => {
-			caloriesHistory = caloriesHistory.filter((e) => e.id !== id);
-			trackerHistory.caloriesHistory[selectedDateStr] = caloriesHistory;
+			info(`[History] onDeleteSuccess id=${id}, type=${typeof id}`);
+			info(`[History] Before delete - entries count: ${trackerHistory.caloriesHistory[selectedDateStr].length}`);
+			info(`[History] Entry IDs: ${JSON.stringify(trackerHistory.caloriesHistory[selectedDateStr].map(e => ({ id: e.id, type: typeof e.id })))}`);
+
+			const filtered = trackerHistory.caloriesHistory[selectedDateStr].filter((e) => {
+				const match = e.id !== id;
+				info(`[History] Entry ${e.id} (${typeof e.id}) !== ${id} (${typeof id}) = ${match}`);
+				return match;
+			});
+			info(`[History] After filter - entries count: ${filtered.length}`);
+
+			trackerHistory = {
+				...trackerHistory,
+				caloriesHistory: {
+					...trackerHistory.caloriesHistory,
+					[selectedDateStr]: filtered
+				}
+			};
+
+			info(`[History] After reassignment - entries count: ${trackerHistory.caloriesHistory[selectedDateStr].length}`);
 		}
 	});
 
@@ -272,7 +302,7 @@
 	{#snippet content()}
 		{#if modal.currentEntry}
 			<CalorieTrackerMask
-				entry={modal.currentEntry as CalorieTracker}
+				bind:entry={modal.currentEntry as CalorieTracker}
 				isEditing={modal.isEditing}
 			/>
 		{/if}
@@ -288,7 +318,11 @@
 	{/snippet}
 </ModalDialog>
 
-<ModalDialog bind:dialog={modal.deleteDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
+<ModalDialog
+	bind:dialog={modal.deleteDialog.value}
+	onconfirm={modal.deleteEntry}
+	oncancel={modal.cancel}
+>
 	{#snippet title()}
 		<span>Delete Intake</span>
 		<span class="text-sm font-normal opacity-70"> Do you really want to delete this entry? </span>
@@ -296,7 +330,7 @@
 
 	{#snippet content()}
 		{#if modal.currentEntry}
-			<CalorieTrackerDisplay entry={modal.currentEntry as CalorieTracker} />
+			<CalorieTrackerMask entry={modal.currentEntry as CalorieTracker} readonly={true} />
 		{/if}
 	{/snippet}
 

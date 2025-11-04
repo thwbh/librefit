@@ -39,7 +39,7 @@
 			{getFoodCategoryLongvalue(categories, entry.category)}
 		</div>
 	{:else if isEditing}
-		<div class="w-full overflow-x-auto pb-2 snap-x snap-mandatory">
+		<div class="w-full overflow-x-auto p-4 snap-x snap-mandatory">
 			<div class="flex gap-2 w-max">
 				{#each categories as category}
 					<button
@@ -81,6 +81,7 @@
 				decrementSteps={[1, 5, 10, 100, 250]}
 				initialIncrementStep={10}
 				initialDecrementStep={10}
+				showLeftWheel={false}
 			/>
 		{:else}
 			<ValidatedInput

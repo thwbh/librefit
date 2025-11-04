@@ -136,6 +136,7 @@
 					decrementSteps={[0.5, 1, 2, 5]}
 					initialIncrementStep={1}
 					initialDecrementStep={1}
+					showLeftWheel={false}
 				/>
 			{/if}
 		</fieldset>

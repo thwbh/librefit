@@ -32,8 +32,8 @@
  */
 
 import type { CommandHooks } from '$lib/api/gen/commands';
-import { type ZodError } from 'zod';
-import { formatZodError, formatInvokeError, formatError } from '$lib/api/error-formatter';
+import { formatError } from '$lib/api/error-formatter';
+import { info } from '@tauri-apps/plugin-log';
 
 export interface UseEntryModalOptions<T extends { id?: number }, N = T> {
   /** Called when creating a new entry - receives optional hooks for error/success handling */
@@ -75,7 +75,6 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 
   // Error handling
   let errorMessage = $state<string | undefined>();
-  let validationError = $state<ZodError | undefined>();
 
   /**
    * Open create modal with a blank entry
@@ -85,7 +84,6 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     currentEntry = getBlankEntry();
     enableDelete = false;
     errorMessage = undefined;
-    validationError = undefined;
     createDialog?.showModal();
   };
 
@@ -98,8 +96,9 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     currentEntry = { ...entry }; // Copy to avoid mutating original
     enableDelete = false;
     errorMessage = undefined;
-    validationError = undefined;
     editDialog?.showModal();
+
+    info(`[ModalDialog  openEdit] editingEntry=${JSON.stringify(editingEntry)}`);
   };
 
 
@@ -112,7 +111,6 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     currentEntry = { ...entry };
     enableDelete = true;
     errorMessage = undefined;
-    validationError = undefined;
     deleteDialog?.showModal();
   }
 
@@ -121,17 +119,18 @@ export function useEntryModal<T extends { id?: number }, N = T>(
    * Returns true if successful, false if validation error occurred
    */
   const save = async (event?: Event): Promise<boolean> => {
+    info(`[ModalDialog save] isProcessing=${isProcessing} mode=${mode}`);
+
     if (isProcessing) return false;
 
     // Clear previous errors
     errorMessage = undefined;
-    validationError = undefined;
     isProcessing = true;
+
+    let success = false;
 
     try {
       if (mode === 'create') {
-        let success = false;
-
         try {
           const data = await onCreate(currentEntry as N);
 
@@ -148,16 +147,12 @@ export function useEntryModal<T extends { id?: number }, N = T>(
           event?.stopPropagation();
 
           errorMessage = formatError(error);
-          success = false;
         }
-
-        return success;
-
       } else if (mode === 'edit' && editingEntry?.id !== undefined) {
-        let success = false;
+        info(`[ModalDialog save] currentEntry=${JSON.stringify(currentEntry)}`);
 
         try {
-          const data = await onUpdate(editingEntry.id!, editingEntry);
+          const data = await onUpdate(editingEntry.id!, currentEntry as T);
 
           success = true;
 
@@ -171,34 +166,23 @@ export function useEntryModal<T extends { id?: number }, N = T>(
           event?.preventDefault();
           event?.stopPropagation();
           errorMessage = formatError(error);
-
-          success = false;
         }
-
-        return success;
-
       } else if (mode === 'delete' && editingEntry?.id !== undefined) {
-        let success = false;
-
         try {
-          const id = await onDelete(editingEntry.id);
+          await onDelete(editingEntry.id);
 
           success = true;
 
-          onDeleteSuccess?.(id);
+          onDeleteSuccess?.(editingEntry.id);
           deleteDialog?.close();
-
 
           currentEntry = undefined;
           editingEntry = undefined;
-
           enableDelete = false;
         } catch (error: unknown) {
           event?.preventDefault();
           event?.stopPropagation();
           errorMessage = formatError(error);
-
-          success = false;
         }
 
         return success;
@@ -222,7 +206,6 @@ export function useEntryModal<T extends { id?: number }, N = T>(
     editingEntry = undefined;
     enableDelete = false;
     errorMessage = undefined;
-    validationError = undefined;
   };
 
   /**
@@ -233,38 +216,30 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 
     // Clear previous errors
     errorMessage = undefined;
-    validationError = undefined;
     isProcessing = true;
 
     try {
       let success = false;
 
-      const result = await onDelete(editingEntry.id, {
-        onValidationError: (error) => {
-          // Stop event propagation to prevent modal from closing
-          event?.preventDefault();
-          event?.stopPropagation();
-          errorMessage = formatZodError(error);
-          validationError = error;
-        },
-        onInvokeError: (error) => {
-          // Stop event propagation to prevent modal from closing
-          event?.preventDefault();
-          event?.stopPropagation();
-          errorMessage = formatInvokeError(error);
-        },
-        onSuccess: (id) => {
-          success = true;
-          onDeleteSuccess?.(id);
-          editDialog?.close();
-          deleteDialog?.close();
+      try {
+        await onDelete(editingEntry.id);
 
-          // Reset state on success
-          currentEntry = undefined;
-          editingEntry = undefined;
-          enableDelete = false;
-        }
-      });
+        success = true;
+
+        onDeleteSuccess?.(editingEntry.id);
+        editDialog?.close();
+        deleteDialog?.close();
+
+        // Reset state on success
+        currentEntry = undefined;
+        editingEntry = undefined;
+        enableDelete = false;
+      } catch (error: unknown) {
+        event?.preventDefault();
+        event?.stopPropagation();
+        errorMessage = formatError(error);
+        success = false;
+      }
 
       return success;
     } finally {
@@ -284,7 +259,6 @@ export function useEntryModal<T extends { id?: number }, N = T>(
    */
   const clearError = () => {
     errorMessage = undefined;
-    validationError = undefined;
   };
 
   return {
@@ -312,7 +286,6 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 
     // Error state
     get errorMessage() { return errorMessage; },
-    get validationError() { return validationError; },
     get hasError() { return errorMessage !== undefined; },
 
     // Actions
