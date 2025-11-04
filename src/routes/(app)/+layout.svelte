@@ -4,8 +4,17 @@
 	import type { BottomNavItem } from '@thwbh/veilchen';
 	import { ChartLine, DotsThreeVertical, House, ListBullets } from 'phosphor-svelte';
 	import Settings from '$lib/component/settings/Settings.svelte';
+	import { fade } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
+	import { beforeNavigate, afterNavigate } from '$app/navigation';
 
 	let { children } = $props();
+
+	// Scroll to top on navigation to prevent flicker
+	beforeNavigate(() => {
+		document.documentElement.scrollTop = 0;
+		document.body.scrollTop = 0;
+	});
 
 	let isSettingsOpen = $state(false);
 
@@ -57,7 +66,15 @@
 <ToastContainer position="top" align="center" />
 
 <AppShell items={navItems} {activeId} onrefresh={refresh.handler} refreshing={refresh.isRefreshing}>
-	{@render children()}
+	{#key page.url.pathname}
+		<div
+			class="min-h-screen"
+			in:fade={{ duration: 200, easing: cubicOut }}
+			out:fade={{ duration: 150, easing: cubicOut }}
+		>
+			{@render children()}
+		</div>
+	{/key}
 </AppShell>
 
 <Settings bind:open={isSettingsOpen} />

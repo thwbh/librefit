@@ -47,7 +47,7 @@
 	<h1 class="sr-only">Dashboard</h1>
 	<span class="text-xl font-bold text-center"> Day {data.dashboardData.currentDay} </span>
 
-	<div class="flex flex-col items-center gap-2">
+	<div class="flex flex-col items-center gap-2 w-full">
 		<TrackerScore {calorieTarget} entries={caloriesToday} />
 
 		<TrackerStack
