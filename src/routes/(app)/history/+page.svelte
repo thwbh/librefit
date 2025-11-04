@@ -19,6 +19,9 @@
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
+	import { swipe } from 'svelte-gestures';
+	import { fly } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
 	import {
 		createCalorieTrackerEntry,
 		deleteCalorieTrackerEntry,
@@ -46,12 +49,13 @@
 
 	let selectedDateStr: string = $derived(dates[dates.length - 1]);
 
+	// Track swipe direction for animations
+	let swipeDirection = $state<'left' | 'right' | null>(null);
+
 	let caloriesHistory: Array<CalorieTracker> = $derived.by(() => {
 		if (!trackerHistory || !trackerHistory.caloriesHistory[selectedDateStr]) return [];
 
-		const result = [...trackerHistory?.caloriesHistory[selectedDateStr]];
-		info(`[History] caloriesHistory derived - count: ${result.length}`);
-		return result;
+		return [...trackerHistory?.caloriesHistory[selectedDateStr]];
 	});
 
 	let weightHistory: Array<WeightTracker> = $derived.by(() => {
@@ -95,26 +99,15 @@
 			}
 		},
 		onDeleteSuccess: (id) => {
-			info(`[History] onDeleteSuccess id=${id}, type=${typeof id}`);
-			info(`[History] Before delete - entries count: ${trackerHistory.caloriesHistory[selectedDateStr].length}`);
-			info(`[History] Entry IDs: ${JSON.stringify(trackerHistory.caloriesHistory[selectedDateStr].map(e => ({ id: e.id, type: typeof e.id })))}`);
-
-			const filtered = trackerHistory.caloriesHistory[selectedDateStr].filter((e) => {
-				const match = e.id !== id;
-				info(`[History] Entry ${e.id} (${typeof e.id}) !== ${id} (${typeof id}) = ${match}`);
-				return match;
-			});
-			info(`[History] After filter - entries count: ${filtered.length}`);
-
 			trackerHistory = {
 				...trackerHistory,
 				caloriesHistory: {
 					...trackerHistory.caloriesHistory,
-					[selectedDateStr]: filtered
+					[selectedDateStr]: trackerHistory.caloriesHistory[selectedDateStr].filter(
+						(e) => e.id !== id
+					)
 				}
 			};
-
-			info(`[History] After reassignment - entries count: ${trackerHistory.caloriesHistory[selectedDateStr].length}`);
 		}
 	});
 
@@ -125,6 +118,7 @@
 	};
 
 	const scrollLeft = () => {
+		swipeDirection = 'right';
 		const firstDate = parseStringAsDate(dates[0]);
 
 		updateRange(subDays(firstDate, 7), subDays(firstDate, 1));
@@ -133,6 +127,7 @@
 	};
 
 	const scrollRight = () => {
+		swipeDirection = 'left';
 		let lastDate = parseStringAsDate(dates[dates.length - 1]);
 
 		if (lastDate) lastDate = addDays(lastDate, 1);
@@ -163,6 +158,27 @@
 		await vibrate(2);
 		modal.openDelete(calories);
 	};
+
+	// Animation parameters based on swipe direction
+	const flyParams = $derived({
+		x: swipeDirection === 'left' ? -300 : swipeDirection === 'right' ? 300 : 0,
+		duration: 300,
+		easing: cubicOut
+	});
+
+	// Swipe handlers for date navigation
+	const handleSwipe = (event: CustomEvent) => {
+		const direction = event.detail.direction;
+		if (direction === 'left') {
+			// Swipe left = go to next week (if available)
+			if (showRightCaret) {
+				scrollRight();
+			}
+		} else if (direction === 'right') {
+			// Swipe right = go to previous week
+			scrollLeft();
+		}
+	};
 </script>
 
 <div class="flex flex-col gap-4">
@@ -179,6 +195,8 @@
 		{/if}
 		<div
 			class="border-b-base-300 grid grid-cols-9 gap-2 border-b border-dashed- pb-3 overflow-x-scroll p-4"
+			use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
+			onswipe={handleSwipe}
 		>
 			<button class="btn-ghost w-fit place-self-center" onclick={scrollLeft}>
 				<span><CaretLeft size="1em" /></span>
@@ -210,17 +228,23 @@
 		</div>
 	</div>
 
-	<div class="flex flex-col overflow-y-scroll">
-		<div class="stats">
-			<div class="stat">
-				<div class="stat-title">Average calories</div>
-				<div class="stat-value"><NumberFlow value={trackerHistory.caloriesAverage} /></div>
-			</div>
-		</div>
+	<div
+		class="flex flex-col overflow-y-scroll"
+		use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
+		onswipe={handleSwipe}
+	>
+		{#key selectedDateStr}
+			<div in:fly={flyParams} out:fly={{ x: -flyParams.x, duration: 250, easing: cubicOut }}>
+				<div class="stats">
+					<div class="stat">
+						<div class="stat-title">Average calories</div>
+						<div class="stat-value"><NumberFlow value={trackerHistory.caloriesAverage} /></div>
+					</div>
+				</div>
 
-		<TrackerScore {calorieTarget} entries={caloriesHistory.map((c) => c.amount)} isHistory={true} />
+				<TrackerScore {calorieTarget} entries={caloriesHistory.map((c) => c.amount)} isHistory={true} />
 
-		<div class="divide-base-300 divide-y p-6">
+				<div class="divide-base-300 divide-y p-6">
 			{#each caloriesHistory as calories}
 				<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
 					{#snippet leftAction()}
@@ -264,6 +288,8 @@
 				{/if}
 			</div>
 		</div>
+			</div>
+		{/key}
 	</div>
 </div>
 
