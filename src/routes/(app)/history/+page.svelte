@@ -47,7 +47,10 @@
 		compareAsc(parseStringAsDate(lastDateStr), parseStringAsDate(dates[dates.length - 1])) === 1
 	);
 
-	let selectedDateStr: string = $derived(dates[dates.length - 1]);
+	let selectedDateStr = $state(dates[dates.length - 1]);
+
+	// Track current day index within the week
+	let currentDayIndex = $derived(dates.indexOf(selectedDateStr));
 
 	// Track swipe direction for animations
 	let swipeDirection = $state<'left' | 'right' | null>(null);
@@ -113,7 +116,7 @@
 
 	const selectHistory = (dateStr: string) => {
 		info(`selectHistory dateStr={${dateStr}}`);
-
+		swipeDirection = null; // Reset direction when clicking a date
 		selectedDateStr = dateStr;
 	};
 
@@ -122,8 +125,6 @@
 		const firstDate = parseStringAsDate(dates[0]);
 
 		updateRange(subDays(firstDate, 7), subDays(firstDate, 1));
-
-		selectedDateStr = dates[dates.length - 1];
 	};
 
 	const scrollRight = () => {
@@ -143,6 +144,14 @@
 
 		if (result) {
 			trackerHistory = result;
+			// After loading new week, select appropriate day based on swipe direction
+			if (swipeDirection === 'right') {
+				// Came from scrollLeft, select last day
+				selectedDateStr = Object.keys(result.caloriesHistory).sort().pop() || '';
+			} else if (swipeDirection === 'left') {
+				// Came from scrollRight, select first day
+				selectedDateStr = Object.keys(result.caloriesHistory).sort()[0] || '';
+			}
 		}
 	};
 
@@ -160,14 +169,16 @@
 	};
 
 	// Animation parameters based on swipe direction
+	// When swiping left, new content comes from right (positive x)
+	// When swiping right, new content comes from left (negative x)
 	const flyParams = $derived({
-		x: swipeDirection === 'left' ? -300 : swipeDirection === 'right' ? 300 : 0,
+		x: swipeDirection === 'left' ? 300 : swipeDirection === 'right' ? -300 : 0,
 		duration: 300,
 		easing: cubicOut
 	});
 
-	// Swipe handlers for date navigation
-	const handleSwipe = (event: CustomEvent) => {
+	// Swipe handler for week navigation (date selector area)
+	const handleWeekSwipe = (event: CustomEvent) => {
 		const direction = event.detail.direction;
 		if (direction === 'left') {
 			// Swipe left = go to next week (if available)
@@ -177,6 +188,32 @@
 		} else if (direction === 'right') {
 			// Swipe right = go to previous week
 			scrollLeft();
+		}
+	};
+
+	// Swipe handler for day navigation (content area)
+	const handleDaySwipe = (event: CustomEvent) => {
+		const direction = event.detail.direction;
+		if (direction === 'left') {
+			// Swipe left = go forward in time
+			if (currentDayIndex < dates.length - 1) {
+				// Not at end of week, go to next day
+				swipeDirection = 'left';
+				selectedDateStr = dates[currentDayIndex + 1];
+			} else if (showRightCaret) {
+				// At end of week and more data available, load next week
+				scrollRight();
+			}
+		} else if (direction === 'right') {
+			// Swipe right = go backward in time
+			if (currentDayIndex > 0) {
+				// Not at start of week, go to previous day
+				swipeDirection = 'right';
+				selectedDateStr = dates[currentDayIndex - 1];
+			} else {
+				// At start of week, load previous week
+				scrollLeft();
+			}
 		}
 	};
 </script>
@@ -196,7 +233,7 @@
 		<div
 			class="border-b-base-300 grid grid-cols-9 gap-2 border-b border-dashed- pb-3 overflow-x-scroll p-4"
 			use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
-			onswipe={handleSwipe}
+			onswipe={handleWeekSwipe}
 		>
 			<button class="btn-ghost w-fit place-self-center" onclick={scrollLeft}>
 				<span><CaretLeft size="1em" /></span>
@@ -228,21 +265,22 @@
 		</div>
 	</div>
 
-	<div
-		class="flex flex-col overflow-y-scroll"
-		use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
-		onswipe={handleSwipe}
-	>
+	<div class="flex flex-col overflow-y-scroll">
 		{#key selectedDateStr}
 			<div in:fly={flyParams} out:fly={{ x: -flyParams.x, duration: 250, easing: cubicOut }}>
-				<div class="stats">
-					<div class="stat">
-						<div class="stat-title">Average calories</div>
-						<div class="stat-value"><NumberFlow value={trackerHistory.caloriesAverage} /></div>
+				<div
+					use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
+					onswipe={handleDaySwipe}
+				>
+					<div class="stats">
+						<div class="stat">
+							<div class="stat-title">Average calories</div>
+							<div class="stat-value"><NumberFlow value={trackerHistory.caloriesAverage} /></div>
+						</div>
 					</div>
-				</div>
 
-				<TrackerScore {calorieTarget} entries={caloriesHistory.map((c) => c.amount)} isHistory={true} />
+					<TrackerScore {calorieTarget} entries={caloriesHistory.map((c) => c.amount)} isHistory={true} />
+				</div>
 
 				<div class="divide-base-300 divide-y p-6">
 			{#each caloriesHistory as calories}
@@ -277,7 +315,11 @@
 
 			<button class="btn btn-neutral w-full mt-4" onclick={modal.openCreate}> Add Intake </button>
 		</div>
-		<div class="stats">
+		<div
+			class="stats"
+			use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
+			onswipe={handleDaySwipe}
+		>
 			<div class="stat">
 				<div class="stat-title">Weight</div>
 
