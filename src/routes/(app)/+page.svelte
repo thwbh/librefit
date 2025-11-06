@@ -45,7 +45,13 @@
 
 <div class="flex flex-col gap-6 overflow-x-hidden p-2">
 	<h1 class="sr-only">Dashboard</h1>
-	<span class="text-xl font-bold text-center"> Day {data.dashboardData.currentDay} </span>
+	<div class="p-2 pt-4">
+		{#if data.dashboardData.currentDay > 0}
+			<span class="text-xl font-bold text-center"> Day {data.dashboardData.currentDay} </span>
+		{:else}
+			<span class="text-xl font-fold text-center"></span>
+		{/if}
+	</div>
 
 	<div class="flex flex-col items-center gap-2 w-full">
 		<TrackerScore {calorieTarget} entries={caloriesToday} />
