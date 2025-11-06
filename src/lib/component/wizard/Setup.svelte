@@ -15,6 +15,7 @@
 		WizardRecommendationSchema
 	} from '$lib/api/gen/types';
 	import type {
+		BodyData,
 		LibreUser,
 		NewCalorieTarget,
 		NewWeightTarget,
@@ -37,27 +38,35 @@
 
 	interface Props {
 		userData?: LibreUser;
+		bodyData?: BodyData;
 	}
+
+	const CalculationGoal = CalculationGoalSchema.enum;
+	const CalculationSex = CalculationSexSchema.enum;
+	const WizardRecommendation = WizardRecommendationSchema.enum;
 
 	let {
 		userData = {
 			id: 1,
 			name: 'Arnie',
 			avatar: ''
+		},
+		bodyData = {
+			id: 0,
+			age: 30,
+			sex: CalculationSex.MALE,
+			weight: 85,
+			height: 180
 		}
 	}: Props = $props();
-
-	const CalculationGoal = CalculationGoalSchema.enum;
-	const CalculationSex = CalculationSexSchema.enum;
-	const WizardRecommendation = WizardRecommendationSchema.enum;
 
 	let currentStep = $state(1);
 
 	let wizardInput: WizardInput = $state({
-		age: 30,
-		sex: CalculationSex.MALE,
-		weight: 85,
-		height: 180,
+		age: bodyData.age,
+		sex: CalculationSexSchema.safeParse(bodyData.sex).data!,
+		weight: bodyData.weight,
+		height: bodyData.height,
 		activityLevel: 1,
 		weeklyDifference: 1,
 		calculationGoal: CalculationGoal.LOSS

@@ -5,6 +5,8 @@
 	import type { BreadcrumbItem } from '@thwbh/veilchen';
 	import { Gear, MagicWand } from 'phosphor-svelte';
 
+	let { data } = $props();
+
 	const items: BreadcrumbItem[] = [
 		{
 			id: '1',
@@ -26,5 +28,5 @@
 <div class="flex flex-col gap-4 p-4">
 	<Breadcrumbs {items} size={TextSize.XL} class="font-semibold" />
 
-	<Setup {userData} />
+	<Setup {userData} bodyData={data.bodyData} />
 </div>
