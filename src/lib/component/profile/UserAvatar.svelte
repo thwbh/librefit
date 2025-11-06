@@ -64,6 +64,9 @@
 	// Temp avatar shown in modal while user is picking
 	let tempRandomAvatar = $derived(getAvatar(tempRandomSeed));
 
+	// Get the src for the currently selected avatar in the modal
+	let tempSelectedAvatarSrc = $derived(getAvatar(tempSelectedAvatar));
+
 	// Pre-defined avatar options
 	const loreleis = [...defaults].map((seed) => {
 		return {
@@ -128,7 +131,7 @@
 					</span>
 					<Avatar
 						size="2xl"
-						src={tempRandomAvatar}
+						src={tempSelectedAvatarSrc}
 						onclick={() => (tempSelectedAvatar = tempRandomSeed)}
 					/>
 					<span>
