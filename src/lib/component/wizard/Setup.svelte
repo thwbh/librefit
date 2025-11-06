@@ -45,20 +45,24 @@
 	const CalculationSex = CalculationSexSchema.enum;
 	const WizardRecommendation = WizardRecommendationSchema.enum;
 
-	let {
-		userData = {
+	let props: Props = $props();
+
+	// Create reactive local state for userData with default
+	let userData = $state(
+		props.userData || {
 			id: 1,
 			name: 'Arnie',
 			avatar: ''
-		},
-		bodyData = {
-			id: 0,
-			age: 30,
-			sex: CalculationSex.MALE,
-			weight: 85,
-			height: 180
 		}
-	}: Props = $props();
+	);
+
+	let bodyData = props.bodyData || {
+		id: 0,
+		age: 30,
+		sex: CalculationSex.MALE,
+		weight: 85,
+		height: 180
+	};
 
 	let currentStep = $state(1);
 

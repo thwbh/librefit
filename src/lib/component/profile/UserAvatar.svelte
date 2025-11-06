@@ -9,9 +9,7 @@
 		onAvatarChange?: (newAvatar: string) => void;
 	}
 
-	let { userData, onAvatarChange }: Props = $props();
-
-	let hasOpenedPicker = $state(false);
+	let { userData = $bindable(), onAvatarChange }: Props = $props();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -19,23 +17,20 @@
 	let tempSelectedAvatar = $state('');
 	let tempRandomSeed = $state('');
 
-	// Current confirmed avatar (derived from userData)
-	// Dynamically shows name-based avatar until picker is opened
-	let currentAvatar = $derived.by(() => {
-		let avatar = userData.avatar;
-		let username = userData.name!;
+	// Local reactive copies to force re-renders
+	let localName = $state(userData.name || '');
+	let localAvatar = $state(userData.avatar || '');
 
-		if (avatar) {
-			return getAvatar(avatar);
-		} else {
-			// Show dynamic name-based avatar before picker is opened
-			return getAvatar(username);
-		}
+	// Watch for changes to userData properties and update local state
+	$effect(() => {
+		localName = userData.name || '';
+		localAvatar = userData.avatar || '';
 	});
 
-	const openModal = () => {
-		hasOpenedPicker = true;
+	// Current confirmed avatar based on local reactive state
+	let currentAvatar = $derived(localAvatar !== '' ? getAvatar(localAvatar) : getAvatar(localName));
 
+	const openModal = () => {
 		// Initialize temp state with current confirmed state
 		const currentAvatarValue = userData.avatar || userData.name!;
 		const isDefaultAvatar = currentAvatarValue && defaults.indexOf(currentAvatarValue) > -1;
@@ -59,7 +54,8 @@
 	};
 
 	const handleConfirm = () => {
-		// Commit the selected avatar via callback
+		// Commit the selected avatar
+		userData.avatar = tempSelectedAvatar;
 		onAvatarChange?.(tempSelectedAvatar);
 	};
 

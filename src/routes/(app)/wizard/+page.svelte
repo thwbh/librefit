@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { LibreUser } from '$lib/api/index.js';
 	import Setup from '$lib/component/wizard/Setup.svelte';
 	import { getUserContext } from '$lib/context';
 	import { Breadcrumbs, TextSize } from '@thwbh/veilchen';
@@ -22,7 +23,12 @@
 		}
 	];
 
-	const userData = $state(getUserContext().user);
+	// page is only visible with user data
+	const userDataCtx = getUserContext().user!;
+
+	// pass cloned object so context data does not get updated by accident
+	// Don't type annotate - let Svelte infer the reactive proxy type
+	let userData = $state({ ...userDataCtx });
 </script>
 
 <div class="flex flex-col gap-4 p-4">
