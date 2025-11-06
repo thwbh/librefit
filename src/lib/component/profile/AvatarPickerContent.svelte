@@ -14,30 +14,33 @@
 
 	const defaults = ['Bryan', 'Kimberbly', 'Andrea', 'Aidan', 'Jude', 'Jack', 'George'];
 
-	// Initialize temp state
-	let tempRandomSeed = $state('');
-	let tempSelectedAvatar = $state('');
+	// Track the random seed separately - this is what appears in position 1
+	// Only initialize once, don't react to changes
+	const currentAvatarValue = currentAvatar || userName;
+	const isDefaultAvatar = currentAvatarValue && defaults.indexOf(currentAvatarValue) > -1;
+	let randomSeed = $state(isDefaultAvatar ? userName : currentAvatarValue);
 
-	$effect(() => {
-		const currentAvatarValue = currentAvatar || userName;
-		const isDefaultAvatar = currentAvatarValue && defaults.indexOf(currentAvatarValue) > -1;
-
-		if (isDefaultAvatar) {
-			tempRandomSeed = userName;
-		} else {
-			tempRandomSeed = currentAvatarValue;
-		}
-
-		tempSelectedAvatar = selectedAvatar || currentAvatarValue;
-	});
+	// Initialize with current/selected avatar
+	// If current avatar matches random seed, select the random slot (__random__)
+	// Otherwise, select the preset (which will be one of the defaults)
+	let tempSelectedAvatar = $state(
+		currentAvatarValue === randomSeed ? '__random__' : currentAvatar || '__random__'
+	);
 
 	// Update bindable when tempSelectedAvatar changes
+	// Translate '__random__' to actual randomSeed value
 	$effect(() => {
-		selectedAvatar = tempSelectedAvatar;
-		onSelect?.(tempSelectedAvatar);
+		const actualValue = tempSelectedAvatar === '__random__' ? randomSeed : tempSelectedAvatar;
+		selectedAvatar = actualValue;
+		onSelect?.(actualValue);
 	});
 
-	let tempRandomAvatar = $derived(getAvatar(tempRandomSeed));
+	let randomAvatarSrc = $derived(getAvatar(randomSeed));
+
+	// Get the src for the currently selected avatar
+	let selectedAvatarSrc = $derived(
+		tempSelectedAvatar === '__random__' ? randomAvatarSrc : getAvatar(tempSelectedAvatar)
+	);
 
 	const loreleis = [...defaults].map((seed) => {
 		return {
@@ -46,8 +49,10 @@
 		};
 	});
 
+	// Position 1 is always the random avatar, rest are preset avatars
+	// Use '__random__' as a stable ID for the random slot
 	let avatars = $derived.by(() => {
-		return [{ id: tempRandomSeed, src: tempRandomAvatar }, ...loreleis];
+		return [{ id: '__random__', src: randomAvatarSrc }, ...loreleis];
 	});
 
 	const randomize = () => {
@@ -62,13 +67,15 @@
 			outString += Math.floor(Math.random() * 10);
 		}
 
-		tempRandomSeed = outString;
-		tempSelectedAvatar = outString;
+		// Update random seed and select the random slot
+		randomSeed = outString;
+		tempSelectedAvatar = '__random__';
 	};
 
 	const reset = () => {
-		tempRandomSeed = userName;
-		tempSelectedAvatar = userName;
+		// Reset to username-based avatar
+		randomSeed = userName;
+		tempSelectedAvatar = '__random__';
 	};
 </script>
 
@@ -94,8 +101,8 @@
 			</span>
 			<Avatar
 				size="2xl"
-				src={tempRandomAvatar}
-				onclick={() => (tempSelectedAvatar = tempRandomSeed)}
+				src={selectedAvatarSrc}
+				onclick={() => (tempSelectedAvatar = '__random__')}
 			/>
 			<span>
 				<HandSwipeLeft size="2em" class="opacity-40" />
