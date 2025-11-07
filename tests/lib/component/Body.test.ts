@@ -1,16 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/svelte';
 import Body from '../../../src/lib/component/wizard/body/Body.svelte';
 import type { LibreUser, WizardInput } from '$lib/api/gen';
 import { CalculationGoalSchema, CalculationSexSchema } from '$lib/api/gen';
+import { setupVeilchenMock } from '../../utils/mocks';
 
-// Mock the veilchen components properly
-vi.mock('@thwbh/veilchen', () => {
-  return {
-    ButtonGroup: vi.fn(() => null),
-    RangeInput: vi.fn(() => null)
-  };
-});
+// Setup common mocks
+setupVeilchenMock();
 
 describe('Body Component', () => {
   const mockWizardInput: WizardInput = {
