@@ -3,6 +3,22 @@
 
 	let { data } = $props();
 
+	// Extract theme colors from CSS custom properties and convert to RGB
+	const getThemeColor = (colorVar: string): string => {
+		if (typeof window === 'undefined') return 'rgb(0, 0, 0)';
+
+		// Create a temporary element to let the browser compute the color
+		const temp = document.createElement('div');
+		temp.style.color = `var(${colorVar})`;
+		document.body.appendChild(temp);
+
+		// Get the computed RGB value
+		const computedColor = getComputedStyle(temp).color;
+		document.body.removeChild(temp);
+
+		return computedColor || 'rgb(0, 0, 0)';
+	};
+
 	const weightChartData = {
 		data: {
 			labels: data.trackerProgress.weightChartData.legend,
@@ -10,6 +26,8 @@
 				{
 					label: 'Weight (kg)',
 					data: data.trackerProgress.weightChartData.values,
+					borderColor: getThemeColor('--color-primary'),
+					backgroundColor: getThemeColor('--color-primary'),
 					tension: 0.4
 				}
 			]
@@ -37,6 +55,8 @@
 				{
 					label: 'Actual',
 					data: data.trackerProgress.calorieChartData.values,
+					borderColor: getThemeColor('--color-primary'),
+					backgroundColor: getThemeColor('--color-primary'),
 					tension: 0.4
 				},
 				{
@@ -44,19 +64,25 @@
 					data: data.trackerProgress.calorieChartData.legend.map(
 						(_: any) => data.trackerProgress.calorieTarget.maximumCalories
 					),
+					borderColor: getThemeColor('--color-error'),
+					backgroundColor: getThemeColor('--color-error'),
 					tension: 0.4
 				},
 				{
 					label: 'Target',
 					data: data.trackerProgress.calorieChartData.legend.map(
 						(_: any) => data.trackerProgress.calorieTarget.targetCalories
-					)
+					),
+					borderColor: getThemeColor('--color-success'),
+					backgroundColor: getThemeColor('--color-success')
 				},
 				{
 					label: 'Average',
 					data: data.trackerProgress.calorieChartData.legend.map(
 						(_: any) => data.trackerProgress.calorieChartData.avg
-					)
+					),
+					borderColor: getThemeColor('--color-warning'),
+					backgroundColor: getThemeColor('--color-warning')
 				}
 			]
 		},
