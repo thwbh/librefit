@@ -19,12 +19,15 @@
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
 	import { fade, type FlyParams } from 'svelte/transition';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
+	import { vibrate } from '@tauri-apps/plugin-haptics';
+	import { getFoodCategoryColor } from '$lib/api';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
 		onadd?: (params: CreateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
 		onedit?: (params: UpdateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
 		ondelete?: (params: DeleteCalorieTrackerEntryParams) => Promise<number>;
+		class?: string;
 	}
 
 	const getBlankEntry = (): NewCalorieTracker => {
@@ -40,7 +43,8 @@
 		entries = $bindable([]),
 		onadd = undefined,
 		onedit = undefined,
-		ondelete = undefined
+		ondelete = undefined,
+		class: className = ''
 	}: Props = $props();
 
 	let index = $state(0);
@@ -81,6 +85,11 @@
 			}
 		}
 	});
+
+	const onlongpress = async (cardKey: number) => {
+		await vibrate(2);
+		modal.openEdit(entries[cardKey]);
+	};
 </script>
 
 {#if entries.length > 0}
@@ -89,10 +98,20 @@
 		size={entries.length}
 		swipeable={true}
 		onswipe={(direction: string) => console.log('swiped ', direction)}
+		class={className}
 	>
 		{#snippet card(cardKey: number, outFlyParams: FlyParams, inFlyParams: FlyParams)}
-			<StackCard isActive={cardKey === index} {cardKey} {outFlyParams} {inFlyParams} class="w-full">
-				<LongPressContainer onlongpress={() => modal.openEdit(entries[cardKey])}>
+			<StackCard
+				isActive={cardKey === index}
+				{cardKey}
+				{outFlyParams}
+				{inFlyParams}
+				class="card-side w-full"
+			>
+				{#snippet side()}
+					<figure class="{getFoodCategoryColor(entries[cardKey].category)} w-4"></figure>
+				{/snippet}
+				<LongPressContainer onlongpress={() => onlongpress(cardKey)}>
 					<CalorieTrackerMask entry={entries[cardKey]} readonly />
 				</LongPressContainer>
 			</StackCard>

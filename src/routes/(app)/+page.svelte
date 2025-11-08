@@ -17,7 +17,6 @@
 	import { getUserContext } from '$lib/context';
 	import { info } from '@tauri-apps/plugin-log';
 	import { useRefresh } from '@thwbh/veilchen';
-	import { onDestroy } from 'svelte';
 	import { invalidate } from '$app/navigation';
 
 	let { data } = $props();
@@ -61,6 +60,7 @@
 			onadd={(params) => createCalorieTrackerEntry(params)}
 			onedit={(params) => updateCalorieTrackerEntry(params)}
 			ondelete={(params) => deleteCalorieTrackerEntry(params)}
+			class="w-full"
 		/>
 	</div>
 

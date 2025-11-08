@@ -279,57 +279,65 @@
 						</div>
 					</div>
 
-					<TrackerScore {calorieTarget} entries={caloriesHistory.map((c) => c.amount)} isHistory={true} />
+					<TrackerScore
+						{calorieTarget}
+						entries={caloriesHistory.map((c) => c.amount)}
+						isHistory={true}
+					/>
 				</div>
 
 				<div class="divide-base-300 divide-y p-6">
-			{#each caloriesHistory as calories}
-				<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
-					{#snippet leftAction()}
-						<span><Pencil size="2em" color={'var(--color-primary)'} /></span>
-					{/snippet}
+					{#each caloriesHistory as calories}
+						<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
+							{#snippet leftAction()}
+								<span><Pencil size="2em" color={'var(--color-primary)'} /></span>
+							{/snippet}
 
-					{#snippet rightAction()}
-						<span><Trash size="2em" color={'var(--color-error)'} /> </span>
-					{/snippet}
+							{#snippet rightAction()}
+								<span><Trash size="2em" color={'var(--color-error)'} /> </span>
+							{/snippet}
 
-					<div
-						class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
-						use:longpress
-						onlongpress={() => edit(calories)}
-					>
-						<div class="flex flex-col">
-							<span class="text-lg font-semibold">
-								{calories.description}
-							</span>
-							<span class="stat-desc">
-								{calories.amount} kcal
-							</span>
-						</div>
-						<span class="badge badge-xs badge-info"
-							>{getFoodCategoryLongvalue(foodCategories, calories.category)}</span
+							<div
+								class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
+								use:longpress
+								onlongpress={() => edit(calories)}
+							>
+								<div class="flex flex-col">
+									<span class="text-lg font-semibold">
+										{calories.description}
+									</span>
+									<span class="stat-desc">
+										{calories.amount} kcal
+									</span>
+								</div>
+								<span class="badge badge-xs badge-info"
+									>{getFoodCategoryLongvalue(foodCategories, calories.category)}</span
+								>
+							</div></SwipeableListItem
 						>
-					</div></SwipeableListItem
+					{/each}
+
+					<button class="btn btn-neutral w-full mt-4" onclick={modal.openCreate}>
+						Add Intake
+					</button>
+				</div>
+				<div
+					class="stats"
+					use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
+					onswipe={handleDaySwipe}
 				>
-			{/each}
+					<div class="stat">
+						<div class="stat-title">Weight</div>
 
-			<button class="btn btn-neutral w-full mt-4" onclick={modal.openCreate}> Add Intake </button>
-		</div>
-		<div
-			class="stats"
-			use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
-			onswipe={handleDaySwipe}
-		>
-			<div class="stat">
-				<div class="stat-title">Weight</div>
-
-				{#if weightHistory.length > 0}
-					<div class="stat-value">{weightHistory[0].amount} <span class="text-sm">kg</span></div>
-				{:else}
-					<div class="stat-value">No weight tracked.</div>
-				{/if}
-			</div>
-		</div>
+						{#if weightHistory.length > 0}
+							<div class="stat-value">
+								{weightHistory[0].amount} <span class="text-sm">kg</span>
+							</div>
+						{:else}
+							<div class="stat-value">No weight tracked.</div>
+						{/if}
+					</div>
+				</div>
 			</div>
 		{/key}
 	</div>
@@ -393,7 +401,7 @@
 >
 	{#snippet title()}
 		<span>Delete Intake</span>
-		<span class="text-sm font-normal opacity-70"> Do you really want to delete this entry? </span>
+		<span class="text-sm font-normal opacity-70"> Are you sure? </span>
 	{/snippet}
 
 	{#snippet content()}
