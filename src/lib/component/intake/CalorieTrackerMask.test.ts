@@ -46,11 +46,15 @@ describe('CalorieTrackerMask', () => {
 			expect(editButton).toBeNull();
 		});
 
-		it('should disable textarea in readonly mode', () => {
+		it('should display description as paragraph in readonly mode', () => {
 			renderWithContext(mockEntry, { readonly: true });
 
+			// In readonly mode, there should be no textarea
 			const textarea = document.querySelector('textarea');
-			expect(textarea?.disabled).toBe(true);
+			expect(textarea).toBeNull();
+
+			// Description should be visible as text
+			expect(screen.getByText('Healthy lunch')).toBeTruthy();
 		});
 
 		it('should not show category selector in readonly mode', () => {
@@ -115,30 +119,18 @@ describe('CalorieTrackerMask', () => {
 	});
 
 	describe('Default Mode (Non-editing)', () => {
-		it('should show category badge with edit button', () => {
+		it('should show category badge', () => {
 			renderWithContext(mockEntry, { isEditing: false });
 
 			expect(screen.getByText('Lunch')).toBeTruthy();
-			expect(screen.getByLabelText(/press to edit/i)).toBeTruthy();
 		});
 
-		it('should call onedit when edit button clicked', async () => {
-			const user = userEvent.setup();
-			const onedit = vi.fn();
-
-			renderWithContext(mockEntry, { isEditing: false, onedit });
-
-			const editButton = screen.getByLabelText(/press to edit/i);
-			await user.click(editButton);
-
-			expect(onedit).toHaveBeenCalledTimes(1);
-		});
-
-		it('should not show category selector by default', () => {
+		it('should show category selector as badges in default mode', () => {
 			const { container } = renderWithContext(mockEntry, { isEditing: false });
 
+			// Category selector shows all categories as badges
 			const categorySelector = container.querySelector('.snap-x');
-			expect(categorySelector).toBeNull();
+			expect(categorySelector).toBeTruthy();
 		});
 	});
 
@@ -200,11 +192,12 @@ describe('CalorieTrackerMask', () => {
 			expect(textarea?.value).toBe(longDesc);
 		});
 
-		it('should disable textarea in readonly mode', () => {
+		it('should not render textarea in readonly mode', () => {
 			renderWithContext(mockEntry, { readonly: true });
 
+			// In readonly mode, description is shown as text, not a textarea
 			const textarea = document.querySelector('textarea');
-			expect(textarea?.disabled).toBe(true);
+			expect(textarea).toBeNull();
 		});
 	});
 
@@ -286,8 +279,8 @@ describe('CalorieTrackerMask', () => {
 			expect(fieldset).toBeTruthy();
 		});
 
-		it('should accept custom className', () => {
-			const { container } = renderWithContext(mockEntry, { className: 'custom-class' });
+		it('should accept custom class prop', () => {
+			const { container } = renderWithContext(mockEntry, { class: 'custom-class' });
 
 			const fieldset = container.querySelector('.custom-class');
 			expect(fieldset).toBeTruthy();
@@ -316,13 +309,6 @@ describe('CalorieTrackerMask', () => {
 
 			const breakfastButton = screen.getByLabelText(/Select Breakfast/i);
 			expect(breakfastButton).toHaveProperty('ariaPressed', 'false');
-		});
-
-		it('should have edit button with aria-label', () => {
-			renderWithContext(mockEntry, { isEditing: false });
-
-			const editButton = screen.getByLabelText(/press to edit/i);
-			expect(editButton).toBeTruthy();
 		});
 	});
 });
