@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Format Rust code in src-tauri
+echo "🦀 Formatting Rust code..."
+cd src-tauri && cargo fmt && cd ..
+
+# Run lint-staged for JavaScript/TypeScript/Svelte files
+echo "🎨 Formatting staged files with Prettier..."
+npx lint-staged
