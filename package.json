@@ -22,6 +22,8 @@
 		"@tauri-apps/plugin-opener": "^2"
 	},
 	"devDependencies": {
+		"@dicebear/core": "^9.2.4",
+		"@dicebear/lorelei": "^9.2.4",
 		"@number-flow/svelte": "^0.3.7",
 		"@sveltejs/adapter-static": "^3.0.8",
 		"@sveltejs/kit": "^2.20.4",
@@ -34,7 +36,7 @@
 		"@testing-library/jest-dom": "^6.8.0",
 		"@testing-library/svelte": "^5.1.0",
 		"@testing-library/user-event": "^14.6.1",
-		"@thwbh/veilchen": "^0.0.22",
+		"@thwbh/veilchen": "^0.2.0",
 		"@tsconfig/svelte": "^5.0.4",
 		"@types/date-fns": "^2.6.0",
 		"@types/node": "^22.10.1",
@@ -47,8 +49,8 @@
 		"eslint": "^8.57.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-svelte": "^2.45.1",
-		"flowbite-svelte-icons": "^2.1.0",
 		"jsdom": "^24.1.0",
+		"phosphor-svelte": "^3.0.1",
 		"prettier": "^3.2.5",
 		"prettier-plugin-svelte": "^3.2.6",
 		"svelte": "^5.27.0",

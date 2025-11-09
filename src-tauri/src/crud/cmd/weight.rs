@@ -13,8 +13,7 @@ pub fn create_weight_target(new_target: NewWeightTarget) -> Result<WeightTarget,
     }
 
     log::info!("Creating new weight target: {:?}", new_target);
-    with_db_connection(|conn| weight::create_weight_target(conn, &new_target))
-        .map_err(handle_error)
+    with_db_connection(|conn| weight::create_weight_target(conn, &new_target)).map_err(handle_error)
 }
 
 /// Retrieve all weight targets
@@ -47,8 +46,7 @@ pub fn update_weight_target(
 /// Delete a weight target by ID
 #[command]
 pub fn delete_weight_target(target_id: i32) -> Result<usize, String> {
-    with_db_connection(|conn| weight::delete_weight_target(conn, target_id))
-        .map_err(handle_error)
+    with_db_connection(|conn| weight::delete_weight_target(conn, target_id)).map_err(handle_error)
 }
 
 /// Create a new weight tracker entry and return tracker data for that day
@@ -73,9 +71,15 @@ pub fn update_weight_tracker_entry(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Updating weight tracker entry {}: {:?}", tracker_id, updated_entry);
-    with_db_connection(|conn| weight::update_weight_tracker_entry(conn, &tracker_id, &updated_entry))
-        .map_err(handle_error)
+    log::info!(
+        "Updating weight tracker entry {}: {:?}",
+        tracker_id,
+        updated_entry
+    );
+    with_db_connection(|conn| {
+        weight::update_weight_tracker_entry(conn, &tracker_id, &updated_entry)
+    })
+    .map_err(handle_error)
 }
 
 /// Delete a weight tracker entry by ID and return tracker data for that day
@@ -90,6 +94,8 @@ pub fn get_weight_tracker_for_date_range(
     date_from_str: String,
     date_to_str: String,
 ) -> Result<Vec<WeightTracker>, String> {
-    with_db_connection(|conn| weight::find_weight_tracker_by_date_range(conn, &date_from_str, &date_to_str))
-        .map_err(handle_error)
+    with_db_connection(|conn| {
+        weight::find_weight_tracker_by_date_range(conn, &date_from_str, &date_to_str)
+    })
+    .map_err(handle_error)
 }

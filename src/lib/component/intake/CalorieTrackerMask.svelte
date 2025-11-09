@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import type { CalorieTracker, FoodCategory, NewCalorieTracker } from '$lib/api/gen';
-	import { ValidatedInput } from '@thwbh/veilchen';
-	import { PenSolid } from 'flowbite-svelte-icons';
+	import type { CalorieTracker, NewCalorieTracker } from '$lib/api/gen';
+	import { NumberStepper } from '@thwbh/veilchen';
+	import { getCategoriesContext } from '$lib/context';
 
 	interface Props {
 		entry: CalorieTracker | NewCalorieTracker;
-		categories: Array<FoodCategory>;
-		className?: string;
+		class?: string;
 		readonly?: boolean;
 		isEditing?: boolean;
 		onedit?: () => void;
@@ -15,73 +14,90 @@
 
 	let {
 		entry = $bindable(),
-		categories,
-		className = 'fieldset rounded-box',
-		isEditing = false,
-		readonly = false,
-		onedit = () => {}
+		class: className = 'fieldset rounded-box',
+		readonly = false
 	}: Props = $props();
+
+	// Get categories from context instead of props
+	const categories = getCategoriesContext();
 
 	const select = (categoryShortvalue: string) => {
 		entry.category = categoryShortvalue;
 	};
 </script>
 
-<fieldset class={className}>
-	{#if !readonly}
-		<span> Category </span>
-	{/if}
-
-	<div class="flex flex-row items-center justify-between w-full grow">
-		{#if isEditing}
-			<div class="dropdown dropdown-center w-full">
-				<button tabindex="0" class="m-1 btn w-full" disabled={readonly}
-					><span class="text-left w-full"
-						>{getFoodCategoryLongvalue(categories, entry.category)}</span
-					></button
-				>
-				<ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-full">
-					{#each categories as category}
-						<li>
-							<button onclick={() => select(category.shortvalue)}>{category.longvalue}</button>
-						</li>
-					{/each}
-				</ul>
-			</div>
-		{:else}
-			<p class="font-bold">
+{#if readonly}
+	<fieldset class="fieldset rounded-box p-3 space-y-2">
+		<div class="flex items-center justify-between">
+			<h3 class="text-lg font-semibold">
 				{getFoodCategoryLongvalue(categories, entry.category)}
-			</p>
+			</h3>
+			<div class="text-right">
+				<p class="text-2xl font-bold">
+					{entry.amount} <span class="text-xs">kcal</span>
+				</p>
+				<p class="text-xs opacity-60">2:30 PM</p>
+			</div>
+		</div>
 
-			<button class="btn btn-xs btn-ghost" onclick={onedit} aria-label="press to edit"
-				><!-- Press to edit -->
-				<PenSolid height="1rem" width="1rem" />
-			</button>
-		{/if}
-	</div>
+		<div class="min-h-[2rem]">
+			{#if entry.description}
+				<p class="text-sm opacity-75 line-clamp-2 break-words overflow-x-scroll">
+					{entry.description}
+				</p>
+			{/if}
+		</div>
+	</fieldset>
+{:else}
+	<fieldset class={className}>
+		<span> Category </span>
 
-	<ValidatedInput
-		bind:value={entry.amount}
-		label="Amount"
-		type="number"
-		unit="kcal"
-		required
-		placeholder="Amount..."
-		errorInline={true}
-		min="1"
-		max="10000"
-		disabled={readonly}
-	>
-		Please enter a valid amount.
-	</ValidatedInput>
+		<div class="w-full overflow-x-auto p-4 snap-x snap-mandatory">
+			<div class="flex gap-2 w-max">
+				{#each categories as category}
+					<button
+						class="badge badge-md whitespace-nowrap snap-start"
+						class:badge-primary={entry.category === category.shortvalue}
+						class:badge-outline-neutral={entry.category !== category.shortvalue}
+						onclick={() => select(category.shortvalue)}
+						disabled={readonly}
+						aria-label="Select {category.longvalue}"
+						aria-pressed={entry.category === category.shortvalue}
+					>
+						{category.longvalue}
+					</button>
+				{/each}
+			</div>
+		</div>
 
-	<textarea
-		class="textarea w-full"
-		placeholder="Description..."
-		bind:value={entry.description}
-		disabled={readonly}
-	></textarea>
-</fieldset>
+		<div class="flex flex-col gap-2 w-full">
+			<NumberStepper
+				bind:value={entry.amount}
+				label="Amount"
+				unit="kcal"
+				min={1}
+				max={10000}
+				incrementSteps={[1, 5, 10, 100, 250]}
+				decrementSteps={[1, 5, 10, 100, 250]}
+				initialIncrementStep={10}
+				initialDecrementStep={10}
+				showLeftWheel={false}
+			/>
+
+			<textarea
+				class="textarea w-full"
+				placeholder="Description..."
+				bind:value={entry.description}
+				disabled={readonly}
+				rows={3}
+				maxlength={500}
+			></textarea>
+			<span class="text-xs opacity-60 text-right">
+				{entry.description?.length || 0} / 500
+			</span>
+		</div>
+	</fieldset>
+{/if}
 
 <style>
 	:disabled {
