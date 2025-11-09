@@ -32,8 +32,8 @@ fn calculate_weight_loss_for_men() {
     assert_eq!(27.8, result.bmi);
     assert_eq!(2993.0, result.tdee);
     assert_eq!(BmiCategory::Overweight, result.bmi_category);
-    assert_eq!(20, result.target_bmi_lower);
-    assert_eq!(25, result.target_bmi_upper);
+    assert_eq!(20, result.target_bmi_lower); // Fixed range for all ages
+    assert_eq!(25, result.target_bmi_upper); // Fixed range for all ages
     assert_eq!(64.8, result.target_weight_lower);
     assert_eq!(81.0, result.target_weight_upper);
     assert_eq!(72.9, result.target_weight);
@@ -65,8 +65,8 @@ fn calculate_weight_gain_for_women() {
     assert_eq!(21.6, result.bmi);
     assert_eq!(1645.0, result.tdee);
     assert_eq!(BmiCategory::StandardWeight, result.bmi_category);
-    assert_eq!(20, result.target_bmi_lower);
-    assert_eq!(25, result.target_bmi_upper);
+    assert_eq!(20, result.target_bmi_lower); // Fixed range for all ages
+    assert_eq!(25, result.target_bmi_upper); // Fixed range for all ages
     assert_eq!(22, result.target_bmi);
     assert_eq!(48.0, result.target_weight_lower);
     assert_eq!(60.1, result.target_weight_upper);

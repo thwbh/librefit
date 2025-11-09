@@ -1,23 +1,29 @@
 <script lang="ts">
-	import { AlertBox, AlertType, Stepper } from '@thwbh/veilchen';
+	import { Stepper } from '@thwbh/veilchen';
 	import Body from './body/Body.svelte';
+	import SetupComplete from './SetupComplete.svelte';
+	import {
+		updateUser,
+		updateBodyData,
+		wizardCreateTargets,
+		wizardCalculateTdee,
+		wizardCalculateForTargetWeight
+	} from '$lib/api/gen/commands';
 	import {
 		CalculationGoalSchema,
 		CalculationSexSchema,
-		updateBodyData,
-		updateUser,
-		wizardCalculateForTargetWeight,
-		wizardCalculateTdee,
-		wizardCreateTargets,
-		WizardRecommendationSchema,
-		type LibreUser,
-		type NewCalorieTarget,
-		type NewWeightTarget,
-		type NewWeightTracker,
-		type WizardInput,
-		type WizardResult,
-		type WizardTargetWeightResult
-	} from '$lib/api/gen';
+		WizardRecommendationSchema
+	} from '$lib/api/gen/types';
+	import type {
+		BodyData,
+		LibreUser,
+		NewCalorieTarget,
+		NewWeightTarget,
+		NewWeightTracker,
+		WizardInput,
+		WizardResult,
+		WizardTargetWeightResult
+	} from '$lib/api';
 	import type { WizardTargetSelection } from '$lib/types';
 	import { WizardOptions } from '$lib/enum';
 	import Finish from './Finish.svelte';
@@ -25,27 +31,46 @@
 	import { getDateAsStr } from '$lib/date';
 	import Rate from './targets/Rate.svelte';
 	import Report from './body/Report.svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { error } from '@tauri-apps/plugin-log';
 	import { createTargetWeightTargets } from '$lib/api/util';
+	import { setWizardContext, tryGetUserContext } from '$lib/context';
+
+	interface Props {
+		userData?: LibreUser;
+		bodyData?: BodyData;
+	}
 
 	const CalculationGoal = CalculationGoalSchema.enum;
 	const CalculationSex = CalculationSexSchema.enum;
 	const WizardRecommendation = WizardRecommendationSchema.enum;
 
-	let currentStep = $state(1);
+	let props: Props = $props();
 
-	let userData: LibreUser = $state({
-		id: 1,
-		name: 'Arnie',
-		avatar: ''
-	});
+	// Create reactive local state for userData with default
+	let userData = $state(
+		props.userData || {
+			id: 1,
+			name: 'Arnie',
+			avatar: ''
+		}
+	);
 
-	let wizardInput: WizardInput = $state({
+	let bodyData = props.bodyData || {
+		id: 0,
 		age: 30,
 		sex: CalculationSex.MALE,
 		weight: 85,
-		height: 180,
+		height: 180
+	};
+
+	let currentStep = $state(1);
+
+	let wizardInput: WizardInput = $state({
+		age: bodyData.age,
+		sex: CalculationSexSchema.safeParse(bodyData.sex).data!,
+		weight: bodyData.weight,
+		height: bodyData.height,
 		activityLevel: 1,
 		weeklyDifference: 1,
 		calculationGoal: CalculationGoal.LOSS
@@ -61,14 +86,50 @@
 
 	let wizardTargetWeightResult: WizardTargetWeightResult | undefined = $state();
 	let chosenRate: number = $state(500);
+	let chosenTargetWeight: number = $state(76); // For HOLD/GAIN users to select target weight
 
 	let weightTarget: NewWeightTarget | undefined = $state();
 	let calorieTarget: NewCalorieTarget | undefined = $state();
 
-	let finished: boolean = $state(false);
+	let showCompletion: boolean = $state(false);
+	let isProcessing: boolean = $state(false);
+	let processingStep: string = $state('');
 	let finishError: boolean = $state(false);
+	let isFadingOut: boolean = $state(false);
+
+	// Get user context during component initialization (not in async function)
+	const userContext = tryGetUserContext();
+
+	// Set wizard context for child components to access
+	setWizardContext({
+		get wizardResult() {
+			return wizardResult;
+		},
+		get wizardInput() {
+			return wizardInput;
+		},
+		get userData() {
+			return userData;
+		},
+		get chosenRate() {
+			return chosenRate;
+		},
+		get weightTarget() {
+			return weightTarget;
+		},
+		get calorieTarget() {
+			return calorieTarget;
+		}
+	});
 
 	const onnext = async () => {
+		if (currentStep === 1) {
+			// Lock in avatar to name if user never opened the picker
+			if (!userData.avatar) {
+				userData.avatar = userData.name!;
+			}
+		}
+
 		if (currentStep === 2) {
 			weightTracker = {
 				added: getDateAsStr(new Date()),
@@ -77,39 +138,64 @@
 		}
 
 		if (currentStep === 3) {
-			wizardResult = await wizardCalculateTdee({
+			const result = await wizardCalculateTdee({
 				input: wizardInput
 			});
 
-			if (wizardResult.recommendation === WizardRecommendation.LOSE) {
-				chosenOption.customDetails = wizardResult.targetWeightUpper;
-			} else if (wizardResult.recommendation === WizardRecommendation.HOLD) {
-				chosenOption.customDetails = wizardResult.targetWeight;
-			} else {
-				chosenOption.customDetails = wizardResult.targetWeightLower;
+			if (result) {
+				wizardResult = result;
+
+				if (result.recommendation === WizardRecommendation.LOSE) {
+					chosenOption.customDetails = result.targetWeightUpper;
+				} else if (result.recommendation === WizardRecommendation.HOLD) {
+					// Initialize target weight to current weight for HOLD users
+					chosenTargetWeight = wizardInput.weight;
+				} else if (result.recommendation === WizardRecommendation.GAIN) {
+					chosenOption.customDetails = result.targetWeightLower;
+					// Also initialize for potential override to HOLD
+					chosenTargetWeight = wizardInput.weight;
+				}
 			}
 		}
 
 		if (currentStep === 4) {
-			wizardTargetWeightResult = await wizardCalculateForTargetWeight({
+			const result = await wizardCalculateForTargetWeight({
 				input: {
 					age: wizardInput.age,
 					sex: wizardInput.sex,
 					currentWeight: wizardInput.weight,
 					height: wizardInput.height,
-					targetWeight: wizardResult!.targetWeight,
+					targetWeight: chosenTargetWeight,
 					startDate: getDateAsStr(new Date())
 				}
 			});
+
+			if (result) {
+				wizardTargetWeightResult = result;
+			}
 		}
 
 		if (currentStep === 5) {
+			// For GAIN users, check if they selected target weight equal to current weight (maintain)
+			const isGainUserMaintaining =
+				wizardResult!.recommendation === WizardRecommendation.GAIN &&
+				chosenTargetWeight === wizardInput.weight;
+
+			// Determine effective recommendation
+			const effectiveRecommendation = isGainUserMaintaining
+				? WizardRecommendation.HOLD
+				: wizardResult!.recommendation;
+
 			const targets = createTargetWeightTargets(
 				wizardInput,
 				wizardResult!,
 				wizardTargetWeightResult!,
 				new Date(),
-				wizardResult!.targetWeightUpper,
+				effectiveRecommendation === WizardRecommendation.HOLD
+					? chosenTargetWeight
+					: effectiveRecommendation === WizardRecommendation.LOSE
+						? wizardResult!.targetWeightUpper
+						: chosenTargetWeight, // Use selected target weight for GAIN
 				chosenRate
 			);
 
@@ -120,90 +206,189 @@
 
 	const onback = () => {
 		finishError = false;
-		finished = false;
+	};
+
+	// Recalculate when target weight changes for GAIN users
+	$effect(() => {
+		if (
+			currentStep === 4 &&
+			wizardResult?.recommendation === WizardRecommendation.GAIN &&
+			chosenTargetWeight !== wizardInput.weight
+		) {
+			wizardCalculateForTargetWeight({
+				input: {
+					age: wizardInput.age,
+					sex: wizardInput.sex,
+					currentWeight: wizardInput.weight,
+					height: wizardInput.height,
+					targetWeight: chosenTargetWeight,
+					startDate: getDateAsStr(new Date())
+				}
+			}).then((result) => {
+				if (result) {
+					wizardTargetWeightResult = result;
+				}
+			});
+		}
+	});
+
+	const performSetup = async () => {
+		showCompletion = true;
+		isProcessing = true;
+		finishError = false;
+
+		try {
+			processingStep = 'Saving your profile...';
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			const userResult = await updateUser({
+				userName: userData.name!,
+				userAvatar: userData.avatar!
+			});
+
+			// Update user context so the profile page reflects new data
+			if (userContext && userResult) {
+				userContext.updateUser({
+					id: userResult.id,
+					name: userResult.name!,
+					avatar: userResult.avatar!
+				});
+			}
+
+			processingStep = 'Recording body measurements...';
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			await updateBodyData({
+				age: wizardInput.age,
+				sex: wizardInput.sex,
+				height: wizardInput.height,
+				weight: wizardInput.weight
+			});
+
+			processingStep = 'Creating your personalized plan...';
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			await wizardCreateTargets({
+				input: {
+					weightTracker: weightTracker!,
+					weightTarget: weightTarget!,
+					calorieTarget: calorieTarget!
+				}
+			});
+
+			processingStep = 'All set! Taking you to your dashboard...';
+			isProcessing = false;
+
+			// Wait a moment to show success message
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			// Start fade out transition
+			isFadingOut = true;
+
+			// Wait for fade out animation to complete
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			// Invalidate all layout data to refetch user profile
+			await invalidateAll();
+
+			goto('/');
+		} catch (e) {
+			error(`Error during setup: ${e}`);
+			finishError = true;
+			isProcessing = false;
+			processingStep = 'An error occurred. Please try again.';
+		}
 	};
 
 	const onfinish = async () => {
-		await updateUser({
-			userName: userData.name!,
-			userAvatar: userData.avatar!
-		});
-		await updateBodyData({
-			age: wizardInput.age,
-			sex: wizardInput.sex,
-			height: wizardInput.height,
-			weight: wizardInput.weight
-		});
-		await wizardCreateTargets({
-			input: {
-				weightTracker: weightTracker!,
-				weightTarget: weightTarget!,
-				calorieTarget: calorieTarget!
-			}
-		}).catch((e) => {
-			error(e);
-			finishError = true;
-		});
+		await performSetup();
+	};
 
-		finished = true;
-
-		if (!finishError) {
-			setTimeout(() => {
-				goto('/');
-			}, 5000);
-		}
+	const handleRetry = () => {
+		isFadingOut = false;
+		performSetup();
 	};
 </script>
 
-<Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
-	{#snippet step1()}
-		<strong>Body Parameters</strong>
-		<Body bind:wizardInput />
-	{/snippet}
+{#if !showCompletion}
+	<Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
+		{#snippet step1()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Body Parameters</h2>
+				<p class="text-sm text-base-content opacity-60">
+					Let's start with some basic information about you
+				</p>
+			</div>
+			<Body bind:wizardInput bind:userData />
+		{/snippet}
 
-	{#snippet step2()}
-		<strong>Activity Level</strong>
-		<ActivityLevel bind:value={wizardInput.activityLevel} />
-	{/snippet}
+		{#snippet step2()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Activity Level</h2>
+				<p class="text-sm text-base-content opacity-60">
+					How active are you during your day? Choose what describes your daily activity level best.
+				</p>
+			</div>
+			<ActivityLevel bind:value={wizardInput.activityLevel} />
+		{/snippet}
 
-	{#snippet step3()}
-		<strong>Result</strong>
-		{#if wizardResult}
-			<Report {wizardInput} {wizardResult} />
-		{/if}
-	{/snippet}
+		{#snippet step3()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Your Results</h2>
+				<p class="text-sm text-base-content opacity-60">
+					Here's what your body composition and metabolism look like
+				</p>
+			</div>
+			{#if wizardResult}
+				<Report {wizardInput} {wizardResult} />
+			{/if}
+		{/snippet}
 
-	{#snippet step4()}
-		<strong>Next Steps</strong>
-		{#if wizardTargetWeightResult}
-			{@const rates = Object.keys(wizardTargetWeightResult.dateByRate).map((v) => +v)}
-			{@const targetDates = wizardTargetWeightResult.dateByRate}
-			{@const targetProgress = wizardTargetWeightResult.progressByRate}
-			<Rate bind:value={chosenRate} {rates} {targetDates} {targetProgress} />
-		{/if}
-	{/snippet}
+		{#snippet step4()}
+			<div class="mb-6">
+				{#if wizardResult?.recommendation === WizardRecommendation.HOLD}
+					<h2 class="text-2xl font-bold text-base-content mb-2">Select Your Target Weight</h2>
+				{:else}
+					<h2 class="text-2xl font-bold text-base-content mb-2">Choose Your Pace</h2>
+				{/if}
+				<p class="text-sm text-base-content opacity-60">
+					{#if wizardResult?.recommendation === WizardRecommendation.HOLD}
+						Choose a target weight within your healthy weight range
+					{:else}
+						Select a calorie deficit that fits your lifestyle and goals
+					{/if}
+				</p>
+			</div>
+			{#if wizardTargetWeightResult}
+				{@const rates = Object.keys(wizardTargetWeightResult.dateByRate).map((v) => +v)}
+				{@const targetDates = wizardTargetWeightResult.dateByRate}
+				{@const targetProgress = wizardTargetWeightResult.progressByRate}
+				<Rate
+					bind:value={chosenRate}
+					{rates}
+					{targetDates}
+					{targetProgress}
+					bind:targetWeight={chosenTargetWeight}
+				/>
+			{/if}
+		{/snippet}
 
-	{#snippet step5()}
-		<strong>You're set!</strong>
-		<Finish {wizardResult} {chosenRate} {weightTarget} {calorieTarget} />
-		<p class="text-xs">Click finish to proceed. You will be redirected to the dashboard.</p>
-	{/snippet}
-</Stepper>
+		{#snippet step5()}
+			<div class="mb-6">
+				<h2 class="text-2xl font-bold text-base-content mb-2">Your Personalized Plan</h2>
+				<p class="text-sm text-base-content opacity-60">
+					Here's your customized fitness journey roadmap
+				</p>
+			</div>
+			<Finish />
+		{/snippet}
+	</Stepper>
+{/if}
 
-{#if finished}
-	{#if finishError}
-		<AlertBox type={AlertType.Error} alertClass="alert-soft">
-			<strong>Error</strong>
-			<p>An error occurred. Please try again later.</p>
-		</AlertBox>
-	{:else}
-		<AlertBox type={AlertType.Success} alertClass="alert-soft">
-			<strong>Success</strong>
-			<p>
-				Successfully created your plan. You will be redirected to the <a href="/" class="link"
-					>dashboard</a
-				>.
-			</p>
-		</AlertBox>
-	{/if}
+{#if showCompletion}
+	<SetupComplete
+		{isProcessing}
+		{processingStep}
+		{isFadingOut}
+		hasError={finishError}
+		{userData}
+		onRetry={handleRetry}
+	/>
 {/if}

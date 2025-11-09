@@ -22,7 +22,7 @@ export const createTargetWeightTargets = (
   const calorieTarget: NewCalorieTarget = {
     added: todayStr,
     startDate: getDateAsStr(startDate),
-    endDate: customWizardResult.dateByRate.get(selectedRate)!,
+    endDate: customWizardResult.dateByRate[selectedRate]!,
     targetCalories: wizardResult.tdee + multiplier * selectedRate,
     maximumCalories: wizardResult.tdee
   };
@@ -30,7 +30,7 @@ export const createTargetWeightTargets = (
   const weightTarget: NewWeightTarget = {
     added: todayStr,
     startDate: getDateAsStr(startDate),
-    endDate: customWizardResult.dateByRate.get(selectedRate)!,
+    endDate: customWizardResult.dateByRate[selectedRate]!,
     initialWeight: wizardInput.weight,
     targetWeight: targetWeight
   };

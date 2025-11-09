@@ -3,25 +3,31 @@
 		CalorieTracker,
 		CreateCalorieTrackerEntryParams,
 		DeleteCalorieTrackerEntryParams,
-		FoodCategory,
 		NewCalorieTracker,
 		UpdateCalorieTrackerEntryParams
 	} from '$lib/api/gen';
-	import IntakeCard from './IntakeCard.svelte';
 	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
-	import { TrashBinSolid } from 'flowbite-svelte-icons';
-	import { AlertBox, AlertType, ModalDialog, Stack } from '@thwbh/veilchen';
+	import { Trash } from 'phosphor-svelte';
+	import {
+		AlertBox,
+		AlertType,
+		LongPressContainer,
+		ModalDialog,
+		Stack,
+		StackCard
+	} from '@thwbh/veilchen';
 	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
-	import { fade, fly, type FlyParams } from 'svelte/transition';
-	import { info } from '@tauri-apps/plugin-log';
+	import { fade, type FlyParams } from 'svelte/transition';
+	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
+	import { getFoodCategoryColor } from '$lib/api';
 
 	interface Props {
 		entries: Array<CalorieTracker>;
-		categories: Array<FoodCategory>;
 		onadd?: (params: CreateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
 		onedit?: (params: UpdateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
 		ondelete?: (params: DeleteCalorieTrackerEntryParams) => Promise<number>;
+		class?: string;
 	}
 
 	const getBlankEntry = (): NewCalorieTracker => {
@@ -35,179 +41,146 @@
 
 	let {
 		entries = $bindable([]),
-		categories,
 		onadd = undefined,
 		onedit = undefined,
-		ondelete = undefined
+		ondelete = undefined,
+		class: className = ''
 	}: Props = $props();
 
-	let blankEntry: NewCalorieTracker = $state(getBlankEntry());
-
 	let index = $state(0);
-	let focusedEntry = $derived(entries[index] ? { ...entries[index] } : undefined);
-	let editDialog: HTMLDialogElement | undefined = $state();
-	let createDialog: HTMLDialogElement | undefined = $state();
 
-	let isEditing = $state(false);
-	let enableDelete = $state(false);
-	let isNew = $state(false);
-
-	const startEditing = async () => {
-		await vibrate(2);
-
-		isEditing = true;
-		isNew = false;
-
-		editDialog?.showModal();
-	};
-
-	const create = () => {
-		isNew = true;
-
-		info('create button triggered');
-
-		createDialog?.showModal();
-	};
-
-	const save = async () => {
-		info('save button triggered');
-
-		if (isNew) {
-			onadd?.({ newEntry: blankEntry }).then((newEntry: CalorieTracker) => {
-				entries.push(newEntry);
-				index = entries.length - 1;
-				blankEntry = getBlankEntry();
-			});
-		} else if (isEditing && focusedEntry) {
-			onedit?.({
-				trackerId: focusedEntry.id,
-				updatedEntry: focusedEntry
-			}).then((updatedEntry: CalorieTracker) => (entries[index] = updatedEntry));
-		}
-
-		createDialog?.close();
-		editDialog?.close();
-	};
-
-	const deleteEntry = () => {
-		info(`button triggered. focusedEntry=${focusedEntry}`);
-
-		ondelete?.({
-			trackerId: focusedEntry!!.id
-		}).then(() => {
+	// Use modal composition hook
+	const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
+		onCreate: (entry) => {
+			if (!onadd) throw new Error('onadd not provided');
+			return onadd({ newEntry: entry });
+		},
+		onUpdate: (id, entry) => {
+			if (!onedit) throw new Error('onedit not provided');
+			return onedit({ trackerId: id, updatedEntry: entry });
+		},
+		onDelete: (id) => {
+			if (!ondelete) throw new Error('ondelete not provided');
+			return ondelete({ trackerId: id });
+		},
+		getBlankEntry,
+		onCreateSuccess: (newEntry) => {
+			entries = [...entries, newEntry];
+			index = entries.length - 1;
+		},
+		onUpdateSuccess: (updatedEntry) => {
+			entries[index] = updatedEntry;
+		},
+		onDeleteSuccess: () => {
 			if (entries.length === 1) {
 				entries = [];
 			} else {
-				let deletedIndex = index;
-
+				const deletedIndex = index;
 				entries = entries.toSpliced(deletedIndex, 1);
-
 				if (index === entries.length && index > 0) {
 					index--;
-				} else index = 0;
+				} else {
+					index = 0;
+				}
 			}
-		});
+		}
+	});
 
-		enableDelete = false;
-
-		editDialog?.close();
-	};
-
-	const cancel = () => {
-		info('cancel button triggered');
-
-		createDialog?.close();
-		editDialog?.close();
-
-		enableDelete = false;
-		blankEntry = getBlankEntry();
-	};
-
-	const handleSwipe = () => {
-		info(`swiping to ${index}`);
+	const onlongpress = async (cardKey: number) => {
+		await vibrate(2);
+		modal.openEdit(entries[cardKey]);
 	};
 </script>
 
-<div class="flex flex-col items-center gap-2 p-4 w-full">
-	{#if entries.length > 0}
-		<div in:fly={{ y: 500 }}>
-			<Stack
-				bind:index
-				size={entries.length}
-				swipeable={true}
-				swipeParams={{ timeframe: 300, minSwipeDistance: 60 }}
-				onswipe={handleSwipe}
+{#if entries.length > 0}
+	<Stack
+		bind:index
+		size={entries.length}
+		swipeable={true}
+		onswipe={(direction: string) => console.log('swiped ', direction)}
+		class={className}
+	>
+		{#snippet card(cardKey: number, outFlyParams: FlyParams, inFlyParams: FlyParams)}
+			<StackCard
+				isActive={cardKey === index}
+				{cardKey}
+				{outFlyParams}
+				{inFlyParams}
+				class="card-side w-full"
 			>
-				{#snippet card(_: number, params: FlyParams)}
-					{@const flyParams = entries.length > 1 ? params : { y: 500 }}
-					<div transition:fly={flyParams}>
-						<IntakeCard
-							entry={focusedEntry as CalorieTracker}
-							{categories}
-							{flyParams}
-							onlongpress={startEditing}
-						/>
-					</div>
+				{#snippet side()}
+					<figure class="{getFoodCategoryColor(entries[cardKey].category)} w-4"></figure>
 				{/snippet}
-			</Stack>
-		</div>
-	{:else}
-		<div in:fade>
-			<AlertBox type={AlertType.Warning} alertClass="border-neutral border-dashed">
-				<strong>Nothing tracked today.</strong>
-				<span> Use the button below to add today's first entry. Stay strong! </span>
-			</AlertBox>
-		</div>
-	{/if}
+				<LongPressContainer onlongpress={() => onlongpress(cardKey)}>
+					<CalorieTrackerMask entry={entries[cardKey]} readonly />
+				</LongPressContainer>
+			</StackCard>
+		{/snippet}
+	</Stack>
+{:else}
+	<div in:fade>
+		<AlertBox type={AlertType.Warning} class="border-neutral border-dashed">
+			<strong>Nothing tracked today.</strong>
+			<span> Use the button below to add today's first entry. Stay strong! </span>
+		</AlertBox>
+	</div>
+{/if}
 
-	<button class="btn btn-neutral w-full" onclick={create}> Add Intake </button>
-</div>
+<button class="btn btn-neutral w-full" onclick={modal.openCreate}> Add Intake </button>
 
-<ModalDialog bind:dialog={createDialog} onconfirm={save} oncancel={cancel}>
+<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
 		<span>Add Intake</span>
-		<span class="text-xs opacity-60">
-			Date: {convertDateStrToDisplayDateStr(blankEntry.added)}
-		</span>
+		{#if modal.currentEntry}
+			<span class="text-xs opacity-60">
+				Date: {convertDateStrToDisplayDateStr((modal.currentEntry as NewCalorieTracker).added)}
+			</span>
+		{/if}
 	{/snippet}
 
 	{#snippet content()}
-		<CalorieTrackerMask
-			bind:entry={blankEntry}
-			{categories}
-			isEditing={true}
-			readonly={enableDelete}
-		/>
+		{#if modal.currentEntry}
+			<CalorieTrackerMask
+				bind:entry={modal.currentEntry}
+				isEditing={true}
+				readonly={modal.enableDelete}
+			/>
+		{/if}
 	{/snippet}
 </ModalDialog>
 
-<ModalDialog bind:dialog={editDialog} onconfirm={save} oncancel={cancel}>
+<ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
 		<span>Edit Intake</span>
 		<span>
-			<span class="text-xs opacity-60">
-				Added: {convertDateStrToDisplayDateStr(blankEntry.added)}
-			</span>
+			{#if modal.currentEntry}
+				<span class="text-xs opacity-60">
+					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as CalorieTracker).added)}
+				</span>
+			{/if}
 			<span>
 				<button class="btn btn-xs btn-error">
-					<TrashBinSolid width="1rem" onclick={() => (enableDelete = true)} />
+					<Trash size="1rem" onclick={modal.requestDelete} />
 				</button>
 			</span>
 		</span>
 	{/snippet}
 
 	{#snippet content()}
-		{#if focusedEntry !== undefined}
-			<CalorieTrackerMask entry={focusedEntry} {categories} {isEditing} />
+		{#if modal.currentEntry}
+			<CalorieTrackerMask
+				entry={modal.currentEntry as CalorieTracker}
+				isEditing={modal.isEditing}
+			/>
 		{/if}
 	{/snippet}
 
 	{#snippet footer()}
-		{#if enableDelete}
-			<button class="btn btn-error" onclick={deleteEntry}>Delete</button>
+		{#if modal.enableDelete}
+			<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
 		{:else}
-			<button class="btn btn-primary" onclick={save}>Save</button>
+			<button class="btn btn-primary" onclick={modal.save}>Save</button>
 		{/if}
-		<button class="btn" onclick={cancel}>Cancel</button>
+		<button class="btn" onclick={modal.cancel}>Cancel</button>
 	{/snippet}
 </ModalDialog>

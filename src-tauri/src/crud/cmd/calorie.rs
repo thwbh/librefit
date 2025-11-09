@@ -46,9 +46,15 @@ pub fn update_calorie_tracker_entry(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Updating calorie tracker entry {}: {:?}", tracker_id, updated_entry);
-    with_db_connection(|conn| calories::update_calorie_tracker_entry(conn, tracker_id, &updated_entry))
-        .map_err(handle_error)
+    log::info!(
+        "Updating calorie tracker entry {}: {:?}",
+        tracker_id,
+        updated_entry
+    );
+    with_db_connection(|conn| {
+        calories::update_calorie_tracker_entry(conn, tracker_id, &updated_entry)
+    })
+    .map_err(handle_error)
 }
 
 /// Delete a calorie tracker entry by ID and return the deleted row count
@@ -63,8 +69,10 @@ pub fn get_calorie_tracker_for_date_range(
     date_from_str: String,
     date_to_str: String,
 ) -> Result<Vec<CalorieTracker>, String> {
-    with_db_connection(|conn| calories::find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str))
-        .map_err(handle_error)
+    with_db_connection(|conn| {
+        calories::find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str)
+    })
+    .map_err(handle_error)
 }
 
 /// Return all dates the user has actually tracked something in the given range.
@@ -80,8 +88,8 @@ pub fn get_calorie_tracker_dates_in_range(
     );
 
     with_db_connection(|conn| {
-        calories::find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str)
-            .map(|result| {
+        calories::find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str).map(
+            |result| {
                 let mut vec = result
                     .into_iter()
                     .map(|tracker| tracker.added)
@@ -89,7 +97,8 @@ pub fn get_calorie_tracker_dates_in_range(
 
                 vec.dedup();
                 vec
-            })
+            },
+        )
     })
     .map_err(handle_error)
 }

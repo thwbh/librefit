@@ -1,25 +1,20 @@
 <script lang="ts">
 	import { display_date_format, getDateAsStr, parseStringAsDate } from '$lib/date';
-	import type {
-		CreateWeightTrackerEntryParams,
-		NewWeightTracker,
-		UpdateWeightTrackerEntryParams,
-		WeightTarget,
-		WeightTracker
-	} from '$lib/api/gen';
-	import { ModalDialog, ValidatedInput } from '@thwbh/veilchen';
+	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/api/gen';
+	import { ModalDialog, NumberStepper } from '@thwbh/veilchen';
 	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
-	import { ExclamationCircleSolid, ShieldCheckSolid, ShieldSolid } from 'flowbite-svelte-icons';
-	import { PlusOutline } from 'flowbite-svelte-icons';
+	import { Shield, ShieldCheck, ShieldWarning } from 'phosphor-svelte';
+	import { Plus } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
+	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 
 	interface Props {
 		weightTracker?: NewWeightTracker | WeightTracker;
 		lastWeightTracker?: WeightTracker;
 		weightTarget: WeightTarget;
-		onadd?: (params: CreateWeightTrackerEntryParams) => Promise<WeightTracker>;
-		onedit?: (params: UpdateWeightTrackerEntryParams) => Promise<WeightTracker>;
+		onadd?: (entry: NewWeightTracker) => Promise<WeightTracker>;
+		onedit?: (id: number, entry: WeightTracker) => Promise<WeightTracker>;
 	}
 
 	let {
@@ -34,31 +29,35 @@
 		onedit = undefined
 	}: Props = $props();
 
-	let dialog: HTMLDialogElement | undefined = $state();
-	let currentEntry = $derived({ ...weightTracker });
-
-	const show = () => {
-		dialog?.show();
-	};
-
-	const set = async () => {
-		if ('id' in currentEntry) {
-			await onedit?.({
-				trackerId: currentEntry.id,
-				updatedEntry: currentEntry
-			}).then((updatedEntry: WeightTracker) => (weightTracker = updatedEntry));
-		} else {
-			await onadd?.({
-				newEntry: currentEntry
-			}).then((newEntry: WeightTracker) => (weightTracker = newEntry));
+	const modal = useEntryModal<WeightTracker, NewWeightTracker>({
+		onCreate: async (entry) => {
+			if (!onadd) throw new Error('No create handler provided');
+			return await onadd(entry);
+		},
+		onUpdate: async (id, entry) => {
+			if (!onedit) throw new Error('No update handler provided');
+			return await onedit(id, entry);
+		},
+		onDelete: async (id) => {
+			throw new Error('Delete not supported for weight entries');
+		},
+		getBlankEntry: () => ({
+			added: getDateAsStr(new Date()),
+			amount: lastWeightTracker ? lastWeightTracker.amount : 0
+		}),
+		onCreateSuccess: (newEntry) => {
+			lastWeightTracker = newEntry;
+		},
+		onUpdateSuccess: (entry) => {
+			lastWeightTracker = entry;
 		}
-	};
+	});
 </script>
 
 <div class="stat">
 	<div class="stat-figure">
-		<button class="btn btn-primary btn-xl" aria-label="Set Weight" onclick={show}>
-			<PlusOutline height="1.5rem" width="1.5rem" />
+		<button class="btn btn-primary w-16 h-16" aria-label="Set Weight" onclick={modal.openCreate}>
+			<Plus size="1.5rem" />
 		</button>
 	</div>
 
@@ -79,7 +78,7 @@
 	</div>
 	<div class="stat-desc flex items-center gap-1">
 		{#if weightTracker && 'id' in weightTracker}
-			<ShieldCheckSolid width="20" height="20" class={'text-success'} />
+			<ShieldCheck size="20" weight="fill" class={'text-success'} />
 			Last update: Today.
 		{:else if lastWeightTracker}
 			{@const lastEntryDayDiff = differenceInDays(
@@ -87,14 +86,14 @@
 				parseStringAsDate(lastWeightTracker.added)
 			)}
 			{#if lastEntryDayDiff > 2}
-				<ExclamationCircleSolid width="20" height="20" class={'text-error'} />
+				<ShieldWarning size="1.5em" weight="fill" color={'var(--color-error)'} />
 				Last update was {lastEntryDayDiff} days ago!
 			{:else}
-				<ShieldSolid width="20" height="20" class={'text-warning'} />
+				<Shield size="1.5em" weight="fill" color={'var(--color-warning)'} />
 				Last update: {lastEntryDayDiff} days ago.
 			{/if}
 		{:else}
-			<ShieldSolid width="20" height="20" class={'stat-desc'} />
+			<Shield size="20" class={'stat-desc'} />
 			Nothing tracked yet.
 		{/if}
 	</div>
@@ -112,7 +111,7 @@
 	<progress class="progress w-full" value="63" max="100"></progress>
 </div>
 
-<ModalDialog bind:dialog onconfirm={set}>
+<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
 		<span> Set Weight </span>
 		<span class="text-xs">
@@ -121,17 +120,25 @@
 	{/snippet}
 	{#snippet content()}
 		<fieldset class="fieldset rounded-box">
-			<ValidatedInput
-				bind:value={currentEntry.amount}
-				label="Current Weight"
-				type="number"
-				unit="kg"
-				errorInline={true}
-				min={30}
-				max={330}
-			>
-				Please enter a valid weight.
-			</ValidatedInput>
+			{#if modal.errorMessage}
+				<div class="alert alert-error mb-4">
+					<span>{modal.errorMessage}</span>
+				</div>
+			{/if}
+			{#if modal.currentEntry}
+				<NumberStepper
+					bind:value={modal.currentEntry.amount}
+					label="Current Weight"
+					unit="kg"
+					min={30}
+					max={330}
+					incrementSteps={[0.5, 1, 2, 5]}
+					decrementSteps={[0.5, 1, 2, 5]}
+					initialIncrementStep={1}
+					initialDecrementStep={1}
+					showLeftWheel={false}
+				/>
+			{/if}
 		</fieldset>
 	{/snippet}
 </ModalDialog>

@@ -1,16 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/svelte';
 import Body from '../../../src/lib/component/wizard/body/Body.svelte';
-import type { WizardInput } from '$lib/api/gen';
+import type { LibreUser, WizardInput } from '$lib/api/gen';
 import { CalculationGoalSchema, CalculationSexSchema } from '$lib/api/gen';
+import { setupVeilchenMock } from '../../utils/mocks';
 
-// Mock the veilchen components properly
-vi.mock('@thwbh/veilchen', () => {
-  return {
-    ButtonGroup: vi.fn(() => null),
-    RangeInput: vi.fn(() => null)
-  };
-});
+// Setup common mocks
+setupVeilchenMock();
 
 describe('Body Component', () => {
   const mockWizardInput: WizardInput = {
@@ -23,10 +19,18 @@ describe('Body Component', () => {
     calculationGoal: CalculationGoalSchema.enum.LOSS
   };
 
+
+  const mockUserData: LibreUser = {
+    id: 1,
+    name: 'Arnie',
+    avatar: 'abc'
+  }
+
   it('should render component without crashing', () => {
     const { container } = render(Body, {
       props: {
-        wizardInput: mockWizardInput
+        wizardInput: mockWizardInput,
+        userData: mockUserData
       }
     });
 
@@ -36,7 +40,8 @@ describe('Body Component', () => {
   it('should apply correct container styling', () => {
     const { container } = render(Body, {
       props: {
-        wizardInput: mockWizardInput
+        wizardInput: mockWizardInput,
+        userData: mockUserData
       }
     });
 
@@ -58,7 +63,8 @@ describe('Body Component', () => {
 
     const { container } = render(Body, {
       props: {
-        wizardInput: differentInput
+        wizardInput: differentInput,
+        userData: mockUserData
       }
     });
 

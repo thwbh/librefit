@@ -28,7 +28,7 @@ use crate::crud::db::connection;
 use dotenv::dotenv;
 use std::env;
 use tauri::path::BaseDirectory;
-use tauri::Manager;
+use tauri::{App, Manager};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 pub mod calc;
@@ -53,25 +53,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_haptics::init())
-        .setup(|app| {
-            dotenv().ok();
-
-            match env::var("DATABASE_URL") {
-                Ok(_) => {}
-                // hardwire db path. bundling resources does not work on android for some reason.
-                Err(_) => env::set_var(
-                    "DATABASE_URL",
-                    app.path()
-                        .resolve("tracker.db", BaseDirectory::AppData)
-                        .unwrap()
-                        .clone(),
-                ),
-            }
-
-            let _ = init::db_setup::run_migrations(&mut connection::create_db_connection());
-
-            Ok(())
-        })
+        .setup(setup_db)
         .invoke_handler(tauri::generate_handler![
             daily_dashboard,
             get_tracker_progress,
@@ -100,4 +82,54 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+    // Only load .env in development
+    #[cfg(debug_assertions)]
+    {
+        dotenv().ok();
+        log::info!("Development mode: loaded .env file");
+    }
+
+    let db_path = match env::var("DATABASE_URL") {
+        Ok(url) => {
+            log::info!("DATABASE_URL found in environment: {}", url);
+            url
+        }
+        Err(_) => {
+            let path = app
+                .path()
+                .resolve("tracker.db", BaseDirectory::AppData)
+                .unwrap();
+
+            let path_str = path.to_string_lossy().to_string();
+
+            log::info!("DATABASE_URL not found, using app data path: {}", path_str);
+
+            path_str
+        }
+    };
+
+    env::set_var("DATABASE_URL", &db_path);
+    log::info!("DATABASE_URL set to: {}", db_path);
+
+    // Ensure the database directory exists
+    if let Ok(url) = env::var("DATABASE_URL") {
+        if let Some(parent) = std::path::Path::new(&url).parent() {
+            if !parent.exists() {
+                log::info!("Creating database directory: {:?}", parent);
+                std::fs::create_dir_all(parent).unwrap_or_else(|e| {
+                    log::error!("Failed to create database directory: {}", e);
+                });
+            }
+        }
+    }
+
+    match init::db_setup::run_migrations(&mut connection::create_db_connection()) {
+        Ok(_) => log::info!("Database migrations completed successfully"),
+        Err(e) => log::error!("Database migrations failed: {}", e),
+    }
+
+    Ok(())
 }
