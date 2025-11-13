@@ -1,20 +1,66 @@
+use diesel::r2d2::{self, ConnectionManager, Pool, PoolError};
 use diesel::sqlite::SqliteConnection;
-use diesel::Connection;
-use dotenv::dotenv;
-use std::env;
 
-pub fn create_db_connection() -> SqliteConnection {
-    dotenv().ok();
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+/// Type alias for the connection pool
+pub type DbPool = Pool<ConnectionManager<SqliteConnection>>;
 
-    SqliteConnection::establish(&db_url)
-        .unwrap_or_else(|_| panic!("Error connecting to database {}", db_url))
+/// Type alias for a pooled connection
+pub type PooledConnection = r2d2::PooledConnection<ConnectionManager<SqliteConnection>>;
+
+/// Creates a new connection pool with the given database URL
+///
+/// This should be called once during app initialization and the pool
+/// should be stored in Tauri's managed state.
+///
+/// Configuration is optimized for mobile (Android):
+/// - Small pool size (3 connections max)
+/// - WAL mode enabled for better concurrency
+/// - Reduced cache size for memory efficiency
+pub fn create_pool(database_url: &str) -> Result<DbPool, PoolError> {
+    log::info!("Creating database connection pool for: {}", database_url);
+
+    let manager = ConnectionManager::<SqliteConnection>::new(database_url);
+
+    Pool::builder()
+        .max_size(3) // 3 connections max (sufficient for mobile with background tasks)
+        .min_idle(Some(1)) // Keep 1 connection ready
+        .connection_timeout(std::time::Duration::from_secs(5))
+        .connection_customizer(Box::new(ConnectionOptions))
+        .build(manager)
 }
 
-pub fn with_db_connection<F, R>(f: F) -> Result<R, diesel::result::Error>
-where
-    F: FnOnce(&mut SqliteConnection) -> Result<R, diesel::result::Error>,
-{
-    let conn = &mut create_db_connection();
-    f(conn)
+/// Custom connection options to configure SQLite behavior for mobile
+#[derive(Debug, Clone, Copy)]
+struct ConnectionOptions;
+
+impl r2d2::CustomizeConnection<SqliteConnection, r2d2::Error> for ConnectionOptions {
+    fn on_acquire(&self, conn: &mut SqliteConnection) -> Result<(), r2d2::Error> {
+        use diesel::RunQueryDsl;
+
+        // Enable WAL mode for better concurrency
+        // This allows reads and writes to happen concurrently, preventing
+        // "database is locked" errors during normal app usage
+        diesel::sql_query("PRAGMA journal_mode = WAL;")
+            .execute(conn)
+            .map_err(|e| r2d2::Error::QueryError(e))?;
+
+        // Enable foreign key constraints
+        diesel::sql_query("PRAGMA foreign_keys = ON;")
+            .execute(conn)
+            .map_err(|e| r2d2::Error::QueryError(e))?;
+
+        // Set busy timeout to 3 seconds (mobile-friendly)
+        // Fail faster on mobile rather than hanging indefinitely
+        diesel::sql_query("PRAGMA busy_timeout = 3000;")
+            .execute(conn)
+            .map_err(|e| r2d2::Error::QueryError(e))?;
+
+        // Reduce page cache for memory efficiency on mobile
+        // -2000 means 2MB cache (negative value = KB, positive = pages)
+        diesel::sql_query("PRAGMA cache_size = -2000;")
+            .execute(conn)
+            .map_err(|e| r2d2::Error::QueryError(e))?;
+
+        Ok(())
+    }
 }

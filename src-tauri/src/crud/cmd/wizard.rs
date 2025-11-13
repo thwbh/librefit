@@ -6,9 +6,9 @@ use calc::wizard::{
     WizardTargetWeightInput, WizardTargetWeightResult,
 };
 use crud::db;
-use crud::db::connection::with_db_connection;
+use crud::db::connection::DbPool;
 use diesel::Connection;
-use tauri::command;
+use tauri::{command, State};
 use validator::ValidationErrors;
 
 #[command]
@@ -23,17 +23,19 @@ pub fn wizard_calculate_tdee(input: WizardInput) -> Result<WizardResult, Validat
 }
 
 #[command]
-pub fn wizard_create_targets(input: Wizard) -> Result<(), String> {
+pub fn wizard_create_targets(pool: State<DbPool>, input: Wizard) -> Result<(), String> {
     log::info!(">>> wizard_create_targets: {:?}", input);
 
-    with_db_connection(|conn| {
-        conn.transaction(|conn| {
-            db::repo::weight::create_weight_target(conn, &input.weight_target)?;
-            db::repo::weight::create_weight_tracker_entry(conn, &input.weight_tracker)?;
-            db::repo::calories::create_calorie_target(conn, &input.calorie_target)?;
+    let mut conn = pool
+        .get()
+        .map_err(|e| format!("Failed to get connection: {}", e))?;
 
-            Ok(())
-        })
+    conn.transaction(|conn| {
+        db::repo::weight::create_weight_target(conn, &input.weight_target)?;
+        db::repo::weight::create_weight_tracker_entry(conn, &input.weight_tracker)?;
+        db::repo::calories::create_calorie_target(conn, &input.calorie_target)?;
+
+        Ok(())
     })
     .map_err(handle_error)
 }

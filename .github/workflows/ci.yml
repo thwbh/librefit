@@ -4,6 +4,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main", "develop" ]
+env:
+  CARGO_TERM_COLOR: always
 jobs:
   rust-test:
     name: 'Run nextest'
@@ -27,27 +29,35 @@ jobs:
             webkit2gtk-driver \
             xvfb
       - name: 'Set up Rust'
-        uses: actions-rs/toolchain@v1 
-        with: 
-          toolchain: stable 
-          profile: minimal 
-          override: true 
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - name: 'Cache Rust dependencies'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
       - name: 'Install nextest'
         uses: taiki-e/install-action@nextest
       - name: 'Install cargo-llvm-cov'
         uses: taiki-e/install-action@cargo-llvm-cov
-      - name: 'Run tests'
-        run: cd src-tauri/ && cargo llvm-cov nextest --profile ci
+      - name: 'Run tests with coverage'
+        run: cd src-tauri/ && cargo llvm-cov nextest --profile ci --lcov --output-path ../coverage-rust.lcov
       - name: 'Upload TypeScript bindings'
         uses: actions/upload-artifact@v4
         with:
           name: typescript-bindings
           path: src/lib/api/gen/
           retention-days: 1
-      - name: 'Upload coverage reports to Codecov'
+      - name: 'Upload Rust coverage to Codecov'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage-rust.lcov
+          flags: rust
+          name: rust-coverage
   svelte-test:
     name: 'Run vitest'
     runs-on: ubuntu-latest
@@ -70,11 +80,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+        cache: 'npm'
     - name: 'Install Deps'
-      run: npm install
+      run: npm ci
     - name: 'Test'
-      run: npm run test:ci --coverage.enabled true
-    - name: 'Upload coverage reports to Codecov'
+      run: npm run test:ci
+    - name: 'Upload Svelte coverage to Codecov'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage/coverage-final.json
+        flags: svelte
+        name: svelte-coverage

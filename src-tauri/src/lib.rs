@@ -126,10 +126,39 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    match init::db_setup::run_migrations(&mut connection::create_db_connection()) {
+    // Create connection pool for the application
+    let pool = connection::create_pool(&db_path).map_err(|e| {
+        log::error!("Failed to create connection pool: {}", e);
+        Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to create connection pool: {}", e),
+        ))
+    })?;
+
+    log::info!("Database connection pool created successfully");
+
+    // Run migrations using a connection from the pool
+    let mut conn = pool.get().map_err(|e| {
+        log::error!("Failed to get connection from pool for migrations: {}", e);
+        Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to get connection from pool: {}", e),
+        ))
+    })?;
+
+    match init::db_setup::run_migrations(&mut conn) {
         Ok(_) => log::info!("Database migrations completed successfully"),
-        Err(e) => log::error!("Database migrations failed: {}", e),
+        Err(e) => {
+            log::error!("Database migrations failed: {}", e);
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Migration failed: {}", e),
+            )));
+        }
     }
+
+    // Store the pool in Tauri's managed state
+    app.manage(pool);
 
     Ok(())
 }
