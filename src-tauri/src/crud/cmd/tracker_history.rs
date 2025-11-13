@@ -2,7 +2,7 @@ use crate::{
     calc::math_f32::floor_f32,
     crud::db::{
         comp::tracker_history::TrackerHistory,
-        connection::with_db_connection,
+        connection::DbPool,
         model::{CalorieTracker, WeightTracker},
         repo::{
             calories::find_calorie_tracker_by_date_range, weight::find_weight_tracker_by_date_range,
@@ -11,10 +11,11 @@ use crate::{
 };
 use chrono::{Duration, NaiveDate, ParseResult};
 use std::collections::BTreeMap;
-use tauri::command;
+use tauri::{command, State};
 
 #[command]
 pub fn get_tracker_history(
+    pool: State<DbPool>,
     date_from_str: String,
     date_to_str: String,
 ) -> Result<TrackerHistory, String> {
@@ -30,12 +31,18 @@ pub fn get_tracker_history(
         NaiveDate::parse_from_str(&date_to_str, "%Y-%m-%d");
 
     match (date_from_parse_result, date_to_parse_result) {
-        (Ok(date_from), Ok(date_to)) => with_db_connection(|conn| {
+        (Ok(date_from), Ok(date_to)) => {
+            let mut conn = pool
+                .get()
+                .map_err(|e| format!("Failed to get connection: {}", e))?;
+
             let calories_range =
-                find_calorie_tracker_by_date_range(conn, &date_from_str, &date_to_str)?;
+                find_calorie_tracker_by_date_range(&mut conn, &date_from_str, &date_to_str)
+                    .map_err(|e| format!("Failed to get calorie tracker data: {}", e))?;
 
             let weight_range =
-                find_weight_tracker_by_date_range(conn, &date_from_str, &date_to_str)?;
+                find_weight_tracker_by_date_range(&mut conn, &date_from_str, &date_to_str)
+                    .map_err(|e| format!("Failed to get weight tracker data: {}", e))?;
 
             let mut calories_history = interpolate_calories(calories_range);
             let mut weight_history = interpolate_weight(weight_range);
@@ -63,9 +70,8 @@ pub fn get_tracker_history(
                 weight_history,
                 date_last_str: date_to_str.clone(),
             })
-        })
-        .map_err(|_| "Error".to_string()),
-        _ => Err("Invalid date format".parse().unwrap()),
+        }
+        _ => Err("Invalid date format".to_string()),
     }
 }
 
