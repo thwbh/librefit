@@ -1,4 +1,6 @@
 res/tracker.db-journal
 res/tracker.db
+res/tracker.db-wal
+res/tracker.db-shm
 ../node_modules
 gen/

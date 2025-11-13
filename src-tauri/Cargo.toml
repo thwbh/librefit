@@ -24,8 +24,9 @@ serde = { version = "1.0.217", features = ["derive"] }
 log = "0.4.25"
 tauri = { version = "2.2.3", features = [] }
 tauri-plugin-log = { version = "2.2.0", features = ["colored"] }
-diesel = { version = "2.2.6", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+diesel = { version = "2.2.6", features = ["sqlite", "returning_clauses_for_sqlite_3_35", "r2d2"] }
 diesel_migrations = { version = "2.2.0", features = ["sqlite"] }
+r2d2 = "0.8"
 dotenv = "0.15.0"
 chrono = "0.4.38"
 validator = { version = "0.19.0", features = ["derive"] }
