@@ -1,6 +1,5 @@
 use crate::helpers::setup_test_pool;
-use librefit_lib::crud::db::model::{NewWeightTarget, NewWeightTracker};
-use librefit_lib::crud::db::repo::weight;
+use librefit_lib::service::weight::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
 
 // ============================================================================
 // Weight Target Tests
@@ -19,7 +18,7 @@ fn test_create_weight_target() {
         target_weight: 75.0,
     };
 
-    let result = weight::create_weight_target(&mut conn, &new_target);
+    let result = WeightTarget::create(&mut conn, &new_target);
 
     assert!(result.is_ok());
     let target = result.unwrap();
@@ -52,11 +51,11 @@ fn test_get_weight_targets() {
         target_weight: 75.0,
     };
 
-    weight::create_weight_target(&mut conn, &target1).unwrap();
-    weight::create_weight_target(&mut conn, &target2).unwrap();
+    WeightTarget::create(&mut conn, &target1).unwrap();
+    WeightTarget::create(&mut conn, &target2).unwrap();
 
     // Retrieve all targets
-    let result = weight::get_weight_targets(&mut conn);
+    let result = WeightTarget::all(&mut conn);
 
     assert!(result.is_ok());
     let targets = result.unwrap();
@@ -70,7 +69,7 @@ fn test_get_weight_targets_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = weight::get_weight_targets(&mut conn);
+    let result = WeightTarget::all(&mut conn);
 
     assert!(result.is_ok());
     let targets = result.unwrap();
@@ -99,11 +98,11 @@ fn test_get_latest_weight_target() {
         target_weight: 75.0,
     };
 
-    weight::create_weight_target(&mut conn, &target1).unwrap();
-    let last_created = weight::create_weight_target(&mut conn, &target2).unwrap();
+    WeightTarget::create(&mut conn, &target1).unwrap();
+    let last_created = WeightTarget::create(&mut conn, &target2).unwrap();
 
     // Get latest target (should be target2)
-    let result = weight::get_latest_weight_target(&mut conn);
+    let result = WeightTarget::get_latest(&mut conn);
 
     assert!(result.is_ok());
     let latest = result.unwrap();
@@ -116,7 +115,7 @@ fn test_get_latest_weight_target_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = weight::get_latest_weight_target(&mut conn);
+    let result = WeightTarget::get_latest(&mut conn);
 
     assert!(result.is_err()); // Should fail when no targets exist
 }
@@ -135,7 +134,7 @@ fn test_update_weight_target() {
         target_weight: 75.0,
     };
 
-    let created = weight::create_weight_target(&mut conn, &new_target).unwrap();
+    let created = WeightTarget::create(&mut conn, &new_target).unwrap();
 
     // Update target
     let updated_target = NewWeightTarget {
@@ -146,7 +145,7 @@ fn test_update_weight_target() {
         target_weight: 70.0,
     };
 
-    let result = weight::update_weight_target(&mut conn, created.id, updated_target);
+    let result = WeightTarget::update(&mut conn, created.id, updated_target);
 
     assert!(result.is_ok());
     let updated = result.unwrap();
@@ -168,16 +167,16 @@ fn test_delete_weight_target() {
         target_weight: 75.0,
     };
 
-    let created = weight::create_weight_target(&mut conn, &new_target).unwrap();
+    let created = WeightTarget::create(&mut conn, &new_target).unwrap();
 
     // Delete
-    let delete_result = weight::delete_weight_target(&mut conn, created.id);
+    let delete_result = WeightTarget::delete(&mut conn, created.id);
 
     assert!(delete_result.is_ok());
     assert_eq!(delete_result.unwrap(), 1);
 
     // Verify deleted
-    let targets = weight::get_weight_targets(&mut conn).unwrap();
+    let targets = WeightTarget::all(&mut conn).unwrap();
     assert_eq!(targets.len(), 0);
 }
 
@@ -186,7 +185,7 @@ fn test_delete_nonexistent_weight_target() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let delete_result = weight::delete_weight_target(&mut conn, 999);
+    let delete_result = WeightTarget::delete(&mut conn, 999);
 
     assert!(delete_result.is_ok());
     assert_eq!(delete_result.unwrap(), 0); // No rows deleted
@@ -214,11 +213,11 @@ fn test_find_last_weight_target() {
         target_weight: 75.0,
     };
 
-    weight::create_weight_target(&mut conn, &target1).unwrap();
-    let last_created = weight::create_weight_target(&mut conn, &target2).unwrap();
+    WeightTarget::create(&mut conn, &target1).unwrap();
+    let last_created = WeightTarget::create(&mut conn, &target2).unwrap();
 
     // Find last target (should be target2)
-    let result = weight::find_last_weight_target(&mut conn);
+    let result = WeightTarget::find_last(&mut conn);
 
     assert!(result.is_ok());
     let last = result.unwrap();
@@ -231,7 +230,7 @@ fn test_find_last_weight_target_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = weight::find_last_weight_target(&mut conn);
+    let result = WeightTarget::find_last(&mut conn);
 
     assert!(result.is_err()); // Should fail when no targets exist
 }
@@ -250,7 +249,7 @@ fn test_create_weight_tracker_entry() {
         amount: 82.5,
     };
 
-    let result = weight::create_weight_tracker_entry(&mut conn, &new_entry);
+    let result = WeightTracker::create(&mut conn, &new_entry);
 
     assert!(result.is_ok());
     let entry = result.unwrap();
@@ -275,11 +274,11 @@ fn test_get_weight_tracker_entries() {
         amount: 82.0,
     };
 
-    weight::create_weight_tracker_entry(&mut conn, &entry1).unwrap();
-    weight::create_weight_tracker_entry(&mut conn, &entry2).unwrap();
+    WeightTracker::create(&mut conn, &entry1).unwrap();
+    WeightTracker::create(&mut conn, &entry2).unwrap();
 
     // Retrieve all entries
-    let result = weight::get_weight_tracker_entries(&mut conn);
+    let result = WeightTracker::all(&mut conn);
 
     assert!(result.is_ok());
     let entries = result.unwrap();
@@ -297,7 +296,7 @@ fn test_update_weight_tracker_entry() {
         amount: 82.5,
     };
 
-    let created = weight::create_weight_tracker_entry(&mut conn, &new_entry).unwrap();
+    let created = WeightTracker::create(&mut conn, &new_entry).unwrap();
 
     // Update entry
     let updated_entry = NewWeightTracker {
@@ -305,7 +304,7 @@ fn test_update_weight_tracker_entry() {
         amount: 82.0,
     };
 
-    let result = weight::update_weight_tracker_entry(&mut conn, &created.id, &updated_entry);
+    let result = WeightTracker::update(&mut conn, &created.id, &updated_entry);
 
     assert!(result.is_ok());
     let updated = result.unwrap();
@@ -323,16 +322,16 @@ fn test_delete_weight_tracker_entry() {
         amount: 82.5,
     };
 
-    let created = weight::create_weight_tracker_entry(&mut conn, &new_entry).unwrap();
+    let created = WeightTracker::create(&mut conn, &new_entry).unwrap();
 
     // Delete
-    let delete_result = weight::delete_weight_tracker_entry(&mut conn, created.id);
+    let delete_result = WeightTracker::delete(&mut conn, created.id);
 
     assert!(delete_result.is_ok());
     assert_eq!(delete_result.unwrap(), 1);
 
     // Verify deleted
-    let entries = weight::get_weight_tracker_entries(&mut conn).unwrap();
+    let entries = WeightTracker::all(&mut conn).unwrap();
     assert_eq!(entries.len(), 0);
 }
 
@@ -357,12 +356,12 @@ fn test_find_weight_tracker_by_date() {
         amount: 82.0,
     };
 
-    weight::create_weight_tracker_entry(&mut conn, &entry1).unwrap();
-    weight::create_weight_tracker_entry(&mut conn, &entry2).unwrap();
-    weight::create_weight_tracker_entry(&mut conn, &entry3).unwrap();
+    WeightTracker::create(&mut conn, &entry1).unwrap();
+    WeightTracker::create(&mut conn, &entry2).unwrap();
+    WeightTracker::create(&mut conn, &entry3).unwrap();
 
     // Find entries for 2025-01-15
-    let result = weight::find_weight_tracker_by_date(&mut conn, &"2025-01-15".to_string());
+    let result = WeightTracker::find_by_date(&mut conn, &"2025-01-15".to_string());
 
     assert!(result.is_ok());
     let entries = result.unwrap();
@@ -375,7 +374,7 @@ fn test_find_weight_tracker_by_date_no_results() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = weight::find_weight_tracker_by_date(&mut conn, &"2025-01-15".to_string());
+    let result = WeightTracker::find_by_date(&mut conn, &"2025-01-15".to_string());
 
     assert!(result.is_ok());
     let entries = result.unwrap();
@@ -395,11 +394,11 @@ fn test_find_weight_tracker_by_date_range() {
             added: date.to_string(),
             amount: 85.0 - (i as f32 * 0.5),
         };
-        weight::create_weight_tracker_entry(&mut conn, &entry).unwrap();
+        WeightTracker::create(&mut conn, &entry).unwrap();
     }
 
     // Test date range query
-    let result = weight::find_weight_tracker_by_date_range(
+    let result = WeightTracker::find_by_date_range(
         &mut conn,
         &"2025-01-15".to_string(),
         &"2025-01-17".to_string(),
@@ -425,10 +424,10 @@ fn test_find_weight_tracker_by_date_range_single_day() {
         amount: 82.5,
     };
 
-    weight::create_weight_tracker_entry(&mut conn, &entry).unwrap();
+    WeightTracker::create(&mut conn, &entry).unwrap();
 
     // Same date for start and end
-    let result = weight::find_weight_tracker_by_date_range(
+    let result = WeightTracker::find_by_date_range(
         &mut conn,
         &"2025-01-15".to_string(),
         &"2025-01-15".to_string(),
@@ -444,7 +443,7 @@ fn test_find_weight_tracker_by_date_range_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = weight::find_weight_tracker_by_date_range(
+    let result = WeightTracker::find_by_date_range(
         &mut conn,
         &"2025-01-15".to_string(),
         &"2025-01-20".to_string(),
@@ -466,10 +465,10 @@ fn test_multiple_entries_same_day() {
             added: "2025-01-15".to_string(),
             amount: 82.5 - (i as f32 * 0.1),
         };
-        weight::create_weight_tracker_entry(&mut conn, &entry).unwrap();
+        WeightTracker::create(&mut conn, &entry).unwrap();
     }
 
-    let result = weight::find_weight_tracker_by_date(&mut conn, &"2025-01-15".to_string());
+    let result = WeightTracker::find_by_date(&mut conn, &"2025-01-15".to_string());
 
     assert!(result.is_ok());
     let entries = result.unwrap();
@@ -490,7 +489,7 @@ fn test_weight_precision() {
         amount: 82.456,
     };
 
-    let created = weight::create_weight_tracker_entry(&mut conn, &new_entry).unwrap();
+    let created = WeightTracker::create(&mut conn, &new_entry).unwrap();
 
     // SQLite might round f32 values, but should be close
     assert!((created.amount - 82.456).abs() < 0.01);

@@ -1,12 +1,12 @@
 use crate::helpers::setup_test_pool;
-use librefit_lib::crud::db::repo::food_category;
+use librefit_lib::service::intake::FoodCategory;
 
 #[test]
 fn test_get_food_categories() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_categories(&mut conn);
+    let result = FoodCategory::all(&mut conn);
 
     assert!(result.is_ok());
     let categories = result.unwrap();
@@ -29,7 +29,7 @@ fn test_get_food_category_breakfast() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_category(&mut conn, "b".to_string());
+    let result = FoodCategory::find_by_key(&mut conn, "b".to_string());
 
     assert!(result.is_ok());
     let category = result.unwrap();
@@ -42,7 +42,7 @@ fn test_get_food_category_lunch() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_category(&mut conn, "l".to_string());
+    let result = FoodCategory::find_by_key(&mut conn, "l".to_string());
 
     assert!(result.is_ok());
     let category = result.unwrap();
@@ -55,7 +55,7 @@ fn test_get_food_category_dinner() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_category(&mut conn, "d".to_string());
+    let result = FoodCategory::find_by_key(&mut conn, "d".to_string());
 
     assert!(result.is_ok());
     let category = result.unwrap();
@@ -68,7 +68,7 @@ fn test_get_food_category_snack() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_category(&mut conn, "s".to_string());
+    let result = FoodCategory::find_by_key(&mut conn, "s".to_string());
 
     assert!(result.is_ok());
     let category = result.unwrap();
@@ -81,7 +81,7 @@ fn test_get_food_category_treat() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_category(&mut conn, "t".to_string());
+    let result = FoodCategory::find_by_key(&mut conn, "t".to_string());
 
     assert!(result.is_ok());
     let category = result.unwrap();
@@ -94,7 +94,7 @@ fn test_get_food_category_unset() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_category(&mut conn, "u".to_string());
+    let result = FoodCategory::find_by_key(&mut conn, "u".to_string());
 
     assert!(result.is_ok());
     let category = result.unwrap();
@@ -107,7 +107,7 @@ fn test_get_food_category_not_found() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = food_category::get_food_category(&mut conn, "z".to_string());
+    let result = FoodCategory::find_by_key(&mut conn, "z".to_string());
 
     assert!(result.is_err()); // Should fail for non-existent category
 }
@@ -117,7 +117,7 @@ fn test_get_all_categories_have_values() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let categories = food_category::get_food_categories(&mut conn).unwrap();
+    let categories = FoodCategory::all(&mut conn).unwrap();
 
     // Verify all categories have non-empty values
     for category in categories {

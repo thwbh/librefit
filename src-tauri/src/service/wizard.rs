@@ -1,12 +1,18 @@
-use crate::service::intake::NewIntakeTarget;
-use crate::service::weight::{NewWeightTarget, NewWeightTracker};
+use crate::calc::math_f32::floor_f32;
+use crate::db::connection::DbPool;
 use crate::i18n::localize;
+use crate::service::intake::{IntakeTarget, NewIntakeTarget};
+use crate::service::weight::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
 use chrono::{Duration, NaiveDate};
+use diesel::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tauri::{command, State};
 use validator::{Validate, ValidationError, ValidationErrors};
 
-use super::math_f32::floor_f32;
+// ============================================================================
+// INPUT/OUTPUT TYPES
+// ============================================================================
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -156,15 +162,9 @@ pub enum WizardRecommendation {
     GAIN,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ErrorDescription {
-    property_name: String,
-    message: String,
-}
-
-fn validate(input: &dyn Validate) -> Result<(), ValidationErrors> {
-    input.validate()
-}
+// ============================================================================
+// VALIDATION FUNCTIONS
+// ============================================================================
 
 fn validate_activity_level(activity_level: f32) -> Result<(), ValidationError> {
     match activity_level {
@@ -173,8 +173,12 @@ fn validate_activity_level(activity_level: f32) -> Result<(), ValidationError> {
     }
 }
 
+// ============================================================================
+// CALCULATION FUNCTIONS
+// ============================================================================
+
 pub fn calculate(wizard_input: WizardInput) -> Result<WizardResult, ValidationErrors> {
-    match validate(&wizard_input) {
+    match wizard_input.validate() {
         Err(e) => Err(localize::localize_validation_errors(&e)),
         Ok(_) => {
             let target_bmi_range = calculate_target_bmi(&wizard_input.age);
@@ -533,4 +537,63 @@ fn calculate_recommendation(bmi: &f32) -> WizardRecommendation {
         // Overweight or obese: lose weight
         WizardRecommendation::LOSE
     }
+}
+
+// ============================================================================
+// COMMANDS (Tauri)
+// ============================================================================
+
+#[command]
+pub fn wizard_calculate_tdee(input: WizardInput) -> Result<WizardResult, ValidationErrors> {
+    log::info!(">>> wizard_calculate_tdee: {:?}", input);
+
+    let wizard_result = calculate(input);
+
+    log::info!(">>> result={:?}", wizard_result);
+
+    wizard_result
+}
+
+#[command]
+pub fn wizard_create_targets(pool: State<DbPool>, input: Wizard) -> Result<(), String> {
+    log::info!(">>> wizard_create_targets: {:?}", input);
+
+    let mut conn = pool
+        .get()
+        .map_err(|e| format!("Failed to get connection: {}", e))?;
+
+    conn.transaction(|conn| {
+        WeightTarget::create(conn, &input.weight_target)?;
+        WeightTracker::create(conn, &input.weight_tracker)?;
+        IntakeTarget::create(conn, &input.calorie_target)?;
+
+        Ok(())
+    })
+    .map_err(|e: diesel::result::Error| format!("Transaction failed: {}", e))
+}
+
+#[command]
+pub fn wizard_calculate_for_target_date(
+    input: WizardTargetDateInput,
+) -> Result<WizardTargetDateResult, ValidationErrors> {
+    log::info!(">>> wizard_calculate_for_target_date: {:?}", input);
+
+    let wizard_result = calculate_for_target_date(&input);
+
+    log::info!(">>> result={:?}", wizard_result);
+
+    wizard_result
+}
+
+#[command]
+pub fn wizard_calculate_for_target_weight(
+    input: WizardTargetWeightInput,
+) -> Result<WizardTargetWeightResult, ValidationErrors> {
+    log::info!(">>> wizard_calculate_for_target_weight {:?}", input);
+
+    let wizard_result = calculate_for_target_weight(&input);
+
+    log::info!(">>> result={:?}", wizard_result);
+
+    wizard_result
 }

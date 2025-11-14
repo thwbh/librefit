@@ -2,7 +2,7 @@ use crate::helpers::{
     create_test_intake_entry, create_test_intake_target, create_test_user,
     create_test_weight_entry, create_test_weight_target, setup_test_pool,
 };
-use librefit_lib::crud::cmd::dashboard::daily_dashboard;
+use librefit_lib::service::dashboard::daily_dashboard;
 use tauri::Manager;
 
 #[test]
@@ -34,7 +34,7 @@ fn test_daily_dashboard_success() {
     // Verify user data
     assert!(dashboard.user_data.is_some());
     let user = dashboard.user_data.unwrap();
-    assert_eq!(user.name, Some("Test User".to_string()));
+    assert_eq!(user.name, "Test User");
 
     // Verify calorie target
     assert_eq!(dashboard.calorie_target.target_calories, 2000);

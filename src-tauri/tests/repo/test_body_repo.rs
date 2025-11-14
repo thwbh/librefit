@@ -1,5 +1,5 @@
 use crate::helpers::setup_test_pool;
-use librefit_lib::crud::db::repo::body;
+use librefit_lib::service::body::BodyData;
 
 /// Should fail when no body data exists
 #[test]
@@ -7,7 +7,7 @@ fn test_get_body_data_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = body::get_body_data(&mut conn);
+    let result = BodyData::get(&mut conn);
 
     assert!(result.is_err()); // Should fail when no body data exists
 }
@@ -19,7 +19,7 @@ fn test_update_body_data_creates_new() {
     let mut conn = pool.get().unwrap();
 
     // When no body data exists, update_body_data should create one
-    let result = body::update_body_data(&mut conn, &30, &175.0, &75.0, "male");
+    let result = BodyData::update(&mut conn, &30, &175.0, &75.0, "male");
 
     assert!(result.is_ok());
     let created = result.unwrap();
@@ -37,10 +37,10 @@ fn test_update_body_data_updates_existing() {
     let mut conn = pool.get().unwrap();
 
     // Create initial body data
-    body::update_body_data(&mut conn, &25, &170.0, &70.0, "female").unwrap();
+    BodyData::update(&mut conn, &25, &170.0, &70.0, "female").unwrap();
 
     // Update the body data
-    let result = body::update_body_data(&mut conn, &26, &171.0, &69.0, "female");
+    let result = BodyData::update(&mut conn, &26, &171.0, &69.0, "female");
 
     assert!(result.is_ok());
     let updated = result.unwrap();
@@ -51,7 +51,7 @@ fn test_update_body_data_updates_existing() {
     assert_eq!(updated.sex, "female");
 
     // Verify only one body data record exists
-    let fetched = body::get_body_data(&mut conn).unwrap();
+    let fetched = BodyData::get(&mut conn).unwrap();
     assert_eq!(fetched.age, 26);
 }
 
@@ -62,10 +62,10 @@ fn test_get_body_data_after_creation() {
     let mut conn = pool.get().unwrap();
 
     // Create body data
-    body::update_body_data(&mut conn, &35, &180.0, &85.0, "male").unwrap();
+    BodyData::update(&mut conn, &35, &180.0, &85.0, "male").unwrap();
 
     // Get body data
-    let result = body::get_body_data(&mut conn);
+    let result = BodyData::get(&mut conn);
 
     assert!(result.is_ok());
     let fetched = result.unwrap();
@@ -82,9 +82,9 @@ fn test_update_body_data_multiple_times() {
     let mut conn = pool.get().unwrap();
 
     // Create and update multiple times
-    body::update_body_data(&mut conn, &20, &160.0, &50.0, "female").unwrap();
-    body::update_body_data(&mut conn, &21, &161.0, &51.0, "female").unwrap();
-    let final_update = body::update_body_data(&mut conn, &22, &162.0, &52.0, "female").unwrap();
+    BodyData::update(&mut conn, &20, &160.0, &50.0, "female").unwrap();
+    BodyData::update(&mut conn, &21, &161.0, &51.0, "female").unwrap();
+    let final_update = BodyData::update(&mut conn, &22, &162.0, &52.0, "female").unwrap();
 
     // Should still be the same record (ID 1)
     assert_eq!(final_update.id, 1);
@@ -100,10 +100,10 @@ fn test_update_body_data_change_sex() {
     let mut conn = pool.get().unwrap();
 
     // Create with one sex
-    body::update_body_data(&mut conn, &30, &175.0, &75.0, "male").unwrap();
+    BodyData::update(&mut conn, &30, &175.0, &75.0, "male").unwrap();
 
     // Update to different sex
-    let result = body::update_body_data(&mut conn, &30, &175.0, &75.0, "female");
+    let result = BodyData::update(&mut conn, &30, &175.0, &75.0, "female");
 
     assert!(result.is_ok());
     let updated = result.unwrap();
@@ -117,7 +117,7 @@ fn test_update_body_data_boundary_values() {
     let mut conn = pool.get().unwrap();
 
     // Test with edge case values
-    let result = body::update_body_data(&mut conn, &18, &100.0, &30.0, "male");
+    let result = BodyData::update(&mut conn, &18, &100.0, &30.0, "male");
 
     assert!(result.is_ok());
     let created = result.unwrap();
@@ -133,7 +133,7 @@ fn test_update_body_data_high_values() {
     let mut conn = pool.get().unwrap();
 
     // Test with high values
-    let result = body::update_body_data(&mut conn, &100, &250.0, &300.0, "male");
+    let result = BodyData::update(&mut conn, &100, &250.0, &300.0, "male");
 
     assert!(result.is_ok());
     let created = result.unwrap();
@@ -149,7 +149,7 @@ fn test_update_body_data_precision() {
     let mut conn = pool.get().unwrap();
 
     // Test decimal precision
-    let result = body::update_body_data(&mut conn, &30, &175.456, &75.789, "male");
+    let result = BodyData::update(&mut conn, &30, &175.456, &75.789, "male");
 
     assert!(result.is_ok());
     let created = result.unwrap();
@@ -164,7 +164,7 @@ fn test_update_body_data_custom_sex_value() {
     let mut conn = pool.get().unwrap();
 
     // Test with custom sex value (the database doesn't enforce enum, just string)
-    let result = body::update_body_data(&mut conn, &30, &175.0, &75.0, "other");
+    let result = BodyData::update(&mut conn, &30, &175.0, &75.0, "other");
 
     assert!(result.is_ok());
     let created = result.unwrap();
@@ -175,7 +175,6 @@ fn test_update_body_data_custom_sex_value() {
 
 #[test]
 fn test_body_data_validation_age_too_low() {
-    use librefit_lib::crud::db::model::BodyData;
     use validator::Validate;
 
     let body = BodyData {
@@ -192,7 +191,6 @@ fn test_body_data_validation_age_too_low() {
 
 #[test]
 fn test_body_data_validation_age_too_high() {
-    use librefit_lib::crud::db::model::BodyData;
     use validator::Validate;
 
     let body = BodyData {
@@ -209,7 +207,6 @@ fn test_body_data_validation_age_too_high() {
 
 #[test]
 fn test_body_data_validation_height_too_low() {
-    use librefit_lib::crud::db::model::BodyData;
     use validator::Validate;
 
     let body = BodyData {
@@ -226,7 +223,6 @@ fn test_body_data_validation_height_too_low() {
 
 #[test]
 fn test_body_data_validation_height_too_high() {
-    use librefit_lib::crud::db::model::BodyData;
     use validator::Validate;
 
     let body = BodyData {
@@ -243,7 +239,6 @@ fn test_body_data_validation_height_too_high() {
 
 #[test]
 fn test_body_data_validation_weight_too_low() {
-    use librefit_lib::crud::db::model::BodyData;
     use validator::Validate;
 
     let body = BodyData {
@@ -260,7 +255,6 @@ fn test_body_data_validation_weight_too_low() {
 
 #[test]
 fn test_body_data_validation_weight_too_high() {
-    use librefit_lib::crud::db::model::BodyData;
     use validator::Validate;
 
     let body = BodyData {

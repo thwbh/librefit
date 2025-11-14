@@ -1,6 +1,5 @@
 use crate::helpers::setup_test_pool;
-use librefit_lib::crud::db::model::{NewIntakeTarget, NewIntake};
-use librefit_lib::crud::db::repo::intake;
+use librefit_lib::service::intake::{Intake, IntakeTarget, NewIntake, NewIntakeTarget};
 
 // ============================================================================
 // Intake Target Tests
@@ -19,7 +18,7 @@ fn test_create_intake_target() {
         maximum_calories: 2500,
     };
 
-    let result = intake::create_intake_target(&mut conn, &new_target);
+    let result = IntakeTarget::create(&mut conn, &new_target);
 
     assert!(result.is_ok());
     let target = result.unwrap();
@@ -52,11 +51,11 @@ fn test_get_intake_targets() {
         maximum_calories: 2200,
     };
 
-    intake::create_intake_target(&mut conn, &target1).unwrap();
-    intake::create_intake_target(&mut conn, &target2).unwrap();
+    IntakeTarget::create(&mut conn, &target1).unwrap();
+    IntakeTarget::create(&mut conn, &target2).unwrap();
 
     // Retrieve all targets
-    let result = intake::get_intake_targets(&mut conn);
+    let result = IntakeTarget::all(&mut conn);
 
     assert!(result.is_ok());
     let targets = result.unwrap();
@@ -70,7 +69,7 @@ fn test_get_intake_targets_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = intake::get_intake_targets(&mut conn);
+    let result = IntakeTarget::all(&mut conn);
 
     assert!(result.is_ok());
     let targets = result.unwrap();
@@ -91,7 +90,7 @@ fn test_update_intake_target() {
         maximum_calories: 2500,
     };
 
-    let created = intake::create_intake_target(&mut conn, &new_target).unwrap();
+    let created = IntakeTarget::create(&mut conn, &new_target).unwrap();
 
     // Update target
     let updated_target = NewIntakeTarget {
@@ -102,7 +101,7 @@ fn test_update_intake_target() {
         maximum_calories: 2200,
     };
 
-    let result = intake::update_intake_target(&mut conn, created.id, updated_target);
+    let result = IntakeTarget::update(&mut conn, created.id, updated_target);
 
     assert!(result.is_ok());
     let updated = result.unwrap();
@@ -125,16 +124,16 @@ fn test_delete_intake_target() {
         maximum_calories: 2500,
     };
 
-    let created = intake::create_intake_target(&mut conn, &new_target).unwrap();
+    let created = IntakeTarget::create(&mut conn, &new_target).unwrap();
 
     // Delete
-    let delete_result = intake::delete_intake_target(&mut conn, created.id);
+    let delete_result = IntakeTarget::delete(&mut conn, created.id);
 
     assert!(delete_result.is_ok());
     assert_eq!(delete_result.unwrap(), 1);
 
     // Verify deleted
-    let targets = intake::get_intake_targets(&mut conn).unwrap();
+    let targets = IntakeTarget::all(&mut conn).unwrap();
     assert_eq!(targets.len(), 0);
 }
 
@@ -143,7 +142,7 @@ fn test_delete_nonexistent_intake_target() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let delete_result = intake::delete_intake_target(&mut conn, 999);
+    let delete_result = IntakeTarget::delete(&mut conn, 999);
 
     assert!(delete_result.is_ok());
     assert_eq!(delete_result.unwrap(), 0); // No rows deleted
@@ -171,11 +170,11 @@ fn test_find_last_intake_target() {
         maximum_calories: 2200,
     };
 
-    intake::create_intake_target(&mut conn, &target1).unwrap();
-    let last_created = intake::create_intake_target(&mut conn, &target2).unwrap();
+    IntakeTarget::create(&mut conn, &target1).unwrap();
+    let last_created = IntakeTarget::create(&mut conn, &target2).unwrap();
 
     // Find last target (should be target2)
-    let result = intake::find_last_intake_target(&mut conn);
+    let result = IntakeTarget::find_last(&mut conn);
 
     assert!(result.is_ok());
     let last = result.unwrap();
@@ -188,7 +187,7 @@ fn test_find_last_intake_target_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = intake::find_last_intake_target(&mut conn);
+    let result = IntakeTarget::find_last(&mut conn);
 
     assert!(result.is_err()); // Should fail when no targets exist
 }
@@ -209,7 +208,7 @@ fn test_create_intake_entry() {
         description: Some("Breakfast oatmeal".to_string()),
     };
 
-    let result = intake::create_intake_entry(&mut conn, &new_entry);
+    let result = Intake::create(&mut conn, &new_entry);
 
     assert!(result.is_ok());
     let entry = result.unwrap();
@@ -232,7 +231,7 @@ fn test_create_intake_entry_no_description() {
         description: None,
     };
 
-    let result = intake::create_intake_entry(&mut conn, &new_entry);
+    let result = Intake::create(&mut conn, &new_entry);
 
     assert!(result.is_ok());
     let entry = result.unwrap();
@@ -260,11 +259,11 @@ fn test_get_intake_entries() {
         description: Some("Lunch".to_string()),
     };
 
-    intake::create_intake_entry(&mut conn, &entry1).unwrap();
-    intake::create_intake_entry(&mut conn, &entry2).unwrap();
+    Intake::create(&mut conn, &entry1).unwrap();
+    Intake::create(&mut conn, &entry2).unwrap();
 
     // Retrieve all entries
-    let result = intake::get_intake_entries(&mut conn);
+    let result = Intake::all(&mut conn);
 
     assert!(result.is_ok());
     let entries = result.unwrap();
@@ -284,7 +283,7 @@ fn test_update_intake_entry() {
         description: Some("Original description".to_string()),
     };
 
-    let created = intake::create_intake_entry(&mut conn, &new_entry).unwrap();
+    let created = Intake::create(&mut conn, &new_entry).unwrap();
 
     // Update entry
     let updated_entry = NewIntake {
@@ -294,7 +293,7 @@ fn test_update_intake_entry() {
         description: Some("Updated description".to_string()),
     };
 
-    let result = intake::update_intake_entry(&mut conn, created.id, &updated_entry);
+    let result = Intake::update(&mut conn, created.id, &updated_entry);
 
     assert!(result.is_ok());
     let updated = result.unwrap();
@@ -315,16 +314,16 @@ fn test_delete_intake_entry() {
         description: None,
     };
 
-    let created = intake::create_intake_entry(&mut conn, &new_entry).unwrap();
+    let created = Intake::create(&mut conn, &new_entry).unwrap();
 
     // Delete
-    let delete_result = intake::delete_intake_entry(&mut conn, &created.id);
+    let delete_result = Intake::delete(&mut conn, &created.id);
 
     assert!(delete_result.is_ok());
     assert_eq!(delete_result.unwrap(), 1);
 
     // Verify deleted
-    let entries = intake::get_intake_entries(&mut conn).unwrap();
+    let entries = Intake::all(&mut conn).unwrap();
     assert_eq!(entries.len(), 0);
 }
 
@@ -355,12 +354,12 @@ fn test_find_intake_by_date() {
         description: None,
     };
 
-    intake::create_intake_entry(&mut conn, &entry1).unwrap();
-    intake::create_intake_entry(&mut conn, &entry2).unwrap();
-    intake::create_intake_entry(&mut conn, &entry3).unwrap();
+    Intake::create(&mut conn, &entry1).unwrap();
+    Intake::create(&mut conn, &entry2).unwrap();
+    Intake::create(&mut conn, &entry3).unwrap();
 
     // Find entries for 2025-01-15
-    let result = intake::find_intake_by_date(&mut conn, &"2025-01-15".to_string());
+    let result = Intake::find_by_date(&mut conn, &"2025-01-15".to_string());
 
     assert!(result.is_ok());
     let entries = result.unwrap();
@@ -373,7 +372,7 @@ fn test_find_intake_by_date_no_results() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = intake::find_intake_by_date(&mut conn, &"2025-01-15".to_string());
+    let result = Intake::find_by_date(&mut conn, &"2025-01-15".to_string());
 
     assert!(result.is_ok());
     let entries = result.unwrap();
@@ -395,11 +394,11 @@ fn test_find_intake_by_date_range() {
             category: "b".to_string(),
             description: None,
         };
-        intake::create_intake_entry(&mut conn, &entry).unwrap();
+        Intake::create(&mut conn, &entry).unwrap();
     }
 
     // Test date range query
-    let result = intake::find_intake_by_date_range(
+    let result = Intake::find_by_date_range(
         &mut conn,
         &"2025-01-15".to_string(),
         &"2025-01-17".to_string(),
@@ -432,10 +431,10 @@ fn test_find_intake_by_date_range_single_day() {
         description: None,
     };
 
-    intake::create_intake_entry(&mut conn, &entry).unwrap();
+    Intake::create(&mut conn, &entry).unwrap();
 
     // Same date for start and end
-    let result = intake::find_intake_by_date_range(
+    let result = Intake::find_by_date_range(
         &mut conn,
         &"2025-01-15".to_string(),
         &"2025-01-15".to_string(),
@@ -451,7 +450,7 @@ fn test_find_intake_by_date_range_empty() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let result = intake::find_intake_by_date_range(
+    let result = Intake::find_by_date_range(
         &mut conn,
         &"2025-01-15".to_string(),
         &"2025-01-20".to_string(),
@@ -475,10 +474,10 @@ fn test_multiple_entries_same_date_same_category() {
             category: "b".to_string(),
             description: Some(format!("Breakfast item {}", i)),
         };
-        intake::create_intake_entry(&mut conn, &entry).unwrap();
+        Intake::create(&mut conn, &entry).unwrap();
     }
 
-    let result = intake::find_intake_by_date(&mut conn, &"2025-01-15".to_string());
+    let result = Intake::find_by_date(&mut conn, &"2025-01-15".to_string());
 
     assert!(result.is_ok());
     let entries = result.unwrap();

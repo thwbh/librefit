@@ -41,8 +41,8 @@ diesel::table! {
 diesel::table! {
     libre_user (id) {
         id -> Integer,
-        avatar -> Nullable<Text>,
-        name -> Nullable<Text>,
+        avatar -> Text,
+        name -> Text,
     }
 }
 
