@@ -33,7 +33,7 @@ pub fn wizard_create_targets(pool: State<DbPool>, input: Wizard) -> Result<(), S
     conn.transaction(|conn| {
         db::repo::weight::create_weight_target(conn, &input.weight_target)?;
         db::repo::weight::create_weight_tracker_entry(conn, &input.weight_tracker)?;
-        db::repo::calories::create_calorie_target(conn, &input.calorie_target)?;
+        db::repo::intake::create_intake_target(conn, &input.calorie_target)?;
 
         Ok(())
     })

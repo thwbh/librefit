@@ -1,67 +1,67 @@
 use crate::crud::cmd::error_handler::handle_error;
 use crate::crud::db::connection::DbPool;
-use crate::crud::db::model::{CalorieTarget, CalorieTracker, NewCalorieTarget, NewCalorieTracker};
-use crate::crud::db::repo::calories;
+use crate::crud::db::model::{IntakeTarget, Intake, NewIntakeTarget, NewIntake};
+use crate::crud::db::repo::intake;
 use tauri::{command, State};
 use validator::Validate;
 
-/// Create a new calorie target
+/// Create a new intake target
 #[command]
 pub fn create_calorie_target(
     pool: State<DbPool>,
-    new_target: NewCalorieTarget,
-) -> Result<CalorieTarget, String> {
+    new_target: NewIntakeTarget,
+) -> Result<IntakeTarget, String> {
     if let Err(validation_errors) = new_target.validate() {
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new calorie target: {:?}", new_target);
+    log::info!("Creating new intake target: {:?}", new_target);
 
     let mut conn = pool
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
-    calories::create_calorie_target(&mut conn, &new_target).map_err(handle_error)
+    intake::create_intake_target(&mut conn, &new_target).map_err(handle_error)
 }
 
 #[command]
-pub fn get_last_calorie_target(pool: State<DbPool>) -> Result<CalorieTarget, String> {
+pub fn get_last_calorie_target(pool: State<DbPool>) -> Result<IntakeTarget, String> {
     let mut conn = pool
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
-    calories::find_last_calorie_target(&mut conn).map_err(handle_error)
+    intake::find_last_intake_target(&mut conn).map_err(handle_error)
 }
 
-/// Create a new calorie tracker entry and return the created one
+/// Create a new intake tracker entry and return the created one
 #[command]
 pub fn create_calorie_tracker_entry(
     pool: State<DbPool>,
-    new_entry: NewCalorieTracker,
-) -> Result<CalorieTracker, String> {
+    new_entry: NewIntake,
+) -> Result<Intake, String> {
     if let Err(validation_errors) = new_entry.validate() {
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new calorie tracker entry: {:?}", new_entry);
+    log::info!("Creating new intake tracker entry: {:?}", new_entry);
 
     let mut conn = pool
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
-    calories::create_calorie_tracker_entry(&mut conn, &new_entry).map_err(handle_error)
+    intake::create_intake_entry(&mut conn, &new_entry).map_err(handle_error)
 }
 
-/// Update a calorie tracker entry by ID and return it
+/// Update an intake tracker entry by ID and return it
 #[command]
 pub fn update_calorie_tracker_entry(
     pool: State<DbPool>,
     tracker_id: i32,
-    updated_entry: NewCalorieTracker,
-) -> Result<CalorieTracker, String> {
+    updated_entry: NewIntake,
+) -> Result<Intake, String> {
     if let Err(validation_errors) = updated_entry.validate() {
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
     log::info!(
-        "Updating calorie tracker entry {}: {:?}",
+        "Updating intake tracker entry {}: {:?}",
         tracker_id,
         updated_entry
     );
@@ -69,17 +69,17 @@ pub fn update_calorie_tracker_entry(
     let mut conn = pool
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
-    calories::update_calorie_tracker_entry(&mut conn, tracker_id, &updated_entry)
+    intake::update_intake_entry(&mut conn, tracker_id, &updated_entry)
         .map_err(handle_error)
 }
 
-/// Delete a calorie tracker entry by ID and return the deleted row count
+/// Delete an intake tracker entry by ID and return the deleted row count
 #[command]
 pub fn delete_calorie_tracker_entry(pool: State<DbPool>, tracker_id: i32) -> Result<usize, String> {
     let mut conn = pool
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
-    calories::delete_calorie_tracker_entry(&mut conn, &tracker_id).map_err(handle_error)
+    intake::delete_intake_entry(&mut conn, &tracker_id).map_err(handle_error)
 }
 
 #[command]
@@ -87,11 +87,11 @@ pub fn get_calorie_tracker_for_date_range(
     pool: State<DbPool>,
     date_from_str: String,
     date_to_str: String,
-) -> Result<Vec<CalorieTracker>, String> {
+) -> Result<Vec<Intake>, String> {
     let mut conn = pool
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
-    calories::find_calorie_tracker_by_date_range(&mut conn, &date_from_str, &date_to_str)
+    intake::find_intake_by_date_range(&mut conn, &date_from_str, &date_to_str)
         .map_err(handle_error)
 }
 
@@ -112,7 +112,7 @@ pub fn get_calorie_tracker_dates_in_range(
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
 
-    calories::find_calorie_tracker_by_date_range(&mut conn, &date_from_str, &date_to_str)
+    intake::find_intake_by_date_range(&mut conn, &date_from_str, &date_to_str)
         .map(|result| {
             let mut vec = result
                 .into_iter()

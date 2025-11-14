@@ -1,4 +1,4 @@
-use crate::crud::db::model::{NewCalorieTarget, NewWeightTarget, NewWeightTracker};
+use crate::crud::db::model::{NewIntakeTarget, NewWeightTarget, NewWeightTracker};
 use crate::i18n::localize;
 use chrono::{Duration, NaiveDate};
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use super::math_f32::floor_f32;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Wizard {
-    pub calorie_target: NewCalorieTarget,
+    pub calorie_target: NewIntakeTarget,
     pub weight_target: NewWeightTarget,
     pub weight_tracker: NewWeightTracker,
 }

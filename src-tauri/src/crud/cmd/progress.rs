@@ -8,8 +8,8 @@ use crate::{
     crud::db::{
         comp::progress::{CalorieChartData, Progress, WeightChartData},
         connection::DbPool,
-        model::{CalorieTracker, WeightTracker},
-        repo::{calories, food_category, weight},
+        model::{Intake, WeightTracker},
+        repo::{intake, food_category, weight},
     },
 };
 
@@ -22,7 +22,7 @@ pub fn get_tracker_progress(pool: State<DbPool>, date_str: String) -> Result<Pro
         .get()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
 
-    let calorie_target = calories::find_last_calorie_target(&mut conn)
+    let calorie_target = intake::find_last_intake_target(&mut conn)
         .map_err(|_| "No calorie target found".to_string())?;
 
     let weight_target = weight::get_latest_weight_target(&mut conn)
@@ -41,8 +41,8 @@ pub fn get_tracker_progress(pool: State<DbPool>, date_str: String) -> Result<Pro
                 calorie_target_end_date
             };
 
-            let calorie_tracker: Vec<CalorieTracker> =
-                calories::find_calorie_tracker_by_date_range(
+            let calorie_tracker: Vec<Intake> =
+                intake::find_intake_by_date_range(
                     &mut conn,
                     &calorie_target.start_date,
                     &end_date.format("%Y-%m-%d").to_string(),
@@ -82,12 +82,12 @@ pub fn get_tracker_progress(pool: State<DbPool>, date_str: String) -> Result<Pro
     }
 }
 
-/// process calorie_tracker to prepare client side graph rendering
+/// process intake tracker to prepare client side graph rendering
 fn process_calories(
     conn: &mut diesel::r2d2::PooledConnection<
         diesel::r2d2::ConnectionManager<diesel::SqliteConnection>,
     >,
-    calorie_tracker: &[CalorieTracker],
+    calorie_tracker: &[Intake],
 ) -> Result<CalorieChartData, String> {
     if calorie_tracker.is_empty() {
         Ok(CalorieChartData {

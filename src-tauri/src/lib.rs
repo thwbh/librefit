@@ -4,7 +4,7 @@ extern crate rust_i18n;
 i18n!("locales", fallback = "en");
 
 use crate::crud::cmd::body::{get_body_data, update_body_data};
-use crate::crud::cmd::calorie::{
+use crate::crud::cmd::intake::{
     create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
     get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range,
     get_last_calorie_target, update_calorie_tracker_entry,

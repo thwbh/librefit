@@ -11,18 +11,14 @@ diesel::table! {
 }
 
 diesel::table! {
-    calorie_target (id) {
-        id -> Integer,
-        added -> Text,
-        end_date -> Text,
-        maximum_calories -> Integer,
-        start_date -> Text,
-        target_calories -> Integer,
+    food_category (shortvalue) {
+        longvalue -> Text,
+        shortvalue -> Text,
     }
 }
 
 diesel::table! {
-    calorie_tracker (id) {
+    intake (id) {
         id -> Integer,
         added -> Text,
         amount -> Integer,
@@ -32,9 +28,13 @@ diesel::table! {
 }
 
 diesel::table! {
-    food_category (shortvalue) {
-        longvalue -> Text,
-        shortvalue -> Text,
+    intake_target (id) {
+        id -> Integer,
+        added -> Text,
+        end_date -> Text,
+        maximum_calories -> Integer,
+        start_date -> Text,
+        target_calories -> Integer,
     }
 }
 
@@ -67,9 +67,9 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     body_data,
-    calorie_target,
-    calorie_tracker,
     food_category,
+    intake,
+    intake_target,
     libre_user,
     weight_target,
     weight_tracker,

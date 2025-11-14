@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::crud::db::model::{CalorieTarget, WeightTarget};
+use crate::crud::db::model::{IntakeTarget, WeightTarget};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,7 +29,7 @@ pub struct WeightChartData {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Progress {
-    pub calorie_target: CalorieTarget,
+    pub calorie_target: IntakeTarget,
     pub weight_target: WeightTarget,
     pub days_passed: i32,
     pub days_total: i32,

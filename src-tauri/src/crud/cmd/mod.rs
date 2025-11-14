@@ -1,8 +1,8 @@
 pub mod body;
-pub mod calorie;
 pub mod dashboard;
 pub mod error_handler;
 pub mod food_category;
+pub mod intake;
 pub mod progress;
 pub mod tracker_history;
 pub mod user;

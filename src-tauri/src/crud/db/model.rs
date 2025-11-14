@@ -14,13 +14,13 @@ pub struct LibreUser {
     pub name: Option<String>,
 }
 
-/// Represents a calorie tracker entry tied to a day. There may be multiple entries for the same
+/// Represents an intake entry tied to a day. There may be multiple entries for the same
 /// category.
 #[derive(Queryable, Selectable, Serialize, Deserialize, Validate)]
-#[diesel(table_name = crate::crud::db::schema::calorie_tracker)]
+#[diesel(table_name = crate::crud::db::schema::intake)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
-pub struct CalorieTracker {
+pub struct Intake {
     pub id: i32,
     pub added: String,
     #[validate(range(
@@ -55,7 +55,7 @@ pub struct WeightTracker {
     pub amount: f32,
 }
 
-/// Represents the category for [CalorieTracker]. <key, value> pair for the cateogry dropdown in
+/// Represents the category for [Intake]. <key, value> pair for the category dropdown in
 /// the UI.
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::crud::db::schema::food_category)]
@@ -65,13 +65,13 @@ pub struct FoodCategory {
     pub shortvalue: String,
 }
 
-/// Represents a target for the maximum calorie intake for per day. Will display a warning in the
+/// Represents a target for the maximum calorie intake per day. Will display a warning in the
 /// UI if an overflow occurs.
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = crate::crud::db::schema::calorie_target)]
+#[diesel(table_name = crate::crud::db::schema::intake_target)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
-pub struct CalorieTarget {
+pub struct IntakeTarget {
     pub id: i32,
     pub added: String,
     pub end_date: String,
@@ -94,12 +94,12 @@ pub struct WeightTarget {
     pub target_weight: f32,
 }
 
-/// For creation of a new [CalorieTracker] entry.
+/// For creation of a new [Intake] entry.
 #[derive(Insertable, AsChangeset, Serialize, Deserialize, Validate, Debug)]
-#[diesel(table_name = crate::crud::db::schema::calorie_tracker)]
+#[diesel(table_name = crate::crud::db::schema::intake)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
-pub struct NewCalorieTracker {
+pub struct NewIntake {
     #[validate(custom(function = "validate_date_format"))]
     pub added: String,
     #[validate(range(
@@ -142,13 +142,13 @@ pub struct NewFoodCategory {
     pub shortvalue: String,
 }
 
-/// For creation of a new [CalorieTarget] entry.
+/// For creation of a new [IntakeTarget] entry.
 #[derive(Insertable, AsChangeset, Serialize, Deserialize, Debug, Validate)]
-#[diesel(table_name = crate::crud::db::schema::calorie_target)]
+#[diesel(table_name = crate::crud::db::schema::intake_target)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
-#[validate(schema(function = "validate_calorie_target"))]
-pub struct NewCalorieTarget {
+#[validate(schema(function = "validate_intake_target"))]
+pub struct NewIntakeTarget {
     #[validate(custom(function = "validate_date_format"))]
     pub added: String,
     #[validate(custom(function = "validate_date_format"))]
@@ -233,7 +233,7 @@ fn validate_date_format(date_str: &str) -> Result<(), ValidationError> {
 }
 
 /// Validates that target calories doesn't exceed maximum calories and dates are logical
-fn validate_calorie_target(target: &NewCalorieTarget) -> Result<(), ValidationError> {
+fn validate_intake_target(target: &NewIntakeTarget) -> Result<(), ValidationError> {
     use chrono::Utc;
 
     // Check target calories doesn't exceed maximum

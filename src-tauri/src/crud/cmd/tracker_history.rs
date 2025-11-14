@@ -3,9 +3,9 @@ use crate::{
     crud::db::{
         comp::tracker_history::TrackerHistory,
         connection::DbPool,
-        model::{CalorieTracker, WeightTracker},
+        model::{Intake, WeightTracker},
         repo::{
-            calories::find_calorie_tracker_by_date_range, weight::find_weight_tracker_by_date_range,
+            intake::find_intake_by_date_range, weight::find_weight_tracker_by_date_range,
         },
     },
 };
@@ -37,7 +37,7 @@ pub fn get_tracker_history(
                 .map_err(|e| format!("Failed to get connection: {}", e))?;
 
             let calories_range =
-                find_calorie_tracker_by_date_range(&mut conn, &date_from_str, &date_to_str)
+                find_intake_by_date_range(&mut conn, &date_from_str, &date_to_str)
                     .map_err(|e| format!("Failed to get calorie tracker data: {}", e))?;
 
             let weight_range =
@@ -75,8 +75,8 @@ pub fn get_tracker_history(
     }
 }
 
-fn interpolate_calories(db_result: Vec<CalorieTracker>) -> BTreeMap<String, Vec<CalorieTracker>> {
-    let mut history_map: BTreeMap<String, Vec<CalorieTracker>> = BTreeMap::new();
+fn interpolate_calories(db_result: Vec<Intake>) -> BTreeMap<String, Vec<Intake>> {
+    let mut history_map: BTreeMap<String, Vec<Intake>> = BTreeMap::new();
 
     for calorie_tracker in db_result {
         let added_date = &calorie_tracker.added;
@@ -108,7 +108,7 @@ fn interpolate_weight(db_result: Vec<WeightTracker>) -> BTreeMap<String, Vec<Wei
 fn interpolate_history(
     date_from: NaiveDate,
     date_to: NaiveDate,
-    calorie_map: &mut BTreeMap<String, Vec<CalorieTracker>>,
+    calorie_map: &mut BTreeMap<String, Vec<Intake>>,
     weight_map: &mut BTreeMap<String, Vec<WeightTracker>>,
 ) {
     let mut current_date = date_from;
