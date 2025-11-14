@@ -1,8 +1,8 @@
-use crate::calc::math_f32::floor_f32;
 use crate::db::connection::DbPool;
 use crate::i18n::localize;
 use crate::service::intake::{IntakeTarget, NewIntakeTarget};
 use crate::service::weight::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
+use crate::util::math_f32::floor_f32;
 use chrono::{Duration, NaiveDate};
 use diesel::Connection;
 use serde::{Deserialize, Serialize};
@@ -104,7 +104,7 @@ pub struct WizardTargetWeightInput {
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct WizardTargetWeightResult {
-    #[serde(deserialize_with = "crate::util::serde::date::deserialize")]
+    #[serde(deserialize_with = "crate::util::date_serde::deserialize")]
     pub date_by_rate: HashMap<i32, String>,
     pub progress_by_rate: HashMap<i32, f32>,
     pub target_classification: BmiCategory,

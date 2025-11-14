@@ -25,7 +25,7 @@ use crate::service::weight::{
     get_weight_tracker_for_date_range, update_weight_tracker_entry,
 };
 
-use crate::db::connection;
+use crate::db::{connection, migrations};
 
 use dotenv::dotenv;
 use std::env;
@@ -33,10 +33,8 @@ use tauri::path::BaseDirectory;
 use tauri::{App, Manager};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
-pub mod calc;
 pub mod db;
 pub mod i18n;
-pub mod init;
 pub mod service;
 pub mod util;
 
@@ -150,7 +148,7 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         )))
     })?;
 
-    match init::db_setup::run_migrations(&mut conn) {
+    match migrations::run(&mut conn) {
         Ok(_) => log::info!("Database migrations completed successfully"),
         Err(e) => {
             log::error!("Database migrations failed: {}", e);

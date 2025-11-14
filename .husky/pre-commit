@@ -3,7 +3,7 @@ echo "🦀 Formatting Rust code..."
 cd src-tauri && cargo fmt && cd ..
 
 # Stage all formatted Rust files
-RUST_FILES=$(git diff --name-only --diff-filter=ACM "*.rs" | grep "^src-tauri/")
+RUST_FILES=$(git diff --name-only --diff-filter=ACM "*.rs" | grep "^src-tauri/" || true)
 if [ -n "$RUST_FILES" ]; then
   echo "📦 Staging formatted Rust files..."
   git add $RUST_FILES

@@ -1,7 +1,7 @@
-use crate::calc::math_f32::floor_f32;
 use crate::db::connection::DbPool;
 use crate::service::intake::Intake;
 use crate::service::weight::WeightTracker;
+use crate::util::math_f32::floor_f32;
 use chrono::{Duration, NaiveDate};
 use diesel::SqliteConnection;
 use serde::{Deserialize, Serialize};

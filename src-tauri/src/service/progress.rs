@@ -1,7 +1,7 @@
-use crate::calc::math_f32;
 use crate::db::connection::DbPool;
 use crate::service::intake::{FoodCategory, Intake, IntakeTarget};
 use crate::service::weight::{WeightTarget, WeightTracker};
+use crate::util::math_f32;
 use chrono::{Days, NaiveDate};
 use diesel::SqliteConnection;
 use serde::{Deserialize, Serialize};

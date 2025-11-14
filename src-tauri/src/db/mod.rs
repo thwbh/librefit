@@ -1,4 +1,5 @@
 pub mod connection;
+pub mod migrations;
 pub mod schema;
 
 use crate::db::connection::DbPool;

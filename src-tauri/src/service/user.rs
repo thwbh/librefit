@@ -100,5 +100,5 @@ pub fn update_user(
 pub fn get_user(pool: State<DbPool>) -> Result<Option<LibreUser>, String> {
     log::info!(">>> get_user");
 
-    pool.execute(|conn| LibreUser::get(conn))
+    pool.execute(LibreUser::get)
 }

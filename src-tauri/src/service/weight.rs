@@ -1,7 +1,6 @@
 use crate::db::connection::DbPool;
 use crate::db::schema::{weight_target, weight_tracker};
 use crate::db::DbExecutor;
-use crate::util::error_handler::handle_error;
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

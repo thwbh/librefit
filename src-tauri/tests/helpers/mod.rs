@@ -1,6 +1,6 @@
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::sqlite::SqliteConnection;
-use librefit_lib::init::db_setup;
+use librefit_lib::db::migrations;
 use librefit_lib::service::intake::{Intake, IntakeTarget, NewIntake, NewIntakeTarget};
 use librefit_lib::service::user::LibreUser;
 use librefit_lib::service::weight::{
@@ -19,7 +19,7 @@ pub fn setup_test_pool() -> TestPool {
         .expect("Failed to create test pool");
 
     let mut conn = pool.get().expect("Failed to get connection");
-    db_setup::run_migrations(&mut conn).expect("Failed to run migrations");
+    migrations::run(&mut conn).expect("Failed to run migrations");
 
     pool
 }
