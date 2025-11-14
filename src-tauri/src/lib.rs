@@ -3,27 +3,29 @@ extern crate rust_i18n;
 
 i18n!("locales", fallback = "en");
 
-use crate::crud::cmd::body::{get_body_data, update_body_data};
-use crate::crud::cmd::calorie::{
-    create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
-    get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range,
-    get_last_calorie_target, update_calorie_tracker_entry,
-};
-use crate::crud::cmd::dashboard::daily_dashboard;
-use crate::crud::cmd::food_category::get_food_categories;
-use crate::crud::cmd::progress::get_tracker_progress;
-use crate::crud::cmd::tracker_history::get_tracker_history;
-use crate::crud::cmd::user::{get_user, update_user};
-use crate::crud::cmd::weight::{
-    create_weight_target, create_weight_tracker_entry, delete_weight_tracker_entry,
-    get_weight_tracker_for_date_range, update_weight_tracker_entry,
-};
-use crate::crud::cmd::wizard::{
+// Composite service commands (composition of multiple models)
+use crate::service::dashboard::daily_dashboard;
+use crate::service::progress::get_tracker_progress;
+use crate::service::tracker_history::get_tracker_history;
+use crate::service::wizard::{
     wizard_calculate_for_target_date, wizard_calculate_for_target_weight, wizard_calculate_tdee,
     wizard_create_targets,
 };
 
-use crate::crud::db::connection;
+// Individual model commands
+use crate::service::body::{get_body_data, update_body_data};
+use crate::service::intake::{
+    create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
+    get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range, get_food_categories,
+    get_last_calorie_target, update_calorie_tracker_entry,
+};
+use crate::service::user::{get_user, update_user};
+use crate::service::weight::{
+    create_weight_target, create_weight_tracker_entry, delete_weight_tracker_entry,
+    get_weight_tracker_for_date_range, update_weight_tracker_entry,
+};
+
+use crate::db::{connection, migrations};
 
 use dotenv::dotenv;
 use std::env;
@@ -31,10 +33,10 @@ use tauri::path::BaseDirectory;
 use tauri::{App, Manager};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
-pub mod calc;
-pub mod crud;
+pub mod db;
 pub mod i18n;
-pub mod init;
+pub mod service;
+pub mod util;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -129,10 +131,10 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     // Create connection pool for the application
     let pool = connection::create_pool(&db_path).map_err(|e| {
         log::error!("Failed to create connection pool: {}", e);
-        Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Failed to create connection pool: {}", e),
-        ))
+        Box::new(std::io::Error::other(format!(
+            "Failed to create connection pool: {}",
+            e
+        )))
     })?;
 
     log::info!("Database connection pool created successfully");
@@ -140,20 +142,20 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     // Run migrations using a connection from the pool
     let mut conn = pool.get().map_err(|e| {
         log::error!("Failed to get connection from pool for migrations: {}", e);
-        Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Failed to get connection from pool: {}", e),
-        ))
+        Box::new(std::io::Error::other(format!(
+            "Failed to get connection from pool: {}",
+            e
+        )))
     })?;
 
-    match init::db_setup::run_migrations(&mut conn) {
+    match migrations::run(&mut conn) {
         Ok(_) => log::info!("Database migrations completed successfully"),
         Err(e) => {
             log::error!("Database migrations failed: {}", e);
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Migration failed: {}", e),
-            )));
+            return Err(Box::new(std::io::Error::other(format!(
+                "Migration failed: {}",
+                e
+            ))));
         }
     }
 
