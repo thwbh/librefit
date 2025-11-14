@@ -1,0 +1,5 @@
+-- Rename CALORIE_TRACKER to intake
+ALTER TABLE CALORIE_TRACKER RENAME TO intake;
+
+-- Rename CALORIE_TARGET to intake_target
+ALTER TABLE CALORIE_TARGET RENAME TO intake_target;
