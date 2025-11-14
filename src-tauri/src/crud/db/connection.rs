@@ -42,24 +42,24 @@ impl r2d2::CustomizeConnection<SqliteConnection, r2d2::Error> for ConnectionOpti
         // "database is locked" errors during normal app usage
         diesel::sql_query("PRAGMA journal_mode = WAL;")
             .execute(conn)
-            .map_err(|e| r2d2::Error::QueryError(e))?;
+            .map_err(r2d2::Error::QueryError)?;
 
         // Enable foreign key constraints
         diesel::sql_query("PRAGMA foreign_keys = ON;")
             .execute(conn)
-            .map_err(|e| r2d2::Error::QueryError(e))?;
+            .map_err(r2d2::Error::QueryError)?;
 
         // Set busy timeout to 3 seconds (mobile-friendly)
         // Fail faster on mobile rather than hanging indefinitely
         diesel::sql_query("PRAGMA busy_timeout = 3000;")
             .execute(conn)
-            .map_err(|e| r2d2::Error::QueryError(e))?;
+            .map_err(r2d2::Error::QueryError)?;
 
         // Reduce page cache for memory efficiency on mobile
         // -2000 means 2MB cache (negative value = KB, positive = pages)
         diesel::sql_query("PRAGMA cache_size = -2000;")
             .execute(conn)
-            .map_err(|e| r2d2::Error::QueryError(e))?;
+            .map_err(r2d2::Error::QueryError)?;
 
         Ok(())
     }
