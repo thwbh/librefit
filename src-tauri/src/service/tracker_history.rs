@@ -12,7 +12,7 @@ use tauri::{command, State};
 // COMPOSITION MODEL
 // ============================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TrackerHistory {
     pub calories_history: BTreeMap<String, Vec<Intake>>,
@@ -37,11 +37,16 @@ impl TrackerHistory {
         let date_to = NaiveDate::parse_from_str(date_to_str, "%Y-%m-%d")
             .map_err(|_| "Invalid date_to format".to_string())?;
 
-        let calories_range = Intake::find_by_date_range(conn, &date_from_str.to_string(), &date_to_str.to_string())
-            .map_err(|e| format!("Failed to get calorie tracker data: {}", e))?;
+        let calories_range =
+            Intake::find_by_date_range(conn, &date_from_str.to_string(), &date_to_str.to_string())
+                .map_err(|e| format!("Failed to get calorie tracker data: {}", e))?;
 
-        let weight_range = WeightTracker::find_by_date_range(conn, &date_from_str.to_string(), &date_to_str.to_string())
-            .map_err(|e| format!("Failed to get weight tracker data: {}", e))?;
+        let weight_range = WeightTracker::find_by_date_range(
+            conn,
+            &date_from_str.to_string(),
+            &date_to_str.to_string(),
+        )
+        .map_err(|e| format!("Failed to get weight tracker data: {}", e))?;
 
         let mut calories_history = interpolate_calories(calories_range);
         let mut weight_history = interpolate_weight(weight_range);

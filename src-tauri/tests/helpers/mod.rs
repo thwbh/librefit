@@ -3,7 +3,9 @@ use diesel::sqlite::SqliteConnection;
 use librefit_lib::init::db_setup;
 use librefit_lib::service::intake::{Intake, IntakeTarget, NewIntake, NewIntakeTarget};
 use librefit_lib::service::user::LibreUser;
-use librefit_lib::service::weight::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
+use librefit_lib::service::weight::{
+    NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker,
+};
 
 pub type TestPool = Pool<ConnectionManager<SqliteConnection>>;
 
@@ -91,6 +93,5 @@ pub fn create_test_weight_entry(pool: &TestPool, added: &str, amount: f32) -> We
         added: added.to_string(),
         amount,
     };
-    WeightTracker::create(&mut conn, &new_entry)
-        .expect("Failed to create weight entry")
+    WeightTracker::create(&mut conn, &new_entry).expect("Failed to create weight entry")
 }

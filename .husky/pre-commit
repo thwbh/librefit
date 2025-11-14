@@ -2,6 +2,13 @@
 echo "🦀 Formatting Rust code..."
 cd src-tauri && cargo fmt && cd ..
 
+# Stage all formatted Rust files
+RUST_FILES=$(git diff --name-only --diff-filter=ACM "*.rs" | grep "^src-tauri/")
+if [ -n "$RUST_FILES" ]; then
+  echo "📦 Staging formatted Rust files..."
+  git add $RUST_FILES
+fi
+
 # Run lint-staged for JavaScript/TypeScript/Svelte files
 echo "🎨 Formatting staged files with Prettier..."
 npx lint-staged

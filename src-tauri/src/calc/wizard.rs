@@ -1,6 +1,6 @@
+use crate::i18n::localize;
 use crate::service::intake::NewIntakeTarget;
 use crate::service::weight::{NewWeightTarget, NewWeightTracker};
-use crate::i18n::localize;
 use chrono::{Duration, NaiveDate};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

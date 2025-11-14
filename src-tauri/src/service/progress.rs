@@ -12,7 +12,7 @@ use tauri::{command, State};
 // COMPOSITION MODEL
 // ============================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CalorieChartData {
     pub avg: f32,
@@ -24,7 +24,7 @@ pub struct CalorieChartData {
     pub daily_average: f32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct WeightChartData {
     pub avg: f32,
@@ -34,7 +34,7 @@ pub struct WeightChartData {
     pub values: Vec<f32>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Progress {
     pub calorie_target: IntakeTarget,

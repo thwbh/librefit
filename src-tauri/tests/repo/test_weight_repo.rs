@@ -1,5 +1,7 @@
 use crate::helpers::setup_test_pool;
-use librefit_lib::service::weight::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
+use librefit_lib::service::weight::{
+    NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker,
+};
 
 // ============================================================================
 // Weight Target Tests

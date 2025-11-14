@@ -16,8 +16,8 @@ use crate::service::wizard::{
 use crate::service::body::{get_body_data, update_body_data};
 use crate::service::intake::{
     create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
-    get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range,
-    get_food_categories, get_last_calorie_target, update_calorie_tracker_entry,
+    get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range, get_food_categories,
+    get_last_calorie_target, update_calorie_tracker_entry,
 };
 use crate::service::user::{get_user, update_user};
 use crate::service::weight::{

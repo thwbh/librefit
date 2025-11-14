@@ -11,7 +11,7 @@ use tauri::{command, State};
 // ============================================================================
 
 /// Represents a user profile. There may be only one.
-#[derive(Queryable, Selectable, Insertable, AsChangeset, Serialize, Deserialize)]
+#[derive(Queryable, Selectable, Insertable, AsChangeset, Serialize, Deserialize, Debug)]
 #[diesel(table_name = libre_user)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]

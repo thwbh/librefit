@@ -22,7 +22,7 @@ pub struct FoodCategory {
 
 /// Represents an intake entry tied to a day. There may be multiple entries for the same
 /// category.
-#[derive(Queryable, Selectable, Serialize, Deserialize, Validate)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Validate, Debug)]
 #[diesel(table_name = intake)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
