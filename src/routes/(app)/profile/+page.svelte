@@ -18,6 +18,7 @@
 	import { getAvatar } from '$lib/avatar';
 	import { slide } from 'svelte/transition';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
+	import Export from '$lib/component/profile/Export.svelte';
 
 	let { data } = $props();
 
@@ -26,6 +27,8 @@
 
 	let userData: LibreUser = $state(userContext.user)!;
 	let showAvatarPicker = $state(false);
+
+	let exportDialog: HTMLDialogElement | undefined = $state();
 
 	const modal = useEntryModal<LibreUser, LibreUser>({
 		onCreate: async () => {
@@ -100,6 +103,11 @@
 
 		<!-- Body Data Display (read-only) -->
 		<BodyDataDisplay {bodyData} />
+
+		<!-- Data Export -->
+		<div>
+			<button class="btn btn-neutral" onclick={() => exportDialog?.showModal()}>Export Data</button>
+		</div>
 	</div>
 </div>
 
@@ -154,5 +162,19 @@
 				</div>
 			{/if}
 		</div>
+	{/snippet}
+</ModalDialog>
+
+<ModalDialog bind:dialog={exportDialog}>
+	{#snippet title()}
+		<h3 class="text-lg font-bold">Export Data</h3>
+	{/snippet}
+
+	{#snippet content()}
+		<Export />
+	{/snippet}
+
+	{#snippet footer()}
+		<button class="btn btn-primary" onclick={() => exportDialog?.close()}>Close</button>
 	{/snippet}
 </ModalDialog>
