@@ -145,8 +145,8 @@ fn test_get_tracker_progress_empty_trackers() {
     assert!(result.is_ok());
     let progress = result.unwrap();
     // Empty trackers should return zeroed chart data
-    assert_eq!(progress.calorie_chart_data.avg, 0.0);
-    assert_eq!(progress.calorie_chart_data.legend.len(), 0);
+    assert_eq!(progress.intake_chart_data.avg, 0.0);
+    assert_eq!(progress.intake_chart_data.legend.len(), 0);
     assert_eq!(progress.weight_chart_data.avg, 0.0);
 }
 
@@ -236,7 +236,7 @@ fn test_get_tracker_progress_with_multiple_entries_same_day() {
     assert!(result.is_ok());
     let progress = result.unwrap();
     // Should aggregate entries for the same day
-    assert!(progress.calorie_chart_data.values.len() > 0);
+    assert!(progress.intake_chart_data.values.len() > 0);
 }
 
 #[test]
