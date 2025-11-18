@@ -545,18 +545,18 @@ fn calculate_recommendation(bmi: &f32) -> WizardRecommendation {
 
 #[command]
 pub fn wizard_calculate_tdee(input: WizardInput) -> Result<WizardResult, ValidationErrors> {
-    log::info!(">>> wizard_calculate_tdee: {:?}", input);
+    log::debug!(">>> wizard_calculate_tdee: {:?}", input);
 
     let wizard_result = calculate(input);
 
-    log::info!(">>> result={:?}", wizard_result);
+    log::debug!(">>> result={:?}", wizard_result);
 
     wizard_result
 }
 
 #[command]
 pub fn wizard_create_targets(pool: State<DbPool>, input: Wizard) -> Result<(), String> {
-    log::info!(">>> wizard_create_targets: {:?}", input);
+    log::debug!(">>> wizard_create_targets: {:?}", input);
 
     let mut conn = pool
         .get()
@@ -576,11 +576,11 @@ pub fn wizard_create_targets(pool: State<DbPool>, input: Wizard) -> Result<(), S
 pub fn wizard_calculate_for_target_date(
     input: WizardTargetDateInput,
 ) -> Result<WizardTargetDateResult, ValidationErrors> {
-    log::info!(">>> wizard_calculate_for_target_date: {:?}", input);
+    log::debug!(">>> wizard_calculate_for_target_date: {:?}", input);
 
     let wizard_result = calculate_for_target_date(&input);
 
-    log::info!(">>> result={:?}", wizard_result);
+    log::debug!(">>> result={:?}", wizard_result);
 
     wizard_result
 }
@@ -589,11 +589,11 @@ pub fn wizard_calculate_for_target_date(
 pub fn wizard_calculate_for_target_weight(
     input: WizardTargetWeightInput,
 ) -> Result<WizardTargetWeightResult, ValidationErrors> {
-    log::info!(">>> wizard_calculate_for_target_weight {:?}", input);
+    log::debug!(">>> wizard_calculate_for_target_weight {:?}", input);
 
     let wizard_result = calculate_for_target_weight(&input);
 
-    log::info!(">>> result={:?}", wizard_result);
+    log::debug!(">>> result={:?}", wizard_result);
 
     wizard_result
 }

@@ -249,7 +249,7 @@ fn process_weight(weight_tracker: &[WeightTracker]) -> WeightChartData {
 
 #[command]
 pub fn get_tracker_progress(pool: State<DbPool>, date_str: String) -> Result<Progress, String> {
-    log::info!(">>> get_tracker_progress date_str={:?}", date_str);
+    log::debug!(">>> get_tracker_progress date_str={:?}", date_str);
 
     let mut conn = pool
         .get()

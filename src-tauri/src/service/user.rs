@@ -4,6 +4,7 @@ use crate::db::DbExecutor;
 use diesel::prelude::*;
 use diesel::OptionalExtension;
 use serde::{Deserialize, Serialize};
+use tauri::ipc::Channel;
 use tauri::{command, State};
 
 // ============================================================================
@@ -86,7 +87,7 @@ pub fn update_user(
         return Err("Avatar path must be less than 500 characters".to_string());
     }
 
-    log::info!(
+    log::debug!(
         ">>> update_user: user_name={}, user_avatar={}",
         user_name,
         user_avatar
@@ -98,7 +99,7 @@ pub fn update_user(
 /// Return user data to determine if its a first time setup
 #[command]
 pub fn get_user(pool: State<DbPool>) -> Result<Option<LibreUser>, String> {
-    log::info!(">>> get_user");
+    log::debug!(">>> get_user");
 
     pool.execute(LibreUser::get)
 }

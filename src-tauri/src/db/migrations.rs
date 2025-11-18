@@ -10,7 +10,7 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 pub fn run(
     connection: &mut SqliteConnection,
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    log::info!("Running migrations...");
+    log::debug!("Running migrations...");
 
     // This will run the necessary migrations.
     //

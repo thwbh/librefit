@@ -17,7 +17,7 @@ pub type PooledConnection = r2d2::PooledConnection<ConnectionManager<SqliteConne
 /// - WAL mode enabled for better concurrency
 /// - Reduced cache size for memory efficiency
 pub fn create_pool(database_url: &str) -> Result<DbPool, PoolError> {
-    log::info!("Creating database connection pool for: {}", database_url);
+    log::debug!("Creating database connection pool for: {}", database_url);
 
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
 

@@ -263,7 +263,7 @@ pub fn create_calorie_target(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new intake target: {:?}", new_target);
+    log::debug!("Creating new intake target: {:?}", new_target);
 
     pool.execute(|conn| IntakeTarget::create(conn, &new_target))
 }
@@ -283,7 +283,7 @@ pub fn create_calorie_tracker_entry(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new intake tracker entry: {:?}", new_entry);
+    log::debug!("Creating new intake tracker entry: {:?}", new_entry);
 
     pool.execute(|conn| Intake::create(conn, &new_entry))
 }
@@ -299,7 +299,7 @@ pub fn update_calorie_tracker_entry(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!(
+    log::debug!(
         "Updating intake tracker entry {}: {:?}",
         tracker_id,
         updated_entry
@@ -330,7 +330,7 @@ pub fn get_calorie_tracker_dates_in_range(
     date_from_str: String,
     date_to_str: String,
 ) -> Result<Vec<String>, String> {
-    log::info!(
+    log::debug!(
         ">>> get_calorie_tracker_dates_in_range date_from_str={:?} date_to_str={:?}",
         date_from_str,
         date_to_str

@@ -117,7 +117,7 @@ fn get_date_range_begin(date: &NaiveDate, delta: TimeDelta) -> String {
 
 #[command]
 pub fn daily_dashboard(pool: State<DbPool>, date_str: String) -> Result<Dashboard, String> {
-    log::info!(">>> date_str: {}", date_str);
+    log::debug!(">>> date_str: {}", date_str);
 
     let mut conn = pool
         .get()

@@ -14,6 +14,7 @@ use crate::service::wizard::{
 
 // Individual model commands
 use crate::service::body::{get_body_data, update_body_data};
+use crate::service::export::export_database_file;
 use crate::service::intake::{
     create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
     get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range, get_food_categories,
@@ -44,7 +45,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(
             tauri_plugin_log::Builder::default()
-                .level(log::LevelFilter::Info)
+                .level(log::LevelFilter::Debug)
                 .with_colors(ColoredLevelConfig::default())
                 .target(tauri_plugin_log::Target::new(
                     tauri_plugin_log::TargetKind::LogDir {
@@ -55,6 +56,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_haptics::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(setup_db)
         .invoke_handler(tauri::generate_handler![
             daily_dashboard,
@@ -80,7 +82,8 @@ pub fn run() {
             wizard_calculate_for_target_date,
             wizard_calculate_for_target_weight,
             get_body_data,
-            update_body_data
+            update_body_data,
+            export_database_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -91,12 +94,12 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(debug_assertions)]
     {
         dotenv().ok();
-        log::info!("Development mode: loaded .env file");
+        log::debug!("Development mode: loaded .env file");
     }
 
     let db_path = match env::var("DATABASE_URL") {
         Ok(url) => {
-            log::info!("DATABASE_URL found in environment: {}", url);
+            log::debug!("DATABASE_URL found in environment: {}", url);
             url
         }
         Err(_) => {
@@ -107,20 +110,20 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
             let path_str = path.to_string_lossy().to_string();
 
-            log::info!("DATABASE_URL not found, using app data path: {}", path_str);
+            log::debug!("DATABASE_URL not found, using app data path: {}", path_str);
 
             path_str
         }
     };
 
     env::set_var("DATABASE_URL", &db_path);
-    log::info!("DATABASE_URL set to: {}", db_path);
+    log::debug!("DATABASE_URL set to: {}", db_path);
 
     // Ensure the database directory exists
     if let Ok(url) = env::var("DATABASE_URL") {
         if let Some(parent) = std::path::Path::new(&url).parent() {
             if !parent.exists() {
-                log::info!("Creating database directory: {:?}", parent);
+                log::debug!("Creating database directory: {:?}", parent);
                 std::fs::create_dir_all(parent).unwrap_or_else(|e| {
                     log::error!("Failed to create database directory: {}", e);
                 });
@@ -137,7 +140,7 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         )))
     })?;
 
-    log::info!("Database connection pool created successfully");
+    log::debug!("Database connection pool created successfully");
 
     // Run migrations using a connection from the pool
     let mut conn = pool.get().map_err(|e| {
@@ -149,7 +152,7 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     })?;
 
     match migrations::run(&mut conn) {
-        Ok(_) => log::info!("Database migrations completed successfully"),
+        Ok(_) => log::debug!("Database migrations completed successfully"),
         Err(e) => {
             log::error!("Database migrations failed: {}", e);
             return Err(Box::new(std::io::Error::other(format!(

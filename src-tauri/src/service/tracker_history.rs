@@ -139,7 +139,7 @@ pub fn get_tracker_history(
     date_from_str: String,
     date_to_str: String,
 ) -> Result<TrackerHistory, String> {
-    log::info!(
+    log::debug!(
         ">>> date_from_str: {}, date_to_str: {}",
         date_from_str,
         date_to_str
