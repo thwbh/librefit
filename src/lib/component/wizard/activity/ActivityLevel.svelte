@@ -22,8 +22,9 @@
 			{@const size = '2.75em'}
 			{@const activityInfo = activityLevels.find((a) => a.level === option.value)}
 			{#if activityInfo}
+				{@const Icon = activityInfo.icon}
 				<span class="p-4">
-					<svelte:component this={activityInfo.icon} {size} />
+					<Icon {size} />
 				</span>
 			{/if}
 		{/snippet}
