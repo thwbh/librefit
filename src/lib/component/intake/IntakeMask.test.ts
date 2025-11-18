@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import CalorieTrackerMask from './CalorieTrackerMask.svelte';
-import type { CalorieTracker, NewCalorieTracker } from '$lib/api/gen';
+import IntakeMask from './IntakeMask.svelte';
 import TestWrapper from '../../../../tests/utils/TestWrapper.svelte';
+import type { Intake, NewIntake } from '$lib/api';
 
 const mockCategories = [
 	{ shortvalue: 'b', longvalue: 'Breakfast' },
@@ -13,18 +13,18 @@ const mockCategories = [
 	{ shortvalue: 't', longvalue: 'Treat' }
 ];
 
-function renderWithContext(entry: CalorieTracker | NewCalorieTracker, props = {}) {
+function renderWithContext(entry: Intake | NewIntake, props = {}) {
 	return render(TestWrapper, {
 		props: {
-			component: CalorieTrackerMask,
+			component: IntakeMask,
 			props: { entry, ...props },
 			categories: mockCategories
 		}
 	});
 }
 
-describe('CalorieTrackerMask', () => {
-	const mockEntry: CalorieTracker = {
+describe('IntakeMask', () => {
+	const mockEntry: Intake = {
 		id: 1,
 		added: '2024-01-01',
 		category: 'l',
@@ -240,7 +240,7 @@ describe('CalorieTrackerMask', () => {
 
 	describe('NewCalorieTracker Support', () => {
 		it('should work with NewCalorieTracker entry', () => {
-			const newEntry: NewCalorieTracker = {
+			const newEntry: NewIntake = {
 				added: '2024-01-15',
 				category: 'l',
 				amount: 300,
@@ -254,7 +254,7 @@ describe('CalorieTrackerMask', () => {
 
 		it('should allow editing new entries', async () => {
 			const user = userEvent.setup();
-			const newEntry: NewCalorieTracker = {
+			const newEntry: NewIntake = {
 				added: '2024-01-15',
 				category: 'l',
 				amount: 300,

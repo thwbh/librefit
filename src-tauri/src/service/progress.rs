@@ -37,11 +37,11 @@ pub struct WeightChartData {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Progress {
-    pub calorie_target: IntakeTarget,
+    pub intake_target: IntakeTarget,
     pub weight_target: WeightTarget,
     pub days_passed: i32,
     pub days_total: i32,
-    pub calorie_chart_data: CalorieChartData,
+    pub intake_chart_data: CalorieChartData,
     pub weight_chart_data: WeightChartData,
 }
 
@@ -50,59 +50,58 @@ pub struct Progress {
 // ============================================================================
 
 impl Progress {
-    /// Load tracker progress with start and end date of the last valid calorie_target
+    /// Load tracker progress with start and end date of the last valid intake_target
     pub fn build_for_date(conn: &mut SqliteConnection, date_str: &str) -> Result<Self, String> {
-        let calorie_target =
+        let intake_target =
             IntakeTarget::find_last(conn).map_err(|_| "No calorie target found".to_string())?;
 
         let weight_target =
             WeightTarget::find_last(conn).map_err(|_| "No weight target found".to_string())?;
 
-        let calorie_target_start_date =
-            NaiveDate::parse_from_str(&calorie_target.start_date, "%Y-%m-%d")
+        let intake_target_start_date =
+            NaiveDate::parse_from_str(&intake_target.start_date, "%Y-%m-%d")
                 .map_err(|_| "Invalid date format".to_string())?;
-        let calorie_target_end_date =
-            NaiveDate::parse_from_str(&calorie_target.end_date, "%Y-%m-%d")
-                .map_err(|_| "Invalid date format".to_string())?;
+        let intake_target_end_date = NaiveDate::parse_from_str(&intake_target.end_date, "%Y-%m-%d")
+            .map_err(|_| "Invalid date format".to_string())?;
 
         let today_date: NaiveDate = NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
             .map_err(|_| "Invalid date format".to_string())?;
 
-        let end_date: NaiveDate = if today_date < calorie_target_end_date {
+        let end_date: NaiveDate = if today_date < intake_target_end_date {
             today_date
                 .checked_sub_days(Days::new(1))
                 .ok_or("Failed to subtract day".to_string())?
         } else {
-            calorie_target_end_date
+            intake_target_end_date
         };
 
         let end_date_str = end_date.format("%Y-%m-%d").to_string();
 
-        let calorie_tracker: Vec<Intake> =
-            Intake::find_by_date_range(conn, &calorie_target.start_date, &end_date_str)
+        let intake: Vec<Intake> =
+            Intake::find_by_date_range(conn, &intake_target.start_date, &end_date_str)
                 .unwrap_or_default();
 
         let weight_tracker: Vec<WeightTracker> =
             WeightTracker::find_by_date_range(conn, &weight_target.start_date, &end_date_str)
                 .unwrap_or_default();
 
-        let calorie_chart_data = process_calories(conn, &calorie_tracker)?;
+        let intake_chart_data = process_intake(conn, &intake)?;
         let weight_chart_data = process_weight(&weight_tracker);
 
         let days_passed: i32 = end_date
-            .signed_duration_since(calorie_target_start_date)
+            .signed_duration_since(intake_target_start_date)
             .num_days() as i32;
 
-        let days_total: i32 = calorie_target_end_date
-            .signed_duration_since(calorie_target_start_date)
+        let days_total: i32 = intake_target_end_date
+            .signed_duration_since(intake_target_start_date)
             .num_days() as i32;
 
         Ok(Progress {
-            calorie_target,
+            intake_target,
             weight_target,
             days_passed,
             days_total,
-            calorie_chart_data,
+            intake_chart_data,
             weight_chart_data,
         })
     }
@@ -113,11 +112,11 @@ impl Progress {
 // ============================================================================
 
 /// Process intake tracker to prepare client side graph rendering
-fn process_calories(
+fn process_intake(
     conn: &mut SqliteConnection,
-    calorie_tracker: &[Intake],
+    intake: &[Intake],
 ) -> Result<CalorieChartData, String> {
-    if calorie_tracker.is_empty() {
+    if intake.is_empty() {
         Ok(CalorieChartData {
             avg: 0.,
             min: 0,
@@ -134,7 +133,7 @@ fn process_calories(
         let mut progress_map: BTreeMap<String, i32> = BTreeMap::new();
         let mut distribution_map: BTreeMap<String, (f32, u32)> = BTreeMap::new();
 
-        for calories in calorie_tracker {
+        for calories in intake {
             sum += calories.amount;
 
             max = i32::max(max, calories.amount);

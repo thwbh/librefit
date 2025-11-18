@@ -16,9 +16,8 @@ use crate::service::wizard::{
 use crate::service::body::{get_body_data, update_body_data};
 use crate::service::export::export_database_file;
 use crate::service::intake::{
-    create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
-    get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range, get_food_categories,
-    get_last_calorie_target, update_calorie_tracker_entry,
+    create_intake, create_intake_target, delete_intake, get_food_categories,
+    get_intake_dates_in_range, get_intake_for_date_range, get_last_intake_target, update_intake,
 };
 use crate::service::user::{get_user, update_user};
 use crate::service::weight::{
@@ -63,18 +62,18 @@ pub fn run() {
             get_tracker_progress,
             get_tracker_history,
             get_food_categories,
-            create_calorie_tracker_entry,
-            update_calorie_tracker_entry,
-            delete_calorie_tracker_entry,
-            get_calorie_tracker_for_date_range,
-            get_calorie_tracker_dates_in_range,
+            create_intake,
+            update_intake,
+            delete_intake,
+            get_intake_for_date_range,
+            get_intake_dates_in_range,
             create_weight_tracker_entry,
             update_weight_tracker_entry,
             delete_weight_tracker_entry,
             get_weight_tracker_for_date_range,
-            create_calorie_target,
+            create_intake_target,
             create_weight_target,
-            get_last_calorie_target,
+            get_last_intake_target,
             get_user,
             update_user,
             wizard_calculate_tdee,

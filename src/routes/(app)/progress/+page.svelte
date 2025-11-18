@@ -48,21 +48,21 @@
 		}
 	};
 
-	const calorieChartData = {
+	const intakeChartData = {
 		data: {
-			labels: data.trackerProgress.calorieChartData.legend,
+			labels: data.trackerProgress.intakeChartData.legend,
 			datasets: [
 				{
 					label: 'Actual',
-					data: data.trackerProgress.calorieChartData.values,
+					data: data.trackerProgress.intakeChartData.values,
 					borderColor: getThemeColor('--color-primary'),
 					backgroundColor: getThemeColor('--color-primary'),
 					tension: 0.4
 				},
 				{
 					label: 'Maximum',
-					data: data.trackerProgress.calorieChartData.legend.map(
-						(_: any) => data.trackerProgress.calorieTarget.maximumCalories
+					data: data.trackerProgress.intakeChartData.legend.map(
+						(_: any) => data.trackerProgress.intakeTarget.maximumCalories
 					),
 					borderColor: getThemeColor('--color-error'),
 					backgroundColor: getThemeColor('--color-error'),
@@ -70,16 +70,16 @@
 				},
 				{
 					label: 'Target',
-					data: data.trackerProgress.calorieChartData.legend.map(
-						(_: any) => data.trackerProgress.calorieTarget.targetCalories
+					data: data.trackerProgress.intakeChartData.legend.map(
+						(_: any) => data.trackerProgress.intakeTarget.targetCalories
 					),
 					borderColor: getThemeColor('--color-success'),
 					backgroundColor: getThemeColor('--color-success')
 				},
 				{
 					label: 'Average',
-					data: data.trackerProgress.calorieChartData.legend.map(
-						(_: any) => data.trackerProgress.calorieChartData.avg
+					data: data.trackerProgress.intakeChartData.legend.map(
+						(_: any) => data.trackerProgress.intakeChartData.avg
 					),
 					borderColor: getThemeColor('--color-warning'),
 					backgroundColor: getThemeColor('--color-warning')
@@ -95,8 +95,8 @@
 			},
 			scales: {
 				y: {
-					suggestedMin: data.trackerProgress.calorieChartData.min - 50,
-					suggestedMax: data.trackerProgress.calorieChartData.max + 50
+					suggestedMin: data.trackerProgress.intakeChartData.min - 50,
+					suggestedMax: data.trackerProgress.intakeChartData.max + 50
 				}
 			}
 		}
@@ -127,27 +127,27 @@
 		</div>
 	</div>
 
-	<LineChart data={calorieChartData.data} options={calorieChartData.options} />
+	<LineChart data={intakeChartData.data} options={intakeChartData.options} />
 
 	<div class="flex flex-row justify-between">
 		<div class="stat">
 			<div class="stat-title">Average per day</div>
 			<div class="stat-value">
-				{data.trackerProgress.calorieChartData.avg}
+				{data.trackerProgress.intakeChartData.avg}
 				<span class="text-sm">kcal</span>
 			</div>
-			<div class="stat-desc">Target: {data.trackerProgress.calorieTarget.targetCalories}kcal</div>
+			<div class="stat-desc">Target: {data.trackerProgress.intakeTarget.targetCalories}kcal</div>
 		</div>
 		<div class="stat">
 			<div class="stat-title text-right">∅ Deficit</div>
 			<div class="stat-value text-right">
-				{data.trackerProgress.calorieTarget.maximumCalories -
-					data.trackerProgress.calorieChartData.dailyAverage}
+				{data.trackerProgress.intakeTarget.maximumCalories -
+					data.trackerProgress.intakeChartData.dailyAverage}
 				<span class="text-sm">kcal</span>
 			</div>
 			<div class="stat-desc text-right">
-				target: {data.trackerProgress.calorieTarget.maximumCalories -
-					data.trackerProgress.calorieTarget.targetCalories}
+				target: {data.trackerProgress.intakeTarget.maximumCalories -
+					data.trackerProgress.intakeTarget.targetCalories}
 			</div>
 		</div>
 	</div>

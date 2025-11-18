@@ -17,7 +17,7 @@ use validator::{Validate, ValidationError, ValidationErrors};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Wizard {
-    pub calorie_target: NewIntakeTarget,
+    pub intake_target: NewIntakeTarget,
     pub weight_target: NewWeightTarget,
     pub weight_tracker: NewWeightTracker,
 }
@@ -565,7 +565,7 @@ pub fn wizard_create_targets(pool: State<DbPool>, input: Wizard) -> Result<(), S
     conn.transaction(|conn| {
         WeightTarget::create(conn, &input.weight_target)?;
         WeightTracker::create(conn, &input.weight_tracker)?;
-        IntakeTarget::create(conn, &input.calorie_target)?;
+        IntakeTarget::create(conn, &input.intake_target)?;
 
         Ok(())
     })

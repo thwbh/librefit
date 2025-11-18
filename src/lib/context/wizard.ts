@@ -1,22 +1,22 @@
 import { getContext, setContext } from 'svelte';
 import type {
-  LibreUser,
-  NewCalorieTarget,
-  NewWeightTarget,
-  WizardInput,
-  WizardResult
+	LibreUser,
+	NewIntakeTarget,
+	NewWeightTarget,
+	WizardInput,
+	WizardResult
 } from '$lib/api/gen';
 
 /**
  * Wizard state shared across wizard steps
  */
 export interface WizardState {
-  wizardResult?: WizardResult;
-  wizardInput: WizardInput;
-  userData: LibreUser;
-  chosenRate: number;
-  weightTarget?: NewWeightTarget;
-  calorieTarget?: NewCalorieTarget;
+	wizardResult?: WizardResult;
+	wizardInput: WizardInput;
+	userData: LibreUser;
+	chosenRate: number;
+	weightTarget?: NewWeightTarget;
+	intakeTarget?: NewIntakeTarget;
 }
 
 const WIZARD_CONTEXT_KEY = Symbol('wizard-state');
@@ -25,7 +25,7 @@ const WIZARD_CONTEXT_KEY = Symbol('wizard-state');
  * Set wizard state context - call this in Setup.svelte
  */
 export function setWizardContext(state: WizardState) {
-  setContext(WIZARD_CONTEXT_KEY, state);
+	setContext(WIZARD_CONTEXT_KEY, state);
 }
 
 /**
@@ -33,13 +33,13 @@ export function setWizardContext(state: WizardState) {
  * @throws Error if context not found
  */
 export function getWizardContext(): WizardState {
-  const state = getContext<WizardState>(WIZARD_CONTEXT_KEY);
-  if (!state) {
-    throw new Error(
-      'Wizard context not found. Make sure setWizardContext() is called in Setup.svelte.'
-    );
-  }
-  return state;
+	const state = getContext<WizardState>(WIZARD_CONTEXT_KEY);
+	if (!state) {
+		throw new Error(
+			'Wizard context not found. Make sure setWizardContext() is called in Setup.svelte.'
+		);
+	}
+	return state;
 }
 
 /**
@@ -47,5 +47,5 @@ export function getWizardContext(): WizardState {
  * @returns WizardState or null if not found
  */
 export function tryGetWizardContext(): WizardState | null {
-  return getContext<WizardState | null>(WIZARD_CONTEXT_KEY) ?? null;
+	return getContext<WizardState | null>(WIZARD_CONTEXT_KEY) ?? null;
 }

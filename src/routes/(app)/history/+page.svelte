@@ -1,20 +1,17 @@
 <script lang="ts">
 	import {
-		type CalorieTarget,
-		type CalorieTracker,
-		type NewCalorieTracker,
+		type Intake,
+		type IntakeTarget,
+		type NewIntake,
 		type TrackerHistory,
 		type WeightTracker
 	} from '$lib/api';
-	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
 	import { convertDateStrToDisplayDateStr, getDateAsStr, parseStringAsDate } from '$lib/date.js';
 	import NumberFlow from '@number-flow/svelte';
-	import { info } from '@tauri-apps/plugin-log';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
 	import { CaretLeft, CaretRight, Pencil, Trash } from 'phosphor-svelte';
 	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
-	import CalorieTrackerMask from '$lib/component/intake/CalorieTrackerMask.svelte';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
@@ -23,24 +20,25 @@
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import {
-		createCalorieTrackerEntry,
-		deleteCalorieTrackerEntry,
+		createIntake,
+		deleteIntake,
 		getTrackerHistory,
-		updateCalorieTrackerEntry
+		updateIntake
 	} from '$lib/api/gen/commands.js';
+	import { debug } from '@tauri-apps/plugin-log';
+	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
+	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
 
 	let { data } = $props();
 
 	const foodCategories = getCategoriesContext();
 
-	info(JSON.stringify(data));
-
 	// default history is 1 week
 	let trackerHistory: TrackerHistory = $state(data.trackerHistory);
-	let calorieTarget: CalorieTarget = data.calorieTarget;
+	let intakeTarget: IntakeTarget = data.calorieTarget;
 	let lastDateStr = data.trackerHistory.dateLastStr;
 
-	let dates = $derived(Object.keys(trackerHistory?.caloriesHistory));
+	let dates = $derived(Object.keys(trackerHistory?.intakeHistory));
 
 	// ensure history can't be scrolled into the future
 	let showRightCaret: boolean = $derived(
@@ -55,10 +53,10 @@
 	// Track swipe direction for animations
 	let swipeDirection = $state<'left' | 'right' | null>(null);
 
-	let caloriesHistory: Array<CalorieTracker> = $derived.by(() => {
-		if (!trackerHistory || !trackerHistory.caloriesHistory[selectedDateStr]) return [];
+	let intakeHistory: Array<Intake> = $derived.by(() => {
+		if (!trackerHistory || !trackerHistory.intakeHistory[selectedDateStr]) return [];
 
-		return [...trackerHistory?.caloriesHistory[selectedDateStr]];
+		return [...trackerHistory?.intakeHistory[selectedDateStr]];
 	});
 
 	let weightHistory: Array<WeightTracker> = $derived.by(() => {
@@ -68,10 +66,10 @@
 	});
 
 	// Modal composition for CRUD operations
-	const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
-		onCreate: (entry) => createCalorieTrackerEntry({ newEntry: entry }),
-		onUpdate: (id, entry) => updateCalorieTrackerEntry({ trackerId: id, updatedEntry: entry }),
-		onDelete: (id) => deleteCalorieTrackerEntry({ trackerId: id }),
+	const modal = useEntryModal<Intake, NewIntake>({
+		onCreate: (entry) => createIntake({ newEntry: entry }),
+		onUpdate: (id, entry) => updateIntake({ trackerId: id, updatedEntry: entry }),
+		onDelete: (id) => deleteIntake({ trackerId: id }),
 		getBlankEntry: () => ({
 			added: selectedDateStr,
 			amount: 0,
@@ -81,21 +79,21 @@
 		onCreateSuccess: (newEntry) => {
 			trackerHistory = {
 				...trackerHistory,
-				caloriesHistory: {
-					...trackerHistory.caloriesHistory,
-					[selectedDateStr]: [...trackerHistory.caloriesHistory[selectedDateStr], newEntry]
+				intakeHistory: {
+					...trackerHistory.intakeHistory,
+					[selectedDateStr]: [...trackerHistory.intakeHistory[selectedDateStr], newEntry]
 				}
 			};
 		},
 		onUpdateSuccess: (updatedEntry) => {
-			const entries = [...trackerHistory.caloriesHistory[selectedDateStr]];
+			const entries = [...trackerHistory.intakeHistory[selectedDateStr]];
 			const idx = entries.findIndex((e) => e.id === updatedEntry.id);
 			if (idx !== -1) {
 				entries[idx] = updatedEntry;
 				trackerHistory = {
 					...trackerHistory,
-					caloriesHistory: {
-						...trackerHistory.caloriesHistory,
+					intakeHistory: {
+						...trackerHistory.intakeHistory,
 						[selectedDateStr]: entries
 					}
 				};
@@ -104,9 +102,9 @@
 		onDeleteSuccess: (id) => {
 			trackerHistory = {
 				...trackerHistory,
-				caloriesHistory: {
-					...trackerHistory.caloriesHistory,
-					[selectedDateStr]: trackerHistory.caloriesHistory[selectedDateStr].filter(
+				intakeHistory: {
+					...trackerHistory.intakeHistory,
+					[selectedDateStr]: trackerHistory.intakeHistory[selectedDateStr].filter(
 						(e) => e.id !== id
 					)
 				}
@@ -115,7 +113,7 @@
 	});
 
 	const selectHistory = (dateStr: string) => {
-		info(`selectHistory dateStr={${dateStr}}`);
+		debug(`selectHistory dateStr={${dateStr}}`);
 		swipeDirection = null; // Reset direction when clicking a date
 		selectedDateStr = dateStr;
 	};
@@ -147,10 +145,10 @@
 			// After loading new week, select appropriate day based on swipe direction
 			if (swipeDirection === 'right') {
 				// Came from scrollLeft, select last day
-				selectedDateStr = Object.keys(result.caloriesHistory).sort().pop() || '';
+				selectedDateStr = Object.keys(result.intakeHistory).sort().pop() || '';
 			} else if (swipeDirection === 'left') {
 				// Came from scrollRight, select first day
-				selectedDateStr = Object.keys(result.caloriesHistory).sort()[0] || '';
+				selectedDateStr = Object.keys(result.intakeHistory).sort()[0] || '';
 			}
 		}
 	};
@@ -158,12 +156,12 @@
 	const getActiveClass = (dateStr: string) =>
 		dateStr === selectedDateStr ? 'bg-primary text-primary-content' : '';
 
-	const edit = async (calories: CalorieTracker) => {
+	const edit = async (calories: Intake) => {
 		await vibrate(2);
 		modal.openEdit(calories);
 	};
 
-	const remove = async (calories: CalorieTracker) => {
+	const remove = async (calories: Intake) => {
 		await vibrate(2);
 		modal.openDelete(calories);
 	};
@@ -279,15 +277,15 @@
 						</div>
 					</div>
 
-					<TrackerScore
-						{calorieTarget}
-						entries={caloriesHistory.map((c) => c.amount)}
+					<IntakeScore
+						{intakeTarget}
+						entries={intakeHistory.map((c) => c.amount)}
 						isHistory={true}
 					/>
 				</div>
 
 				<div class="divide-base-300 divide-y p-6">
-					{#each caloriesHistory as calories}
+					{#each intakeHistory as calories}
 						<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
 							{#snippet leftAction()}
 								<span><Pencil size="2em" color={'var(--color-primary)'} /></span>
@@ -353,7 +351,7 @@
 
 	{#snippet content()}
 		{#if modal.currentEntry}
-			<CalorieTrackerMask bind:entry={modal.currentEntry} isEditing={true} />
+			<IntakeMask bind:entry={modal.currentEntry} isEditing={true} />
 		{/if}
 	{/snippet}
 </ModalDialog>
@@ -364,7 +362,7 @@
 			<span>Edit Intake</span>
 			<span>
 				<span class="text-xs opacity-60">
-					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as CalorieTracker).added)}
+					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
 				</span>
 				<span>
 					<button class="btn btn-xs btn-error">
@@ -377,10 +375,7 @@
 
 	{#snippet content()}
 		{#if modal.currentEntry}
-			<CalorieTrackerMask
-				bind:entry={modal.currentEntry as CalorieTracker}
-				isEditing={modal.isEditing}
-			/>
+			<IntakeMask bind:entry={modal.currentEntry as Intake} isEditing={modal.isEditing} />
 		{/if}
 	{/snippet}
 
@@ -406,7 +401,7 @@
 
 	{#snippet content()}
 		{#if modal.currentEntry}
-			<CalorieTrackerMask entry={modal.currentEntry as CalorieTracker} readonly={true} />
+			<IntakeMask entry={modal.currentEntry as Intake} readonly={true} />
 		{/if}
 	{/snippet}
 
