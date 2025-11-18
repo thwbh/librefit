@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { formatError, formatZodError, formatInvokeError } from '$lib/api/error-formatter';
-import { ZodError } from 'zod';
+import { ZodError, type ZodIssue } from 'zod';
 
 describe('error-formatter', () => {
 	describe('formatZodError', () => {
@@ -9,10 +9,9 @@ describe('error-formatter', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['name'],
 					message: 'Expected string, received number'
-				}
+				} as ZodIssue
 			]);
 
 			const result = formatZodError(zodError);
@@ -25,10 +24,9 @@ describe('error-formatter', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'undefined',
 					path: ['user', 'profile', 'email'],
 					message: 'Required'
-				}
+				} as ZodIssue
 			]);
 
 			const result = formatZodError(zodError);
@@ -55,19 +53,17 @@ describe('error-formatter', () => {
 				{
 					code: 'too_small',
 					minimum: 5,
-					type: 'string',
 					inclusive: true,
-					exact: false,
+					origin: 'string',
 					path: ['password'],
 					message: 'String must contain at least 5 character(s)'
-				},
+				} as ZodIssue,
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'undefined',
 					path: ['email'],
 					message: 'Required'
-				}
+				} as ZodIssue
 			]);
 
 			const result = formatZodError(zodError);
@@ -88,10 +84,9 @@ describe('error-formatter', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['items', 0, 'name'],
 					message: 'Expected string'
-				}
+				} as ZodIssue
 			]);
 
 			const result = formatZodError(zodError);
@@ -176,10 +171,9 @@ describe('error-formatter', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['field'],
 					message: 'Expected string'
-				}
+				} as ZodIssue
 			]);
 
 			const result = formatError(zodError);
@@ -212,12 +206,11 @@ describe('error-formatter', () => {
 				{
 					code: 'too_big',
 					maximum: 100,
-					type: 'string',
 					inclusive: true,
-					exact: false,
+					origin: 'string',
 					path: ['description'],
 					message: 'String must contain at most 100 character(s)'
-				}
+				} as ZodIssue
 			]);
 
 			const result = formatError(zodError);

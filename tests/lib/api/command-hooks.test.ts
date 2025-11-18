@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createCommandHooks, createSilentHooks, CommonHooks } from '$lib/api/command-hooks';
-import { ZodError } from 'zod';
+import { ZodError, type ZodIssue } from 'zod';
 
 // Mock dependencies
 vi.mock('@thwbh/veilchen', () => ({
@@ -41,10 +41,9 @@ describe('command-hooks', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['field'],
 					message: 'Expected string'
-				}
+				} as ZodIssue
 			]);
 
 			hooks.onValidationError?.(zodError);
@@ -59,10 +58,9 @@ describe('command-hooks', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['name'],
 					message: 'Required'
-				}
+				} as ZodIssue
 			]);
 
 			hooks.onValidationError?.(zodError);
@@ -129,10 +127,9 @@ describe('command-hooks', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['field'],
 					message: 'Expected string'
-				}
+				} as ZodIssue
 			]);
 
 			hooks.onValidationError?.(zodError);
@@ -160,10 +157,9 @@ describe('command-hooks', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['field'],
 					message: 'Expected string'
-				}
+				} as ZodIssue
 			]);
 
 			hooks.onValidationError?.(zodError);
@@ -193,10 +189,9 @@ describe('command-hooks', () => {
 					{
 						code: 'invalid_type',
 						expected: 'string',
-						received: 'number',
 						path: ['field'],
 						message: 'Expected string'
-					}
+					} as ZodIssue
 				])
 			);
 			hooks.onInvokeError?.(error);
@@ -212,10 +207,9 @@ describe('command-hooks', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['field'],
 					message: 'Expected string'
-				}
+				} as ZodIssue
 			]);
 
 			hooks.onValidationError?.(zodError);
@@ -232,9 +226,7 @@ describe('command-hooks', () => {
 
 			hooks.onInvokeError?.(error);
 
-			expect(logError).toHaveBeenCalledWith(
-				'[Invoke Error] Background operation: Failed to sync'
-			);
+			expect(logError).toHaveBeenCalledWith('[Invoke Error] Background operation: Failed to sync');
 		});
 
 		it('should not have onSuccess hook', () => {
@@ -290,10 +282,7 @@ describe('command-hooks', () => {
 
 			hooks.onInvokeError?.(new Error('Connection failed'));
 
-			expect(toast.error).toHaveBeenCalledWith(
-				'Failed to load users: Connection failed',
-				5000
-			);
+			expect(toast.error).toHaveBeenCalledWith('Failed to load users: Connection failed', 5000);
 		});
 
 		it('should create read hooks without error context', async () => {

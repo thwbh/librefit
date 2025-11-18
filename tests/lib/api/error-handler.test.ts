@@ -5,7 +5,7 @@ import {
 	logApiError,
 	type ApiError
 } from '$lib/api/error-handler';
-import { ZodError } from 'zod';
+import { ZodError, type ZodIssue } from 'zod';
 
 // Mock the Tauri logger
 vi.mock('@tauri-apps/plugin-log', () => ({
@@ -20,10 +20,9 @@ describe('error-handler', () => {
 					{
 						code: 'invalid_type',
 						expected: 'string',
-						received: 'number',
 						path: ['field'],
 						message: 'Expected string, received number'
-					}
+					} as ZodIssue
 				]);
 
 				const result = extractErrorMessage(zodError);
@@ -47,19 +46,17 @@ describe('error-handler', () => {
 					{
 						code: 'too_small',
 						minimum: 5,
-						type: 'string',
 						inclusive: true,
-						exact: false,
+						origin: 'string',
 						path: ['name'],
 						message: 'String must contain at least 5 character(s)'
-					},
+					} as ZodIssue,
 					{
 						code: 'invalid_type',
 						expected: 'number',
-						received: 'string',
 						path: ['age'],
 						message: 'Expected number, received string'
-					}
+					} as ZodIssue
 				]);
 
 				const result = extractErrorMessage(zodError);
@@ -243,10 +240,9 @@ describe('error-handler', () => {
 				{
 					code: 'invalid_type',
 					expected: 'string',
-					received: 'number',
 					path: ['email'],
 					message: 'Expected string, received number'
-				}
+				} as ZodIssue
 			]);
 
 			logApiError(zodError, 'Form validation');
