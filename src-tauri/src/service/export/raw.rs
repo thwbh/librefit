@@ -1,43 +1,10 @@
 use diesel::prelude::QueryableByName;
-use serde::{Deserialize, Serialize};
 use std::io::Read;
-use tauri::{command, ipc::Channel, State};
+use tauri::{ipc::Channel, State};
 
 use crate::db::connection::DbPool;
 
-/// Export result
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ExportResult {
-    bytes: Vec<u8>,
-    file_path: String,
-}
-
-// Define progress event structure
-
-/// Progress tracking
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ExportProgress {
-    pub stage: ExportStage,
-    pub percent: f32, // 0.0 to 100.0
-    pub message: String,
-    pub bytes_processed: Option<usize>,
-    pub total_bytes: Option<usize>,
-}
-
-/// Progress stage
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub enum ExportStage {
-    Initializing,
-    AnalyzingDatabase,
-    CreatingBackup,
-    ReadingFile,
-    Finalizing,
-    Complete,
-    Error,
-}
+use super::{format_bytes, send_progress, ExportProgress, ExportResult, ExportStage};
 
 // Query result structs for PRAGMA queries
 #[derive(QueryableByName)]
@@ -52,17 +19,16 @@ struct PageSize {
     page_size: i64,
 }
 
-/// Export database file with granular progress tracking
-#[command]
-pub async fn export_database_file(
+/// Export database as raw SQLite file
+pub async fn export_raw(
     pool: State<'_, DbPool>,
     on_progress: Channel<ExportProgress>,
 ) -> Result<ExportResult, String> {
-    log::debug!(">>> Starting database export...");
-
     use diesel::RunQueryDsl;
     use std::fs::{metadata, File};
     use std::io::BufReader;
+
+    log::debug!(">>> Starting raw database export...");
 
     // Stage 1: Initializing (0-5%)
     send_progress(
@@ -155,6 +121,14 @@ pub async fn export_database_file(
         .ok_or_else(|| "Invalid temp path".to_string())?;
 
     log::debug!(">>> backup created path={:?}", file_path);
+
+    // Remove any existing temp file from previous exports
+    if file_path.exists() {
+        log::debug!(">>> Removing existing temp file...");
+        if let Err(e) = std::fs::remove_file(&file_path) {
+            log::warn!("Failed to remove existing temp file: {}", e);
+        }
+    }
 
     send_progress(
         &on_progress,
@@ -354,36 +328,4 @@ pub async fn export_database_file(
         bytes,
         file_path: file_path_str.to_string(),
     })
-}
-
-// Helper function to send progress updates
-fn send_progress(
-    channel: &Channel<ExportProgress>,
-    stage: ExportStage,
-    percent: f32,
-    message: &str,
-    bytes_processed: Option<usize>,
-    total_bytes: Option<usize>,
-) {
-    let _ = channel.send(ExportProgress {
-        stage,
-        percent,
-        message: message.to_string(),
-        bytes_processed,
-        total_bytes,
-    });
-}
-
-// Helper to format bytes
-fn format_bytes(bytes: usize) -> String {
-    const UNITS: &[&str] = &["B", "KB", "MB", "GB"];
-    let mut size = bytes as f64;
-    let mut unit_index = 0;
-
-    while size >= 1024.0 && unit_index < UNITS.len() - 1 {
-        size /= 1024.0;
-        unit_index += 1;
-    }
-
-    format!("{:.2} {}", size, UNITS[unit_index])
 }

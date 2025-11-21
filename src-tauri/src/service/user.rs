@@ -4,7 +4,6 @@ use crate::db::DbExecutor;
 use diesel::prelude::*;
 use diesel::OptionalExtension;
 use serde::{Deserialize, Serialize};
-use tauri::ipc::Channel;
 use tauri::{command, State};
 
 // ============================================================================
