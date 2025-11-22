@@ -18,7 +18,6 @@
 	import { getAvatar } from '$lib/avatar';
 	import { slide } from 'svelte/transition';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
-	import Export from '$lib/component/profile/Export.svelte';
 
 	let { data } = $props();
 
