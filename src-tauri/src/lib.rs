@@ -14,7 +14,7 @@ use crate::service::wizard::{
 
 // Individual model commands
 use crate::service::body::{get_body_data, update_body_data};
-use crate::service::export::export_database_file;
+use crate::service::export::{cancel_export, export_database_file, ExportCancellation};
 use crate::service::intake::{
     create_intake, create_intake_target, delete_intake, get_food_categories,
     get_intake_dates_in_range, get_intake_for_date_range, get_last_intake_target, update_intake,
@@ -82,7 +82,8 @@ pub fn run() {
             wizard_calculate_for_target_weight,
             get_body_data,
             update_body_data,
-            export_database_file
+            export_database_file,
+            cancel_export
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -161,8 +162,9 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // Store the pool in Tauri's managed state
+    // Store the pool and export cancellation state in Tauri's managed state
     app.manage(pool);
+    app.manage(ExportCancellation::new());
 
     Ok(())
 }

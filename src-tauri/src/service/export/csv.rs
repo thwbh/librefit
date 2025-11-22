@@ -7,11 +7,14 @@ use crate::db::connection::DbPool;
 use crate::service::intake::{FoodCategory, Intake, IntakeTarget};
 use crate::service::weight::{WeightTarget, WeightTracker};
 
-use super::{format_bytes, send_progress, ExportProgress, ExportResult, ExportStage};
+use super::{
+    format_bytes, send_progress, ExportCancellation, ExportProgress, ExportResult, ExportStage,
+};
 
 /// Export database as CSV files in a ZIP archive
 pub async fn export_csv(
     pool: State<'_, DbPool>,
+    cancellation: ExportCancellation,
     on_progress: Channel<ExportProgress>,
 ) -> Result<ExportResult, String> {
     log::debug!(">>> Starting CSV export...");
@@ -97,6 +100,11 @@ pub async fn export_csv(
     let total_tables = 5; // intake, weight_tracker, intake_target, weight_target, food_category
 
     // Export intake entries (calories)
+    if cancellation.is_cancelled() {
+        log::debug!(">>> CSV export cancelled by user");
+        return Err("Export cancelled by user".to_string());
+    }
+
     send_progress(
         &on_progress,
         ExportStage::CreatingBackup,

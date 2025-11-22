@@ -4,7 +4,9 @@ use tauri::{ipc::Channel, State};
 
 use crate::db::connection::DbPool;
 
-use super::{format_bytes, send_progress, ExportProgress, ExportResult, ExportStage};
+use super::{
+    format_bytes, send_progress, ExportCancellation, ExportProgress, ExportResult, ExportStage,
+};
 
 // Query result structs for PRAGMA queries
 #[derive(QueryableByName)]
@@ -22,6 +24,7 @@ struct PageSize {
 /// Export database as raw SQLite file
 pub async fn export_raw(
     pool: State<'_, DbPool>,
+    cancellation: ExportCancellation,
     on_progress: Channel<ExportProgress>,
 ) -> Result<ExportResult, String> {
     use diesel::RunQueryDsl;
@@ -73,6 +76,12 @@ pub async fn export_raw(
         None,
         None,
     );
+
+    // Check for cancellation
+    if cancellation.is_cancelled() {
+        log::debug!(">>> Export cancelled by user at analysis stage");
+        return Err("Export cancelled by user".to_string());
+    }
 
     // Get database page count and size for progress estimation
     let page_count: i64 = diesel::sql_query("PRAGMA page_count")
@@ -148,6 +157,7 @@ pub async fn export_raw(
     let vacuum_progress_clone = vacuum_progress.clone();
 
     // Progress simulation thread (since VACUUM doesn't provide callbacks)
+    let cancellation_clone = cancellation.cancelled.clone();
     let progress_handle = std::thread::spawn(move || {
         let start_percent = 10.0;
         let end_percent = 60.0;
@@ -156,7 +166,9 @@ pub async fn export_raw(
         let sleep_ms = duration_estimate_ms / steps;
 
         for i in 0..steps {
-            if vacuum_progress_clone.load(std::sync::atomic::Ordering::Relaxed) {
+            if vacuum_progress_clone.load(std::sync::atomic::Ordering::Relaxed)
+                || cancellation_clone.load(std::sync::atomic::Ordering::Relaxed)
+            {
                 break;
             }
 
@@ -200,6 +212,14 @@ pub async fn export_raw(
     vacuum_progress.store(true, std::sync::atomic::Ordering::Relaxed);
     let _ = progress_handle.join();
 
+    // Check if cancelled during VACUUM
+    if cancellation.is_cancelled() {
+        log::debug!(">>> Export cancelled during VACUUM");
+        // Clean up temp file
+        let _ = std::fs::remove_file(&file_path);
+        return Err("Export cancelled by user".to_string());
+    }
+
     log::debug!(">>> Replication finished.");
 
     send_progress(
@@ -242,6 +262,13 @@ pub async fn export_raw(
     log::debug!(">>> reading in chunk_size={:?}", CHUNK_SIZE);
 
     loop {
+        // Check for cancellation during file read
+        if cancellation.is_cancelled() {
+            log::debug!(">>> Export cancelled during file read");
+            let _ = std::fs::remove_file(&file_path);
+            return Err("Export cancelled by user".to_string());
+        }
+
         let n = reader.read(&mut buffer).map_err(|e| {
             log::error!(">>> error reading backup. Error={:?}", e);
             format!("Failed to read backup: {}", e)

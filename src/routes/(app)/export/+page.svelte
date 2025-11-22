@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { exportDatabaseFile, type ExportProgress } from '$lib/api';
+	import { cancelExport, exportDatabaseFile, type ExportProgress } from '$lib/api';
 	import { ExportFormatSchema, ExportStageSchema, type ExportStage } from '$lib/api/gen/types';
 	import { Channel } from '@tauri-apps/api/core';
 	import { save } from '@tauri-apps/plugin-dialog';
@@ -77,12 +77,16 @@
 		[ExportStage.readingFile]: Eyeglasses,
 		[ExportStage.finalizing]: ArrowClockwise,
 		[ExportStage.complete]: Check,
+		[ExportStage.cancelled]: Warning,
 		[ExportStage.error]: Warning
 	};
 
 	let stageIcon = $derived(stageIcons[exportStage as ExportStage]);
 
+	let exportStarted = $state(false);
+
 	async function exportDatabase() {
+		exportStarted = true;
 		isExporting = true;
 		exportProgress = 0;
 		exportMessage = 'Starting...';
@@ -135,6 +139,7 @@
 			exportStage = ExportStage.error;
 		} finally {
 			isExporting = false;
+			exportStarted = false;
 		}
 	}
 
@@ -146,17 +151,50 @@
 		return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 	}
 
+	let exportTimeoutId: number | undefined = $state();
+
 	function showModal() {
 		dialog?.showModal();
 
-		setTimeout(() => {
+		exportTimeoutId = setTimeout(() => {
 			exportDatabase();
-		}, 2000);
+		}, 2000) as unknown as number;
+	}
+
+	async function cancel() {
+		try {
+			// If export hasn't started yet, cancel the timeout
+			if (!exportStarted && exportTimeoutId) {
+				clearTimeout(exportTimeoutId);
+				exportTimeoutId = undefined;
+				closeModal();
+				return;
+			}
+
+			// If export has started, request cancellation
+			await cancelExport();
+		} catch (error) {
+			debug(`Error cancelling export: ${error}`);
+		}
 	}
 
 	function closeModal() {
 		dialog?.close();
-		isExporting = false;
+
+		// Clear pending export timeout if exists
+		if (exportTimeoutId) {
+			clearTimeout(exportTimeoutId);
+			exportTimeoutId = undefined;
+		}
+
+		// Reset UI state
+		isExporting = true;
+		exportProgress = 0;
+		exportMessage = 'Working...';
+		exportStage = '';
+		filePath = null;
+		bytesInfo = '';
+		exportStarted = false;
 	}
 
 	const items: BreadcrumbItem[] = [
@@ -222,7 +260,7 @@
 				variant="bars"
 				label={exportMessage}
 				finished={!isExporting}
-				error={exportStage === ExportStage.error}
+				error={exportStage === ExportStage.error || exportStage === ExportStage.cancelled}
 			>
 				{#snippet finishedContent()}
 					<div class="flex flex-col items-center justify-center gap-2">
@@ -265,6 +303,9 @@
 	{/snippet}
 
 	{#snippet footer()}
-		<button class="btn btn-primary" onclick={closeModal}>Close</button>
+		<div class="flex flex-col gap-2">
+			<button class="btn btn-error" onclick={cancel} disabled={!isExporting}>Cancel</button>
+			<button class="btn" onclick={closeModal} disabled={isExporting}>Close</button>
+		</div>
 	{/snippet}
 </ModalDialog>

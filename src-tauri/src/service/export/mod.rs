@@ -2,9 +2,41 @@ pub mod csv;
 pub mod raw;
 
 use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tauri::{command, ipc::Channel, State};
 
 use crate::db::connection::DbPool;
+
+// ============================================================================
+// CANCELLATION STATE
+// ============================================================================
+
+/// Global cancellation flag for exports
+#[derive(Clone)]
+pub struct ExportCancellation {
+    pub cancelled: Arc<AtomicBool>,
+}
+
+impl ExportCancellation {
+    pub fn new() -> Self {
+        Self {
+            cancelled: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::Relaxed);
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled.load(Ordering::Relaxed)
+    }
+
+    pub fn reset(&self) {
+        self.cancelled.store(false, Ordering::Relaxed);
+    }
+}
 
 // ============================================================================
 // SHARED TYPES
@@ -39,6 +71,7 @@ pub enum ExportStage {
     ReadingFile,
     Finalizing,
     Complete,
+    Cancelled,
     Error,
 }
 
@@ -87,18 +120,53 @@ pub fn format_bytes(bytes: usize) -> String {
 }
 
 // ============================================================================
-// MAIN COMMAND
+// COMMANDS
 // ============================================================================
 
 /// Export database file with granular progress tracking
 #[command]
 pub async fn export_database_file(
     pool: State<'_, DbPool>,
+    cancellation: State<'_, ExportCancellation>,
     export_format: ExportFormat,
     on_progress: Channel<ExportProgress>,
 ) -> Result<ExportResult, String> {
-    match export_format {
-        ExportFormat::Raw => raw::export_raw(pool, on_progress).await,
-        ExportFormat::Csv => csv::export_csv(pool, on_progress).await,
+    // Reset cancellation flag at the start
+    cancellation.reset();
+
+    let result = match export_format {
+        ExportFormat::Raw => {
+            raw::export_raw(pool, cancellation.inner().clone(), on_progress.clone()).await
+        }
+        ExportFormat::Csv => {
+            csv::export_csv(pool, cancellation.inner().clone(), on_progress.clone()).await
+        }
+    };
+
+    // Handle cancellation
+    if let Err(ref e) = result {
+        if e.contains("cancelled by user") {
+            log::debug!(">>> Sending cancellation progress update");
+            send_progress(
+                &on_progress,
+                ExportStage::Cancelled,
+                0.0,
+                "Export cancelled by user",
+                None,
+                None,
+            );
+        }
     }
+
+    // Reset cancellation flag after completion
+    cancellation.reset();
+
+    result
+}
+
+/// Cancel the current export operation
+#[command]
+pub fn cancel_export(cancellation: State<'_, ExportCancellation>) {
+    log::debug!(">>> Export cancellation requested");
+    cancellation.cancel();
 }
