@@ -39,7 +39,7 @@
 		"@testing-library/jest-dom": "^6.8.0",
 		"@testing-library/svelte": "^5.1.0",
 		"@testing-library/user-event": "^14.6.1",
-		"@thwbh/veilchen": "file:../veilchen",
+		"@thwbh/veilchen": "^0.2.1",
 		"@tsconfig/svelte": "^5.0.4",
 		"@types/date-fns": "^2.6.0",
 		"@types/node": "^22.10.1",
