@@ -68,7 +68,6 @@
 <AppShell items={navItems} {activeId} onrefresh={refresh.handler} refreshing={refresh.isRefreshing}>
 	{#key page.url.pathname}
 		<div
-			class="min-h-screen"
 			in:fade={{ duration: 200, easing: cubicOut }}
 			out:fade={{ duration: 150, easing: cubicOut }}
 		>

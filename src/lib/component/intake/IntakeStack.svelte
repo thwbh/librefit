@@ -1,94 +1,31 @@
 <script lang="ts">
-	import type {
-		CreateIntakeParams,
-		DeleteIntakeParams,
-		Intake,
-		NewIntake,
-		UpdateIntakeParams
-	} from '$lib/api/gen';
+	import type { Intake } from '$lib/api/gen';
 	import IntakeMask from './IntakeMask.svelte';
-	import { Trash } from 'phosphor-svelte';
-	import {
-		AlertBox,
-		AlertType,
-		LongPressContainer,
-		ModalDialog,
-		Stack,
-		StackCard
-	} from '@thwbh/veilchen';
-	import { convertDateStrToDisplayDateStr, getDateAsStr } from '$lib/date';
+	import { AlertBox, AlertType, LongPressContainer, Stack, StackCard } from '@thwbh/veilchen';
 	import { fade, type FlyParams } from 'svelte/transition';
-	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getFoodCategoryColor } from '$lib/api';
 
 	interface Props {
+		index: number;
 		entries: Array<Intake>;
-		onadd?: (params: CreateIntakeParams) => Promise<Intake>;
-		onedit?: (params: UpdateIntakeParams) => Promise<Intake>;
-		ondelete?: (params: DeleteIntakeParams) => Promise<number>;
+		onEdit: (entry: Intake) => void;
 		class?: string;
 	}
 
-	const getBlankEntry = (): NewIntake => {
-		return {
-			category: 'l',
-			added: getDateAsStr(new Date()),
-			amount: 0,
-			description: ''
-		};
-	};
-
 	let {
+		index = $bindable(),
 		entries = $bindable([]),
-		onadd = undefined,
-		onedit = undefined,
-		ondelete = undefined,
+		onEdit = () => {},
 		class: className = ''
 	}: Props = $props();
 
-	let index = $state(0);
-
 	// Use modal composition hook
-	const modal = useEntryModal<Intake, NewIntake>({
-		onCreate: (entry) => {
-			if (!onadd) throw new Error('onadd not provided');
-			return onadd({ newEntry: entry });
-		},
-		onUpdate: (id, entry) => {
-			if (!onedit) throw new Error('onedit not provided');
-			return onedit({ trackerId: id, updatedEntry: entry });
-		},
-		onDelete: (id) => {
-			if (!ondelete) throw new Error('ondelete not provided');
-			return ondelete({ trackerId: id });
-		},
-		getBlankEntry,
-		onCreateSuccess: (newEntry) => {
-			entries = [...entries, newEntry];
-			index = entries.length - 1;
-		},
-		onUpdateSuccess: (updatedEntry) => {
-			entries[index] = updatedEntry;
-		},
-		onDeleteSuccess: () => {
-			if (entries.length === 1) {
-				entries = [];
-			} else {
-				const deletedIndex = index;
-				entries = entries.toSpliced(deletedIndex, 1);
-				if (index === entries.length && index > 0) {
-					index--;
-				} else {
-					index = 0;
-				}
-			}
-		}
-	});
 
 	const onlongpress = async (cardKey: number) => {
 		await vibrate(2);
-		modal.openEdit(entries[cardKey]);
+
+		onEdit(entries[cardKey]);
 	};
 </script>
 
@@ -126,54 +63,4 @@
 	</div>
 {/if}
 
-<button class="btn btn-neutral w-full" onclick={modal.openCreate}> Add Intake </button>
-
-<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span>Add Intake</span>
-		{#if modal.currentEntry}
-			<span class="text-xs opacity-60">
-				Date: {convertDateStrToDisplayDateStr((modal.currentEntry as NewIntake).added)}
-			</span>
-		{/if}
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask bind:entry={modal.currentEntry} isEditing={true} readonly={modal.enableDelete} />
-		{/if}
-	{/snippet}
-</ModalDialog>
-
-<ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span>Edit Intake</span>
-		<span>
-			{#if modal.currentEntry}
-				<span class="text-xs opacity-60">
-					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
-				</span>
-			{/if}
-			<span>
-				<button class="btn btn-xs btn-error">
-					<Trash size="1rem" onclick={modal.requestDelete} />
-				</button>
-			</span>
-		</span>
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask entry={modal.currentEntry as Intake} isEditing={modal.isEditing} />
-		{/if}
-	{/snippet}
-
-	{#snippet footer()}
-		{#if modal.enableDelete}
-			<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
-		{:else}
-			<button class="btn btn-primary" onclick={modal.save}>Save</button>
-		{/if}
-		<button class="btn" onclick={modal.cancel}>Cancel</button>
-	{/snippet}
-</ModalDialog>
+<!-- <button class="btn btn-neutral w-full" onclick={modal.openCreate}> Add Intake </button> -->

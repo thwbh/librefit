@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './lib/fab.css';
 @source '../node_modules/@thwbh/veilchen';
 
 @plugin '@tailwindcss/typography';

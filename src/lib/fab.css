@@ -1,0 +1,173 @@
+/* Custom FAB styles for Android compatibility */
+/* Based on DaisyUI 5.5+ FAB component */
+
+.fab {
+	pointer-events: none;
+	position: fixed;
+	inset-inline-end: 1rem;
+	bottom: 1rem;
+	z-index: 999;
+	display: flex;
+	flex-direction: column-reverse;
+	align-items: flex-end;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	white-space: nowrap;
+}
+
+.fab > * {
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.fab > *:hover,
+.fab > *:has(:focus-visible) {
+	z-index: 1;
+}
+
+.fab > [tabindex]:first-child {
+	position: relative;
+	display: grid;
+	transition-property: opacity, visibility, rotate;
+	transition-duration: 0.2s;
+	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab .fab-close,
+.fab .fab-main-action {
+	position: absolute;
+	inset-inline-end: 0;
+	bottom: 0;
+}
+
+.fab:focus-within:has(.fab-close) > [tabindex],
+.fab:focus-within:has(.fab-main-action) > [tabindex] {
+	rotate: 90deg;
+	opacity: 0;
+}
+
+.fab > :nth-child(n + 2) {
+	visibility: hidden;
+	scale: 0.8;
+	opacity: 0;
+	transition-property: opacity, scale, visibility;
+	transition-duration: 0.2s;
+	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab > :nth-child(n + 2).fab-main-action,
+.fab > :nth-child(n + 2).fab-close {
+	scale: 1;
+}
+
+.fab > :nth-child(3) {
+	transition-delay: 30ms;
+}
+
+.fab > :nth-child(4) {
+	transition-delay: 60ms;
+}
+
+.fab > :nth-child(5) {
+	transition-delay: 90ms;
+}
+
+.fab > :nth-child(6) {
+	transition-delay: 120ms;
+}
+
+.fab:focus-within > [tabindex]:first-child {
+	pointer-events: none;
+}
+
+.fab:focus-within > :nth-child(n + 2) {
+	visibility: visible;
+	scale: 1;
+	opacity: 1;
+}
+
+/* Flower variant */
+.fab-flower {
+	display: grid;
+	--position: 0rem;
+}
+
+.fab-flower > *:nth-child(-n + 2) {
+	--position: 0rem;
+}
+
+.fab-flower > * {
+	grid-area: 1/1;
+	--degree: 180deg;
+	--flip-degree: calc(180deg - var(--degree));
+	transform: translateX(calc(cos(var(--degree)) * var(--position)))
+		translateY(calc(sin(var(--degree)) * calc(-1 * var(--position))));
+}
+
+[dir='rtl'] .fab-flower > * {
+	transform: translateX(calc(cos(var(--flip-degree)) * var(--position)))
+		translateY(calc(sin(var(--flip-degree)) * calc(-1 * var(--position))));
+}
+
+.fab-flower > :nth-child(n + 7) {
+	display: none;
+}
+
+.fab-flower:has(:nth-child(3)) {
+	--position: 140%;
+}
+
+.fab-flower:has(:nth-child(3)) > :nth-child(3) {
+	--degree: 135deg;
+}
+
+.fab-flower:has(:nth-child(4)) {
+	--position: 140%;
+}
+
+.fab-flower:has(:nth-child(4)) > :nth-child(3) {
+	--degree: 165deg;
+}
+
+.fab-flower:has(:nth-child(4)) > :nth-child(4) {
+	--degree: 105deg;
+}
+
+.fab-flower:has(:nth-child(5)) {
+	--position: 180%;
+}
+
+.fab-flower:has(:nth-child(5)) > :nth-child(3) {
+	--degree: 180deg;
+}
+
+.fab-flower:has(:nth-child(5)) > :nth-child(4) {
+	--degree: 135deg;
+}
+
+.fab-flower:has(:nth-child(5)) > :nth-child(5) {
+	--degree: 90deg;
+}
+
+.fab-flower:has(:nth-child(6)) {
+	--position: 220%;
+}
+
+.fab-flower:has(:nth-child(6)) > :nth-child(3) {
+	--degree: 180deg;
+}
+
+.fab-flower:has(:nth-child(6)) > :nth-child(4) {
+	--degree: 150deg;
+}
+
+.fab-flower:has(:nth-child(6)) > :nth-child(5) {
+	--degree: 120deg;
+}
+
+.fab-flower:has(:nth-child(6)) > :nth-child(6) {
+	--degree: 90deg;
+}
