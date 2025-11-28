@@ -1,0 +1,136 @@
+name: Bug Report
+description: Report a bug or issue with LibreFit
+title: "[Bug]: "
+labels: ["bug", "review required"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below to help us investigate and fix the issue.
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: App Version
+      description: Which version are you using?
+      options:
+        - latest
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: Which platform are you using?
+      options:
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation-method
+    attributes:
+      label: Installation Method
+      description: How did you install LibreFit?
+      options:
+        - APK (Direct Download)
+        - Google Play Store
+        - F-Droid
+        - TestFlight (iOS)
+        - Built from source
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      description: How severe is this bug?
+      options:
+        - Critical (App crashes or data loss)
+        - Major (Feature completely broken)
+        - Minor (Feature partially broken)
+        - Cosmetic (UI/UX issue)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Which feature is affected?
+      options:
+        - Dashboard
+        - Calorie Tracking
+        - Weight Tracking
+        - History View
+        - Progress/Charts
+        - Setup Wizard
+        - Settings
+        - Data Export
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: I expected...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Instead, what happened was...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to...
+        2. Click on...
+        3. See error...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      description: How often does this happen?
+      options:
+        - Always (100% of the time)
+        - Often (>50% of the time)
+        - Sometimes (<50% of the time)
+        - Rare (only happened once or twice)
+    validations:
+      required: true
+
+  - type: textarea
+    id: device-info
+    attributes:
+      label: Device Information (Optional)
+      description: Additional device details that might be helpful
+      placeholder: |
+        - Device Model: (e.g., Samsung Galaxy S23, Pixel 7, iPhone 14)
+        - OS Version: (e.g., Android 14, iOS 17)
+        - Any other relevant details
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context (Optional)
+      description: Add any other context, screenshots, or logs about the problem
+      placeholder: Any additional information that might help...
