@@ -82,18 +82,24 @@
 		</span>
 	</div>
 </div>
-
-<div class="progress-container w-full">
-	<span class="flex flex-row justify-between items-center">
-		{#if weightTarget}
+{#if weightTarget}
+	{@const dayDiff = differenceInDays(parseStringAsDate(weightTarget.endDate), new Date())}
+	{@const totalDays = differenceInDays(
+		parseStringAsDate(weightTarget.endDate),
+		parseStringAsDate(weightTarget.startDate)
+	)}
+	{@const progress = Math.round(((totalDays - dayDiff) / totalDays) * 100)}
+	<div class="progress-container w-full">
+		<span class="flex flex-row justify-between items-center">
 			<p class="text-sm opacity-60">
-				{differenceInDays(parseStringAsDate(weightTarget.endDate), new Date())} days left.
+				{dayDiff} days left.
 			</p>
 			<button class="btn btn-sm" onclick={() => goto('/progress')}> Review plan </button>
-		{/if}
-	</span>
-	<progress class="progress w-full" value="63" max="100"></progress>
-</div>
+		</span>
+
+		<progress class="progress w-full" value={progress} max="100"></progress>
+	</div>
+{/if}
 
 <style>
 	.stat-value {
