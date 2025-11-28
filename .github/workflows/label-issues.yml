@@ -1,0 +1,90 @@
+name: Auto-label Issues Based on Selection
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  add-platform-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Add platform labels to bug reports
+        if: contains(github.event.issue.labels.*.name, 'bug')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+
+            // Parse the issue body to find OS selection
+            const osMatch = body.match(/### Operating System\s*\n\s*(.+)/);
+
+            if (!osMatch) {
+              console.log('Could not find OS selection in issue body');
+              return;
+            }
+
+            const os = osMatch[1].trim();
+            console.log(`Detected OS: ${os}`);
+
+            const labelsToAdd = [];
+
+            if (os === 'Android') {
+              labelsToAdd.push('target:android');
+            } else if (os === 'iOS') {
+              labelsToAdd.push('target:ios');
+            }
+
+            if (labelsToAdd.length > 0) {
+              console.log(`Adding labels: ${labelsToAdd.join(', ')}`);
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              });
+            }
+
+      - name: Add platform labels to feature requests
+        if: contains(github.event.issue.labels.*.name, 'enhancement')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+
+            // Parse the issue body to find Target Platform selection
+            const targetMatch = body.match(/### Target Platform\s*\n\s*(.+)/);
+
+            if (!targetMatch) {
+              console.log('Could not find Target Platform selection in issue body');
+              return;
+            }
+
+            const target = targetMatch[1].trim();
+            console.log(`Detected Target Platform: ${target}`);
+
+            const labelsToAdd = [];
+
+            if (target === 'Android') {
+              labelsToAdd.push('target:android');
+            } else if (target === 'iOS') {
+              labelsToAdd.push('target:ios');
+            } else if (target === 'Common (both platforms)' || target.includes('Common')) {
+              labelsToAdd.push('target:common');
+            }
+
+            if (labelsToAdd.length > 0) {
+              console.log(`Adding labels: ${labelsToAdd.join(', ')}`);
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              });
+            }
