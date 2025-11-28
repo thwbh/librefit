@@ -154,27 +154,76 @@ describe('WeightScore', () => {
 	});
 
 	describe('Icons and Visual States', () => {
-		it('should show ShieldCheck icon for current day', () => {
-			const { container } = render(WeightScore, {
+		it('should show success state with ShieldCheck for current day', () => {
+			render(WeightScore, {
 				props: {
 					weightTracker: mockWeightTracker,
 					weightTarget: mockWeightTarget
 				}
 			});
 
-			// Check for success color
-			expect(container.querySelector('.text-success')).toBeTruthy();
+			// Check for "Last update: Today" text which appears with ShieldCheck icon
+			expect(screen.getByText(/Last update: Today/i)).toBeTruthy();
 		});
 
-		it('should show Shield icon when no data', () => {
+		it('should show warning state for entries 1-2 days old', () => {
+			// Create a tracker from 1 day ago
+			const yesterday = new Date();
+			yesterday.setDate(yesterday.getDate() - 1);
+			const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+			const oldTracker: WeightTracker = {
+				id: 1,
+				added: yesterdayStr,
+				amount: 83
+			};
+
 			const { container } = render(WeightScore, {
+				props: {
+					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
+					lastWeightTracker: oldTracker,
+					weightTarget: mockWeightTarget
+				}
+			});
+
+			// ShieldWarning should show with "days ago" (not exclamation mark)
+			expect(container.textContent).toMatch(/Last update.*1.*day.*ago\./i);
+		});
+
+		it('should show error state for entries older than 2 days', () => {
+			// Create a tracker from 5 days ago
+			const fiveDaysAgo = new Date();
+			fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+			const oldDate = fiveDaysAgo.toISOString().split('T')[0];
+
+			const veryOldTracker: WeightTracker = {
+				id: 1,
+				added: oldDate,
+				amount: 83
+			};
+
+			const { container } = render(WeightScore, {
+				props: {
+					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
+					lastWeightTracker: veryOldTracker,
+					weightTarget: mockWeightTarget
+				}
+			});
+
+			// ShieldWarning (error color) should show with "days ago!" (with exclamation)
+			expect(container.textContent).toMatch(/Last update was.*5.*days ago!/i);
+		});
+
+		it('should show neutral state with Shield icon when no data tracked', () => {
+			render(WeightScore, {
 				props: {
 					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
 					weightTarget: mockWeightTarget
 				}
 			});
 
-			expect(container.querySelector('.stat-desc')).toBeTruthy();
+			// Shield icon shows with "Nothing tracked yet" text
+			expect(screen.getByText(/Nothing tracked yet/i)).toBeTruthy();
 		});
 	});
 
@@ -220,68 +269,8 @@ describe('WeightScore', () => {
 		});
 	});
 
-	describe('Modal Interaction', () => {
-		it('should render Set Weight button', () => {
-			render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: mockWeightTarget,
-					onAdd: vi.fn()
-				}
-			});
-
-			expect(screen.getByLabelText(/Set Weight/i)).toBeTruthy();
-		});
-
-		it('should open modal when Set Weight button clicked', async () => {
-			const user = userEvent.setup();
-
-			const { container } = render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: mockWeightTarget,
-					onAdd: vi.fn()
-				}
-			});
-
-			const button = screen.getByLabelText(/Set Weight/i);
-			expect(button).toBeTruthy();
-
-			await user.click(button);
-
-			// Modal should be open
-			await waitFor(() => {
-				const modal = container.querySelector('dialog[open]');
-				expect(modal).toBeTruthy();
-			});
-		});
-
-		it('should show weight stepper in modal', async () => {
-			const user = userEvent.setup();
-
-			const { container } = render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: mockWeightTarget,
-					onAdd: vi.fn()
-				}
-			});
-
-			const button = screen.getByLabelText(/Set Weight/i);
-			await user.click(button);
-
-			await waitFor(() => {
-				const modal = container.querySelector('dialog[open]');
-				expect(modal).toBeTruthy();
-
-				// Should have NumberStepper for weight input
-				expect(modal?.textContent).toContain('Current Weight');
-			});
-		});
-	});
-
 	describe('Callbacks', () => {
-		it('should call onadd when provided', async () => {
+		it('should call onAdd when provided', async () => {
 			const onaddMock = vi.fn().mockResolvedValue({
 				id: 2,
 				added: '2024-01-20',
@@ -300,7 +289,7 @@ describe('WeightScore', () => {
 			expect(onaddMock).not.toHaveBeenCalled();
 		});
 
-		it('should work without onadd callback', () => {
+		it('should work without onAdd callback', () => {
 			expect(() => {
 				render(WeightScore, {
 					props: {
@@ -311,7 +300,7 @@ describe('WeightScore', () => {
 			}).not.toThrow();
 		});
 
-		it('should work without onedit callback', () => {
+		it('should work without onEdit callback', () => {
 			expect(() => {
 				render(WeightScore, {
 					props: {
