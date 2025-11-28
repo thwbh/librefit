@@ -44,9 +44,7 @@
 
 			<!-- App Name -->
 			<div in:fly={{ y: 20, duration: 400, delay: 100 }}>
-				<h1 class="text-4xl md:text-5xl font-bold text-base-content mb-2 text-center">
-					LibreFit
-				</h1>
+				<h1 class="text-4xl md:text-5xl font-bold text-base-content mb-2 text-center">LibreFit</h1>
 				<div class="w-16 h-1 bg-primary mx-auto mb-4"></div>
 			</div>
 
@@ -126,8 +124,11 @@
 			</div>
 
 			<!-- Version -->
-			<p class="text-xs text-base-content opacity-40 text-center" in:fade={{ duration: 400, delay: 500 }}>
-				Version 0.1.0-beta • Free & Open Source
+			<p
+				class="text-xs text-base-content opacity-40 text-center"
+				in:fade={{ duration: 400, delay: 500 }}
+			>
+				Version {__APP_VERSION__} • Free & Open Source
 			</p>
 		{/if}
 	</div>
