@@ -226,7 +226,7 @@ describe('WeightScore', () => {
 				props: {
 					weightTracker: mockWeightTracker,
 					weightTarget: mockWeightTarget,
-					onadd: vi.fn()
+					onAdd: vi.fn()
 				}
 			});
 
@@ -240,7 +240,7 @@ describe('WeightScore', () => {
 				props: {
 					weightTracker: mockWeightTracker,
 					weightTarget: mockWeightTarget,
-					onadd: vi.fn()
+					onAdd: vi.fn()
 				}
 			});
 
@@ -263,7 +263,7 @@ describe('WeightScore', () => {
 				props: {
 					weightTracker: mockWeightTracker,
 					weightTarget: mockWeightTarget,
-					onadd: vi.fn()
+					onAdd: vi.fn()
 				}
 			});
 
@@ -292,7 +292,7 @@ describe('WeightScore', () => {
 				props: {
 					weightTracker: mockWeightTracker,
 					weightTarget: mockWeightTarget,
-					onadd: onaddMock
+					onAdd: onaddMock
 				}
 			});
 

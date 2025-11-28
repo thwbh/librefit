@@ -122,7 +122,7 @@
 			{weightTracker}
 			{lastWeightTracker}
 			{weightTarget}
-			onAdd={(entry: WeightTracker) => createWeightTrackerEntry({ newEntry: entry })}
+			onAdd={(entry: NewWeightTracker) => createWeightTrackerEntry({ newEntry: entry })}
 			onEdit={(id, entry: WeightTracker) =>
 				updateWeightTrackerEntry({ trackerId: id, updatedEntry: entry })}
 		/>
