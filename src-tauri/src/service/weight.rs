@@ -246,7 +246,7 @@ pub fn create_weight_target(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new weight target: {:?}", new_target);
+    log::debug!("Creating new weight target: {:?}", new_target);
 
     pool.execute(|conn| WeightTarget::create(conn, &new_target))
 }
@@ -274,7 +274,7 @@ pub fn update_weight_target(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Updating weight target {}: {:?}", target_id, updated_target);
+    log::debug!("Updating weight target {}: {:?}", target_id, updated_target);
 
     pool.execute(|conn| WeightTarget::update(conn, target_id, updated_target))
 }
@@ -295,7 +295,7 @@ pub fn create_weight_tracker_entry(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new weight tracker entry: {:?}", new_entry);
+    log::debug!("Creating new weight tracker entry: {:?}", new_entry);
 
     pool.execute(|conn| WeightTracker::create(conn, &new_entry))
 }
@@ -311,7 +311,7 @@ pub fn update_weight_tracker_entry(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!(
+    log::debug!(
         "Updating weight tracker entry {}: {:?}",
         tracker_id,
         updated_entry

@@ -255,7 +255,7 @@ impl IntakeTarget {
 
 /// Create a new intake target
 #[command]
-pub fn create_calorie_target(
+pub fn create_intake_target(
     pool: State<DbPool>,
     new_target: NewIntakeTarget,
 ) -> Result<IntakeTarget, String> {
@@ -263,34 +263,31 @@ pub fn create_calorie_target(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new intake target: {:?}", new_target);
+    log::debug!("Creating new intake target: {:?}", new_target);
 
     pool.execute(|conn| IntakeTarget::create(conn, &new_target))
 }
 
 #[command]
-pub fn get_last_calorie_target(pool: State<DbPool>) -> Result<IntakeTarget, String> {
+pub fn get_last_intake_target(pool: State<DbPool>) -> Result<IntakeTarget, String> {
     pool.execute(IntakeTarget::find_last)
 }
 
-/// Create a new intake tracker entry and return the created one
+/// Create intake and return the created dataset
 #[command]
-pub fn create_calorie_tracker_entry(
-    pool: State<DbPool>,
-    new_entry: NewIntake,
-) -> Result<Intake, String> {
+pub fn create_intake(pool: State<DbPool>, new_entry: NewIntake) -> Result<Intake, String> {
     if let Err(validation_errors) = new_entry.validate() {
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!("Creating new intake tracker entry: {:?}", new_entry);
+    log::debug!("Creating new intake tracker entry: {:?}", new_entry);
 
     pool.execute(|conn| Intake::create(conn, &new_entry))
 }
 
-/// Update an intake tracker entry by ID and return it
+/// Update intake by ID and return it
 #[command]
-pub fn update_calorie_tracker_entry(
+pub fn update_intake(
     pool: State<DbPool>,
     tracker_id: i32,
     updated_entry: NewIntake,
@@ -299,7 +296,7 @@ pub fn update_calorie_tracker_entry(
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    log::info!(
+    log::debug!(
         "Updating intake tracker entry {}: {:?}",
         tracker_id,
         updated_entry
@@ -308,14 +305,14 @@ pub fn update_calorie_tracker_entry(
     pool.execute(|conn| Intake::update(conn, tracker_id, &updated_entry))
 }
 
-/// Delete an intake tracker entry by ID and return the deleted row count
+/// Delete intake by ID and return the deleted row count
 #[command]
-pub fn delete_calorie_tracker_entry(pool: State<DbPool>, tracker_id: i32) -> Result<usize, String> {
+pub fn delete_intake(pool: State<DbPool>, tracker_id: i32) -> Result<usize, String> {
     pool.execute(|conn| Intake::delete(conn, &tracker_id))
 }
 
 #[command]
-pub fn get_calorie_tracker_for_date_range(
+pub fn get_intake_for_date_range(
     pool: State<DbPool>,
     date_from_str: String,
     date_to_str: String,
@@ -325,13 +322,13 @@ pub fn get_calorie_tracker_for_date_range(
 
 /// Return all dates the user has actually tracked something in the given range.
 #[command]
-pub fn get_calorie_tracker_dates_in_range(
+pub fn get_intake_dates_in_range(
     pool: State<DbPool>,
     date_from_str: String,
     date_to_str: String,
 ) -> Result<Vec<String>, String> {
-    log::info!(
-        ">>> get_calorie_tracker_dates_in_range date_from_str={:?} date_to_str={:?}",
+    log::debug!(
+        ">>> get_intake_dates_in_range date_from_str={:?} date_to_str={:?}",
         date_from_str,
         date_to_str
     );

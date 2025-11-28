@@ -37,14 +37,14 @@ fn test_daily_dashboard_success() {
     assert_eq!(user.name, "Test User");
 
     // Verify calorie target
-    assert_eq!(dashboard.calorie_target.target_calories, 2000);
-    assert_eq!(dashboard.calorie_target.maximum_calories, 2500);
+    assert_eq!(dashboard.intake_target.target_calories, 2000);
+    assert_eq!(dashboard.intake_target.maximum_calories, 2500);
 
     // Verify weight target
     assert_eq!(dashboard.weight_target.target_weight, 75.0);
 
     // Verify tracker entries
-    assert_eq!(dashboard.calories_today_list.len(), 2);
+    assert_eq!(dashboard.intake_today_list.len(), 2);
     assert_eq!(dashboard.weight_today_list.len(), 2);
 
     // Verify current day calculation (Jan 15 is day 14 completed, so current_day = 14)
@@ -72,7 +72,7 @@ fn test_daily_dashboard_first_day() {
 
     // First day should be day 0 (0 days completed on day 1)
     assert_eq!(dashboard.current_day, 0);
-    assert_eq!(dashboard.calories_today_list.len(), 0);
+    assert_eq!(dashboard.intake_today_list.len(), 0);
     assert_eq!(dashboard.weight_today_list.len(), 0);
 }
 
@@ -146,7 +146,7 @@ fn test_daily_dashboard_with_week_data() {
     let dashboard = result.unwrap();
 
     // Should have 8 days of data (Jan 8-15)
-    assert_eq!(dashboard.calories_week_list.len(), 8);
+    assert_eq!(dashboard.intake_week_list.len(), 8);
 }
 
 #[test]
@@ -199,7 +199,7 @@ fn test_daily_dashboard_invalid_date_format() {
 }
 
 #[test]
-fn test_daily_dashboard_no_calorie_target() {
+fn test_daily_dashboard_no_intake_target() {
     let pool = setup_test_pool();
 
     create_test_user(&pool, "User", "avatar.png");
@@ -251,8 +251,8 @@ fn test_daily_dashboard_empty_trackers() {
     let dashboard = result.unwrap();
 
     // Should succeed with empty lists
-    assert_eq!(dashboard.calories_today_list.len(), 0);
-    assert_eq!(dashboard.calories_week_list.len(), 0);
+    assert_eq!(dashboard.intake_today_list.len(), 0);
+    assert_eq!(dashboard.intake_week_list.len(), 0);
     assert_eq!(dashboard.weight_today_list.len(), 0);
     assert_eq!(dashboard.weight_month_list.len(), 0);
 }
@@ -280,11 +280,11 @@ fn test_daily_dashboard_multiple_categories() {
     assert!(result.is_ok());
     let dashboard = result.unwrap();
 
-    assert_eq!(dashboard.calories_today_list.len(), 5);
+    assert_eq!(dashboard.intake_today_list.len(), 5);
 
     // Verify all categories are represented
     let categories: Vec<String> = dashboard
-        .calories_today_list
+        .intake_today_list
         .iter()
         .map(|e| e.category.clone())
         .collect();

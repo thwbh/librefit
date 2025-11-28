@@ -1,21 +1,21 @@
 <script lang="ts">
-	import TrackerScore from '$lib/component/intake/TrackerScore.svelte';
-	import TrackerStack from '$lib/component/intake/TrackerStack.svelte';
+	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
+	import IntakeStack from '$lib/component/intake/IntakeStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
 	import {
-		createCalorieTrackerEntry,
+		createIntake,
 		createWeightTrackerEntry,
-		deleteCalorieTrackerEntry,
-		updateCalorieTrackerEntry,
+		deleteIntake,
+		updateIntake,
 		updateWeightTrackerEntry,
-		type CalorieTarget,
-		type CalorieTracker,
 		type Dashboard,
+		type Intake,
+		type IntakeTarget,
 		type WeightTarget,
 		type WeightTracker
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
-	import { info } from '@tauri-apps/plugin-log';
+	import { debug } from '@tauri-apps/plugin-log';
 	import { useRefresh } from '@thwbh/veilchen';
 	import { invalidate } from '$app/navigation';
 
@@ -24,20 +24,18 @@
 	const dashboard: Dashboard = data.dashboardData;
 	const userContext = getUserContext();
 
-	let calorieTrackerEntries: Array<CalorieTracker> = $state(dashboard.caloriesTodayList);
+	let intake: Array<Intake> = $state(dashboard.intakeTodayList);
 	let lastWeightTracker = $state(dashboard.weightMonthList[0]);
 
 	const weightTarget: WeightTarget = dashboard.weightTarget;
-	const calorieTarget: CalorieTarget = dashboard.calorieTarget;
+	const intakeTarget: IntakeTarget = dashboard.intakeTarget;
 
 	const weightTracker: WeightTracker = $state(dashboard.weightTodayList[0]);
 
-	let caloriesToday: Array<number> = $derived(
-		calorieTrackerEntries.map((tracker) => tracker.amount)
-	);
+	let intakeToday: Array<number> = $derived(intake.map((tracker) => tracker.amount));
 
-	info(`dashboardData=${JSON.stringify(dashboard)}`);
-	info(`user profile=${JSON.stringify(userContext.user)}`);
+	debug(`dashboardData=${JSON.stringify(dashboard)}`);
+	debug(`user profile=${JSON.stringify(userContext.user)}`);
 
 	useRefresh(() => invalidate('data:dashboardData'));
 </script>
@@ -53,13 +51,13 @@
 	</div>
 
 	<div class="flex flex-col items-center gap-2 w-full">
-		<TrackerScore {calorieTarget} entries={caloriesToday} />
+		<IntakeScore {intakeTarget} entries={intakeToday} />
 
-		<TrackerStack
-			bind:entries={calorieTrackerEntries}
-			onadd={(params) => createCalorieTrackerEntry(params)}
-			onedit={(params) => updateCalorieTrackerEntry(params)}
-			ondelete={(params) => deleteCalorieTrackerEntry(params)}
+		<IntakeStack
+			bind:entries={intake}
+			onadd={(params) => createIntake(params)}
+			onedit={(params) => updateIntake(params)}
+			ondelete={(params) => deleteIntake(params)}
 			class="w-full"
 		/>
 	</div>

@@ -3,7 +3,7 @@
 	import type { Component } from 'svelte';
 
 	interface Props {
-		component: Component;
+		component: Component<any, any, any>;
 		props?: Record<string, any>;
 		categories?: Array<{ shortvalue: string; longvalue: string }>;
 	}
@@ -14,6 +14,9 @@
 	if (categories.length > 0) {
 		setCategoriesContext(categories);
 	}
+
+	// Svelte 5 dynamic component syntax
+	const Component = component;
 </script>
 
-<svelte:component this={component} {...props} />
+<Component {...props} />

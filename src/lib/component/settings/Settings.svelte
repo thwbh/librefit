@@ -19,6 +19,9 @@
 			<a href="/profile" onclick={close}>Profile</a>
 		</li>
 		<li>
+			<a href="/export" onclick={close}>Export</a>
+		</li>
+		<li>
 			<a href="/wizard" onclick={close}>Wizard</a>
 		</li>
 		<li>

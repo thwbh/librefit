@@ -1,22 +1,20 @@
 <script lang="ts">
-	import type { CalorieTarget } from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { Shield, ShieldCheck, ShieldWarning } from 'phosphor-svelte';
-	import { CircularProgress, StatCard } from '@thwbh/veilchen';
+	import { CircularProgress } from '@thwbh/veilchen';
+	import type { IntakeTarget } from '$lib/api';
 
 	interface Props {
-		calorieTarget: CalorieTarget;
+		intakeTarget: IntakeTarget;
 		entries: Array<number>;
 		isHistory?: boolean;
 	}
 
-	let { calorieTarget, entries, isHistory = false }: Props = $props();
+	let { intakeTarget, entries, isHistory = false }: Props = $props();
 
-	let limit = $state(
-			calorieTarget && calorieTarget.targetCalories ? calorieTarget.targetCalories : 0
-		),
+	let limit = $state(intakeTarget && intakeTarget.targetCalories ? intakeTarget.targetCalories : 0),
 		maximum = $state(
-			calorieTarget && calorieTarget.maximumCalories ? calorieTarget.maximumCalories : 0
+			intakeTarget && intakeTarget.maximumCalories ? intakeTarget.maximumCalories : 0
 		),
 		total = $state(0);
 
@@ -31,9 +29,9 @@
 			total = 0;
 		}
 
-		if (calorieTarget) {
-			limit = calorieTarget.targetCalories;
-			maximum = calorieTarget.maximumCalories;
+		if (intakeTarget) {
+			limit = intakeTarget.targetCalories;
+			maximum = intakeTarget.maximumCalories;
 		}
 
 		if (total !== undefined && maximum) {
@@ -59,7 +57,7 @@
 				: 'No intake tracked yet.'
 			: ratio <= 1
 				? `All good. ${limit - total}kcal left${isHistory ? '.' : ' for today.'}`
-				: total <= calorieTarget.maximumCalories
+				: total <= intakeTarget.maximumCalories
 					? `Warning. ${maximum - total}kcal left for hardcap.`
 					: `Warning! ${total - maximum}kcal over hardcap!`
 	);
@@ -83,7 +81,7 @@
 			{:else}
 				<ShieldCheck size="1.5em" weight="fill" class={currentColor} />
 			{/if}
-		{:else if total <= calorieTarget.maximumCalories}
+		{:else if total <= intakeTarget.maximumCalories}
 			<Shield size="1.5em" weight="fill" class={currentColor} />
 		{:else}
 			<ShieldWarning size="1.5em" weight="fill" class={currentColor} />

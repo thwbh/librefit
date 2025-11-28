@@ -1,8 +1,8 @@
 use crate::helpers::setup_test_pool;
 use librefit_lib::service::intake::{
-    create_calorie_target, create_calorie_tracker_entry, delete_calorie_tracker_entry,
-    get_calorie_tracker_dates_in_range, get_calorie_tracker_for_date_range, get_food_categories,
-    get_last_calorie_target, update_calorie_tracker_entry, NewIntake, NewIntakeTarget,
+    create_intake, create_intake_target, delete_intake, get_food_categories,
+    get_intake_dates_in_range, get_intake_for_date_range, get_last_intake_target, update_intake,
+    NewIntake, NewIntakeTarget,
 };
 use tauri::Manager;
 
@@ -11,7 +11,7 @@ use tauri::Manager;
 // ============================================================================
 
 #[test]
-fn test_create_calorie_target_success() {
+fn test_create_intake_target_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -24,7 +24,7 @@ fn test_create_calorie_target_success() {
         maximum_calories: 2500,
     };
 
-    let result = create_calorie_target(app.state(), new_target);
+    let result = create_intake_target(app.state(), new_target);
 
     if result.is_err() {
         eprintln!("Error: {:?}", result.as_ref().unwrap_err());
@@ -36,7 +36,7 @@ fn test_create_calorie_target_success() {
 }
 
 #[test]
-fn test_create_calorie_target_validation_target_exceeds_maximum() {
+fn test_create_intake_target_validation_target_exceeds_maximum() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -49,7 +49,7 @@ fn test_create_calorie_target_validation_target_exceeds_maximum() {
         maximum_calories: 2500,
     };
 
-    let result = create_calorie_target(app.state(), new_target);
+    let result = create_intake_target(app.state(), new_target);
 
     assert!(result.is_err());
     assert!(result
@@ -58,7 +58,7 @@ fn test_create_calorie_target_validation_target_exceeds_maximum() {
 }
 
 #[test]
-fn test_create_calorie_target_validation_past_end_date() {
+fn test_create_intake_target_validation_past_end_date() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -71,7 +71,7 @@ fn test_create_calorie_target_validation_past_end_date() {
         maximum_calories: 2500,
     };
 
-    let result = create_calorie_target(app.state(), new_target);
+    let result = create_intake_target(app.state(), new_target);
 
     assert!(result.is_err());
     let err = result.unwrap_err();
@@ -80,7 +80,7 @@ fn test_create_calorie_target_validation_past_end_date() {
 }
 
 #[test]
-fn test_create_calorie_target_validation_end_before_start() {
+fn test_create_intake_target_validation_end_before_start() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -93,7 +93,7 @@ fn test_create_calorie_target_validation_end_before_start() {
         maximum_calories: 2500,
     };
 
-    let result = create_calorie_target(app.state(), new_target);
+    let result = create_intake_target(app.state(), new_target);
 
     assert!(result.is_err());
     assert!(result
@@ -102,7 +102,7 @@ fn test_create_calorie_target_validation_end_before_start() {
 }
 
 #[test]
-fn test_get_last_calorie_target_success() {
+fn test_get_last_intake_target_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool.clone());
@@ -124,10 +124,10 @@ fn test_get_last_calorie_target_success() {
         maximum_calories: 2500,
     };
 
-    create_calorie_target(app.state(), target1).unwrap();
-    create_calorie_target(app.state(), target2).unwrap();
+    create_intake_target(app.state(), target1).unwrap();
+    create_intake_target(app.state(), target2).unwrap();
 
-    let result = get_last_calorie_target(app.state());
+    let result = get_last_intake_target(app.state());
 
     assert!(result.is_ok());
     let last_target = result.unwrap();
@@ -135,12 +135,12 @@ fn test_get_last_calorie_target_success() {
 }
 
 #[test]
-fn test_get_last_calorie_target_no_targets() {
+fn test_get_last_intake_target_no_targets() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
 
-    let result = get_last_calorie_target(app.state());
+    let result = get_last_intake_target(app.state());
 
     assert!(result.is_err());
 }
@@ -150,7 +150,7 @@ fn test_get_last_calorie_target_no_targets() {
 // ============================================================================
 
 #[test]
-fn test_create_calorie_tracker_entry_success() {
+fn test_create_intake_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -162,7 +162,7 @@ fn test_create_calorie_tracker_entry_success() {
         description: Some("Breakfast".to_string()),
     };
 
-    let result = create_calorie_tracker_entry(app.state(), new_entry);
+    let result = create_intake(app.state(), new_entry);
 
     assert!(result.is_ok());
     let entry = result.unwrap();
@@ -172,7 +172,7 @@ fn test_create_calorie_tracker_entry_success() {
 }
 
 #[test]
-fn test_create_calorie_tracker_entry_validation_amount_too_low() {
+fn test_create_intake_validation_amount_too_low() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -184,14 +184,14 @@ fn test_create_calorie_tracker_entry_validation_amount_too_low() {
         description: None,
     };
 
-    let result = create_calorie_tracker_entry(app.state(), new_entry);
+    let result = create_intake(app.state(), new_entry);
 
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
 #[test]
-fn test_create_calorie_tracker_entry_validation_amount_too_high() {
+fn test_create_intake_validation_amount_too_high() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -203,14 +203,14 @@ fn test_create_calorie_tracker_entry_validation_amount_too_high() {
         description: None,
     };
 
-    let result = create_calorie_tracker_entry(app.state(), new_entry);
+    let result = create_intake(app.state(), new_entry);
 
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
 #[test]
-fn test_create_calorie_tracker_entry_validation_category_too_long() {
+fn test_create_intake_validation_category_too_long() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -222,14 +222,14 @@ fn test_create_calorie_tracker_entry_validation_category_too_long() {
         description: None,
     };
 
-    let result = create_calorie_tracker_entry(app.state(), new_entry);
+    let result = create_intake(app.state(), new_entry);
 
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
 #[test]
-fn test_update_calorie_tracker_entry_success() {
+fn test_update_intake_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -242,7 +242,7 @@ fn test_update_calorie_tracker_entry_success() {
         description: Some("Original".to_string()),
     };
 
-    let created = create_calorie_tracker_entry(app.state(), new_entry).unwrap();
+    let created = create_intake(app.state(), new_entry).unwrap();
 
     // Update entry
     let updated_entry = NewIntake {
@@ -252,7 +252,7 @@ fn test_update_calorie_tracker_entry_success() {
         description: Some("Updated".to_string()),
     };
 
-    let result = update_calorie_tracker_entry(app.state(), created.id, updated_entry);
+    let result = update_intake(app.state(), created.id, updated_entry);
 
     assert!(result.is_ok());
     let updated = result.unwrap();
@@ -261,7 +261,7 @@ fn test_update_calorie_tracker_entry_success() {
 }
 
 #[test]
-fn test_delete_calorie_tracker_entry_success() {
+fn test_delete_intake_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -274,17 +274,17 @@ fn test_delete_calorie_tracker_entry_success() {
         description: None,
     };
 
-    let created = create_calorie_tracker_entry(app.state(), new_entry).unwrap();
+    let created = create_intake(app.state(), new_entry).unwrap();
 
     // Delete
-    let result = delete_calorie_tracker_entry(app.state(), created.id);
+    let result = delete_intake(app.state(), created.id);
 
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), 1);
 }
 
 #[test]
-fn test_get_calorie_tracker_for_date_range_success() {
+fn test_get_intake_for_date_range_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -311,11 +311,11 @@ fn test_get_calorie_tracker_for_date_range_success() {
         description: None,
     };
 
-    create_calorie_tracker_entry(app.state(), entry1).unwrap();
-    create_calorie_tracker_entry(app.state(), entry2).unwrap();
-    create_calorie_tracker_entry(app.state(), entry3).unwrap();
+    create_intake(app.state(), entry1).unwrap();
+    create_intake(app.state(), entry2).unwrap();
+    create_intake(app.state(), entry3).unwrap();
 
-    let result = get_calorie_tracker_for_date_range(
+    let result = get_intake_for_date_range(
         app.state(),
         "2026-01-15".to_string(),
         "2026-01-17".to_string(),
@@ -327,7 +327,7 @@ fn test_get_calorie_tracker_for_date_range_success() {
 }
 
 #[test]
-fn test_get_calorie_tracker_dates_in_range_success() {
+fn test_get_intake_dates_in_range_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -354,11 +354,11 @@ fn test_get_calorie_tracker_dates_in_range_success() {
         description: None,
     };
 
-    create_calorie_tracker_entry(app.state(), entry1).unwrap();
-    create_calorie_tracker_entry(app.state(), entry2).unwrap();
-    create_calorie_tracker_entry(app.state(), entry3).unwrap();
+    create_intake(app.state(), entry1).unwrap();
+    create_intake(app.state(), entry2).unwrap();
+    create_intake(app.state(), entry3).unwrap();
 
-    let result = get_calorie_tracker_dates_in_range(
+    let result = get_intake_dates_in_range(
         app.state(),
         "2026-01-15".to_string(),
         "2026-01-17".to_string(),

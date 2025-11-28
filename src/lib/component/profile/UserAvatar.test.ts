@@ -52,10 +52,10 @@ describe('UserAvatar', () => {
 			expect(avatar).toBeTruthy();
 		});
 
-		it('should handle undefined name gracefully', () => {
+		it('should handle empty name gracefully', () => {
 			const { container } = render(UserAvatar, {
 				props: {
-					userData: { ...mockUserData, name: undefined }
+					userData: { ...mockUserData, name: '' }
 				}
 			});
 
@@ -347,10 +347,10 @@ describe('UserAvatar', () => {
 	});
 
 	describe('Edge cases', () => {
-		it('should handle userData with all undefined fields', () => {
+		it('should handle userData with all empty fields', () => {
 			const { container } = render(UserAvatar, {
 				props: {
-					userData: { id: 1, name: undefined, avatar: undefined }
+					userData: { id: 1, name: '', avatar: '' }
 				}
 			});
 

@@ -113,7 +113,7 @@ pub fn update_body_data(
     weight: f32,
     sex: String,
 ) -> Result<BodyData, String> {
-    log::info!(
+    log::debug!(
         ">>> update_body_data: age={:?} height={:?} weight={:?} sex={:?}",
         age,
         height,

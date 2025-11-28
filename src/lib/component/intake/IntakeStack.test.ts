@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import TrackerStack from './TrackerStack.svelte';
-import type { CalorieTracker } from '$lib/api/gen';
+import IntakeStack from './IntakeStack.svelte';
 import TestWrapper from '../../../../tests/utils/TestWrapper.svelte';
 import { setupVeilchenMock } from '../../../../tests/utils/mocks';
+import type { Intake } from '$lib/api';
 
 // Setup mocks
 setupVeilchenMock();
@@ -20,15 +20,15 @@ const mockCategories = [
 function renderWithContext(props: any) {
 	return render(TestWrapper, {
 		props: {
-			component: TrackerStack,
+			component: IntakeStack,
 			props,
 			categories: mockCategories
 		}
 	});
 }
 
-describe('TrackerStack', () => {
-	const mockEntries: CalorieTracker[] = [
+describe('IntakeStack', () => {
+	const mockEntries: Intake[] = [
 		{
 			id: 1,
 			added: '2024-01-01',
@@ -220,7 +220,7 @@ describe('TrackerStack', () => {
 	describe('Entry Updates', () => {
 		it('should update entries array when entry added', async () => {
 			const user = userEvent.setup();
-			let entries: CalorieTracker[] = [];
+			let entries: Array<Intake> = [];
 
 			const onaddMock = vi.fn().mockResolvedValue({
 				id: 1,

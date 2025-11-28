@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import type { CalorieTracker, NewCalorieTracker } from '$lib/api/gen';
 	import { NumberStepper } from '@thwbh/veilchen';
 	import { getCategoriesContext } from '$lib/context';
+	import type { Intake, NewIntake } from '$lib/api';
 
 	interface Props {
-		entry: CalorieTracker | NewCalorieTracker;
+		entry: Intake | NewIntake;
 		class?: string;
 		readonly?: boolean;
 		isEditing?: boolean;

@@ -15,7 +15,7 @@ use tauri::{command, State};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TrackerHistory {
-    pub calories_history: BTreeMap<String, Vec<Intake>>,
+    pub intake_history: BTreeMap<String, Vec<Intake>>,
     pub calories_average: f32,
     pub weight_history: BTreeMap<String, Vec<WeightTracker>>,
     pub date_last_str: String,
@@ -48,28 +48,23 @@ impl TrackerHistory {
         )
         .map_err(|e| format!("Failed to get weight tracker data: {}", e))?;
 
-        let mut calories_history = interpolate_calories(calories_range);
+        let mut intake_history = interpolate_intake(calories_range);
         let mut weight_history = interpolate_weight(weight_range);
 
-        interpolate_history(
-            date_from,
-            date_to,
-            &mut calories_history,
-            &mut weight_history,
-        );
+        interpolate_history(date_from, date_to, &mut intake_history, &mut weight_history);
 
-        let calories_average: f32 = match calories_history
+        let calories_average: f32 = match intake_history
             .values()
             .flatten()
             .map(|c| c.amount)
             .reduce(|acc, a| acc + a)
         {
-            Some(sum) => floor_f32(sum as f32 / calories_history.len() as f32, 1),
+            Some(sum) => floor_f32(sum as f32 / intake_history.len() as f32, 1),
             None => 0.0,
         };
 
         Ok(TrackerHistory {
-            calories_history,
+            intake_history,
             calories_average,
             weight_history,
             date_last_str: date_to_str.to_string(),
@@ -81,16 +76,16 @@ impl TrackerHistory {
 // HELPER FUNCTIONS
 // ============================================================================
 
-fn interpolate_calories(db_result: Vec<Intake>) -> BTreeMap<String, Vec<Intake>> {
+fn interpolate_intake(db_result: Vec<Intake>) -> BTreeMap<String, Vec<Intake>> {
     let mut history_map: BTreeMap<String, Vec<Intake>> = BTreeMap::new();
 
-    for calorie_tracker in db_result {
-        let added_date = &calorie_tracker.added;
+    for intake in db_result {
+        let added_date = &intake.added;
 
         history_map
             .entry(added_date.to_string())
             .or_default()
-            .push(calorie_tracker);
+            .push(intake);
     }
 
     history_map
@@ -114,7 +109,7 @@ fn interpolate_weight(db_result: Vec<WeightTracker>) -> BTreeMap<String, Vec<Wei
 fn interpolate_history(
     date_from: NaiveDate,
     date_to: NaiveDate,
-    calorie_map: &mut BTreeMap<String, Vec<Intake>>,
+    intake_map: &mut BTreeMap<String, Vec<Intake>>,
     weight_map: &mut BTreeMap<String, Vec<WeightTracker>>,
 ) {
     let mut current_date = date_from;
@@ -122,7 +117,7 @@ fn interpolate_history(
     while current_date <= date_to {
         let current_date_str = NaiveDate::format(&current_date, "%Y-%m-%d").to_string();
 
-        calorie_map.entry(current_date_str.clone()).or_default();
+        intake_map.entry(current_date_str.clone()).or_default();
         weight_map.entry(current_date_str.clone()).or_default();
 
         current_date += Duration::days(1);
@@ -139,7 +134,7 @@ pub fn get_tracker_history(
     date_from_str: String,
     date_to_str: String,
 ) -> Result<TrackerHistory, String> {
-    log::info!(
+    log::debug!(
         ">>> date_from_str: {}, date_to_str: {}",
         date_from_str,
         date_to_str

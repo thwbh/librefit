@@ -1,6 +1,6 @@
 use crate::helpers::setup_test_pool;
 use librefit_lib::service::intake::{
-    create_calorie_target, create_calorie_tracker_entry, NewIntake, NewIntakeTarget,
+    create_intake, create_intake_target, NewIntake, NewIntakeTarget,
 };
 use librefit_lib::service::progress::get_tracker_progress;
 use librefit_lib::service::weight::{
@@ -19,14 +19,14 @@ fn test_get_tracker_progress_success() {
     app.manage(pool);
 
     // Create targets
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-31".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let weight_target = NewWeightTarget {
         added: "2026-01-01".to_string(),
@@ -44,7 +44,7 @@ fn test_get_tracker_progress_success() {
         category: "b".to_string(),
         description: None,
     };
-    create_calorie_tracker_entry(app.state(), entry1).unwrap();
+    create_intake(app.state(), entry1).unwrap();
 
     let entry2 = NewIntake {
         added: "2026-01-06".to_string(),
@@ -52,7 +52,7 @@ fn test_get_tracker_progress_success() {
         category: "l".to_string(),
         description: None,
     };
-    create_calorie_tracker_entry(app.state(), entry2).unwrap();
+    create_intake(app.state(), entry2).unwrap();
 
     let weight_entry = NewWeightTracker {
         added: "2026-01-05".to_string(),
@@ -65,14 +65,14 @@ fn test_get_tracker_progress_success() {
 
     assert!(result.is_ok());
     let progress = result.unwrap();
-    assert_eq!(progress.calorie_target.target_calories, 2000);
+    assert_eq!(progress.intake_target.target_calories, 2000);
     assert_eq!(progress.weight_target.target_weight, 75.0);
     assert!(progress.days_passed >= 0);
     assert!(progress.days_total > 0);
 }
 
 #[test]
-fn test_get_tracker_progress_no_calorie_target() {
+fn test_get_tracker_progress_no_intake_target() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -100,14 +100,14 @@ fn test_get_tracker_progress_no_weight_target() {
     app.manage(pool);
 
     // Create only calorie target
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-31".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let result = get_tracker_progress(app.state(), "2026-01-10".to_string());
 
@@ -122,14 +122,14 @@ fn test_get_tracker_progress_empty_trackers() {
     app.manage(pool);
 
     // Create targets but no tracker entries
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-31".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let weight_target = NewWeightTarget {
         added: "2026-01-01".to_string(),
@@ -145,8 +145,8 @@ fn test_get_tracker_progress_empty_trackers() {
     assert!(result.is_ok());
     let progress = result.unwrap();
     // Empty trackers should return zeroed chart data
-    assert_eq!(progress.calorie_chart_data.avg, 0.0);
-    assert_eq!(progress.calorie_chart_data.legend.len(), 0);
+    assert_eq!(progress.intake_chart_data.avg, 0.0);
+    assert_eq!(progress.intake_chart_data.legend.len(), 0);
     assert_eq!(progress.weight_chart_data.avg, 0.0);
 }
 
@@ -157,14 +157,14 @@ fn test_get_tracker_progress_invalid_date_format() {
     app.manage(pool);
 
     // Create targets
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-31".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let weight_target = NewWeightTarget {
         added: "2026-01-01".to_string(),
@@ -188,14 +188,14 @@ fn test_get_tracker_progress_with_multiple_entries_same_day() {
     app.manage(pool);
 
     // Create targets
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-31".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let weight_target = NewWeightTarget {
         added: "2026-01-01".to_string(),
@@ -213,7 +213,7 @@ fn test_get_tracker_progress_with_multiple_entries_same_day() {
         category: "b".to_string(),
         description: None,
     };
-    create_calorie_tracker_entry(app.state(), entry1).unwrap();
+    create_intake(app.state(), entry1).unwrap();
 
     let entry2 = NewIntake {
         added: "2026-01-05".to_string(),
@@ -221,7 +221,7 @@ fn test_get_tracker_progress_with_multiple_entries_same_day() {
         category: "l".to_string(),
         description: None,
     };
-    create_calorie_tracker_entry(app.state(), entry2).unwrap();
+    create_intake(app.state(), entry2).unwrap();
 
     let entry3 = NewIntake {
         added: "2026-01-05".to_string(),
@@ -229,14 +229,14 @@ fn test_get_tracker_progress_with_multiple_entries_same_day() {
         category: "d".to_string(),
         description: None,
     };
-    create_calorie_tracker_entry(app.state(), entry3).unwrap();
+    create_intake(app.state(), entry3).unwrap();
 
     let result = get_tracker_progress(app.state(), "2026-01-10".to_string());
 
     assert!(result.is_ok());
     let progress = result.unwrap();
     // Should aggregate entries for the same day
-    assert!(progress.calorie_chart_data.values.len() > 0);
+    assert!(progress.intake_chart_data.values.len() > 0);
 }
 
 #[test]
@@ -246,14 +246,14 @@ fn test_get_tracker_progress_date_before_target_end() {
     app.manage(pool);
 
     // Create targets
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-31".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let weight_target = NewWeightTarget {
         added: "2026-01-01".to_string(),
@@ -279,14 +279,14 @@ fn test_get_tracker_progress_date_after_target_end() {
     app.manage(pool);
 
     // Create targets
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-15".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let weight_target = NewWeightTarget {
         added: "2026-01-01".to_string(),
@@ -313,14 +313,14 @@ fn test_get_tracker_progress_with_weight_entries() {
     app.manage(pool);
 
     // Create targets
-    let calorie_target = NewIntakeTarget {
+    let intake_target = NewIntakeTarget {
         added: "2026-01-01".to_string(),
         start_date: "2026-01-01".to_string(),
         end_date: "2026-01-31".to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };
-    create_calorie_target(app.state(), calorie_target).unwrap();
+    create_intake_target(app.state(), intake_target).unwrap();
 
     let weight_target = NewWeightTarget {
         added: "2026-01-01".to_string(),

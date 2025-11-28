@@ -22,9 +22,9 @@
 	let { data } = $props();
 
 	const userContext = getUserContext();
-	let userData: LibreUser = $state(userContext.user)!;
 	const bodyData = data.bodyData;
 
+	let userData: LibreUser = $state(userContext.user)!;
 	let showAvatarPicker = $state(false);
 
 	const modal = useEntryModal<LibreUser, LibreUser>({
@@ -78,6 +78,7 @@
 </script>
 
 <div class="p-4">
+	<h1 class="sr-only">User Profile</h1>
 	<Breadcrumbs {items} size={TextSize.XL} class="font-semibold" />
 
 	<div class="space-y-6">

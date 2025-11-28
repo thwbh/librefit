@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type {
-		CalorieTracker,
-		CreateCalorieTrackerEntryParams,
-		DeleteCalorieTrackerEntryParams,
-		NewCalorieTracker,
-		UpdateCalorieTrackerEntryParams
+		CreateIntakeParams,
+		DeleteIntakeParams,
+		Intake,
+		NewIntake,
+		UpdateIntakeParams
 	} from '$lib/api/gen';
-	import CalorieTrackerMask from './CalorieTrackerMask.svelte';
+	import IntakeMask from './IntakeMask.svelte';
 	import { Trash } from 'phosphor-svelte';
 	import {
 		AlertBox,
@@ -23,14 +23,14 @@
 	import { getFoodCategoryColor } from '$lib/api';
 
 	interface Props {
-		entries: Array<CalorieTracker>;
-		onadd?: (params: CreateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
-		onedit?: (params: UpdateCalorieTrackerEntryParams) => Promise<CalorieTracker>;
-		ondelete?: (params: DeleteCalorieTrackerEntryParams) => Promise<number>;
+		entries: Array<Intake>;
+		onadd?: (params: CreateIntakeParams) => Promise<Intake>;
+		onedit?: (params: UpdateIntakeParams) => Promise<Intake>;
+		ondelete?: (params: DeleteIntakeParams) => Promise<number>;
 		class?: string;
 	}
 
-	const getBlankEntry = (): NewCalorieTracker => {
+	const getBlankEntry = (): NewIntake => {
 		return {
 			category: 'l',
 			added: getDateAsStr(new Date()),
@@ -50,7 +50,7 @@
 	let index = $state(0);
 
 	// Use modal composition hook
-	const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
+	const modal = useEntryModal<Intake, NewIntake>({
 		onCreate: (entry) => {
 			if (!onadd) throw new Error('onadd not provided');
 			return onadd({ newEntry: entry });
@@ -112,7 +112,7 @@
 					<figure class="{getFoodCategoryColor(entries[cardKey].category)} w-4"></figure>
 				{/snippet}
 				<LongPressContainer onlongpress={() => onlongpress(cardKey)}>
-					<CalorieTrackerMask entry={entries[cardKey]} readonly />
+					<IntakeMask entry={entries[cardKey]} readonly />
 				</LongPressContainer>
 			</StackCard>
 		{/snippet}
@@ -133,18 +133,14 @@
 		<span>Add Intake</span>
 		{#if modal.currentEntry}
 			<span class="text-xs opacity-60">
-				Date: {convertDateStrToDisplayDateStr((modal.currentEntry as NewCalorieTracker).added)}
+				Date: {convertDateStrToDisplayDateStr((modal.currentEntry as NewIntake).added)}
 			</span>
 		{/if}
 	{/snippet}
 
 	{#snippet content()}
 		{#if modal.currentEntry}
-			<CalorieTrackerMask
-				bind:entry={modal.currentEntry}
-				isEditing={true}
-				readonly={modal.enableDelete}
-			/>
+			<IntakeMask bind:entry={modal.currentEntry} isEditing={true} readonly={modal.enableDelete} />
 		{/if}
 	{/snippet}
 </ModalDialog>
@@ -155,7 +151,7 @@
 		<span>
 			{#if modal.currentEntry}
 				<span class="text-xs opacity-60">
-					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as CalorieTracker).added)}
+					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
 				</span>
 			{/if}
 			<span>
@@ -168,10 +164,7 @@
 
 	{#snippet content()}
 		{#if modal.currentEntry}
-			<CalorieTrackerMask
-				entry={modal.currentEntry as CalorieTracker}
-				isEditing={modal.isEditing}
-			/>
+			<IntakeMask entry={modal.currentEntry as Intake} isEditing={modal.isEditing} />
 		{/if}
 	{/snippet}
 

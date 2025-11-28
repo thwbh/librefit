@@ -17,7 +17,7 @@
 	import type {
 		BodyData,
 		LibreUser,
-		NewCalorieTarget,
+		NewIntakeTarget,
 		NewWeightTarget,
 		NewWeightTracker,
 		WizardInput,
@@ -89,7 +89,7 @@
 	let chosenTargetWeight: number = $state(76); // For HOLD/GAIN users to select target weight
 
 	let weightTarget: NewWeightTarget | undefined = $state();
-	let calorieTarget: NewCalorieTarget | undefined = $state();
+	let intakeTarget: NewIntakeTarget | undefined = $state();
 
 	let showCompletion: boolean = $state(false);
 	let isProcessing: boolean = $state(false);
@@ -117,8 +117,8 @@
 		get weightTarget() {
 			return weightTarget;
 		},
-		get calorieTarget() {
-			return calorieTarget;
+		get intakeTarget() {
+			return intakeTarget;
 		}
 	});
 
@@ -200,7 +200,7 @@
 			);
 
 			weightTarget = targets.weightTarget;
-			calorieTarget = targets.calorieTarget;
+			intakeTarget = targets.calorieTarget;
 		}
 	};
 
@@ -269,7 +269,7 @@
 				input: {
 					weightTracker: weightTracker!,
 					weightTarget: weightTarget!,
-					calorieTarget: calorieTarget!
+					intakeTarget: intakeTarget!
 				}
 			});
 

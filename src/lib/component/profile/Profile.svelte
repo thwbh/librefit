@@ -21,15 +21,4 @@
 
 	<!-- Body Data Display (read-only) -->
 	<BodyDataDisplay {bodyData} />
-
-	<!-- TODO: Data Import/Export Section -->
-	<!-- <div class="space-y-4">
-		<h2 class="text-xl font-bold">Data Management</h2>
-		<div class="card bg-base-200">
-			<div class="card-body">
-				<button class="btn btn-outline">Import Data</button>
-				<button class="btn btn-outline">Export Data</button>
-			</div>
-		</div>
-	</div> -->
 </div>

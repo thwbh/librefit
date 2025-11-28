@@ -8,7 +8,7 @@
 
 	// Get wizard state from context instead of props
 	const wizardState = getWizardContext();
-	const { wizardResult, wizardInput, userData, chosenRate, weightTarget, calorieTarget } =
+	const { wizardResult, wizardInput, userData, chosenRate, weightTarget, intakeTarget } =
 		wizardState;
 
 	let avatarSrc = $derived(getAvatar(userData.avatar || userData.name!));
@@ -84,12 +84,12 @@
 			{/if}
 			<div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
 				<span class="text-base-content opacity-70">{targetLabel}</span>
-				<span class="font-bold">{calorieTarget!.targetCalories} kcal</span>
+				<span class="font-bold">{intakeTarget!.targetCalories} kcal</span>
 			</div>
 			<div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
 				<span class="text-base-content opacity-70">{maximumLabel}</span>
 				<span class="font-bold" class:text-error={!isGaining && !isHolding}
-					>{calorieTarget!.maximumCalories} kcal</span
+					>{intakeTarget!.maximumCalories} kcal</span
 				>
 			</div>
 		</div>
