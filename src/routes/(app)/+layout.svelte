@@ -6,12 +6,12 @@
 	import Settings from '$lib/component/settings/Settings.svelte';
 	import { fade } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { beforeNavigate, afterNavigate } from '$app/navigation';
+	import { afterNavigate } from '$app/navigation';
 
 	let { children } = $props();
 
-	// Scroll to top on navigation to prevent flicker
-	beforeNavigate(() => {
+	// Scroll to top after navigation completes (after transition)
+	afterNavigate(() => {
 		document.documentElement.scrollTop = 0;
 		document.body.scrollTop = 0;
 	});
@@ -68,8 +68,8 @@
 <AppShell items={navItems} {activeId} onrefresh={refresh.handler} refreshing={refresh.isRefreshing}>
 	{#key page.url.pathname}
 		<div
-			in:fade={{ duration: 200, easing: cubicOut }}
-			out:fade={{ duration: 150, easing: cubicOut }}
+			in:fade={{ duration: 150, delay: 100, easing: cubicOut }}
+			out:fade={{ duration: 100, easing: cubicOut }}
 		>
 			{@render children()}
 		</div>
