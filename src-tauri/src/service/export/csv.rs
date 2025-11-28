@@ -237,7 +237,7 @@ pub async fn export_csv(
         bytes,
         file_path: format!(
             "librefit_export_{}.zip",
-            chrono::Local::now().format("%Y-%m-%d")
+            chrono::Local::now().format("%Y-%m-%d_%H%M%S")
         ),
     })
 }

@@ -124,20 +124,18 @@ pub async fn export_raw(
 
     // Stage 3: Creating backup (10-60%)
     let file_dir = std::env::temp_dir();
-    let file_path = file_dir.join("librefit_backup.db");
+
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+
+    let file_path = file_dir.join(format!("librefit_backup_{}.db", timestamp));
     let file_path_str = file_path
         .to_str()
         .ok_or_else(|| "Invalid temp path".to_string())?;
 
     log::debug!(">>> backup created path={:?}", file_path);
-
-    // Remove any existing temp file from previous exports
-    if file_path.exists() {
-        log::debug!(">>> Removing existing temp file...");
-        if let Err(e) = std::fs::remove_file(&file_path) {
-            log::warn!("Failed to remove existing temp file: {}", e);
-        }
-    }
 
     send_progress(
         &on_progress,
@@ -351,8 +349,14 @@ pub async fn export_raw(
 
     log::debug!(">>> Finished.");
 
+    // Return a suggested filename (not the temp path)
+    let suggested_filename = format!(
+        "librefit_export_{}.db",
+        chrono::Local::now().format("%Y-%m-%d_%H%M%S")
+    );
+
     Ok(ExportResult {
         bytes,
-        file_path: file_path_str.to_string(),
+        file_path: suggested_filename,
     })
 }

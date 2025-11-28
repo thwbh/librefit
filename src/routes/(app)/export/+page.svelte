@@ -26,7 +26,6 @@
 		FilePdf,
 		FloppyDisk,
 		Gear,
-		Info,
 		MagnifyingGlass,
 		TreeStructure,
 		Warning
@@ -44,7 +43,7 @@
 		{
 			value: ExportFormat.csv,
 			header: 'CSV',
-			text: 'The export provides a CSV file to be processed with a tabular calculation tool.'
+			text: 'The export provides zipped CSV files to be processed with a tabular calculation tool.'
 		}
 		/*		{
 			value: 'pdf',
