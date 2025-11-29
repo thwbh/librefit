@@ -22,7 +22,8 @@ use crate::service::intake::{
 use crate::service::user::{get_user, update_user};
 use crate::service::weight::{
     create_weight_target, create_weight_tracker_entry, delete_weight_tracker_entry,
-    get_weight_tracker_for_date_range, update_weight_tracker_entry,
+    get_last_weight_target, get_last_weight_tracker, get_weight_tracker_for_date_range,
+    update_weight_tracker_entry,
 };
 
 use crate::db::{connection, migrations};
@@ -71,9 +72,11 @@ pub fn run() {
             update_weight_tracker_entry,
             delete_weight_tracker_entry,
             get_weight_tracker_for_date_range,
+            get_last_weight_tracker,
             create_intake_target,
             create_weight_target,
             get_last_intake_target,
+            get_last_weight_target,
             get_user,
             update_user,
             wizard_calculate_tdee,
