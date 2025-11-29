@@ -94,7 +94,7 @@
 			<p class="text-sm opacity-60">
 				{dayDiff} days left.
 			</p>
-			<button class="btn btn-sm" onclick={() => goto('/progress')}> Review plan </button>
+			<button class="btn btn-sm" onclick={() => goto('/review')}> Review plan </button>
 		</span>
 
 		<progress class="progress w-full" value={progress} max="100"></progress>
