@@ -289,11 +289,11 @@
 					{#each intakeHistory as calories}
 						<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
 							{#snippet leftAction()}
-								<span><Pencil size="2em" color={'var(--color-primary)'} /></span>
+								<span><Pencil size="1.75rem" color={'var(--color-primary)'} /></span>
 							{/snippet}
 
 							{#snippet rightAction()}
-								<span><Trash size="2em" color={'var(--color-error)'} /> </span>
+								<span><Trash size="1.75rem" color={'var(--color-error)'} /> </span>
 							{/snippet}
 
 							<div

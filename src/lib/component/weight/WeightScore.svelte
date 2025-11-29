@@ -32,7 +32,7 @@
 	let modifier = $derived(weightTarget.initialWeight > weightTracker.amount ? '-' : '+');
 </script>
 
-<div class="stat">
+<div class="stat weight-stat">
 	<div class="stat-title">Current Weight</div>
 	<div class="flex flex-row justify-between stat-value">
 		<span>
@@ -109,5 +109,9 @@
 	.progress-container {
 		padding-inline: calc(0.25rem * 6);
 		padding-block: calc(0.25rem * 4);
+	}
+
+	.weight-stat {
+		border-right: 0px !important;
 	}
 </style>
