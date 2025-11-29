@@ -171,7 +171,8 @@
 	// When swiping right, new content comes from left (negative x)
 	const flyParams = $derived({
 		x: swipeDirection === 'left' ? 300 : swipeDirection === 'right' ? -300 : 0,
-		duration: 300,
+		duration: 200,
+		delay: 150,
 		easing: cubicOut
 	});
 
@@ -265,7 +266,7 @@
 
 	<div class="flex flex-col overflow-y-scroll">
 		{#key selectedDateStr}
-			<div in:fly={flyParams} out:fly={{ x: -flyParams.x, duration: 250, easing: cubicOut }}>
+			<div in:fly={flyParams} out:fly={{ x: -flyParams.x, duration: 150, easing: cubicOut }}>
 				<div
 					use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
 					onswipe={handleDaySwipe}
