@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import UserProfileCard from '../../../../src/lib/component/journey/UserProfileCard.svelte';
-import { setupVeilchenMock } from '../../../utils/mocks';
+import UserProfileCard from './UserProfileCard.svelte';
+import { setupVeilchenMock } from '../../../../tests/utils/mocks';
 
 // Setup common mocks
 setupVeilchenMock();

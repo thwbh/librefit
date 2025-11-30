@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import TimelineCard from '../../../../src/lib/component/journey/TimelineCard.svelte';
+import TimelineCard from './TimelineCard.svelte';
 
 // Mock the date utility
 vi.mock('$lib/date', () => ({

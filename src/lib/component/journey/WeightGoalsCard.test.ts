@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import WeightGoalsCard from '../../../../src/lib/component/journey/WeightGoalsCard.svelte';
-import { setupVeilchenMock } from '../../../utils/mocks';
+import WeightGoalsCard from './WeightGoalsCard.svelte';
+import { setupVeilchenMock } from '../../../../tests/utils/mocks';
 
 // Setup common mocks
 setupVeilchenMock();

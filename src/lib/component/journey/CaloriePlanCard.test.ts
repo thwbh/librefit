@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import CaloriePlanCard from '../../../../src/lib/component/journey/CaloriePlanCard.svelte';
+import CaloriePlanCard from './CaloriePlanCard.svelte';
 
 describe('CaloriePlanCard Component', () => {
 	it('should render calorie plan title', () => {

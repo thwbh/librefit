@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import EncouragementMessage from '../../../../src/lib/component/journey/EncouragementMessage.svelte';
-import { setupVeilchenMock } from '../../../utils/mocks';
+import EncouragementMessage from './EncouragementMessage.svelte';
+import { setupVeilchenMock } from '../../../../tests/utils/mocks';
 
 // Setup common mocks
 setupVeilchenMock();
