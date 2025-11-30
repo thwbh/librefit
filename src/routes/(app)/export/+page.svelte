@@ -36,15 +36,16 @@
 
 	const exportOptions: OptionCardData<string>[] = [
 		{
-			value: ExportFormat.raw,
-			header: 'Raw',
-			text: 'The export creates a SQLite database file that you can store safely or use to restore your data later.'
-		},
-		{
 			value: ExportFormat.csv,
 			header: 'CSV',
 			text: 'The export provides zipped CSV files to be processed with a tabular calculation tool.'
+		},
+		{
+			value: ExportFormat.raw,
+			header: 'Raw',
+			text: 'The export creates a SQLite database file that you can store safely or use to restore your data later.'
 		}
+
 		/*		{
 			value: 'pdf',
 			header: 'PDF',
@@ -65,7 +66,7 @@
 	let isExporting = $state(true);
 	let bytesInfo = $state('');
 
-	let exportFormat = $state(ExportFormat.raw);
+	let exportFormat = $state(ExportFormat.csv);
 
 	let dialog: HTMLDialogElement | undefined = $state();
 

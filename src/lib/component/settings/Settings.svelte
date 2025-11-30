@@ -22,6 +22,9 @@
 			<a href="/export" onclick={close}>Export</a>
 		</li>
 		<li>
+			<a href="/import" onclick={close}>Import</a>
+		</li>
+		<li>
 			<a href="/wizard" onclick={close}>Wizard</a>
 		</li>
 		<li>
