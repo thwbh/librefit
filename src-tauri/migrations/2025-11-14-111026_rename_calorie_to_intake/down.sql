@@ -1,5 +1,0 @@
--- Revert intake to CALORIE_TRACKER
-ALTER TABLE intake RENAME TO CALORIE_TRACKER;
-
--- Revert intake_target to CALORIE_TARGET
-ALTER TABLE intake_target RENAME TO CALORIE_TARGET;
