@@ -25,6 +25,8 @@ pub struct WeightTracker {
         message = "Weight must be between 30 and 330 kg"
     ))]
     pub amount: f32,
+    #[validate(custom(function = "validate_time_format"))]
+    pub time: String,
 }
 
 /// For creation of a new [WeightTracker] entry.
@@ -41,6 +43,26 @@ pub struct NewWeightTracker {
         message = "Weight must be between 30 and 330 kg"
     ))]
     pub amount: f32,
+    #[serde(default = "default_time")]
+    #[validate(custom(function = "validate_time_format_optional"))]
+    pub time: Option<String>,
+}
+
+impl NewWeightTracker {
+    /// Create a new weight tracker entry with current time
+    pub fn new(added: String, amount: f32) -> Self {
+        Self {
+            added,
+            amount,
+            time: default_time(),
+        }
+    }
+}
+
+/// Default time value set to current time
+fn default_time() -> Option<String> {
+    use chrono::Local;
+    Some(Local::now().format("%H:%M:%S").to_string())
 }
 
 /// Represents a target weight that the user wants to reach until a specific date occurs.
@@ -98,6 +120,35 @@ fn validate_date_format(date_str: &str) -> Result<(), ValidationError> {
     }
 }
 
+/// Validates time format (HH:MM:SS) for String fields
+fn validate_time_format(time_str: &str) -> Result<(), ValidationError> {
+    use chrono::NaiveTime;
+
+    match NaiveTime::parse_from_str(time_str, "%H:%M:%S") {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ValidationError::new(
+            "Invalid time format. Expected HH:MM:SS",
+        )),
+    }
+}
+
+/// Validates time format (HH:MM:SS) for Option<String> fields
+fn validate_time_format_optional(time_str: &str) -> Result<(), ValidationError> {
+    use chrono::NaiveTime;
+
+    // For Option fields, validator crate passes empty string for None
+    if time_str.is_empty() {
+        return Ok(()); // Empty is valid, will use default
+    }
+
+    match NaiveTime::parse_from_str(time_str, "%H:%M:%S") {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ValidationError::new(
+            "Invalid time format. Expected HH:MM:SS",
+        )),
+    }
+}
+
 /// Validates weight target logic
 fn validate_weight_target(target: &NewWeightTarget) -> Result<(), ValidationError> {
     use chrono::Utc;
@@ -137,8 +188,15 @@ fn validate_weight_target(target: &NewWeightTarget) -> Result<(), ValidationErro
 impl WeightTracker {
     /// Insert a new weight entry to the tracker
     pub fn create(conn: &mut SqliteConnection, new_entry: &NewWeightTracker) -> QueryResult<Self> {
+        // Ensure time field is set, use default if None
+        let entry_with_time = NewWeightTracker {
+            added: new_entry.added.clone(),
+            amount: new_entry.amount,
+            time: new_entry.time.clone().or_else(default_time),
+        };
+
         diesel::insert_into(weight_tracker::table)
-            .values(new_entry)
+            .values(&entry_with_time)
             .returning(Self::as_returning())
             .get_result(conn)
     }
@@ -154,8 +212,15 @@ impl WeightTracker {
         tracker_id: &i32,
         updated_entry: &NewWeightTracker,
     ) -> QueryResult<Self> {
+        // Ensure time field is set, use default if None
+        let entry_with_time = NewWeightTracker {
+            added: updated_entry.added.clone(),
+            amount: updated_entry.amount,
+            time: updated_entry.time.clone().or_else(default_time),
+        };
+
         diesel::update(weight_tracker::table.filter(weight_tracker::id.eq(tracker_id)))
-            .set(updated_entry)
+            .set(&entry_with_time)
             .returning(Self::as_returning())
             .get_result(conn)
     }
@@ -183,6 +248,13 @@ impl WeightTracker {
             .filter(weight_tracker::added.between(date_from, date_to))
             .order(weight_tracker::added.desc())
             .load::<Self>(conn)
+    }
+
+    /// Find most recent weight tracker entry
+    pub fn get_latest(conn: &mut SqliteConnection) -> QueryResult<Self> {
+        weight_tracker::table
+            .order(weight_tracker::id.desc())
+            .first::<Self>(conn)
     }
 }
 
@@ -233,7 +305,7 @@ impl WeightTarget {
 }
 
 // ============================================================================
-// COMMANDS (Tauri)
+// COMMANDS
 // ============================================================================
 
 /// Create a new weight target
@@ -242,11 +314,11 @@ pub fn create_weight_target(
     pool: State<DbPool>,
     new_target: NewWeightTarget,
 ) -> Result<WeightTarget, String> {
+    log::debug!("Creating new weight target: {:?}", new_target);
+
     if let Err(validation_errors) = new_target.validate() {
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
-
-    log::debug!("Creating new weight target: {:?}", new_target);
 
     pool.execute(|conn| WeightTarget::create(conn, &new_target))
 }
@@ -270,11 +342,11 @@ pub fn update_weight_target(
     target_id: i32,
     updated_target: NewWeightTarget,
 ) -> Result<WeightTarget, String> {
+    log::debug!("Updating weight target {}: {:?}", target_id, updated_target);
+
     if let Err(validation_errors) = updated_target.validate() {
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
-
-    log::debug!("Updating weight target {}: {:?}", target_id, updated_target);
 
     pool.execute(|conn| WeightTarget::update(conn, target_id, updated_target))
 }
@@ -333,4 +405,10 @@ pub fn get_weight_tracker_for_date_range(
     date_to_str: String,
 ) -> Result<Vec<WeightTracker>, String> {
     pool.execute(|conn| WeightTracker::find_by_date_range(conn, &date_from_str, &date_to_str))
+}
+
+/// Return last weight tracker entry
+#[command]
+pub fn get_last_weight_tracker(pool: State<DbPool>) -> Result<WeightTracker, String> {
+    pool.execute(WeightTracker::get_latest)
 }

@@ -36,7 +36,7 @@
 				<p class="text-2xl font-bold">
 					{entry.amount} <span class="text-xs">kcal</span>
 				</p>
-				<p class="text-xs opacity-60">2:30 PM</p>
+				<p class="text-xs opacity-60">{entry.time}</p>
 			</div>
 		</div>
 

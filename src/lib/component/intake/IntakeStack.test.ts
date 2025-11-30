@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/svelte';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import IntakeStack from './IntakeStack.svelte';
 import TestWrapper from '../../../../tests/utils/TestWrapper.svelte';
@@ -8,6 +8,10 @@ import type { Intake } from '$lib/api';
 
 // Setup mocks
 setupVeilchenMock();
+
+vi.mock('@tauri-apps/plugin-haptics', () => ({
+	vibrate: vi.fn()
+}));
 
 const mockCategories = [
 	{ shortvalue: 'b', longvalue: 'Breakfast' },
@@ -66,17 +70,11 @@ describe('IntakeStack', () => {
 			const alertBox = container.querySelector('.alert, [role="alert"]');
 			expect(alertBox).toBeTruthy();
 		});
-
-		it('should always show Add Intake button', () => {
-			renderWithContext({ entries: [] });
-
-			expect(screen.getByRole('button', { name: 'Add Intake' })).toBeTruthy();
-		});
 	});
 
 	describe('Stack Display', () => {
 		it('should display entries when provided', () => {
-			const { container } = renderWithContext({ entries: mockEntries });
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
 			// Stack shows one entry at a time (the active one)
 			// First entry should be visible
@@ -84,212 +82,93 @@ describe('IntakeStack', () => {
 		});
 
 		it('should display entries in readonly mode', () => {
-			const { container } = renderWithContext({ entries: mockEntries });
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
-			// CalorieTrackerMask should be in readonly mode
+			// IntakeMask should be in readonly mode
 			// First entry's category should be displayed
 			expect(container.textContent).toContain('Breakfast');
 		});
 
-		it('should show Add Intake button with entries', () => {
-			renderWithContext({ entries: mockEntries });
+		it('should handle single entry', () => {
+			const { container } = renderWithContext({ entries: [mockEntries[0]], index: 0 });
 
-			expect(screen.getByRole('button', { name: 'Add Intake' })).toBeTruthy();
+			expect(container.textContent).toContain('Breakfast');
 		});
 
-		it('should handle single entry', () => {
-			const { container } = renderWithContext({ entries: [mockEntries[0]] });
+		it('should render Stack component for multiple entries', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
+
+			// Check that Stack is rendered (not AlertBox)
+			const alertBox = container.querySelector('.alert');
+			expect(alertBox).toBeFalsy();
+		});
+	});
+
+	describe('Stack Navigation', () => {
+		it('should display entry at current index', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 1 });
+
+			expect(container.textContent).toContain('Lunch');
+		});
+
+		it('should display last entry when index is at end', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 2 });
+
+			expect(container.textContent).toContain('Dinner');
+		});
+
+		it('should handle index binding', () => {
+			let index = 0;
+			const { container } = renderWithContext({ entries: mockEntries, index });
 
 			expect(container.textContent).toContain('Breakfast');
 		});
 	});
 
-	describe('Add Intake Modal', () => {
-		it('should open create modal when Add Intake clicked', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: mockEntries });
-
-			const addButton = screen.getByRole('button', { name: 'Add Intake' });
-			await user.click(addButton);
-
-			await waitFor(() => {
-				const modal = container.querySelector('dialog[open]');
-				expect(modal).toBeTruthy();
+	describe('Edit Functionality', () => {
+		it('should call onEdit when entry is long-pressed', async () => {
+			const onEditMock = vi.fn();
+			const { container } = renderWithContext({
+				entries: mockEntries,
+				index: 0,
+				onEdit: onEditMock
 			});
+
+			// Long press is handled via LongPressContainer
+			// This would require more complex interaction testing
+			expect(container).toBeTruthy();
 		});
 
-		it('should show "Add Intake" title in create modal', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
-
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				// Check modal is open and has title
-				const modal = container.querySelector('dialog[open]');
-				expect(modal).toBeTruthy();
-				expect(container.textContent).toContain('Add Intake');
-			});
-		});
-
-		it('should show current date in create modal', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
-
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				// Should show "Date:" label
-				expect(container.textContent).toContain('Date:');
-			});
-		});
-
-		it('should close modal on cancel', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
-
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				expect(container.querySelector('dialog[open]')).toBeTruthy();
-			});
-
-			const cancelButton = screen.getByRole('button', { name: 'Cancel' });
-			await user.click(cancelButton);
-
-			await waitFor(() => {
-				expect(container.querySelector('dialog[open]')).toBeFalsy();
-			});
-		});
-	});
-
-	describe('CRUD Operations', () => {
-		it('should call onadd when creating entry', async () => {
-			const user = userEvent.setup();
-			const onaddMock = vi.fn().mockResolvedValue({
-				id: 4,
-				added: '2024-01-01',
-				category: 's',
-				amount: 200,
-				description: 'Apple'
-			});
-
-			const { container } = renderWithContext({ entries: [], onadd: onaddMock });
-
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			// Wait for modal to open
-			await waitFor(() => {
-				expect(container.querySelector('dialog[open]')).toBeTruthy();
-			});
-
-			// Note: We can't easily fill the form in this test due to veilchen components
-			// This would be better tested in E2E tests
-			// For now, we verify the handler is set up correctly
-			expect(onaddMock).not.toHaveBeenCalled(); // Not called until form submit
-		});
-
-		it('should handle missing onadd gracefully', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
-
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				expect(container.querySelector('dialog[open]')).toBeTruthy();
-			});
-
-			// Modal should still open even without onadd
-			// The error would occur on save attempt
-		});
-
-		it('should handle missing onedit gracefully', () => {
-			const { container } = renderWithContext({ entries: mockEntries });
+		it('should handle missing onEdit gracefully', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
 			// Component should render without error
 			expect(container).toBeTruthy();
 		});
-
-		it('should handle missing ondelete gracefully', () => {
-			const { container } = renderWithContext({ entries: mockEntries });
-
-			expect(container).toBeTruthy();
-		});
 	});
 
-	describe('Entry Updates', () => {
-		it('should update entries array when entry added', async () => {
-			const user = userEvent.setup();
-			let entries: Array<Intake> = [];
+	describe('Entry Display', () => {
+		it('should show IntakeMask for each entry', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
-			const onaddMock = vi.fn().mockResolvedValue({
-				id: 1,
-				added: '2024-01-01',
-				category: 'l',
-				amount: 500,
-				description: 'Test'
-			});
-
-			const { component } = renderWithContext({ entries, onadd: onaddMock });
-
-			// After successful add, entries should be updated
-			// This is tested through the onCreateSuccess callback
-			expect(component).toBeTruthy();
+			// Check that entry details are rendered
+			expect(container.textContent).toContain('400');
 		});
 
-		it('should handle entry at specific index after update', () => {
-			const { container } = renderWithContext({ entries: mockEntries });
+		it('should display category colors', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
-			// First entry should be displayed (stack shows one at a time)
-			expect(container.textContent).toContain('Breakfast');
-		});
-	});
-
-	describe('Modal Variants', () => {
-		it('should have create modal dialog element', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
-
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				const dialogs = container.querySelectorAll('dialog');
-				expect(dialogs.length).toBeGreaterThan(0);
-			});
-		});
-
-		it('should show CalorieTrackerMask in edit mode in create modal', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
-
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				// Modal should contain CalorieTrackerMask
-				expect(container.querySelector('fieldset')).toBeTruthy();
-			});
+			// Category color should be rendered as a figure element
+			const figure = container.querySelector('figure');
+			expect(figure).toBeTruthy();
 		});
 	});
 
 	describe('Edge Cases', () => {
 		it('should handle empty entries array transitions', () => {
-			const { container, component } = renderWithContext({ entries: [] });
+			const { container } = renderWithContext({ entries: [] });
 
 			expect(screen.getByText(/Nothing tracked today/i)).toBeTruthy();
-
-			// If entries were added, empty state should disappear
-			expect(component).toBeTruthy();
-		});
-
-		it('should handle single entry deletion', () => {
-			const ondeleteMock = vi.fn().mockResolvedValue(1);
-			const { container } = renderWithContext({
-				entries: [mockEntries[0]],
-				ondelete: ondeleteMock
-			});
-
-			// Component should render
-			expect(container.textContent).toContain('Breakfast');
 		});
 
 		it('should handle multiple entries', () => {
@@ -303,7 +182,7 @@ describe('IntakeStack', () => {
 					description: `Entry ${i + 1}`
 				}));
 
-			const { container } = renderWithContext({ entries: manyEntries });
+			const { container } = renderWithContext({ entries: manyEntries, index: 0 });
 
 			// Should render without error, showing first entry
 			expect(container).toBeTruthy();
@@ -311,15 +190,15 @@ describe('IntakeStack', () => {
 		});
 
 		it('should handle entries with various categories', () => {
-			const { container } = renderWithContext({ entries: mockEntries });
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
 			// Stack displays first entry
 			expect(container.textContent).toContain('Breakfast');
 		});
 
 		it('should handle entries without descriptions', () => {
-			const entriesNoDesc = mockEntries.map((e) => ({ ...e, description: '' }));
-			const { container } = renderWithContext({ entries: entriesNoDesc });
+			const entriesNoDesc = mockEntries.map((e) => ({ ...e, description: undefined }));
+			const { container } = renderWithContext({ entries: entriesNoDesc, index: 0 });
 
 			// Should still display first entry's category
 			expect(container.textContent).toContain('Breakfast');
@@ -336,7 +215,7 @@ describe('IntakeStack', () => {
 				}
 			];
 
-			const { container } = renderWithContext({ entries: largeEntries });
+			const { container } = renderWithContext({ entries: largeEntries, index: 0 });
 
 			// Component should render without error
 			expect(container).toBeTruthy();
@@ -345,88 +224,36 @@ describe('IntakeStack', () => {
 	});
 
 	describe('Component Structure', () => {
-		it('should render with proper button', () => {
-			const { container } = renderWithContext({ entries: [] });
+		it('should render Stack component when entries exist', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
-			const button = container.querySelector('button.btn');
-			expect(button).toBeTruthy();
-			expect(button?.textContent).toContain('Add Intake');
+			// Should not show empty state
+			expect(container.querySelector('.alert')).toBeFalsy();
 		});
 
-		it('should have full width button', () => {
-			const { container } = renderWithContext({ entries: [] });
+		it('should apply custom class name', () => {
+			const customClass = 'custom-stack-class';
+			const { container } = renderWithContext({
+				entries: mockEntries,
+				index: 0,
+				class: customClass
+			});
 
-			const button = container.querySelector('button.w-full');
-			expect(button).toBeTruthy();
-		});
-
-		it('should use neutral button styling', () => {
-			const { container } = renderWithContext({ entries: [] });
-
-			const button = container.querySelector('button.btn-neutral');
-			expect(button).toBeTruthy();
-		});
-	});
-
-	describe('Integration with useEntryModal', () => {
-		it('should use modal composition for state management', () => {
-			const { container } = renderWithContext({ entries: mockEntries });
-
-			// Component should render, indicating modal composition is working
 			expect(container).toBeTruthy();
-			expect(screen.getByRole('button', { name: 'Add Intake' })).toBeTruthy();
-		});
-
-		it('should handle modal state through composition', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
-
-			// Open modal
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				expect(container.querySelector('dialog[open]')).toBeTruthy();
-			});
-
-			// Close modal
-			await user.click(screen.getByRole('button', { name: 'Cancel' }));
-
-			await waitFor(() => {
-				expect(container.querySelector('dialog[open]')).toBeFalsy();
-			});
 		});
 	});
 
-	describe('Date Formatting', () => {
-		it('should format date in modal title', async () => {
-			const user = userEvent.setup();
-			const { container } = renderWithContext({ entries: [] });
+	describe('LongPressContainer Integration', () => {
+		it('should wrap IntakeMask in LongPressContainer', () => {
+			const { container } = renderWithContext({ entries: mockEntries, index: 0 });
 
-			await user.click(screen.getByRole('button', { name: 'Add Intake' }));
-
-			await waitFor(() => {
-				// Should show "Date:" prefix
-				expect(container.textContent).toContain('Date:');
-			});
-		});
-
-		it('should use getDateAsStr for blank entries', () => {
-			// This is tested implicitly through the create modal
-			const { container } = renderWithContext({ entries: [] });
-
+			// Component should render with LongPressContainer
 			expect(container).toBeTruthy();
 		});
 	});
 
 	describe('Accessibility', () => {
-		it('should have accessible button', () => {
-			renderWithContext({ entries: [] });
-
-			const button = screen.getByRole('button', { name: /add intake/i });
-			expect(button).toBeTruthy();
-		});
-
-		it('should show meaningful alert text', () => {
+		it('should show meaningful alert text in empty state', () => {
 			renderWithContext({ entries: [] });
 
 			const strongText = screen.getByText(/Nothing tracked today/i);

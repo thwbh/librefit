@@ -7,6 +7,7 @@ diesel::table! {
         height -> Float,
         weight -> Float,
         sex -> Text,
+        activity_level -> Float,
     }
 }
 
@@ -24,6 +25,7 @@ diesel::table! {
         amount -> Integer,
         category -> Text,
         description -> Nullable<Text>,
+        time -> Text,
     }
 }
 
@@ -62,6 +64,7 @@ diesel::table! {
         id -> Integer,
         added -> Text,
         amount -> Float,
+        time -> Text,
     }
 }
 

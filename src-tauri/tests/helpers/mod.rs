@@ -77,21 +77,13 @@ pub fn create_test_intake_entry(
     description: Option<String>,
 ) -> Intake {
     let mut conn = pool.get().expect("Failed to get connection");
-    let new_entry = NewIntake {
-        added: added.to_string(),
-        amount,
-        category: category.to_string(),
-        description,
-    };
+    let new_entry = NewIntake::new(added.to_string(), amount, category.to_string(), description);
     Intake::create(&mut conn, &new_entry).expect("Failed to create intake entry")
 }
 
 /// Creates a test weight tracker entry
 pub fn create_test_weight_entry(pool: &TestPool, added: &str, amount: f32) -> WeightTracker {
     let mut conn = pool.get().expect("Failed to get connection");
-    let new_entry = NewWeightTracker {
-        added: added.to_string(),
-        amount,
-    };
+    let new_entry = NewWeightTracker::new(added.to_string(), amount);
     WeightTracker::create(&mut conn, &new_entry).expect("Failed to create weight entry")
 }

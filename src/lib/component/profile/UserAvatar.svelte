@@ -7,9 +7,10 @@
 	interface Props {
 		userData: LibreUser;
 		onAvatarChange?: (newAvatar: string) => void;
+		readonly?: boolean | undefined;
 	}
 
-	let { userData = $bindable(), onAvatarChange }: Props = $props();
+	let { userData = $bindable(), onAvatarChange, readonly = false }: Props = $props();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -31,6 +32,8 @@
 	let currentAvatar = $derived(localAvatar !== '' ? getAvatar(localAvatar) : getAvatar(localName));
 
 	const openModal = () => {
+		if (readonly) return;
+
 		// Initialize temp state with current confirmed state
 		const currentAvatarValue = userData.avatar || userData.name!;
 		const isDefaultAvatar = currentAvatarValue && defaults.indexOf(currentAvatarValue) > -1;

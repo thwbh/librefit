@@ -76,30 +76,65 @@ describe('convertFormDataToJson', () => {
 // createTargetWeightTargets TESTS
 // ============================================================================
 
+// Helper function to create complete WizardResult with defaults
+function createWizardResult(overrides: Partial<WizardResult> = {}): WizardResult {
+	return {
+		tdee: 2500,
+		bmr: 1800,
+		bmi: 26.1,
+		deficit: 500,
+		target: 2000,
+		bmiCategory: 'Overweight',
+		recommendation: 'LOSE',
+		targetBmi: 22.5,
+		targetBmiUpper: 24.9,
+		targetBmiLower: 18.5,
+		targetWeight: 70,
+		targetWeightUpper: 76,
+		targetWeightLower: 57,
+		durationDays: 90,
+		durationDaysUpper: 120,
+		durationDaysLower: 60,
+		...overrides
+	};
+}
+
+// Helper function to create complete WizardTargetWeightResult with defaults
+function createWizardTargetWeightResult(
+	overrides: Partial<WizardTargetWeightResult> = {}
+): WizardTargetWeightResult {
+	return {
+		dateByRate: {
+			250: '2026-06-15',
+			500: '2026-04-15',
+			750: '2026-03-15'
+		},
+		progressByRate: {
+			250: 0.25,
+			500: 0.5,
+			750: 0.75
+		},
+		targetClassification: 'StandardWeight',
+		warning: false,
+		message: '',
+		...overrides
+	};
+}
+
 describe('createTargetWeightTargets', () => {
 	test('should create targets for weight loss scenario', () => {
 		const wizardInput: WizardInput = {
 			weight: 80,
 			height: 175,
 			age: 30,
-			biologicalSex: 'male',
-			activityLevel: 'moderate',
-			goal: 'lose'
+			sex: 'MALE',
+			activityLevel: 1.25,
+			weeklyDifference: 0.7,
+			calculationGoal: 'LOSS'
 		};
 
-		const wizardResult: WizardResult = {
-			tdee: 2500,
-			bmr: 1800,
-			bmi: 26.1
-		};
-
-		const customWizardResult: WizardTargetWeightResult = {
-			dateByRate: {
-				250: '2026-06-15',
-				500: '2026-04-15',
-				750: '2026-03-15'
-			}
-		};
+		const wizardResult = createWizardResult();
+		const customWizardResult = createWizardTargetWeightResult();
 
 		const startDate = new Date('2026-01-15');
 		const targetWeight = 75;
@@ -132,24 +167,26 @@ describe('createTargetWeightTargets', () => {
 			weight: 70,
 			height: 180,
 			age: 25,
-			biologicalSex: 'male',
-			activityLevel: 'high',
-			goal: 'gain'
+			sex: 'MALE',
+			activityLevel: 1.55,
+			weeklyDifference: 0.5,
+			calculationGoal: 'GAIN'
 		};
 
-		const wizardResult: WizardResult = {
+		const wizardResult = createWizardResult({
 			tdee: 3000,
 			bmr: 1900,
-			bmi: 21.6
-		};
+			bmi: 21.6,
+			recommendation: 'GAIN'
+		});
 
-		const customWizardResult: WizardTargetWeightResult = {
+		const customWizardResult = createWizardTargetWeightResult({
 			dateByRate: {
 				250: '2026-08-15',
 				500: '2026-05-15',
 				750: '2026-04-01'
 			}
-		};
+		});
 
 		const startDate = new Date('2026-02-01');
 		const targetWeight = 75;
@@ -179,24 +216,26 @@ describe('createTargetWeightTargets', () => {
 			weight: 100,
 			height: 170,
 			age: 35,
-			biologicalSex: 'female',
-			activityLevel: 'sedentary',
-			goal: 'lose'
+			sex: 'FEMALE',
+			activityLevel: 1.2,
+			weeklyDifference: 1.0,
+			calculationGoal: 'LOSS'
 		};
 
-		const wizardResult: WizardResult = {
+		const wizardResult = createWizardResult({
 			tdee: 2000,
 			bmr: 1500,
-			bmi: 34.6
-		};
+			bmi: 34.6,
+			bmiCategory: 'Obese'
+		});
 
-		const customWizardResult: WizardTargetWeightResult = {
+		const customWizardResult = createWizardTargetWeightResult({
 			dateByRate: {
 				250: '2026-12-15',
 				500: '2026-09-15',
 				750: '2026-07-15'
 			}
-		};
+		});
 
 		const startDate = new Date('2026-01-01');
 		const targetWeight = 80;
@@ -223,24 +262,27 @@ describe('createTargetWeightTargets', () => {
 			weight: 75,
 			height: 175,
 			age: 28,
-			biologicalSex: 'male',
-			activityLevel: 'moderate',
-			goal: 'maintain'
+			sex: 'MALE',
+			activityLevel: 1.55,
+			weeklyDifference: 0.5,
+			calculationGoal: 'LOSS'
 		};
 
-		const wizardResult: WizardResult = {
+		const wizardResult = createWizardResult({
 			tdee: 2400,
 			bmr: 1750,
-			bmi: 24.5
-		};
+			bmi: 24.5,
+			bmiCategory: 'StandardWeight',
+			recommendation: 'HOLD'
+		});
 
-		const customWizardResult: WizardTargetWeightResult = {
+		const customWizardResult = createWizardTargetWeightResult({
 			dateByRate: {
 				250: '2026-06-01',
 				500: '2026-04-01',
 				750: '2026-03-01'
 			}
-		};
+		});
 
 		const startDate = new Date('2026-01-01');
 		const targetWeight = 75;
@@ -264,24 +306,27 @@ describe('createTargetWeightTargets', () => {
 			weight: 75,
 			height: 175,
 			age: 30,
-			biologicalSex: 'male',
-			activityLevel: 'moderate',
-			goal: 'maintain'
+			sex: 'MALE',
+			activityLevel: 1.55,
+			weeklyDifference: 0,
+			calculationGoal: 'LOSS'
 		};
 
-		const wizardResult: WizardResult = {
+		const wizardResult = createWizardResult({
 			tdee: 2500,
 			bmr: 1800,
-			bmi: 24.5
-		};
+			bmi: 24.5,
+			bmiCategory: 'StandardWeight',
+			recommendation: 'HOLD'
+		});
 
-		const customWizardResult: WizardTargetWeightResult = {
+		const customWizardResult = createWizardTargetWeightResult({
 			dateByRate: {
 				250: '2026-06-01',
 				500: '2026-06-01',
 				750: '2026-06-01'
 			}
-		};
+		});
 
 		const startDate = new Date('2026-01-01');
 		const targetWeight = 75;
@@ -306,22 +351,19 @@ describe('createTargetWeightTargets', () => {
 			weight: 80,
 			height: 175,
 			age: 30,
-			biologicalSex: 'male',
-			activityLevel: 'moderate',
-			goal: 'lose'
+			sex: 'MALE',
+			activityLevel: 1.55,
+			weeklyDifference: 0.5,
+			calculationGoal: 'LOSS'
 		};
 
-		const wizardResult: WizardResult = {
-			tdee: 2500,
-			bmr: 1800,
-			bmi: 26.1
-		};
+		const wizardResult = createWizardResult();
 
-		const customWizardResult: WizardTargetWeightResult = {
+		const customWizardResult = createWizardTargetWeightResult({
 			dateByRate: {
 				500: '2026-04-15'
 			}
-		};
+		});
 
 		const startDate = new Date('2026-01-15');
 		const targetWeight = 75;
@@ -348,24 +390,26 @@ describe('createTargetWeightTargets', () => {
 			weight: 90,
 			height: 175,
 			age: 40,
-			biologicalSex: 'male',
-			activityLevel: 'low',
-			goal: 'lose'
+			sex: 'MALE',
+			activityLevel: 1.2,
+			weeklyDifference: 0.7,
+			calculationGoal: 'LOSS'
 		};
 
-		const wizardResult: WizardResult = {
+		const wizardResult = createWizardResult({
 			tdee: 2200,
 			bmr: 1650,
-			bmi: 29.4
-		};
+			bmi: 29.4,
+			bmiCategory: 'Overweight'
+		});
 
-		const customWizardResult: WizardTargetWeightResult = {
+		const customWizardResult = createWizardTargetWeightResult({
 			dateByRate: {
 				250: '2026-10-01',
 				500: '2026-07-01',
 				750: '2026-05-15'
 			}
-		};
+		});
 
 		const startDate = new Date('2026-01-01');
 		const targetWeight = 75;

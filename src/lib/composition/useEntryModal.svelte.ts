@@ -33,269 +33,306 @@
 
 import type { CommandHooks } from '$lib/api/gen/commands';
 import { formatError } from '$lib/api/error-formatter';
-import { info } from '@tauri-apps/plugin-log';
+import { debug } from '@tauri-apps/plugin-log';
 
 export interface UseEntryModalOptions<T extends { id?: number }, N = T> {
-  /** Called when creating a new entry - receives optional hooks for error/success handling */
-  onCreate: (entry: N, hooks?: CommandHooks<T>) => Promise<T>;
-  /** Called when updating an existing entry - receives optional hooks for error/success handling */
-  onUpdate: (id: number, entry: T, hooks?: CommandHooks<T>) => Promise<T>;
-  /** Called when deleting an entry - receives optional hooks for error/success handling */
-  onDelete: (id: number, hooks?: CommandHooks<number>) => Promise<number>;
-  /** Returns a blank entry for the create form */
-  getBlankEntry: () => N;
-  /** Optional callback after successful create */
-  onCreateSuccess?: (entry: T) => void;
-  /** Optional callback after successful update */
-  onUpdateSuccess?: (entry: T) => void;
-  /** Optional callback after successful delete */
-  onDeleteSuccess?: (id: number) => void;
+	/** Called when creating a new entry - receives optional hooks for error/success handling */
+	onCreate: (entry: N, hooks?: CommandHooks<T>) => Promise<T>;
+	/** Called when updating an existing entry - receives optional hooks for error/success handling */
+	onUpdate: (id: number, entry: T, hooks?: CommandHooks<T>) => Promise<T>;
+	/** Called when deleting an entry - receives optional hooks for error/success handling */
+	onDelete: (id: number, hooks?: CommandHooks<number>) => Promise<number>;
+	/** Returns a blank entry for the create form */
+	getBlankEntry: () => N;
+	/** Optional callback after successful create */
+	onCreateSuccess?: (entry: T) => void;
+	/** Optional callback after successful update */
+	onUpdateSuccess?: (entry: T) => void;
+	/** Optional callback after successful delete */
+	onDeleteSuccess?: (id: number) => void;
 }
 
 export function useEntryModal<T extends { id?: number }, N = T>(
-  options: UseEntryModalOptions<T, N>
+	options: UseEntryModalOptions<T, N>
 ) {
-  const { onCreate, onUpdate, onDelete, getBlankEntry, onCreateSuccess, onUpdateSuccess, onDeleteSuccess } = options;
+	const {
+		onCreate,
+		onUpdate,
+		onDelete,
+		getBlankEntry,
+		onCreateSuccess,
+		onUpdateSuccess,
+		onDeleteSuccess
+	} = options;
 
-  // Modal dialog references
-  let createDialog = $state<HTMLDialogElement>();
-  let editDialog = $state<HTMLDialogElement>();
-  let deleteDialog = $state<HTMLDialogElement>();
+	// Modal dialog references
+	let createDialog = $state<HTMLDialogElement>();
+	let editDialog = $state<HTMLDialogElement>();
+	let deleteDialog = $state<HTMLDialogElement>();
 
-  // Entry being created or edited
-  let currentEntry = $state<T | N>();
+	// Entry being created or edited
+	let currentEntry = $state<T | N>();
 
-  // Entry being edited (for edit mode)
-  let editingEntry = $state<T>();
+	// Entry being edited (for edit mode)
+	let editingEntry = $state<T>();
 
-  // State flags
-  let mode = $state<'create' | 'edit' | 'delete'>('create');
-  let enableDelete = $state(false);
-  let isProcessing = $state(false);
+	// State flags
+	let mode = $state<'create' | 'edit' | 'delete'>('create');
+	let enableDelete = $state(false);
+	let isProcessing = $state(false);
 
-  // Error handling
-  let errorMessage = $state<string | undefined>();
+	// Error handling
+	let errorMessage = $state<string | undefined>();
 
-  /**
-   * Open create modal with a blank entry
-   */
-  const openCreate = () => {
-    mode = 'create';
-    currentEntry = getBlankEntry();
-    enableDelete = false;
-    errorMessage = undefined;
-    createDialog?.showModal();
-  };
+	/**
+	 * Open create modal with a blank entry
+	 */
+	const openCreate = () => {
+		mode = 'create';
+		currentEntry = getBlankEntry();
+		enableDelete = false;
+		errorMessage = undefined;
+		createDialog?.showModal();
+	};
 
-  /**
-   * Open edit modal with an existing entry
-   */
-  const openEdit = (entry: T) => {
-    mode = 'edit';
-    editingEntry = entry;
-    currentEntry = { ...entry }; // Copy to avoid mutating original
-    enableDelete = false;
-    errorMessage = undefined;
-    editDialog?.showModal();
+	/**
+	 * Open edit modal with an existing entry
+	 */
+	const openEdit = (entry: T) => {
+		mode = 'edit';
+		editingEntry = entry;
+		currentEntry = { ...entry }; // Copy to avoid mutating original
+		enableDelete = false;
+		errorMessage = undefined;
+		editDialog?.showModal();
 
-    info(`[ModalDialog  openEdit] editingEntry=${JSON.stringify(editingEntry)}`);
-  };
+		debug(`[ModalDialog  openEdit] editingEntry=${JSON.stringify(editingEntry)}`);
+	};
 
+	/**
+	 * Open delete modal with an existing entry
+	 */
+	const openDelete = (entry: T) => {
+		mode = 'delete';
+		editingEntry = entry;
+		currentEntry = { ...entry };
+		enableDelete = true;
+		errorMessage = undefined;
+		deleteDialog?.showModal();
+	};
 
-  /**
-   * Open delete modal with an existing entry
-   */
-  const openDelete = (entry: T) => {
-    mode = 'delete';
-    editingEntry = entry;
-    currentEntry = { ...entry };
-    enableDelete = true;
-    errorMessage = undefined;
-    deleteDialog?.showModal();
-  }
+	/**
+	 * Save the current entry (create or update)
+	 * Returns true if successful, false if validation error occurred
+	 */
+	const save = async (event?: Event): Promise<boolean> => {
+		debug(`[ModalDialog save] isProcessing=${isProcessing} mode=${mode}`);
 
-  /**
-   * Save the current entry (create or update)
-   * Returns true if successful, false if validation error occurred
-   */
-  const save = async (event?: Event): Promise<boolean> => {
-    info(`[ModalDialog save] isProcessing=${isProcessing} mode=${mode}`);
+		if (isProcessing) return false;
 
-    if (isProcessing) return false;
+		// Clear previous errors
+		errorMessage = undefined;
+		isProcessing = true;
 
-    // Clear previous errors
-    errorMessage = undefined;
-    isProcessing = true;
+		let success = false;
 
-    let success = false;
+		try {
+			if (mode === 'create') {
+				try {
+					const data = await onCreate(currentEntry as N);
 
-    try {
-      if (mode === 'create') {
-        try {
-          const data = await onCreate(currentEntry as N);
+					success = true;
 
-          success = true;
+					onCreateSuccess?.(data);
+					createDialog?.close();
 
-          onCreateSuccess?.(data);
-          createDialog?.close();
+					currentEntry = undefined;
+					editingEntry = undefined;
+					enableDelete = false;
+				} catch (error: unknown) {
+					event?.preventDefault();
+					event?.stopPropagation();
 
-          currentEntry = undefined;
-          editingEntry = undefined;
-          enableDelete = false;
-        } catch (error: unknown) {
-          event?.preventDefault();
-          event?.stopPropagation();
+					errorMessage = formatError(error);
+				}
+			} else if (mode === 'edit' && editingEntry?.id !== undefined) {
+				debug(`[ModalDialog save] currentEntry=${JSON.stringify(currentEntry)}`);
 
-          errorMessage = formatError(error);
-        }
-      } else if (mode === 'edit' && editingEntry?.id !== undefined) {
-        info(`[ModalDialog save] currentEntry=${JSON.stringify(currentEntry)}`);
+				try {
+					const data = await onUpdate(editingEntry.id!, currentEntry as T);
 
-        try {
-          const data = await onUpdate(editingEntry.id!, currentEntry as T);
+					success = true;
 
-          success = true;
+					onUpdateSuccess?.(data);
+					editDialog?.close();
 
-          onUpdateSuccess?.(data);
-          editDialog?.close();
+					currentEntry = undefined;
+					editingEntry = undefined;
+					enableDelete = false;
+				} catch (error: unknown) {
+					event?.preventDefault();
+					event?.stopPropagation();
+					errorMessage = formatError(error);
+				}
+			} else if (mode === 'delete' && editingEntry?.id !== undefined) {
+				debug(`[ModalDialog delete] id=${editingEntry.id!}`);
 
-          currentEntry = undefined;
-          editingEntry = undefined;
-          enableDelete = false;
-        } catch (error: unknown) {
-          event?.preventDefault();
-          event?.stopPropagation();
-          errorMessage = formatError(error);
-        }
-      } else if (mode === 'delete' && editingEntry?.id !== undefined) {
-        try {
-          await onDelete(editingEntry.id);
+				try {
+					await onDelete(editingEntry.id);
 
-          success = true;
+					success = true;
 
-          onDeleteSuccess?.(editingEntry.id);
-          deleteDialog?.close();
+					onDeleteSuccess?.(editingEntry.id);
+					deleteDialog?.close();
 
-          currentEntry = undefined;
-          editingEntry = undefined;
-          enableDelete = false;
-        } catch (error: unknown) {
-          event?.preventDefault();
-          event?.stopPropagation();
-          errorMessage = formatError(error);
-        }
+					currentEntry = undefined;
+					editingEntry = undefined;
+					enableDelete = false;
+				} catch (error: unknown) {
+					event?.preventDefault();
+					event?.stopPropagation();
+					errorMessage = formatError(error);
+				}
 
-        return success;
-      }
+				return success;
+			}
 
-      return false;
-    } finally {
-      isProcessing = false;
-    }
-  };
+			return false;
+		} finally {
+			isProcessing = false;
+		}
+	};
 
-  /**
-   * Cancel and close the modal
-   */
-  const cancel = () => {
-    createDialog?.close();
-    editDialog?.close();
-    deleteDialog?.close();
+	/**
+	 * Cancel and close the modal
+	 */
+	const cancel = () => {
+		createDialog?.close();
+		editDialog?.close();
+		deleteDialog?.close();
 
-    currentEntry = undefined;
-    editingEntry = undefined;
-    enableDelete = false;
-    errorMessage = undefined;
-  };
+		currentEntry = undefined;
+		editingEntry = undefined;
+		enableDelete = false;
+		errorMessage = undefined;
+	};
 
-  /**
-   * Delete the current entry
-   */
-  const deleteEntry = async (event?: Event): Promise<boolean> => {
-    if (isProcessing || !editingEntry?.id) return false;
+	/**
+	 * Delete the current entry
+	 */
+	const deleteEntry = async (event?: Event): Promise<boolean> => {
+		if (isProcessing || !editingEntry?.id) return false;
 
-    // Clear previous errors
-    errorMessage = undefined;
-    isProcessing = true;
+		// Clear previous errors
+		errorMessage = undefined;
+		isProcessing = true;
 
-    try {
-      let success = false;
+		try {
+			let success = false;
 
-      try {
-        await onDelete(editingEntry.id);
+			try {
+				await onDelete(editingEntry.id);
 
-        success = true;
+				success = true;
 
-        onDeleteSuccess?.(editingEntry.id);
-        editDialog?.close();
-        deleteDialog?.close();
+				onDeleteSuccess?.(editingEntry.id);
+				editDialog?.close();
+				deleteDialog?.close();
 
-        // Reset state on success
-        currentEntry = undefined;
-        editingEntry = undefined;
-        enableDelete = false;
-      } catch (error: unknown) {
-        event?.preventDefault();
-        event?.stopPropagation();
-        errorMessage = formatError(error);
-        success = false;
-      }
+				// Reset state on success
+				currentEntry = undefined;
+				editingEntry = undefined;
+				enableDelete = false;
+			} catch (error: unknown) {
+				event?.preventDefault();
+				event?.stopPropagation();
+				errorMessage = formatError(error);
+				success = false;
+			}
 
-      return success;
-    } finally {
-      isProcessing = false;
-    }
-  };
+			return success;
+		} finally {
+			isProcessing = false;
+		}
+	};
 
-  /**
-   * Enable delete mode (show delete confirmation)
-   */
-  const requestDelete = () => {
-    enableDelete = true;
-  };
+	/**
+	 * Enable delete mode (show delete confirmation)
+	 */
+	const requestDelete = () => {
+		enableDelete = true;
+	};
 
-  /**
-   * Clear error message
-   */
-  const clearError = () => {
-    errorMessage = undefined;
-  };
+	/**
+	 * Clear error message
+	 */
+	const clearError = () => {
+		errorMessage = undefined;
+	};
 
-  return {
-    // Dialog refs (bind these in your template)
-    createDialog: {
-      get value() { return createDialog; },
-      set value(v: HTMLDialogElement | undefined) { createDialog = v; }
-    },
-    editDialog: {
-      get value() { return editDialog; },
-      set value(v: HTMLDialogElement | undefined) { editDialog = v; }
-    },
-    deleteDialog: {
-      get value() { return deleteDialog; },
-      set value(v: HTMLDialogElement | undefined) { deleteDialog = v }
-    },
+	return {
+		// Dialog refs (bind these in your template)
+		createDialog: {
+			get value() {
+				return createDialog;
+			},
+			set value(v: HTMLDialogElement | undefined) {
+				createDialog = v;
+			}
+		},
+		editDialog: {
+			get value() {
+				return editDialog;
+			},
+			set value(v: HTMLDialogElement | undefined) {
+				editDialog = v;
+			}
+		},
+		deleteDialog: {
+			get value() {
+				return deleteDialog;
+			},
+			set value(v: HTMLDialogElement | undefined) {
+				deleteDialog = v;
+			}
+		},
 
-    // Current state
-    get currentEntry() { return currentEntry; },
-    set currentEntry(entry: T | N | undefined) { currentEntry = entry; },
-    get mode() { return mode; },
-    get enableDelete() { return enableDelete; },
-    get isProcessing() { return isProcessing; },
-    get isEditing() { return mode === 'edit'; },
+		// Current state
+		get currentEntry() {
+			return currentEntry;
+		},
+		set currentEntry(entry: T | N | undefined) {
+			currentEntry = entry;
+		},
+		get mode() {
+			return mode;
+		},
+		get enableDelete() {
+			return enableDelete;
+		},
+		get isProcessing() {
+			return isProcessing;
+		},
+		get isEditing() {
+			return mode === 'edit';
+		},
 
-    // Error state
-    get errorMessage() { return errorMessage; },
-    get hasError() { return errorMessage !== undefined; },
+		// Error state
+		get errorMessage() {
+			return errorMessage;
+		},
+		get hasError() {
+			return errorMessage !== undefined;
+		},
 
-    // Actions
-    openCreate,
-    openEdit,
-    openDelete,
-    save,
-    cancel,
-    deleteEntry,
-    requestDelete,
-    clearError
-  };
+		// Actions
+		openCreate,
+		openEdit,
+		openDelete,
+		save,
+		cancel,
+		deleteEntry,
+		requestDelete,
+		clearError
+	};
 }

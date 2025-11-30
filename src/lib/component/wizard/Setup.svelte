@@ -260,7 +260,8 @@
 				age: wizardInput.age,
 				sex: wizardInput.sex,
 				height: wizardInput.height,
-				weight: wizardInput.weight
+				weight: wizardInput.weight,
+				activityLevel: wizardInput.activityLevel
 			});
 
 			processingStep = 'Creating your personalized plan...';

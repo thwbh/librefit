@@ -246,10 +246,7 @@ fn test_create_weight_tracker_entry() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let new_entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.5,
-    };
+    let new_entry = NewWeightTracker::new("2025-01-15".to_string(), 82.5);
 
     let result = WeightTracker::create(&mut conn, &new_entry);
 
@@ -266,15 +263,9 @@ fn test_get_weight_tracker_entries() {
     let mut conn = pool.get().unwrap();
 
     // Create multiple entries
-    let entry1 = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.5,
-    };
+    let entry1 = NewWeightTracker::new("2025-01-15".to_string(), 82.5);
 
-    let entry2 = NewWeightTracker {
-        added: "2025-01-16".to_string(),
-        amount: 82.0,
-    };
+    let entry2 = NewWeightTracker::new("2025-01-16".to_string(), 82.0);
 
     WeightTracker::create(&mut conn, &entry1).unwrap();
     WeightTracker::create(&mut conn, &entry2).unwrap();
@@ -293,18 +284,12 @@ fn test_update_weight_tracker_entry() {
     let mut conn = pool.get().unwrap();
 
     // Create entry
-    let new_entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.5,
-    };
+    let new_entry = NewWeightTracker::new("2025-01-15".to_string(), 82.5);
 
     let created = WeightTracker::create(&mut conn, &new_entry).unwrap();
 
     // Update entry
-    let updated_entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.0,
-    };
+    let updated_entry = NewWeightTracker::new("2025-01-15".to_string(), 82.0);
 
     let result = WeightTracker::update(&mut conn, &created.id, &updated_entry);
 
@@ -319,10 +304,7 @@ fn test_delete_weight_tracker_entry() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let new_entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.5,
-    };
+    let new_entry = NewWeightTracker::new("2025-01-15".to_string(), 82.5);
 
     let created = WeightTracker::create(&mut conn, &new_entry).unwrap();
 
@@ -343,20 +325,11 @@ fn test_find_weight_tracker_by_date() {
     let mut conn = pool.get().unwrap();
 
     // Create entries on different dates
-    let entry1 = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.5,
-    };
+    let entry1 = NewWeightTracker::new("2025-01-15".to_string(), 82.5);
 
-    let entry2 = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.3,
-    };
+    let entry2 = NewWeightTracker::new("2025-01-15".to_string(), 82.3);
 
-    let entry3 = NewWeightTracker {
-        added: "2025-01-16".to_string(),
-        amount: 82.0,
-    };
+    let entry3 = NewWeightTracker::new("2025-01-16".to_string(), 82.0);
 
     WeightTracker::create(&mut conn, &entry1).unwrap();
     WeightTracker::create(&mut conn, &entry2).unwrap();
@@ -392,10 +365,7 @@ fn test_find_weight_tracker_by_date_range() {
     let dates = vec!["2025-01-15", "2025-01-16", "2025-01-17", "2025-01-18"];
 
     for (i, date) in dates.iter().enumerate() {
-        let entry = NewWeightTracker {
-            added: date.to_string(),
-            amount: 85.0 - (i as f32 * 0.5),
-        };
+        let entry = NewWeightTracker::new(date.to_string(), 85.0 - (i as f32 * 0.5));
         WeightTracker::create(&mut conn, &entry).unwrap();
     }
 
@@ -421,10 +391,7 @@ fn test_find_weight_tracker_by_date_range_single_day() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.5,
-    };
+    let entry = NewWeightTracker::new("2025-01-15".to_string(), 82.5);
 
     WeightTracker::create(&mut conn, &entry).unwrap();
 
@@ -463,10 +430,7 @@ fn test_multiple_entries_same_day() {
 
     // Create multiple weight entries on the same day (e.g., morning and evening)
     for i in 1..=3 {
-        let entry = NewWeightTracker {
-            added: "2025-01-15".to_string(),
-            amount: 82.5 - (i as f32 * 0.1),
-        };
+        let entry = NewWeightTracker::new("2025-01-15".to_string(), 82.5 - (i as f32 * 0.1));
         WeightTracker::create(&mut conn, &entry).unwrap();
     }
 
@@ -486,10 +450,7 @@ fn test_weight_precision() {
     let mut conn = pool.get().unwrap();
 
     // Test that weight values maintain precision
-    let new_entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 82.456,
-    };
+    let new_entry = NewWeightTracker::new("2025-01-15".to_string(), 82.456);
 
     let created = WeightTracker::create(&mut conn, &new_entry).unwrap();
 
@@ -505,10 +466,8 @@ fn test_weight_precision() {
 fn test_weight_tracker_validation_amount_too_low() {
     use validator::Validate;
 
-    let entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 29.9, // Invalid: below minimum of 30.0
-    };
+    // Invalid: below minimum of 30.0
+    let entry = NewWeightTracker::new("2025-01-15".to_string(), 29.9);
 
     let validation = entry.validate();
     assert!(validation.is_err());
@@ -518,10 +477,8 @@ fn test_weight_tracker_validation_amount_too_low() {
 fn test_weight_tracker_validation_amount_too_high() {
     use validator::Validate;
 
-    let entry = NewWeightTracker {
-        added: "2025-01-15".to_string(),
-        amount: 330.1, // Invalid: above maximum of 330.0
-    };
+    // Invalid: above maximum of 330.0
+    let entry = NewWeightTracker::new("2025-01-15".to_string(), 330.1);
 
     let validation = entry.validate();
     assert!(validation.is_err());

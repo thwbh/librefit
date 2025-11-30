@@ -91,10 +91,10 @@
 			<div class="flex items-center gap-4 p-4 bg-base-100 rounded-lg">
 				<div class="flex-1">
 					<h2 class="text-2xl font-bold">{userData.name!}</h2>
-					<p class="text-sm opacity-70">Tap to view, swipe to edit</p>
+					<p class="text-sm opacity-70">Swipe to edit</p>
 				</div>
 
-				<UserAvatar {userData} />
+				<UserAvatar {userData} readonly={true} />
 			</div>
 		</SwipeableListItem>
 

@@ -63,7 +63,7 @@
 	);
 </script>
 
-<div class="stat">
+<div class="stat intake-stat">
 	<div class="stat-figure">
 		<CircularProgress value={percentage} size="7rem" color={currentColor}>
 			<p class="text-neutral">{percentage}%</p>
@@ -93,5 +93,9 @@
 <style>
 	.text-stat-value {
 		font-size: 3rem;
+	}
+
+	.intake-stat {
+		border-right: 0px !important;
 	}
 </style>

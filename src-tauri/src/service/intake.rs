@@ -43,6 +43,8 @@ pub struct Intake {
     pub category: String,
     #[validate(length(max = 500, message = "Description must be less than 500 characters"))]
     pub description: Option<String>,
+    #[validate(custom(function = "validate_time_format"))]
+    pub time: String,
 }
 
 /// For creation of a new [Intake] entry.
@@ -67,6 +69,28 @@ pub struct NewIntake {
     pub category: String,
     #[validate(length(max = 500, message = "Description must be less than 500 characters"))]
     pub description: Option<String>,
+    #[serde(default = "default_time")]
+    #[validate(custom(function = "validate_time_format_optional"))]
+    pub time: Option<String>,
+}
+
+impl NewIntake {
+    /// Create a new intake entry with current time
+    pub fn new(added: String, amount: i32, category: String, description: Option<String>) -> Self {
+        Self {
+            added,
+            amount,
+            category,
+            description,
+            time: default_time(),
+        }
+    }
+}
+
+/// Default time value set to current time
+fn default_time() -> Option<String> {
+    use chrono::Local;
+    Some(Local::now().format("%H:%M:%S").to_string())
 }
 
 /// Represents a target for the maximum calorie intake per day. Will display a warning in the
@@ -125,6 +149,35 @@ fn validate_date_format(date_str: &str) -> Result<(), ValidationError> {
     }
 }
 
+/// Validates time format (HH:MM:SS) for String fields
+fn validate_time_format(time_str: &str) -> Result<(), ValidationError> {
+    use chrono::NaiveTime;
+
+    match NaiveTime::parse_from_str(time_str, "%H:%M:%S") {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ValidationError::new(
+            "Invalid time format. Expected HH:MM:SS",
+        )),
+    }
+}
+
+/// Validates time format (HH:MM:SS) for Option<String> fields
+fn validate_time_format_optional(time_str: &str) -> Result<(), ValidationError> {
+    use chrono::NaiveTime;
+
+    // For Option fields, validator crate passes empty string for None
+    if time_str.is_empty() {
+        return Ok(()); // Empty is valid, will use default
+    }
+
+    match NaiveTime::parse_from_str(time_str, "%H:%M:%S") {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ValidationError::new(
+            "Invalid time format. Expected HH:MM:SS",
+        )),
+    }
+}
+
 /// Validates that target calories doesn't exceed maximum calories and dates are logical
 fn validate_intake_target(target: &NewIntakeTarget) -> Result<(), ValidationError> {
     use chrono::Utc;
@@ -162,8 +215,17 @@ fn validate_intake_target(target: &NewIntakeTarget) -> Result<(), ValidationErro
 impl Intake {
     /// Insert a new intake entry to the tracker
     pub fn create(conn: &mut SqliteConnection, new_entry: &NewIntake) -> QueryResult<Self> {
+        // Ensure time field is set, use default if None
+        let entry_with_time = NewIntake {
+            added: new_entry.added.clone(),
+            amount: new_entry.amount,
+            category: new_entry.category.clone(),
+            description: new_entry.description.clone(),
+            time: new_entry.time.clone().or_else(default_time),
+        };
+
         diesel::insert_into(intake::table)
-            .values(new_entry)
+            .values(&entry_with_time)
             .returning(Self::as_returning())
             .get_result(conn)
     }
@@ -179,8 +241,17 @@ impl Intake {
         tracker_id: i32,
         updated_entry: &NewIntake,
     ) -> QueryResult<Self> {
+        // Ensure time field is set, use default if None
+        let entry_with_time = NewIntake {
+            added: updated_entry.added.clone(),
+            amount: updated_entry.amount,
+            category: updated_entry.category.clone(),
+            description: updated_entry.description.clone(),
+            time: updated_entry.time.clone().or_else(default_time),
+        };
+
         diesel::update(intake::table.filter(intake::id.eq(tracker_id)))
-            .set(updated_entry)
+            .set(&entry_with_time)
             .returning(Self::as_returning())
             .get_result(conn)
     }

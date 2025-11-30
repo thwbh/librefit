@@ -136,7 +136,7 @@
 				{data.trackerProgress.intakeChartData.avg}
 				<span class="text-sm">kcal</span>
 			</div>
-			<div class="stat-desc">Target: {data.trackerProgress.intakeTarget.targetCalories}kcal</div>
+			<div class="stat-desc">Target: {data.trackerProgress.intakeTarget.targetCalories} kcal</div>
 		</div>
 		<div class="stat">
 			<div class="stat-title text-right">∅ Deficit</div>
@@ -146,8 +146,8 @@
 				<span class="text-sm">kcal</span>
 			</div>
 			<div class="stat-desc text-right">
-				target: {data.trackerProgress.intakeTarget.maximumCalories -
-					data.trackerProgress.intakeTarget.targetCalories}
+				Target: {data.trackerProgress.intakeTarget.maximumCalories -
+					data.trackerProgress.intakeTarget.targetCalories} kcal
 			</div>
 		</div>
 	</div>
