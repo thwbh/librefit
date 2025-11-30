@@ -3,6 +3,7 @@
 pub mod body;
 pub mod dashboard;
 pub mod export;
+pub mod import;
 pub mod intake;
 pub mod progress;
 pub mod tracker_history;

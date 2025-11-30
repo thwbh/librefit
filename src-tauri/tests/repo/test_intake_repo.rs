@@ -201,12 +201,12 @@ fn test_create_intake_entry() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let new_entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: Some("Breakfast oatmeal".to_string()),
-    };
+    let new_entry = NewIntake::new(
+        "2025-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("Breakfast oatmeal".to_string()),
+    );
 
     let result = Intake::create(&mut conn, &new_entry);
 
@@ -224,12 +224,7 @@ fn test_create_intake_entry_no_description() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let new_entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 300,
-        category: "s".to_string(),
-        description: None,
-    };
+    let new_entry = NewIntake::new("2025-01-15".to_string(), 300, "s".to_string(), None);
 
     let result = Intake::create(&mut conn, &new_entry);
 
@@ -245,19 +240,19 @@ fn test_get_intake_entries() {
     let mut conn = pool.get().unwrap();
 
     // Create multiple entries
-    let entry1 = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: Some("Breakfast".to_string()),
-    };
+    let entry1 = NewIntake::new(
+        "2025-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("Breakfast".to_string()),
+    );
 
-    let entry2 = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 700,
-        category: "l".to_string(),
-        description: Some("Lunch".to_string()),
-    };
+    let entry2 = NewIntake::new(
+        "2025-01-15".to_string(),
+        700,
+        "l".to_string(),
+        Some("Lunch".to_string()),
+    );
 
     Intake::create(&mut conn, &entry1).unwrap();
     Intake::create(&mut conn, &entry2).unwrap();
@@ -276,22 +271,22 @@ fn test_update_intake_entry() {
     let mut conn = pool.get().unwrap();
 
     // Create entry
-    let new_entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: Some("Original description".to_string()),
-    };
+    let new_entry = NewIntake::new(
+        "2025-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("Original description".to_string()),
+    );
 
     let created = Intake::create(&mut conn, &new_entry).unwrap();
 
     // Update entry
-    let updated_entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 550,
-        category: "b".to_string(),
-        description: Some("Updated description".to_string()),
-    };
+    let updated_entry = NewIntake::new(
+        "2025-01-15".to_string(),
+        550,
+        "b".to_string(),
+        Some("Updated description".to_string()),
+    );
 
     let result = Intake::update(&mut conn, created.id, &updated_entry);
 
@@ -307,12 +302,7 @@ fn test_delete_intake_entry() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let new_entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: None,
-    };
+    let new_entry = NewIntake::new("2025-01-15".to_string(), 500, "b".to_string(), None);
 
     let created = Intake::create(&mut conn, &new_entry).unwrap();
 
@@ -333,26 +323,11 @@ fn test_find_intake_by_date() {
     let mut conn = pool.get().unwrap();
 
     // Create entries on different dates
-    let entry1 = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: None,
-    };
+    let entry1 = NewIntake::new("2025-01-15".to_string(), 500, "b".to_string(), None);
 
-    let entry2 = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 700,
-        category: "l".to_string(),
-        description: None,
-    };
+    let entry2 = NewIntake::new("2025-01-15".to_string(), 700, "l".to_string(), None);
 
-    let entry3 = NewIntake {
-        added: "2025-01-16".to_string(),
-        amount: 600,
-        category: "d".to_string(),
-        description: None,
-    };
+    let entry3 = NewIntake::new("2025-01-16".to_string(), 600, "d".to_string(), None);
 
     Intake::create(&mut conn, &entry1).unwrap();
     Intake::create(&mut conn, &entry2).unwrap();
@@ -388,12 +363,12 @@ fn test_find_intake_by_date_range() {
     let dates = vec!["2025-01-15", "2025-01-16", "2025-01-17", "2025-01-18"];
 
     for (i, date) in dates.iter().enumerate() {
-        let entry = NewIntake {
-            added: date.to_string(),
-            amount: (i as i32 + 1) * 100,
-            category: "b".to_string(),
-            description: None,
-        };
+        let entry = NewIntake::new(
+            date.to_string(),
+            (i as i32 + 1) * 100,
+            "b".to_string(),
+            None,
+        );
         Intake::create(&mut conn, &entry).unwrap();
     }
 
@@ -424,12 +399,7 @@ fn test_find_intake_by_date_range_single_day() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
-    let entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: None,
-    };
+    let entry = NewIntake::new("2025-01-15".to_string(), 500, "b".to_string(), None);
 
     Intake::create(&mut conn, &entry).unwrap();
 
@@ -468,12 +438,12 @@ fn test_multiple_entries_same_date_same_category() {
 
     // Create multiple breakfast entries on the same day
     for i in 1..=3 {
-        let entry = NewIntake {
-            added: "2025-01-15".to_string(),
-            amount: i * 100,
-            category: "b".to_string(),
-            description: Some(format!("Breakfast item {}", i)),
-        };
+        let entry = NewIntake::new(
+            "2025-01-15".to_string(),
+            i * 100,
+            "b".to_string(),
+            Some(format!("Breakfast item {}", i)),
+        );
         Intake::create(&mut conn, &entry).unwrap();
     }
 
@@ -495,12 +465,8 @@ fn test_multiple_entries_same_date_same_category() {
 fn test_intake_validation_amount_too_low() {
     use validator::Validate;
 
-    let entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 0, // Invalid: below minimum of 1
-        category: "b".to_string(),
-        description: None,
-    };
+    // Invalid: below minimum of 1
+    let entry = NewIntake::new("2025-01-15".to_string(), 0, "b".to_string(), None);
 
     let validation = entry.validate();
     assert!(validation.is_err());
@@ -510,12 +476,8 @@ fn test_intake_validation_amount_too_low() {
 fn test_intake_validation_amount_too_high() {
     use validator::Validate;
 
-    let entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 10001, // Invalid: above maximum of 10000
-        category: "b".to_string(),
-        description: None,
-    };
+    // Invalid: above maximum of 10000
+    let entry = NewIntake::new("2025-01-15".to_string(), 10001, "b".to_string(), None);
 
     let validation = entry.validate();
     assert!(validation.is_err());
@@ -525,12 +487,8 @@ fn test_intake_validation_amount_too_high() {
 fn test_intake_validation_category_too_long() {
     use validator::Validate;
 
-    let entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "a".repeat(51), // Invalid: exceeds 50 characters
-        description: None,
-    };
+    // Invalid: exceeds 50 characters
+    let entry = NewIntake::new("2025-01-15".to_string(), 500, "a".repeat(51), None);
 
     let validation = entry.validate();
     assert!(validation.is_err());
@@ -540,12 +498,13 @@ fn test_intake_validation_category_too_long() {
 fn test_intake_validation_description_too_long() {
     use validator::Validate;
 
-    let entry = NewIntake {
-        added: "2025-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: Some("a".repeat(501)), // Invalid: exceeds 500 characters
-    };
+    // Invalid: exceeds 500 characters
+    let entry = NewIntake::new(
+        "2025-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("a".repeat(501)),
+    );
 
     let validation = entry.validate();
     assert!(validation.is_err());

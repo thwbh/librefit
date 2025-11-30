@@ -249,8 +249,8 @@ pub async fn export_csv(
 fn create_intake_csv(intakes: &[Intake]) -> Result<String, String> {
     let mut wtr = csv::Writer::from_writer(vec![]);
 
-    // Write header
-    wtr.write_record(["Date", "Amount (kcal)", "Category", "Description"])
+    // Write header - must match NewIntake struct field names for import compatibility
+    wtr.write_record(["added", "amount", "category", "description"])
         .map_err(|e| format!("Failed to write CSV header: {}", e))?;
 
     // Write data
@@ -274,7 +274,8 @@ fn create_intake_csv(intakes: &[Intake]) -> Result<String, String> {
 fn create_weight_tracker_csv(entries: &[WeightTracker]) -> Result<String, String> {
     let mut wtr = csv::Writer::from_writer(vec![]);
 
-    wtr.write_record(["Date", "Weight (kg)"])
+    // Write header - must match NewWeightTracker struct field names for import compatibility
+    wtr.write_record(["added", "amount"])
         .map_err(|e| format!("Failed to write CSV header: {}", e))?;
 
     for entry in entries {
@@ -292,22 +293,23 @@ fn create_weight_tracker_csv(entries: &[WeightTracker]) -> Result<String, String
 fn create_intake_target_csv(targets: &[IntakeTarget]) -> Result<String, String> {
     let mut wtr = csv::Writer::from_writer(vec![]);
 
+    // Write header - must match NewIntakeTarget struct field names for import compatibility
     wtr.write_record([
-        "Created",
-        "Start Date",
-        "End Date",
-        "Target Calories",
-        "Maximum Calories",
+        "added",
+        "end_date",
+        "maximum_calories",
+        "start_date",
+        "target_calories",
     ])
     .map_err(|e| format!("Failed to write CSV header: {}", e))?;
 
     for target in targets {
         wtr.write_record([
             &target.added,
-            &target.start_date,
             &target.end_date,
-            &target.target_calories.to_string(),
             &target.maximum_calories.to_string(),
+            &target.start_date,
+            &target.target_calories.to_string(),
         ])
         .map_err(|e| format!("Failed to write CSV record: {}", e))?;
     }
@@ -322,21 +324,22 @@ fn create_intake_target_csv(targets: &[IntakeTarget]) -> Result<String, String> 
 fn create_weight_target_csv(targets: &[WeightTarget]) -> Result<String, String> {
     let mut wtr = csv::Writer::from_writer(vec![]);
 
+    // Write header - must match NewWeightTarget struct field names for import compatibility
     wtr.write_record([
-        "Created",
-        "Start Date",
-        "End Date",
-        "Initial Weight (kg)",
-        "Target Weight (kg)",
+        "added",
+        "end_date",
+        "initial_weight",
+        "start_date",
+        "target_weight",
     ])
     .map_err(|e| format!("Failed to write CSV header: {}", e))?;
 
     for target in targets {
         wtr.write_record([
             &target.added,
-            &target.start_date,
             &target.end_date,
             &format!("{:.1}", target.initial_weight),
+            &target.start_date,
             &format!("{:.1}", target.target_weight),
         ])
         .map_err(|e| format!("Failed to write CSV record: {}", e))?;

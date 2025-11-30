@@ -15,6 +15,7 @@ use crate::service::wizard::{
 // Individual model commands
 use crate::service::body::{get_body_data, update_body_data};
 use crate::service::export::{cancel_export, export_database_file, ExportCancellation};
+use crate::service::import::{cancel_import, import_data_file, ImportCancellation};
 use crate::service::intake::{
     create_intake, create_intake_target, delete_intake, get_food_categories,
     get_intake_dates_in_range, get_intake_for_date_range, get_last_intake_target, update_intake,
@@ -86,7 +87,9 @@ pub fn run() {
             get_body_data,
             update_body_data,
             export_database_file,
-            cancel_export
+            cancel_export,
+            import_data_file,
+            cancel_import
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -165,9 +168,10 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // Store the pool and export cancellation state in Tauri's managed state
+    // Store the pool and cancellation states in Tauri's managed state
     app.manage(pool);
     app.manage(ExportCancellation::new());
+    app.manage(ImportCancellation::new());
 
     Ok(())
 }

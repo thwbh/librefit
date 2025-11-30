@@ -155,12 +155,12 @@ fn test_create_intake_success() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
-    let new_entry = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: Some("Breakfast".to_string()),
-    };
+    let new_entry = NewIntake::new(
+        "2026-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("Breakfast".to_string()),
+    );
 
     let result = create_intake(app.state(), new_entry);
 
@@ -177,12 +177,7 @@ fn test_create_intake_validation_amount_too_low() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
-    let new_entry = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 0, // Invalid: too low
-        category: "b".to_string(),
-        description: None,
-    };
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 0, "b".to_string(), None);
 
     let result = create_intake(app.state(), new_entry);
 
@@ -196,12 +191,7 @@ fn test_create_intake_validation_amount_too_high() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
-    let new_entry = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 15000, // Invalid: too high
-        category: "b".to_string(),
-        description: None,
-    };
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 15000, "b".to_string(), None);
 
     let result = create_intake(app.state(), new_entry);
 
@@ -215,12 +205,7 @@ fn test_create_intake_validation_category_too_long() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
-    let new_entry = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 500,
-        category: "a".repeat(60), // Invalid: too long
-        description: None,
-    };
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 500, "a".repeat(60), None); // Invalid: too long
 
     let result = create_intake(app.state(), new_entry);
 
@@ -235,22 +220,22 @@ fn test_update_intake_success() {
     app.manage(pool);
 
     // Create entry
-    let new_entry = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: Some("Original".to_string()),
-    };
+    let new_entry = NewIntake::new(
+        "2026-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("Original".to_string()),
+    );
 
     let created = create_intake(app.state(), new_entry).unwrap();
 
     // Update entry
-    let updated_entry = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 600,
-        category: "b".to_string(),
-        description: Some("Updated".to_string()),
-    };
+    let updated_entry = NewIntake::new(
+        "2026-01-15".to_string(),
+        600,
+        "b".to_string(),
+        Some("Updated".to_string()),
+    );
 
     let result = update_intake(app.state(), created.id, updated_entry);
 
@@ -267,12 +252,7 @@ fn test_delete_intake_success() {
     app.manage(pool);
 
     // Create entry
-    let new_entry = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: None,
-    };
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 500, "b".to_string(), None);
 
     let created = create_intake(app.state(), new_entry).unwrap();
 
@@ -290,26 +270,11 @@ fn test_get_intake_for_date_range_success() {
     app.manage(pool);
 
     // Create entries on different dates
-    let entry1 = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: None,
-    };
+    let entry1 = NewIntake::new("2026-01-15".to_string(), 500, "b".to_string(), None);
 
-    let entry2 = NewIntake {
-        added: "2026-01-16".to_string(),
-        amount: 700,
-        category: "l".to_string(),
-        description: None,
-    };
+    let entry2 = NewIntake::new("2026-01-16".to_string(), 700, "l".to_string(), None);
 
-    let entry3 = NewIntake {
-        added: "2026-01-20".to_string(), // Outside range
-        amount: 300,
-        category: "s".to_string(),
-        description: None,
-    };
+    let entry3 = NewIntake::new("2026-01-20".to_string(), 300, "s".to_string(), None);
 
     create_intake(app.state(), entry1).unwrap();
     create_intake(app.state(), entry2).unwrap();
@@ -333,26 +298,11 @@ fn test_get_intake_dates_in_range_success() {
     app.manage(pool);
 
     // Create multiple entries on same dates
-    let entry1 = NewIntake {
-        added: "2026-01-15".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: None,
-    };
+    let entry1 = NewIntake::new("2026-01-15".to_string(), 500, "b".to_string(), None);
 
-    let entry2 = NewIntake {
-        added: "2026-01-15".to_string(), // Same date as entry1
-        amount: 700,
-        category: "l".to_string(),
-        description: None,
-    };
+    let entry2 = NewIntake::new("2026-01-15".to_string(), 700, "l".to_string(), None);
 
-    let entry3 = NewIntake {
-        added: "2026-01-16".to_string(),
-        amount: 300,
-        category: "s".to_string(),
-        description: None,
-    };
+    let entry3 = NewIntake::new("2026-01-16".to_string(), 300, "s".to_string(), None);
 
     create_intake(app.state(), entry1).unwrap();
     create_intake(app.state(), entry2).unwrap();

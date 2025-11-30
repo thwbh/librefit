@@ -38,26 +38,13 @@ fn test_get_tracker_progress_success() {
     create_weight_target(app.state(), weight_target).unwrap();
 
     // Create tracker entries
-    let entry1 = NewIntake {
-        added: "2026-01-05".to_string(),
-        amount: 1800,
-        category: "b".to_string(),
-        description: None,
-    };
+    let entry1 = NewIntake::new("2026-01-05".to_string(), 1800, "b".to_string(), None);
     create_intake(app.state(), entry1).unwrap();
 
-    let entry2 = NewIntake {
-        added: "2026-01-06".to_string(),
-        amount: 2000,
-        category: "l".to_string(),
-        description: None,
-    };
+    let entry2 = NewIntake::new("2026-01-06".to_string(), 2000, "l".to_string(), None);
     create_intake(app.state(), entry2).unwrap();
 
-    let weight_entry = NewWeightTracker {
-        added: "2026-01-05".to_string(),
-        amount: 79.5,
-    };
+    let weight_entry = NewWeightTracker::new("2026-01-05".to_string(), 79.5);
     create_weight_tracker_entry(app.state(), weight_entry).unwrap();
 
     // Get progress
@@ -207,28 +194,13 @@ fn test_get_tracker_progress_with_multiple_entries_same_day() {
     create_weight_target(app.state(), weight_target).unwrap();
 
     // Create multiple entries on same day
-    let entry1 = NewIntake {
-        added: "2026-01-05".to_string(),
-        amount: 500,
-        category: "b".to_string(),
-        description: None,
-    };
+    let entry1 = NewIntake::new("2026-01-05".to_string(), 500, "b".to_string(), None);
     create_intake(app.state(), entry1).unwrap();
 
-    let entry2 = NewIntake {
-        added: "2026-01-05".to_string(),
-        amount: 700,
-        category: "l".to_string(),
-        description: None,
-    };
+    let entry2 = NewIntake::new("2026-01-05".to_string(), 700, "l".to_string(), None);
     create_intake(app.state(), entry2).unwrap();
 
-    let entry3 = NewIntake {
-        added: "2026-01-05".to_string(),
-        amount: 800,
-        category: "d".to_string(),
-        description: None,
-    };
+    let entry3 = NewIntake::new("2026-01-05".to_string(), 800, "d".to_string(), None);
     create_intake(app.state(), entry3).unwrap();
 
     let result = get_tracker_progress(app.state(), "2026-01-10".to_string());
@@ -332,22 +304,13 @@ fn test_get_tracker_progress_with_weight_entries() {
     create_weight_target(app.state(), weight_target).unwrap();
 
     // Create weight entries
-    let weight1 = NewWeightTracker {
-        added: "2026-01-05".to_string(),
-        amount: 79.8,
-    };
+    let weight1 = NewWeightTracker::new("2026-01-05".to_string(), 79.8);
     create_weight_tracker_entry(app.state(), weight1).unwrap();
 
-    let weight2 = NewWeightTracker {
-        added: "2026-01-10".to_string(),
-        amount: 78.5,
-    };
+    let weight2 = NewWeightTracker::new("2026-01-10".to_string(), 78.5);
     create_weight_tracker_entry(app.state(), weight2).unwrap();
 
-    let weight3 = NewWeightTracker {
-        added: "2026-01-15".to_string(),
-        amount: 77.2,
-    };
+    let weight3 = NewWeightTracker::new("2026-01-15".to_string(), 77.2);
     create_weight_tracker_entry(app.state(), weight3).unwrap();
 
     let result = get_tracker_progress(app.state(), "2026-01-20".to_string());
