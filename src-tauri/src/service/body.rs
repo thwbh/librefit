@@ -34,6 +34,18 @@ pub struct BodyData {
     ))]
     pub weight: f32,
     pub sex: String,
+    #[validate(custom(
+        function = "validate_activity_level",
+        message = "Activity level must be one of: 1.0, 1.25, 1.5, 1.75, 2.0"
+    ))]
+    pub activity_level: f32,
+}
+
+fn validate_activity_level(activity_level: f32) -> Result<(), validator::ValidationError> {
+    match activity_level {
+        1f32 | 1.25f32 | 1.5f32 | 1.75f32 | 2f32 => Ok(()),
+        _ => Err(validator::ValidationError::new("invalid_activity_level")),
+    }
 }
 
 // ============================================================================
@@ -53,6 +65,7 @@ impl BodyData {
         height: &f32,
         weight: &f32,
         sex: &str,
+        activity_level: &f32,
     ) -> QueryResult<Self> {
         match body_data::table.first::<Self>(conn) {
             Ok(existing) => {
@@ -62,6 +75,7 @@ impl BodyData {
                     height: *height,
                     weight: *weight,
                     sex: sex.to_owned(),
+                    activity_level: *activity_level,
                 };
 
                 diesel::update(body_data::table)
@@ -69,7 +83,7 @@ impl BodyData {
                     .returning(Self::as_returning())
                     .get_result(conn)
             }
-            Err(_) => Self::create(conn, age, height, weight, sex),
+            Err(_) => Self::create(conn, age, height, weight, sex, activity_level),
         }
     }
 
@@ -80,6 +94,7 @@ impl BodyData {
         height: &f32,
         weight: &f32,
         sex: &str,
+        activity_level: &f32,
     ) -> QueryResult<Self> {
         let new_body_data = Self {
             id: 1,
@@ -87,6 +102,7 @@ impl BodyData {
             height: *height,
             weight: *weight,
             sex: sex.to_owned(),
+            activity_level: *activity_level,
         };
 
         diesel::insert_into(body_data::table)
@@ -112,13 +128,15 @@ pub fn update_body_data(
     height: f32,
     weight: f32,
     sex: String,
+    activity_level: f32,
 ) -> Result<BodyData, String> {
     log::debug!(
-        ">>> update_body_data: age={:?} height={:?} weight={:?} sex={:?}",
+        ">>> update_body_data: age={:?} height={:?} weight={:?} sex={:?} activity_level={:?}",
         age,
         height,
         weight,
-        sex
+        sex,
+        activity_level
     );
 
     let body_data = BodyData {
@@ -127,11 +145,12 @@ pub fn update_body_data(
         height,
         weight,
         sex: sex.clone(),
+        activity_level,
     };
 
     if let Err(validation_errors) = body_data.validate() {
         return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
-    pool.execute(|conn| BodyData::update(conn, &age, &height, &weight, &sex))
+    pool.execute(|conn| BodyData::update(conn, &age, &height, &weight, &sex, &activity_level))
 }

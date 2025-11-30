@@ -7,6 +7,7 @@ diesel::table! {
         height -> Float,
         weight -> Float,
         sex -> Text,
+        activity_level -> Float,
     }
 }
 
