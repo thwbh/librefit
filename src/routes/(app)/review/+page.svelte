@@ -10,14 +10,59 @@
 		House,
 		Strategy
 	} from 'phosphor-svelte';
-	import type { WeightTarget, WeightTracker } from '$lib/api/gen';
+	import {
+		type WeightTarget,
+		type WeightTracker,
+		type IntakeTarget,
+		type BodyData,
+		CalculationSexSchema
+	} from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { Breadcrumbs, TextSize, type BreadcrumbItem } from '@thwbh/veilchen';
+	import { setWizardContext } from '$lib/context/wizard';
+	import { getUserContext } from '$lib/context/user.svelte';
+	import Finish from '$lib/component/wizard/Finish.svelte';
 
 	let { data } = $props();
 
 	const weightTarget: WeightTarget | undefined = $state(data.weightTarget);
 	const lastWeightTracker: WeightTracker | undefined = $state(data.lastWeightTracker);
+	const intakeTarget: IntakeTarget | undefined = $state(data.intakeTarget);
+	const bodyData: BodyData = data.bodyData;
+
+	// Get user from context
+	const { user } = getUserContext();
+
+	// Set up wizard context for Finish component
+	if (weightTarget && intakeTarget && user) {
+		setWizardContext({
+			userData: user,
+			weightTarget: {
+				added: weightTarget.added,
+				startDate: weightTarget.startDate,
+				endDate: weightTarget.endDate,
+				initialWeight: weightTarget.initialWeight,
+				targetWeight: weightTarget.targetWeight
+			},
+			intakeTarget: {
+				added: intakeTarget.added,
+				startDate: intakeTarget.startDate,
+				endDate: intakeTarget.endDate,
+				targetCalories: intakeTarget.targetCalories,
+				maximumCalories: intakeTarget.maximumCalories
+			},
+			wizardInput: {
+				age: bodyData.age,
+				sex: CalculationSexSchema.safeParse(bodyData.sex).data!,
+				weight: weightTarget.initialWeight,
+				height: bodyData.height,
+				activityLevel: 1,
+				weeklyDifference: 0,
+				calculationGoal: weightTarget.targetWeight > weightTarget.initialWeight ? 'GAIN' : 'LOSS'
+			},
+			chosenRate: intakeTarget.maximumCalories - intakeTarget.targetCalories
+		});
+	}
 
 	// Calculate progress metrics
 	const startDate = $derived(weightTarget ? parseStringAsDate(weightTarget.startDate) : null);
@@ -28,7 +73,6 @@
 	const daysElapsed = $derived(
 		startDate ? Math.min(differenceInDays(today, startDate), totalDays) : 0
 	);
-	const daysRemaining = $derived(totalDays - daysElapsed);
 	const progressPercent = $derived(totalDays > 0 ? Math.round((daysElapsed / totalDays) * 100) : 0);
 
 	// Weight progress
@@ -37,10 +81,6 @@
 	const targetWeight = $derived(weightTarget?.targetWeight ?? 0);
 
 	const weightChange = $derived(initialWeight - currentWeight);
-	const totalWeightGoal = $derived(Math.abs(initialWeight - targetWeight));
-	const weightProgress = $derived(
-		totalWeightGoal > 0 ? Math.round((Math.abs(weightChange) / totalWeightGoal) * 100) : 0
-	);
 
 	const isGaining = $derived(targetWeight > initialWeight);
 	const isOnTrack = $derived(
@@ -54,8 +94,6 @@
 	const isAheadOfSchedule = $derived(
 		isGaining ? currentWeight >= expectedWeight : currentWeight <= expectedWeight
 	);
-
-	const weightDifference = $derived(currentWeight - expectedWeight);
 
 	const items: BreadcrumbItem[] = [
 		{
@@ -176,137 +214,9 @@
 			</div>
 		</div>
 
-		<!-- Progress Stats -->
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-			<div class="stat bg-base-200 rounded-box">
-				<div class="stat-title">Time Progress</div>
-				<div class="stat-value text-primary">{progressPercent}%</div>
-				<div class="stat-desc">
-					{daysElapsed} of {totalDays} days complete
-				</div>
-				<progress class="progress progress-primary w-full mt-2" value={progressPercent} max="100"
-				></progress>
-			</div>
-
-			<div class="stat bg-base-200 rounded-box">
-				<div class="stat-title">Weight Progress</div>
-				<div class="stat-value text-accent">{weightProgress}%</div>
-				<div class="stat-desc">
-					{Math.abs(weightChange).toFixed(1)} / {totalWeightGoal.toFixed(1)} kg
-				</div>
-				<progress class="progress progress-accent w-full mt-2" value={weightProgress} max="100"
-				></progress>
-			</div>
-
-			<div class="stat bg-base-200 rounded-box">
-				<div class="stat-title">Days Remaining</div>
-				<div class="stat-value">{daysRemaining}</div>
-				<div class="stat-desc">
-					{#if isAheadOfSchedule}
-						<span class="text-success">Ahead of schedule!</span>
-					{:else if daysRemaining > 0}
-						Keep going!
-					{:else}
-						Plan complete
-					{/if}
-				</div>
-			</div>
-		</div>
-
-		<!-- Plan Details Table -->
-		<div class="card bg-base-200">
-			<div class="card-body">
-				<h2 class="card-title text-xl mb-4">Plan Details</h2>
-
-				<div class="overflow-x-auto">
-					<table class="table">
-						<tbody>
-							<tr>
-								<th class="w-1/2">Start Date</th>
-								<td>{convertDateStrToDisplayDateStr(weightTarget.startDate)}</td>
-							</tr>
-							<tr>
-								<th>Target Date</th>
-								<td>{convertDateStrToDisplayDateStr(weightTarget.endDate)}</td>
-							</tr>
-							<tr>
-								<th>Duration</th>
-								<td>{totalDays} days ({Math.round(totalDays / 7)} weeks)</td>
-							</tr>
-							<tr class="border-t-2 border-base-300">
-								<th>Starting Weight</th>
-								<td>{initialWeight.toFixed(1)} kg</td>
-							</tr>
-							<tr>
-								<th>Current Weight</th>
-								<td class="font-bold">{currentWeight.toFixed(1)} kg</td>
-							</tr>
-							<tr>
-								<th>Target Weight</th>
-								<td>{targetWeight.toFixed(1)} kg</td>
-							</tr>
-							<tr>
-								<th>Total Goal</th>
-								<td>
-									{#if isGaining}
-										<span class="text-success">+{totalWeightGoal.toFixed(1)} kg</span>
-									{:else}
-										<span class="text-error">-{totalWeightGoal.toFixed(1)} kg</span>
-									{/if}
-								</td>
-							</tr>
-							<tr class="border-t-2 border-base-300">
-								<th>Expected Weight (Today)</th>
-								<td>{expectedWeight.toFixed(1)} kg</td>
-							</tr>
-							<tr>
-								<th>Actual vs Expected</th>
-								<td>
-									{#if Math.abs(weightDifference) < 0.5}
-										<span class="badge badge-success">On track!</span>
-									{:else if (isGaining && weightDifference > 0) || (!isGaining && weightDifference < 0)}
-										<span class="badge badge-success">
-											Ahead by {Math.abs(weightDifference).toFixed(1)} kg
-										</span>
-									{:else}
-										<span class="badge badge-warning">
-											Behind by {Math.abs(weightDifference).toFixed(1)} kg
-										</span>
-									{/if}
-								</td>
-							</tr>
-							<tr>
-								<th>Average Weekly Progress Needed</th>
-								<td>
-									{#if daysRemaining > 0}
-										{@const remainingWeight = Math.abs(targetWeight - currentWeight)}
-										{@const weeksRemaining = daysRemaining / 7}
-										{(remainingWeight / weeksRemaining).toFixed(2)} kg/week
-									{:else}
-										Goal complete
-									{/if}
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-
-				{#if daysRemaining <= 0}
-					<div class="alert alert-success mt-4">
-						<span>Congratulations! You've reached your target date. Time to set a new goal!</span>
-					</div>
-				{:else if !isOnTrack}
-					<div class="alert alert-info mt-4">
-						<span>Tip: Start tracking your weight to see your progress on the timeline!</span>
-					</div>
-				{/if}
-			</div>
-		</div>
+		<!-- Plan Details using Finish component -->
+		{#if weightTarget && intakeTarget && user}
+			<Finish />
+		{/if}
 	{/if}
 </div>
-
-<style>
-	.timeline-box {
-		max-width: 40vw;
-	}
-</style>

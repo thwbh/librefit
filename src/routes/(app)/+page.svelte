@@ -142,10 +142,10 @@
 	<button class="fab-main-action btn btn-circle btn-xl btn-neutral"><X size="1.25em" /></button>
 
 	<!-- buttons that show up when FAB is open -->
-	<button class="btn btn-xl btn-circle btn-info" onclick={modal.openCreate}
+	<button class="btn btn-xl btn-circle btn-secondary" onclick={modal.openCreate}
 		><Hamburger size="1.25em" /></button
 	>
-	<button class="btn btn-xl btn-circle btn-info" onclick={modalWeight.openCreate}
+	<button class="btn btn-xl btn-circle btn-secondary" onclick={modalWeight.openCreate}
 		><Scales size="1.25em" /></button
 	>
 </div>
