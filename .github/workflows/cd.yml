@@ -75,106 +75,23 @@ jobs:
             src-tauri/tauri.conf.json
             src-tauri/gen/android/app/tauri.properties
 
-  build-android:
-    name: 'Build Android APK'
+  create-release:
+    name: 'Create GitHub Release and Commit Version Updates'
     needs: [generate-version, update-version-files]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: 'Download version files'
-        uses: actions/download-artifact@v4
-        with:
-          name: version-files
-
-      - name: 'Restore version files to correct locations'
-        run: |
-          mv package.json package.json.versioned
-          mv src-tauri/Cargo.toml src-tauri/Cargo.toml.versioned
-          mv src-tauri/tauri.conf.json src-tauri/tauri.conf.json.versioned
-          cp package.json.versioned package.json
-          cp src-tauri/Cargo.toml.versioned src-tauri/Cargo.toml
-          cp src-tauri/tauri.conf.json.versioned src-tauri/tauri.conf.json
-          mkdir -p src-tauri/gen/android/app
-          mv src-tauri/gen/android/app/tauri.properties src-tauri/gen/android/app/tauri.properties || true
-
-      - name: 'Setup Node.js'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: 'Install frontend dependencies'
-        run: npm ci
-
-      - name: 'Setup Java'
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: 'Setup Rust'
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: 'Rust cache'
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
-      - name: 'Install Android targets'
-        run: |
-          rustup target add aarch64-linux-android
-          rustup target add armv7-linux-androideabi
-          rustup target add i686-linux-android
-          rustup target add x86_64-linux-android
-
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ needs.generate-version.outputs.tag }}
-          releaseName: 'LibreFit v${{ needs.generate-version.outputs.version }}'
-          releaseBody: |
-            🎉 LibreFit v${{ needs.generate-version.outputs.version }}
-
-            ## What's Changed
-            See the full changelog at https://github.com/${{ github.repository }}/compare/${{ needs.generate-version.outputs.tag }}
-
-            ## Installation
-            Download the APK below and install on your Android device.
-
-            ---
-            🤖 Generated with CalVer (YY.WW.MICRO format)
-            📅 Released on ${{ github.event.head_commit.timestamp }}
-          releaseDraft: false
-          prerelease: false
-          includeDebug: false
-          includeRelease: true
-          includeUpdaterJson: false
-          args: --target aarch64-linux-android --apk
-
-  create-release-commit:
-    name: 'Commit Version Updates'
-    needs: [generate-version, build-android]
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: 'Download version files'
         uses: actions/download-artifact@v4
         with:
           name: version-files
 
-      - name: 'Move files to correct locations'
-        run: |
-          mv package.json.versioned package.json || cp package.json package.json
-          mv src-tauri/Cargo.toml.versioned src-tauri/Cargo.toml || cp src-tauri/Cargo.toml src-tauri/Cargo.toml
-          mv src-tauri/tauri.conf.json.versioned src-tauri/tauri.conf.json || cp src-tauri/tauri.conf.json src-tauri/tauri.conf.json
-          mkdir -p src-tauri/gen/android/app
-          cp src-tauri/gen/android/app/tauri.properties src-tauri/gen/android/app/tauri.properties || true
+      - name: 'Ensure directories exist'
+        run: mkdir -p src-tauri/gen/android/app
 
       - name: 'Commit version bump'
         run: |
@@ -184,3 +101,39 @@ jobs:
           git add src-tauri/gen/android/app/tauri.properties || true
           git commit -m "chore: bump version to ${{ needs.generate-version.outputs.version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
+
+      - name: 'Create Git tag'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.generate-version.outputs.tag }}" -m "Release ${{ needs.generate-version.outputs.version }}"
+          git push origin "${{ needs.generate-version.outputs.tag }}"
+
+      - name: 'Create GitHub Release'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.generate-version.outputs.tag }}
+          name: '${{ needs.generate-version.outputs.version }}'
+          body: |
+            🎉 LibreFit v${{ needs.generate-version.outputs.version }}
+
+            ## What's Changed
+            See the full changelog at https://github.com/${{ github.repository }}/compare/${{ needs.generate-version.outputs.tag }}
+
+            ## Installation
+
+            ### F-Droid
+            LibreFit will be available on F-Droid soon. F-Droid builds directly from source.
+
+            ### Google Play
+            Use the manual release workflow to build and publish to Google Play.
+
+            ### Direct APK
+            Manual builds can be created using the Android Release workflow.
+
+            ---
+            📅 Released on ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
