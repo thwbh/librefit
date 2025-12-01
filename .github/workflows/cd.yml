@@ -1,38 +1,139 @@
 name: 'Release'
-on: workflow_dispatch
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
-  packages: write
   contents: write
 
 jobs:
-  publish:
-    name: 'Package'
+  generate-version:
+    name: 'Generate CalVer Version'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+      tag: ${{ steps.version.outputs.TAG }}
+      version_code: ${{ steps.version.outputs.VERSION_CODE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: 'Generate version number'
+        id: version
+        run: |
+          chmod +x .github/scripts/generate-version.sh
+          .github/scripts/generate-version.sh
+
+      - name: 'Display version info'
+        run: |
+          echo "Version: ${{ steps.version.outputs.VERSION }}"
+          echo "Tag: ${{ steps.version.outputs.TAG }}"
+          echo "Version Code: ${{ steps.version.outputs.VERSION_CODE }}"
+
+  update-version-files:
+    name: 'Update Version in Files'
+    needs: generate-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'Update package.json'
+        run: |
+          sed -i 's/"version": ".*"/"version": "${{ needs.generate-version.outputs.version }}"/' package.json
+          cat package.json | grep version
+
+      - name: 'Update Cargo.toml'
+        run: |
+          sed -i 's/^version = ".*"/version = "${{ needs.generate-version.outputs.version }}"/' src-tauri/Cargo.toml
+          cat src-tauri/Cargo.toml | grep version
+
+      - name: 'Update tauri.conf.json'
+        run: |
+          sed -i 's/"version": ".*"/"version": "${{ needs.generate-version.outputs.version }}"/' src-tauri/tauri.conf.json
+          cat src-tauri/tauri.conf.json | grep version
+
+      - name: 'Update Android versionCode and versionName'
+        run: |
+          mkdir -p src-tauri/gen/android/app
+          cat > src-tauri/gen/android/app/tauri.properties << EOF
+          tauri.android.versionCode=${{ needs.generate-version.outputs.version_code }}
+          tauri.android.versionName=${{ needs.generate-version.outputs.version }}
+          EOF
+          cat src-tauri/gen/android/app/tauri.properties
+
+      - name: 'Upload updated files'
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-files
+          path: |
+            package.json
+            src-tauri/Cargo.toml
+            src-tauri/tauri.conf.json
+            src-tauri/gen/android/app/tauri.properties
+
+  create-release:
+    name: 'Create GitHub Release and Commit Version Updates'
+    needs: [generate-version, update-version-files]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
-      - name: 'Install Tauri dependencies'
-        run: |
-          sudo apt update && sudo apt install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            webkit2gtk-driver \
-            xvfb
-      - name: 'Set up Rust'
-        uses: actions-rs/toolchain@v1 
-        with: 
-          toolchain: stable 
-          profile: minimal 
-          override: true 
-      - name: 'Build'
-        run: cd src-tauri/ && cargo build
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
+      - name: 'Download version files'
+        uses: actions/download-artifact@v4
+        with:
+          name: version-files
+
+      - name: 'Ensure directories exist'
+        run: mkdir -p src-tauri/gen/android/app
+
+      - name: 'Commit version bump'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
+          git add src-tauri/gen/android/app/tauri.properties || true
+          git commit -m "chore: bump version to ${{ needs.generate-version.outputs.version }} [skip ci]" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+
+      - name: 'Create Git tag'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.generate-version.outputs.tag }}" -m "Release ${{ needs.generate-version.outputs.version }}"
+          git push origin "${{ needs.generate-version.outputs.tag }}"
+
+      - name: 'Create GitHub Release'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.generate-version.outputs.tag }}
+          name: '${{ needs.generate-version.outputs.version }}'
+          body: |
+            🎉 LibreFit v${{ needs.generate-version.outputs.version }}
+
+            ## What's Changed
+            See the full changelog at https://github.com/${{ github.repository }}/compare/${{ needs.generate-version.outputs.tag }}
+
+            ## Installation
+
+            ### F-Droid
+            LibreFit will be available on F-Droid soon. F-Droid builds directly from source.
+
+            ### Google Play
+            Use the manual release workflow to build and publish to Google Play.
+
+            ### Direct APK
+            Manual builds can be created using the Android Release workflow.
+
+            ---
+            📅 Released on ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,116 +1,142 @@
-# librefit
+# LibreFit
 
 ![GitHub Release](https://img.shields.io/github/v/release/thwbh/librefit)
 [![codecov](https://codecov.io/github/thwbh/librefit/graph/badge.svg?token=0WEOJOI3IJ)](https://codecov.io/github/thwbh/librefit)
+![License](https://img.shields.io/github/license/thwbh/librefit)
 
-LibreFit is my hobby project that allows you to calculate your TDEE (Total Daily Energy Expenditure) based on your body
-metrics, create goals for weight loss or weight gain from that and encourages you to track your daily calorie intake.
-Based in your input, you will see easy to understand charts to keep on track with your goal - all that with privacy
-first in mind.
+**Your free and open-source calorie tracker for privacy-focused health monitoring.**
+
+LibreFit is a cross-platform app built with Tauri that helps you track your caloric intake and monitor your weight progress with complete privacy. Calculate your TDEE (Total Daily Energy Expenditure), set personalized goals, and visualize your progress with beautiful charts - all without sacrificing your privacy.
+
+## Features
+
+- 📊 **Science-based TDEE calculator** - Get personalized calorie recommendations based on your body metrics and activity level
+- 🎯 **Goal-oriented tracking** - Set weight loss or gain targets with customizable timelines
+- 📱 **Simple daily logging** - Track your meals and weight in seconds
+- 📈 **Visual progress charts** - Monitor your journey with intuitive graphs and insights
+- 🔒 **Privacy-first** - All data stays on your device, no cloud sync, no tracking, no ads
+- 🎨 **Clean, modern UI** - Built with Svelte 5 and Tauri for a smooth, near-native experience
+- 📤 **Data export** - Export your data as CSV or complete database backups
+- 🔧 **Cross-platform** - Currently targeting Android, with broader support possible in the future
+
+## Links
 
 - [Issue Tracker](https://github.com/thwbh/librefit/issues)
 - [Discussions](https://github.com/thwbh/librefit/discussions)
 
-## Introduction
+## Tech Stack
 
-LibreFit was created after tracking my caloric intake with some Excel and Google Sheets over a year. Out of boredom I
-decided to try a new stack I've never done anything productive with, I quite enjoyed the journey and thus this project
-was born.
+- **Backend**: Rust 1.84.0 + Tauri 2.2
+- **Database**: SQLite 3 with Diesel ORM 2.2.6
+- **Frontend**: SvelteKit 2 + Svelte 5
+- **UI**: Tailwind CSS 4 + DaisyUI 5
+- **Build**: Vite 6
 
-### Dependencies
+## Prerequisites
 
-- rust 1.84.0
-- diesel 2.2.6
-- tauri 2.0
-- sqlite 3
-- sveltekit 2.5.2
-- skeleton 2.9.0
+- [Rust](https://www.rust-lang.org/tools/install) 1.84.0 or higher
+- [Node.js](https://nodejs.org/) 20.x or higher
+- [Android Studio](https://developer.android.com/studio) (for Android development)
+- [Android NDK](https://developer.android.com/ndk) (for Android builds)
 
-### Tools
-
-- Android Studio
-
-## Structure
-
-The project follows the default [tauri setup](https://tauri.app/start/create-project/).
+## Project Structure
 
 ```
-librefit
-|- librefit-web
-|- src-tauri
+librefit/
+├── src/                    # SvelteKit frontend
+│   ├── lib/               # Reusable components and utilities
+│   └── routes/            # App pages and layouts
+├── src-tauri/             # Rust backend
+│   ├── src/               # Rust source code
+│   ├── migrations/        # Database migrations
+│   └── gen/android/       # Generated Android project
+├── .github/
+│   ├── workflows/         # CI/CD pipelines
+│   └── scripts/           # Build scripts
+└── tests/                 # Frontend tests
 ```
 
-## setup
+## Development Setup
 
-Navigate to src-tauri/ and issue
+### 1. Clone and Install Dependencies
 
-```shell
+```bash
+git clone https://github.com/thwbh/librefit.git
+cd librefit
+npm install
+```
+
+### 2. Build Rust Backend
+
+```bash
+cd src-tauri
 cargo build
+cd ..
 ```
 
-## start
+### 3. Start Development Server
 
-To start the development server, go to the project root and issue
-
-```shell
+**Desktop development:**
+```bash
 cargo tauri dev
 ```
 
-To start the android development server:
-
-```shell
+**Android development:**
+```bash
 cargo tauri android dev
 ```
 
-If you encounter an error like this:
+### Android NDK Linker Issues
 
-`java.lang.UnsatisfiedLinkError: dlopen failed: cannot locate symbol "__floatunditf"`
-
-The linker path found in `build.rs` does not match.
-
-- Navigate to $NDK_HOME.
-- Search for the x86_64-android libclang file. If you followed the steps in the tauri docs, the path should look like this:
-
-`$NDK_HOME/toolchains/llvm/prebuild/<host>/<lib>/clang/<clang-version>/lib/<os>/libclang_rt.builtins-<guest>.a`
-
-- <host>: Your system type, e.g. linux-x86_64
-- <lib>: Either lib or lib64
-- <os>: Your OS type, e.g. linux
-- <guest>: Guest system type, e.g. x86_64-android
-
-export that as env variable, e.g. `$LINKER`
-
-Force cargo to use that linker with `RUSTFLAGS=-C link-arg=$LINKER`
-
-Example command (works on my machine (tm)):
-
-```shell
-RUSTFLAGS="-C link-arg=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/19/lib/linux/libclang_rt.builtins-x86_64-android.a" cargo tauri android dev
+If you encounter this error:
+```
+java.lang.UnsatisfiedLinkError: dlopen failed: cannot locate symbol "__floatunditf"
 ```
 
-## test
+The linker path in `build.rs` doesn't match your system. Fix it by:
 
-This project uses [nextest-rs](https://nexte.st/) and [vitest](https://vitest.dev).
+1. Locate your NDK linker library:
+   ```
+   $NDK_HOME/toolchains/llvm/prebuilt/<host>/lib/clang/<version>/lib/<os>/libclang_rt.builtins-<guest>.a
+   ```
 
-To run vitest (svelte frontend), go to the project root and issue:
+2. Run with explicit linker:
+   ```bash
+   RUSTFLAGS="-C link-arg=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/19/lib/linux/libclang_rt.builtins-x86_64-android.a" cargo tauri android dev
+   ```
 
-```shell
+## Testing
+
+This project uses [nextest](https://nexte.st/) for Rust and [vitest](https://vitest.dev) for frontend tests.
+
+**Run frontend tests:**
+```bash
 npm run test
 ```
 
-To run nextest (rust backend), go to src-tauri/ and issue:
-
-```shell
+**Run backend tests:**
+```bash
+cd src-tauri
 cargo nextest run
 ```
 
-The github action should run with the `--profile ci` flag to enable reporting.
+**Run with coverage:**
+```bash
+npm run test:ci              # Frontend with coverage
+cargo llvm-cov nextest       # Backend with coverage
+```
 
-## Attribution
+## Contributing
 
-The avatars were created with hotpot: https://hotpot.ai/art-generator
+Contributions are welcome! Here's how you can help:
 
-## Contribute
+- **Report bugs**: Use the [Issue Tracker](https://github.com/thwbh/librefit/issues) to report bugs or request features
+- **Discuss ideas**: Join the [Discussions](https://github.com/thwbh/librefit/discussions) to share ideas or ask questions
+- **Submit PRs**: Fork the repo, make your changes, and submit a pull request
+- **Improve documentation**: Help make the docs clearer and more comprehensive
 
-If you have any suggestions, impediments or things that absolutely annoy you, please refer to the issue tracker linked
-at the top of this document. When you are interested in participating in development, feel free to contact me.
+Please review any open issues before starting work to avoid duplicated efforts.
+
+## License
+
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.

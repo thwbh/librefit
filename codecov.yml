@@ -1,0 +1,37 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        informational: true
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+        informational: true
+
+flags:
+  rust:
+    paths:
+      - src-tauri/
+    carryforward: true
+  svelte:
+    paths:
+      - src/
+    carryforward: true
+
+comment:
+  layout: "header, diff, flags, components, footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+ignore:
+  - "src-tauri/target"
+  - "src-tauri/migrations"
+  - "src/lib/api/gen"
+  - "tests"
+  - "**/*.test.ts"
+  - "**/*.test.svelte"

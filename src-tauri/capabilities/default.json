@@ -7,6 +7,14 @@
 		"core:default",
 		"fs:default",
 		"fs:allow-appdata-read-recursive",
-		"fs:allow-appdata-write-recursive"
+		"fs:allow-appdata-write-recursive",
+		"log:default",
+		"haptics:allow-impact-feedback",
+		"haptics:allow-notification-feedback",
+		"haptics:allow-selection-feedback",
+		"haptics:allow-vibrate",
+		"dialog:allow-save",
+		"dialog:allow-open",
+		"fs:allow-write"
 	]
 }
