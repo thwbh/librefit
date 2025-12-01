@@ -35,18 +35,9 @@ jobs:
         run: npm ci
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
-
-      - name: Install Rust Android targets
-        run: |
-          rustup target add aarch64-linux-android
-          rustup target add armv7-linux-androideabi
-          rustup target add i686-linux-android
-          rustup target add x86_64-linux-android
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -57,10 +48,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android NDK
-        run: |
-          sdkmanager "ndk;26.1.10909125"
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.1.10909125" >> $GITHUB_ENV
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26b
+          local-cache: true
 
       - name: Cache Cargo
         uses: actions/cache@v4
@@ -73,10 +65,11 @@ jobs:
             src-tauri/target/
           key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install Tauri CLI and typegen
+      - name: Install Tauri CLI
         run: |
-          cargo install tauri-cli --version "^2.0.0" --locked
-          cargo install tauri-typegen --version "0.3.1" --locked
+          if ! command -v cargo-tauri &> /dev/null; then
+            cargo install tauri-cli --version "^2.0.0" --locked
+          fi
 
       - name: Decode keystore
         env:
@@ -102,28 +95,12 @@ jobs:
       - name: Build APK
         if: inputs.release_type == 'apk' || inputs.release_type == 'both'
         working-directory: src-tauri
-        run: cargo tauri android build --apk true
+        run: cargo tauri android build --apk
 
       - name: Build AAB
         if: inputs.release_type == 'aab' || inputs.release_type == 'both'
         working-directory: src-tauri
-        run: cargo tauri android build --aab true
-
-      - name: Upload APK artifact
-        if: inputs.release_type == 'apk' || inputs.release_type == 'both'
-        uses: actions/upload-artifact@v4
-        with:
-          name: librefit-android-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
-          if-no-files-found: error
-
-      - name: Upload AAB artifact
-        if: inputs.release_type == 'aab' || inputs.release_type == 'both'
-        uses: actions/upload-artifact@v4
-        with:
-          name: librefit-android-aab
-          path: src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab
-          if-no-files-found: error
+        run: cargo tauri android build --aab
 
       - name: Determine release strategy
         id: release_strategy

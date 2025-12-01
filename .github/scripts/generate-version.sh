@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# Generate CalVer version in YY.0W.MICRO format
-# Example: 25.48.0, 25.48.1, 25.48.2
+# Generate CalVer version in YY.0WW or YY.0WW.MICRO format
+# Example: 25.48 (initial), 25.48.1 (first patch), 25.48.2 (second patch)
 
 # Get current year (last 2 digits) and week number (zero-padded)
 YEAR=$(date +%y)
@@ -11,25 +11,35 @@ BASE_VERSION="${YEAR}.${WEEK}"
 
 echo "Base version: ${BASE_VERSION}"
 
-# Find all tags matching this week's base version
-EXISTING_TAGS=$(git tag -l "${BASE_VERSION}.*" 2>/dev/null || echo "")
+# Find all tags matching this week's base version (both YY.WW and YY.WW.MICRO)
+EXISTING_TAGS=$(git tag -l "${BASE_VERSION}" "${BASE_VERSION}.*" 2>/dev/null || echo "")
 
 if [ -z "$EXISTING_TAGS" ]; then
-    # No tags exist for this week, start with .0
+    # No tags exist for this week, use two-segment version
+    VERSION="${BASE_VERSION}"
     MICRO=0
 else
     # Find the highest micro version
-    HIGHEST_MICRO=$(echo "$EXISTING_TAGS" | sed "s/${BASE_VERSION}\.//" | sort -n | tail -1)
-    MICRO=$((HIGHEST_MICRO + 1))
-fi
+    # Filter out the base version and extract micro numbers
+    MICRO_TAGS=$(echo "$EXISTING_TAGS" | grep -E "^${BASE_VERSION}\.[0-9]+$" || echo "")
 
-VERSION="${BASE_VERSION}.${MICRO}"
+    if [ -z "$MICRO_TAGS" ]; then
+        # Only base version exists (YY.WW), start patches at .1
+        MICRO=1
+    else
+        # Find highest existing micro version
+        HIGHEST_MICRO=$(echo "$MICRO_TAGS" | sed "s/${BASE_VERSION}\\.//g" | sort -n | tail -1)
+        MICRO=$((HIGHEST_MICRO + 1))
+    fi
+
+    VERSION="${BASE_VERSION}.${MICRO}"
+fi
 
 echo "Generated version: ${VERSION}"
 echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 echo "TAG=${VERSION}" >> $GITHUB_OUTPUT
 
 # Also calculate versionCode (YYWWMMMM format for Android)
-# Example: 25480000, 25480001, 25480002
+# Example: 25480000 (25.48), 25480001 (25.48.1), 25480002 (25.48.2)
 VERSION_CODE=$(printf "%02d%02d%04d" $YEAR $WEEK $MICRO)
 echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_OUTPUT
