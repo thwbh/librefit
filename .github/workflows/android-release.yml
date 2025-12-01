@@ -73,12 +73,10 @@ jobs:
             src-tauri/target/
           key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2.0.0" --locked
-
-      - name: Generate TypeScript bindings via build.rs
-        working-directory: src-tauri
-        run: cargo check
+      - name: Install Tauri CLI and typegen
+        run: |
+          cargo install tauri-cli --version "^2.0.0" --locked
+          cargo install tauri-typegen --version "0.3.1" --locked
 
       - name: Decode keystore
         env:
