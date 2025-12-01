@@ -123,13 +123,48 @@ jobs:
           path: src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab
           if-no-files-found: error
 
-      - name: Create GitHub Release
+      - name: Determine release strategy
+        id: release_strategy
+        run: |
+          REF="${{ github.ref }}"
+          REF_NAME="${{ github.ref_name }}"
+
+          # Check if ref is a tag (CalVer format: YY.WW.MICRO)
+          if [[ "$REF" == refs/tags/* ]] && [[ "$REF_NAME" =~ ^[0-9]{2}\.[0-9]{1,2}\.[0-9]+$ ]]; then
+            echo "strategy=existing_tag" >> $GITHUB_OUTPUT
+            echo "tag=$REF_NAME" >> $GITHUB_OUTPUT
+            echo "draft=false" >> $GITHUB_OUTPUT
+            echo "Attaching to existing CalVer tag: $REF_NAME"
+          # Check if branch is main
+          elif [[ "$REF_NAME" == "main" ]]; then
+            echo "strategy=latest_release" >> $GITHUB_OUTPUT
+            # Get the latest release tag
+            LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+            if [ -z "$LATEST_TAG" ]; then
+              echo "Error: No releases found to attach to"
+              exit 1
+            fi
+            echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+            echo "draft=false" >> $GITHUB_OUTPUT
+            echo "Attaching to latest release: $LATEST_TAG"
+          # Any other branch - create draft release
+          else
+            DRAFT_TAG="draft-$REF_NAME-${{ github.run_number }}"
+            echo "strategy=draft" >> $GITHUB_OUTPUT
+            echo "tag=$DRAFT_TAG" >> $GITHUB_OUTPUT
+            echo "draft=true" >> $GITHUB_OUTPUT
+            echo "Creating draft release: $DRAFT_TAG"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts to release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.run_number }}
-          name: Release v${{ github.run_number }}
-          draft: true
+          tag_name: ${{ steps.release_strategy.outputs.tag }}
+          name: ${{ steps.release_strategy.outputs.strategy == 'draft' && format('Draft - {0}', github.ref_name) || '' }}
+          draft: ${{ steps.release_strategy.outputs.draft }}
           files: |
             src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
             src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab
