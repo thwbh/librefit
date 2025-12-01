@@ -37,7 +37,7 @@
 			"excludePatterns": null,
 			"includePatterns": null,
 			"includePrivate": false,
-			"outputPath": "../src/lib/api/gen",
+			"outputPath": "./src/lib/api/gen",
 			"projectPath": ".",
 			"typeMappings": null,
 			"validationLibrary": "zod",
