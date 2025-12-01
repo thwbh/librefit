@@ -100,12 +100,12 @@ jobs:
       - name: Build APK
         if: inputs.release_type == 'apk' || inputs.release_type == 'both'
         working-directory: src-tauri
-        run: cargo tauri android build --apk
+        run: cargo tauri android build --apk true
 
       - name: Build AAB
         if: inputs.release_type == 'aab' || inputs.release_type == 'both'
         working-directory: src-tauri
-        run: cargo tauri android build --aab
+        run: cargo tauri android build --aab true
 
       - name: Upload APK artifact
         if: inputs.release_type == 'apk' || inputs.release_type == 'both'
