@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# Generate CalVer version in YY.0WW or YY.0WW.MICRO format
-# Example: 25.48 (initial), 25.48.1 (first patch), 25.48.2 (second patch)
+# Generate CalVer version in YY.WW.MICRO format (always 3 segments for Rust/Tauri)
+# Example: 25.48.0 (initial), 25.48.1 (first patch), 25.48.2 (second patch)
 
 # Get current year (last 2 digits) and week number (zero-padded)
 YEAR=$(date +%y)
@@ -15,8 +15,8 @@ echo "Base version: ${BASE_VERSION}"
 EXISTING_TAGS=$(git tag -l "${BASE_VERSION}" "${BASE_VERSION}.*" 2>/dev/null || echo "")
 
 if [ -z "$EXISTING_TAGS" ]; then
-    # No tags exist for this week, use two-segment version
-    VERSION="${BASE_VERSION}"
+    # No tags exist for this week, start with .0
+    VERSION="${BASE_VERSION}.0"
     MICRO=0
 else
     # Find the highest micro version
