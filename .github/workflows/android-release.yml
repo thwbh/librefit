@@ -29,6 +29,14 @@ jobs:
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-all-crates: true
+          shared-key: android-build
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -45,24 +53,27 @@ jobs:
           ndk-version: r29
           local-cache: true
 
-      - name: Cache Cargo
+      - name: Cache Gradle dependencies and build
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Cache Tauri CLI tools
+        id: cache-tauri-cli
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}-tauri-cli-2.0-typegen-0.3.1
+            ~/.cargo/bin/cargo-tauri
+            ~/.cargo/bin/tauri-typegen
+          key: ${{ runner.os }}-tauri-cli-2.9.5-typegen-0.3.2
 
       - name: Install Tauri CLI and typegen
         run: |
           if ! command -v cargo-tauri &> /dev/null; then
-            cargo install tauri-cli --version "~2.6.0" --locked
+            cargo install tauri-cli --version "=2.9.5" --locked
           fi
           if ! command -v tauri-typegen &> /dev/null; then
-            cargo install tauri-typegen --version "0.3.2" --locked
+            cargo install tauri-typegen --version "=0.3.2" --locked
           fi
 
       - name: Determine release strategy
