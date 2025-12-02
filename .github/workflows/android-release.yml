@@ -49,6 +49,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Setup Android NDK
+        id: setup-ndk
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r26b
@@ -117,6 +118,9 @@ jobs:
 
       - name: Initialize Tauri Android
         working-directory: src-tauri
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android init
 
       - name: Apply Android templates and configuration
@@ -126,6 +130,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          NDK_PATH: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           chmod +x ./android-templates/setup-android.sh
           ./android-templates/setup-android.sh
@@ -133,11 +138,17 @@ jobs:
       - name: Build APK
         if: inputs.release_type == 'apk' || inputs.release_type == 'both'
         working-directory: src-tauri
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android build --apk true
 
       - name: Build AAB
         if: inputs.release_type == 'aab' || inputs.release_type == 'both'
         working-directory: src-tauri
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android build --aab true
 
       - name: Upload artifacts to release
