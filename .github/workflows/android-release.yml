@@ -146,7 +146,6 @@ jobs:
         run: cargo tauri-typegen generate
 
       - name: Build Universal APK
-        working-directory: src-tauri
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}

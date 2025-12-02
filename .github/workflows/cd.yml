@@ -120,7 +120,7 @@ jobs:
             🎉 LibreFit v${{ needs.generate-version.outputs.version }}
 
             ## What's Changed
-            See the full changelog at https://github.com/${{ github.repository }}/compare/${{ needs.generate-version.outputs.tag }}
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
 
             ## Installation
 
