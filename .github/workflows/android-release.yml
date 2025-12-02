@@ -2,16 +2,6 @@ name: 'Android Release'
 
 on:
   workflow_dispatch:
-    inputs:
-      release_type:
-        description: 'Release type'
-        required: true
-        type: choice
-        options:
-          - apk
-          - aab
-          - both
-        default: 'both'
 
 permissions:
   contents: write
@@ -35,18 +25,17 @@ jobs:
         run: npm ci
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
-      - name: Install Rust Android targets
-        run: |
-          rustup target add aarch64-linux-android
-          rustup target add armv7-linux-androideabi
-          rustup target add i686-linux-android
-          rustup target add x86_64-linux-android
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-all-crates: true
+          shared-key: android-build
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -57,24 +46,70 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android NDK
-        run: |
-          sdkmanager "ndk;26.1.10909125"
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.1.10909125" >> $GITHUB_ENV
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r29
+          local-cache: true
 
-      - name: Cache Cargo
+      - name: Cache Gradle dependencies and build
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Cache Tauri CLI tools
+        id: cache-tauri-cli
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/bin/cargo-tauri
+            ~/.cargo/bin/tauri-typegen
+          key: ${{ runner.os }}-tauri-cli-2.9.5-typegen-0.3.2
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2.0.0" --locked
+      - name: Install Tauri CLI and typegen
+        run: |
+          if ! command -v cargo-tauri &> /dev/null; then
+            cargo install tauri-cli --version "=2.9.5" --locked
+          fi
+          if ! command -v tauri-typegen &> /dev/null; then
+            cargo install tauri-typegen --version "=0.3.2" --locked
+          fi
+
+      - name: Determine release strategy
+        id: release_strategy
+        run: |
+          REF="${{ github.ref }}"
+          REF_NAME="${{ github.ref_name }}"
+
+          # Check if ref is a tag (CalVer format: YY.WW.MICRO)
+          if [[ "$REF" == refs/tags/* ]] && [[ "$REF_NAME" =~ ^[0-9]{2}\.[0-9]{1,2}(\.[0-9]+)?$ ]]; then
+            echo "strategy=existing_tag" >> $GITHUB_OUTPUT
+            echo "tag=$REF_NAME" >> $GITHUB_OUTPUT
+            echo "draft=false" >> $GITHUB_OUTPUT
+            echo "Attaching to existing CalVer tag: $REF_NAME"
+          # Check if branch is main
+          elif [[ "$REF_NAME" == "main" ]]; then
+            echo "strategy=latest_release" >> $GITHUB_OUTPUT
+            # Get the latest release tag
+            LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+            if [ -z "$LATEST_TAG" ]; then
+              echo "Error: No releases found to attach to"
+              exit 1
+            fi
+            echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+            echo "draft=false" >> $GITHUB_OUTPUT
+            echo "Attaching to latest release: $LATEST_TAG"
+          # Any other branch - create draft release
+          else
+            DRAFT_TAG="draft-$REF_NAME-${{ github.run_number }}"
+            echo "strategy=draft" >> $GITHUB_OUTPUT
+            echo "tag=$DRAFT_TAG" >> $GITHUB_OUTPUT
+            echo "draft=true" >> $GITHUB_OUTPUT
+            echo "Creating draft release: $DRAFT_TAG"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Decode keystore
         env:
@@ -84,7 +119,14 @@ jobs:
 
       - name: Initialize Tauri Android
         working-directory: src-tauri
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android init
+
+      - name: Generate Android icons
+        working-directory: src-tauri
+        run: cargo tauri icon icons/icon.png
 
       - name: Apply Android templates and configuration
         working-directory: src-tauri
@@ -93,43 +135,48 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          NDK_PATH: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_VERSION: ${{ steps.setup-ndk.outputs.ndk-full-version }}
         run: |
           chmod +x ./android-templates/setup-android.sh
           ./android-templates/setup-android.sh
 
-      - name: Build APK
-        if: inputs.release_type == 'apk' || inputs.release_type == 'both'
+      - name: Invoke tauri-typegen
         working-directory: src-tauri
+        run: cargo tauri-typegen generate
+
+      - name: Build Universal APK
+        working-directory: src-tauri
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android build --apk true
 
-      - name: Build AAB
-        if: inputs.release_type == 'aab' || inputs.release_type == 'both'
-        working-directory: src-tauri
-        run: cargo tauri android build --aab true
+      - name: Rename APK with version
+        run: |
+          VERSION="${{ steps.release_strategy.outputs.tag }}"
+          APK_DIR="src-tauri/gen/android/app/build/outputs/apk/universal/release"
 
-      - name: Upload APK artifact
-        if: inputs.release_type == 'apk' || inputs.release_type == 'both'
-        uses: actions/upload-artifact@v4
-        with:
-          name: librefit-android-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
-          if-no-files-found: error
+          # Find the generated APK
+          ORIGINAL_APK=$(find "$APK_DIR" -name "*.apk" -type f | head -1)
 
-      - name: Upload AAB artifact
-        if: inputs.release_type == 'aab' || inputs.release_type == 'both'
-        uses: actions/upload-artifact@v4
-        with:
-          name: librefit-android-aab
-          path: src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab
-          if-no-files-found: error
+          if [ -n "$ORIGINAL_APK" ]; then
+            # Rename to librefit-{version}.apk
+            mv "$ORIGINAL_APK" "$APK_DIR/librefit-${VERSION}.apk"
+            echo "Renamed APK to: librefit-${VERSION}.apk"
+            ls -lh "$APK_DIR/"
+          else
+            echo "Error: No APK found in $APK_DIR"
+            exit 1
+          fi
 
-      - name: Create GitHub Release
+      - name: Upload artifacts to release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.run_number }}
-          name: Release v${{ github.run_number }}
-          draft: true
+          tag_name: ${{ steps.release_strategy.outputs.tag }}
+          name: ${{ steps.release_strategy.outputs.strategy == 'draft' && format('Draft - {0}', github.ref_name) || '' }}
+          draft: ${{ steps.release_strategy.outputs.draft }}
           files: |
             src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
             src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab

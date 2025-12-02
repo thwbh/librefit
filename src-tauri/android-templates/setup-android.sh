@@ -54,20 +54,14 @@ else
     fi
 fi
 
-# 3. Ensure build.gradle uses keystore.properties
-echo "🔧 Verifying build.gradle configuration..."
-BUILD_GRADLE="$ANDROID_DIR/app/build.gradle.kts"
-
-if [ -f "$BUILD_GRADLE" ]; then
-    # Check if build.gradle already references keystore.properties
-    if grep -q "keystore.properties" "$BUILD_GRADLE"; then
-        echo "   ✅ build.gradle already configured for keystore"
-    else
-        echo "   ⚠️  build.gradle may need manual configuration for keystore signing"
-        echo "   See: https://v2.tauri.app/distribute/sign/android/"
-    fi
+# 3. Apply custom build.gradle.kts (for keystore signing configuration)
+if [ -f "$SCRIPT_DIR/build.gradle.kts" ]; then
+    echo "🔧 Applying custom build.gradle.kts..."
+    cp "$SCRIPT_DIR/build.gradle.kts" "$ANDROID_DIR/app/build.gradle.kts"
+    echo "   ✅ build.gradle.kts applied (includes keystore signing)"
 else
-    echo "   ⚠️  build.gradle.kts not found"
+    echo "   ⚠️  build.gradle.kts template not found"
+    echo "   See: https://v2.tauri.app/distribute/sign/android/"
 fi
 
 # 4. Apply custom AndroidManifest.xml (for permissions and other customizations)
@@ -77,6 +71,42 @@ if [ -f "$SCRIPT_DIR/AndroidManifest.xml" ]; then
     echo "   ✅ AndroidManifest.xml applied (includes storage permissions)"
 else
     echo "   ⚠️  AndroidManifest.xml template not found"
+fi
+
+# 5. Force correct NDK path and version in local.properties and build.gradle.kts
+if [ -n "$NDK_PATH" ]; then
+    echo "🔧 Setting NDK path in local.properties..."
+
+    # Create or update local.properties with correct NDK path
+    LOCAL_PROPS="$ANDROID_DIR/local.properties"
+
+    # Remove existing ndk.dir line if present
+    if [ -f "$LOCAL_PROPS" ]; then
+        sed -i.bak '/^ndk\.dir=/d' "$LOCAL_PROPS" && rm -f "$LOCAL_PROPS.bak"
+    fi
+
+    # Add correct ndk.dir
+    echo "ndk.dir=$NDK_PATH" >> "$LOCAL_PROPS"
+    echo "   ✅ NDK path set to: $NDK_PATH"
+
+    # Also set ndkVersion in build.gradle.kts if NDK_VERSION is provided
+    if [ -n "$NDK_VERSION" ]; then
+        echo "🔧 Setting ndkVersion in build.gradle.kts..."
+        BUILD_GRADLE="$ANDROID_DIR/app/build.gradle.kts"
+
+        # Check if ndkVersion line already exists
+        if grep -q "ndkVersion" "$BUILD_GRADLE"; then
+            # Replace existing ndkVersion
+            sed -i.bak "s/ndkVersion = \".*\"/ndkVersion = \"$NDK_VERSION\"/" "$BUILD_GRADLE" && rm -f "$BUILD_GRADLE.bak"
+        else
+            # Add ndkVersion after compileSdk line
+            sed -i.bak "/compileSdk = /a\\
+    ndkVersion = \"$NDK_VERSION\"" "$BUILD_GRADLE" && rm -f "$BUILD_GRADLE.bak"
+        fi
+        echo "   ✅ NDK version set to: $NDK_VERSION"
+    fi
+else
+    echo "   ⚠️  NDK_PATH environment variable not set, skipping NDK configuration"
 fi
 
 echo ""

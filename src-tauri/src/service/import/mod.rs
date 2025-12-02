@@ -2,10 +2,11 @@ pub mod csv;
 
 use crate::db::connection::DbPool;
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use tauri::{command, ipc::Channel, State};
+use tauri::{command, ipc::Channel, AppHandle, State};
+use tauri_plugin_fs::FsExt;
 
 // ============================================================================
 // CANCELLATION STATE
@@ -126,6 +127,7 @@ pub fn send_progress(
 /// Import data file with granular progress tracking
 #[command]
 pub async fn import_data_file(
+    app: AppHandle,
     pool: State<'_, DbPool>,
     cancellation: State<'_, ImportCancellation>,
     path: String,
@@ -136,7 +138,12 @@ pub async fn import_data_file(
     // Reset cancellation flag at the start
     cancellation.reset();
 
-    let data_file: String = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    // Read file using Tauri FS plugin to support Android content URIs
+    // PathBuf implements Into<FilePath> for tauri-plugin-fs
+    let data_file: String = app
+        .fs()
+        .read_to_string(PathBuf::from(&path))
+        .map_err(|e| format!("Failed to read file '{}': {}", path, e))?;
 
     let result = match import_format {
         ImportFormat::Csv => {
