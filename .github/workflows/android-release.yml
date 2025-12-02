@@ -148,6 +148,24 @@ jobs:
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android build --apk true
 
+      - name: Rename APK with version
+        run: |
+          VERSION="${{ steps.release_strategy.outputs.tag }}"
+          APK_DIR="src-tauri/gen/android/app/build/outputs/apk/universal/release"
+
+          # Find the generated APK
+          ORIGINAL_APK=$(find "$APK_DIR" -name "*.apk" -type f | head -1)
+
+          if [ -n "$ORIGINAL_APK" ]; then
+            # Rename to librefit-{version}.apk
+            mv "$ORIGINAL_APK" "$APK_DIR/librefit-${VERSION}.apk"
+            echo "Renamed APK to: librefit-${VERSION}.apk"
+            ls -lh "$APK_DIR/"
+          else
+            echo "Error: No APK found in $APK_DIR"
+            exit 1
+          fi
+
       - name: Upload artifacts to release
         if: success()
         uses: softprops/action-gh-release@v1
