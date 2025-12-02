@@ -124,6 +124,10 @@ jobs:
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android init
 
+      - name: Generate Android icons
+        working-directory: src-tauri
+        run: cargo tauri icon icons/icon.png
+
       - name: Apply Android templates and configuration
         working-directory: src-tauri
         env:
