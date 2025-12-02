@@ -75,7 +75,9 @@
 				multiple: false,
 				directory: false,
 				canCreateDirectories: false,
-				filters: [{ name: 'CSV', extensions: ['csv'] }]
+				// Android file picker has issues with CSV MIME type filtering
+				// Using no filters allows broader file selection
+				filters: []
 			});
 
 			debug(`Selected file path=${selectedFilePath}`);
