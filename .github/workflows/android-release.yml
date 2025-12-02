@@ -141,6 +141,10 @@ jobs:
           chmod +x ./android-templates/setup-android.sh
           ./android-templates/setup-android.sh
 
+      - name: Invoke tauri-typegen
+        working-directory: src-tauri
+        run: cargo tauri-typegen generate
+
       - name: Build Universal APK
         working-directory: src-tauri
         env:
