@@ -2,16 +2,6 @@ name: 'Android Release'
 
 on:
   workflow_dispatch:
-    inputs:
-      release_type:
-        description: 'Release type'
-        required: true
-        type: choice
-        options:
-          - apk
-          - aab
-          - both
-        default: 'both'
 
 permissions:
   contents: write
@@ -135,21 +125,12 @@ jobs:
           chmod +x ./android-templates/setup-android.sh
           ./android-templates/setup-android.sh
 
-      - name: Build APK
-        if: inputs.release_type == 'apk' || inputs.release_type == 'both'
+      - name: Build Universal APK
         working-directory: src-tauri
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android build --apk true
-
-      - name: Build AAB
-        if: inputs.release_type == 'aab' || inputs.release_type == 'both'
-        working-directory: src-tauri
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-        run: cargo tauri android build --aab true
 
       - name: Upload artifacts to release
         if: success()
