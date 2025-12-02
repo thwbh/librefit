@@ -121,6 +121,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           NDK_PATH: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_VERSION: ${{ steps.setup-ndk.outputs.ndk-version }}
         run: |
           chmod +x ./android-templates/setup-android.sh
           ./android-templates/setup-android.sh

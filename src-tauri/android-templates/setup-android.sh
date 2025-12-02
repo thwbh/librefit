@@ -73,7 +73,7 @@ else
     echo "   ⚠️  AndroidManifest.xml template not found"
 fi
 
-# 5. Force correct NDK path in local.properties (workaround for tauri-action NDK issues)
+# 5. Force correct NDK path and version in local.properties and build.gradle.kts
 if [ -n "$NDK_PATH" ]; then
     echo "🔧 Setting NDK path in local.properties..."
 
@@ -88,6 +88,23 @@ if [ -n "$NDK_PATH" ]; then
     # Add correct ndk.dir
     echo "ndk.dir=$NDK_PATH" >> "$LOCAL_PROPS"
     echo "   ✅ NDK path set to: $NDK_PATH"
+
+    # Also set ndkVersion in build.gradle.kts if NDK_VERSION is provided
+    if [ -n "$NDK_VERSION" ]; then
+        echo "🔧 Setting ndkVersion in build.gradle.kts..."
+        BUILD_GRADLE="$ANDROID_DIR/app/build.gradle.kts"
+
+        # Check if ndkVersion line already exists
+        if grep -q "ndkVersion" "$BUILD_GRADLE"; then
+            # Replace existing ndkVersion
+            sed -i.bak "s/ndkVersion = \".*\"/ndkVersion = \"$NDK_VERSION\"/" "$BUILD_GRADLE" && rm -f "$BUILD_GRADLE.bak"
+        else
+            # Add ndkVersion after compileSdk line
+            sed -i.bak "/compileSdk = /a\\
+    ndkVersion = \"$NDK_VERSION\"" "$BUILD_GRADLE" && rm -f "$BUILD_GRADLE.bak"
+        fi
+        echo "   ✅ NDK version set to: $NDK_VERSION"
+    fi
 else
     echo "   ⚠️  NDK_PATH environment variable not set, skipping NDK configuration"
 fi
