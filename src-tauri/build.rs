@@ -14,7 +14,7 @@ fn setup_android_llvm() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS not set");
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").expect("CARGO_CFG_TARGET_ARCH not set");
 
-    if target_arch == "x86_64" && target_os == "android" {
+    if target_os == "android" {
         let android_ndk_home = env::var("NDK_HOME").expect("NDK_HOME not set");
         let build_os = match env::consts::OS {
             "linux" => "linux",
@@ -28,8 +28,17 @@ fn setup_android_llvm() {
         let clang_version =
             env::var("NDK_CLANG_VERSION").unwrap_or_else(|_| DEFAULT_CLANG_VERSION.to_owned());
 
+        // Map Rust target arch to Android arch naming
+        let android_arch = match target_arch.as_str() {
+            "aarch64" => "aarch64",
+            "arm" => "armv7a",
+            "x86" => "i686",
+            "x86_64" => "x86_64",
+            _ => panic!("Unsupported Android architecture: {}", target_arch),
+        };
+
         let linker = format!(
-            "{android_ndk_home}/toolchains/llvm/prebuilt/{build_os}-x86_64/lib/clang/{clang_version}/lib/linux/libclang_rt.builtins-x86_64-android.a");
+            "{android_ndk_home}/toolchains/llvm/prebuilt/{build_os}-x86_64/lib/clang/{clang_version}/lib/linux/libclang_rt.builtins-{android_arch}-android.a");
 
         println!("cargo:rustc-link-arg={linker}");
     }
