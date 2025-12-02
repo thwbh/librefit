@@ -48,8 +48,10 @@ jobs:
 
       - name: 'Update Cargo.toml'
         run: |
-          sed -i 's/^version = ".*"/version = "${{ needs.generate-version.outputs.version }}"/' src-tauri/Cargo.toml
-          cat src-tauri/Cargo.toml | grep version
+          # Only update the version in the [package] section, not dependencies
+          sed -i '/^\[package\]/,/^\[/ s/^version = ".*"/version = "${{ needs.generate-version.outputs.version }}"/' src-tauri/Cargo.toml
+          echo "Updated package version:"
+          sed -n '/^\[package\]/,/^\[/p' src-tauri/Cargo.toml | grep version
 
       - name: 'Update tauri.conf.json'
         run: |
