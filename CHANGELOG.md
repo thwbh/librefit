@@ -5,6 +5,13 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
+## [25.49.1] - 2025-12-03
+
+### Fixed
+
+- Data Import failing due to missing Android file system permissions
+- Data Import/Export error messages not wrapping properly
+
 ## [25.49.0] - 2025-12-01
 
 ### Added
@@ -37,4 +44,5 @@ and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO fo
 - F-Droid compatible build process
 - Reproducible builds support
 
-[25.49.0]: https://github.com/yourusername/librefit/releases/tag/25.49.0
+[25.49.1]: https://github.com/thwbh/librefit/releases/tag/25.49.1
+[25.49.0]: https://github.com/thwbh/librefit/releases/tag/25.49.0
