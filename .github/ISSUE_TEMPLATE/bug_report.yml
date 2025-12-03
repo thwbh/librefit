@@ -72,6 +72,7 @@ body:
         - Setup Wizard
         - Settings
         - Data Export
+        - Data Import
         - Other
     validations:
       required: true
