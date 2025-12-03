@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{command, ipc::Channel, AppHandle, State};
-use tauri_plugin_fs::FsExt;
+use tauri_plugin_fs::{FilePath, FsExt};
+use url::Url;
 
 // ============================================================================
 // CANCELLATION STATE
@@ -139,10 +140,20 @@ pub async fn import_data_file(
     cancellation.reset();
 
     // Read file using Tauri FS plugin to support Android content URIs
-    // PathBuf implements Into<FilePath> for tauri-plugin-fs
+    // Use FilePath::Url for content:// URIs, FilePath::Path for regular paths
+    let file_path = if path.starts_with("content://") {
+        // Parse as URL for Android content URIs
+        let url = Url::parse(&path)
+            .map_err(|e| format!("Failed to parse content URI '{}': {}", path, e))?;
+        FilePath::Url(url)
+    } else {
+        // Use regular PathBuf for file system paths
+        FilePath::Path(PathBuf::from(&path))
+    };
+
     let data_file: String = app
         .fs()
-        .read_to_string(PathBuf::from(&path))
+        .read_to_string(file_path)
         .map_err(|e| format!("Failed to read file '{}': {}", path, e))?;
 
     let result = match import_format {

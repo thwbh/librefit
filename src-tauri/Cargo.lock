@@ -2427,6 +2427,7 @@ dependencies = [
  "tauri-plugin-haptics",
  "tauri-plugin-log",
  "tauri-typegen",
+ "url",
  "validator",
  "zip",
 ]

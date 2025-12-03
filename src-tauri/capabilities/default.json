@@ -15,6 +15,11 @@
 		"haptics:allow-vibrate",
 		"dialog:allow-save",
 		"dialog:allow-open",
-		"fs:allow-write"
+		"fs:allow-write",
+		"fs:allow-read",
+		{
+			"identifier": "fs:scope",
+			"allow": [{ "path": "content://**" }]
+		}
 	]
 }
