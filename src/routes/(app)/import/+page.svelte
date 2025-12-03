@@ -238,7 +238,7 @@
 				{#snippet errorContent()}
 					<div class="flex flex-col items-center justify-center gap-2">
 						<Warning size="2em" color={'var(--color-warning)'} />
-						<span class="text-sm opacity-70">{importProgress?.message}</span>
+						<span class="text-sm opacity-70 wrap-normal">{importProgress?.message}</span>
 					</div>
 				{/snippet}
 			</LoadingIndicator>
@@ -246,7 +246,7 @@
 			<div class="mt-6 space-y-4">
 				<!-- Status message -->
 				{#if importResult}
-					<AlertBox type={AlertType.Success} class="break-all">
+					<AlertBox type={AlertType.Success} class="break-all wrap-normal">
 						Successfully imported all {importResult.importedCount} rows.
 					</AlertBox>
 				{/if}

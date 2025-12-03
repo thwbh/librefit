@@ -272,7 +272,7 @@
 				{#snippet errorContent()}
 					<div class="flex flex-col items-center justify-center gap-2">
 						<Warning size="2em" color={'var(--color-warning)'} />
-						<span class="text-sm opacity-70">{exportMessage}</span>
+						<span class="text-sm opacity-70 wrap-normal">{exportMessage}</span>
 					</div>
 				{/snippet}
 			</LoadingIndicator>
