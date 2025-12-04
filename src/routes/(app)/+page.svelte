@@ -32,7 +32,7 @@
 
 	let index: number = $state(0);
 	let intake: Array<Intake> = $state(dashboard.intakeTodayList);
-	let lastWeightTracker = $state(dashboard.weightMonthList[0]);
+	let lastWeightTracker: WeightTracker = $state(dashboard.weightMonthList[0]);
 
 	const weightTarget: WeightTarget = dashboard.weightTarget;
 	const intakeTarget: IntakeTarget = dashboard.intakeTarget;
@@ -119,7 +119,6 @@
 
 	<div class="flex flex-col items-center w-full">
 		<WeightScore
-			{weightTracker}
 			{lastWeightTracker}
 			{weightTarget}
 			onAdd={(entry: NewWeightTracker) => createWeightTrackerEntry({ newEntry: entry })}
