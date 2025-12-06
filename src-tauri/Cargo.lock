@@ -4714,9 +4714,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-typegen"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aadf5f4c4c3dd207bff41052e50c1265b79775a83632fe9520f060211eecd3fe"
+checksum = "333e3c8a6c7882e26df58a854b9de9d71d7d407a68b19d53f1efd122b39e33fd"
 dependencies = [
  "chrono",
  "clap",
