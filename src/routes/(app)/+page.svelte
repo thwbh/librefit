@@ -118,13 +118,7 @@
 	</div>
 
 	<div class="flex flex-col items-center w-full">
-		<WeightScore
-			{lastWeightTracker}
-			{weightTarget}
-			onAdd={(entry: NewWeightTracker) => createWeightTrackerEntry({ newEntry: entry })}
-			onEdit={(id, entry: WeightTracker) =>
-				updateWeightTrackerEntry({ trackerId: id, updatedEntry: entry })}
-		/>
+		<WeightScore weightTracker={lastWeightTracker} {weightTarget} />
 	</div>
 
 	<!--

@@ -1,30 +1,28 @@
 <script lang="ts">
 	import { parseStringAsDate } from '$lib/date';
-	import type { NewWeightTracker, WeightTarget, WeightTracker } from '$lib/api/gen';
+	import type { WeightTarget, WeightTracker } from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
 	import { Shield, ShieldCheck, ShieldWarning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
 
 	interface Props {
-		lastWeightTracker: WeightTracker;
+		weightTracker: WeightTracker;
 		weightTarget: WeightTarget;
-		onAdd?: (entry: NewWeightTracker) => Promise<WeightTracker>;
-		onEdit?: (id: number, entry: WeightTracker) => Promise<WeightTracker>;
 	}
 
-	let { lastWeightTracker, weightTarget }: Props = $props();
+	let { weightTracker, weightTarget }: Props = $props();
 
 	let percentage = $derived.by(() => {
-		const diff = weightTarget.initialWeight - lastWeightTracker.amount;
+		const diff = weightTarget.initialWeight - weightTracker.amount;
 
 		return Math.round((diff / weightTarget.initialWeight) * 100);
 	});
 
-	let modifier = $derived(weightTarget.initialWeight > lastWeightTracker.amount ? '-' : '+');
+	let modifier = $derived(weightTarget.initialWeight > weightTracker.amount ? '-' : '+');
 
 	let lastEntryDayDiff = $derived(
-		differenceInDays(new Date(), parseStringAsDate(lastWeightTracker?.added!))
+		differenceInDays(new Date(), parseStringAsDate(weightTracker?.added!))
 	);
 </script>
 
@@ -32,7 +30,7 @@
 	<div class="stat-title">Current Weight</div>
 	<div class="flex flex-row justify-between stat-value">
 		<span>
-			<NumberFlow value={lastWeightTracker.amount} />
+			<NumberFlow value={weightTracker.amount} />
 			<span class="text-sm">kg</span>
 		</span>
 		<span class="flex items-center gap-1">
@@ -45,20 +43,15 @@
 	</div>
 	<div class="flex flex-row stat-desc items-center justify-between gap-1">
 		<span class="flex flex-row gap-1 items-center">
-			{#if lastWeightTracker}
-				{#if lastEntryDayDiff === 0}
-					<ShieldCheck size="1.25rem" weight="fill" color="var(--color-success)" />
-					Last update: Today.
-				{:else if lastEntryDayDiff > 2}
-					<ShieldWarning size="1.25rem" weight="fill" color="var(--color-error)" />
-					Last update was {lastEntryDayDiff} days ago!
-				{:else}
-					<ShieldWarning size="1.25rem" weight="fill" color="var(--color-warning)" />
-					Last update: {lastEntryDayDiff} days ago.
-				{/if}
+			{#if lastEntryDayDiff === 0}
+				<ShieldCheck size="1.25rem" weight="fill" color="var(--color-success)" />
+				Last update: Today.
+			{:else if lastEntryDayDiff > 2}
+				<ShieldWarning size="1.25rem" weight="fill" color="var(--color-error)" />
+				Last update was {lastEntryDayDiff} days ago!
 			{:else}
-				<Shield size="1.25rem" class={'stat-desc'} />
-				Nothing tracked yet.
+				<ShieldWarning size="1.25rem" weight="fill" color="var(--color-warning)" />
+				Last update: {lastEntryDayDiff} days ago.
 			{/if}
 		</span>
 		<span>
