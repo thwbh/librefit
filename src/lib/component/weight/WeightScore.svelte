@@ -3,7 +3,7 @@
 	import type { WeightTarget, WeightTracker } from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
-	import { Shield, ShieldCheck, ShieldWarning, TrendDown, TrendUp } from 'phosphor-svelte';
+	import { ShieldCheck, ShieldWarning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { goto } from '$app/navigation';
 
 	interface Props {
@@ -65,7 +65,7 @@
 		parseStringAsDate(weightTarget.endDate),
 		parseStringAsDate(weightTarget.startDate)
 	)}
-	{@const progress = Math.round(((totalDays - dayDiff) / totalDays) * 100)}
+	{@const progress = totalDays === 0 ? 0 : Math.round(((totalDays - dayDiff) / totalDays) * 100)}
 	<div class="progress-container w-full">
 		<span class="flex flex-row justify-between items-center">
 			<p class="text-sm opacity-60">
