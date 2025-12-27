@@ -27,6 +27,7 @@ describe('IntakeMask', () => {
 	const mockEntry: Intake = {
 		id: 1,
 		added: '2024-01-01',
+		time: '12:30:00',
 		category: 'l',
 		amount: 500,
 		description: 'Healthy lunch'

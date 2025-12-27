@@ -76,8 +76,10 @@ describe('WeightScore', () => {
 		});
 
 		it('should show dash when no weight data', () => {
-			const newEntry: NewWeightTracker = {
+			const newEntry: WeightTracker = {
+				id: 1,
 				added: '2024-01-20',
+				time: '09:15:00',
 				amount: 81
 			};
 

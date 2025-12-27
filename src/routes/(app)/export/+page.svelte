@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { cancelExport, exportDatabaseFile, type ExportProgress } from '$lib/api';
-	import { ExportFormatSchema, ExportStageSchema, type ExportStage } from '$lib/api/gen/types';
+	import { ExportFormatSchema, ExportStageSchema } from '$lib/api/gen/types';
 	import { Channel } from '@tauri-apps/api/core';
 	import { save } from '@tauri-apps/plugin-dialog';
 	import { writeFile } from '@tauri-apps/plugin-fs';
@@ -81,7 +81,11 @@
 		[ExportStage.error]: Warning
 	};
 
-	let stageIcon = $derived(stageIcons[exportStage as ExportStage]);
+	let stageIcon = $derived.by(() => {
+		const value = ExportStageSchema.safeParse(exportStage).data!;
+
+		return stageIcons[value];
+	});
 
 	let exportStarted = $state(false);
 

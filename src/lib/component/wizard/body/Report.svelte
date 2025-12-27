@@ -2,7 +2,6 @@
 	import {
 		BmiCategorySchema,
 		WizardRecommendationSchema,
-		type BmiCategory,
 		type WizardInput,
 		type WizardResult
 	} from '$lib/api/gen';
@@ -36,7 +35,7 @@
 		BmiCategory.Overweight
 	]);
 
-	const getClassificationStyle = (category: BmiCategory) => {
+	const getClassificationStyle = (category: string) => {
 		if (classificationLose.safeParse(category).success) {
 			return 'badge-error';
 		} else if (category === BmiCategory.Underweight) {

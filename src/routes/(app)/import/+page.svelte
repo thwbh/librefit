@@ -4,9 +4,7 @@
 		ImportFormatSchema,
 		type ImportProgress,
 		ImportStageSchema,
-		type ImportStage,
 		ImportTableSchema,
-		type ImportTable,
 		type ImportResult
 	} from '$lib/api/gen/types';
 	import { Channel } from '@tauri-apps/api/core';
@@ -29,7 +27,7 @@
 	const ImportTable = ImportTableSchema.enum;
 	const ImportStage = ImportStageSchema.enum;
 
-	let importTarget: ImportTable = $state(ImportTable.intake);
+	let importTarget: string = $state(ImportTable.intake);
 	let selectedFilePath: string | null = $state(null);
 
 	let dialog: HTMLDialogElement | undefined = $state();
@@ -101,7 +99,7 @@
 
 			importResult = await importDataFile({
 				path: selectedFilePath!,
-				targetTable: importTarget,
+				targetTable: ImportTableSchema.safeParse(importTarget).data!,
 				importFormat: ImportFormat.csv,
 				onProgress
 			});
