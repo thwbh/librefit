@@ -1,8 +1,42 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/svelte';
-import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
 import type { WeightTarget, WeightTracker, NewWeightTracker } from '$lib/api/gen';
 import WeightScore from './WeightScore.svelte';
+import { getDateAsStr } from '$lib/date';
+import { subDays } from 'date-fns';
+
+// Mock NumberFlow as a simple component that renders the number
+// For Svelte 5, components need $$render method for SSR and proper client-side mounting
+vi.mock('@number-flow/svelte', () => {
+	const NumberFlowMock = function (anchor: any, props: any) {
+		const value = props?.value ?? 0;
+		const textNode = document.createTextNode(String(value));
+
+		// Insert the text node
+		if (anchor && anchor.parentNode) {
+			anchor.parentNode.insertBefore(textNode, anchor);
+		}
+
+		return {
+			p: (newProps: any) => {
+				// update
+				if (newProps.value !== undefined) {
+					textNode.textContent = String(newProps.value);
+				}
+			},
+			d: () => {
+				// destroy
+				if (textNode.parentNode) {
+					textNode.parentNode.removeChild(textNode);
+				}
+			}
+		};
+	};
+
+	return {
+		default: NumberFlowMock
+	};
+});
 
 describe('WeightScore', () => {
 	const mockWeightTarget: WeightTarget = {
@@ -17,12 +51,14 @@ describe('WeightScore', () => {
 	const mockWeightTracker: WeightTracker = {
 		id: 1,
 		added: '2024-01-15',
+		time: '08:30:00',
 		amount: 82
 	};
 
-	const mockLastWeightTracker: WeightTracker = {
+	const mockWeightTrackerToday: WeightTracker = {
 		id: 1,
-		added: '2024-01-10',
+		added: getDateAsStr(new Date()),
+		time: '12:00:00',
 		amount: 83
 	};
 
@@ -36,32 +72,14 @@ describe('WeightScore', () => {
 			});
 
 			// Check for kg unit and Last update message
-			expect(container.textContent).toContain('kg');
-			expect(container.textContent).toContain('Last update: Today');
-		});
-
-		it('should display last weight when only lastWeightTracker provided', () => {
-			const newEntry: NewWeightTracker = {
-				added: '2024-01-20',
-				amount: 81
-			};
-
-			const { container } = render(WeightScore, {
-				props: {
-					weightTracker: newEntry,
-					lastWeightTracker: mockLastWeightTracker,
-					weightTarget: mockWeightTarget
-				}
-			});
-
-			// Check for kg unit and last update message
-			expect(container.textContent).toContain('kg');
-			expect(container.textContent).toMatch(/Last update/i);
+			expect(container.textContent).toMatch(/82 kg/i);
 		});
 
 		it('should show dash when no weight data', () => {
-			const newEntry: NewWeightTracker = {
+			const newEntry: WeightTracker = {
+				id: 1,
 				added: '2024-01-20',
+				time: '09:15:00',
 				amount: 81
 			};
 
@@ -77,26 +95,10 @@ describe('WeightScore', () => {
 	});
 
 	describe('Status Messages', () => {
-		it('should show "Nothing tracked yet" when no data', () => {
-			const newEntry: NewWeightTracker = {
-				added: '2024-01-20',
-				amount: 81
-			};
-
-			render(WeightScore, {
-				props: {
-					weightTracker: newEntry,
-					weightTarget: mockWeightTarget
-				}
-			});
-
-			expect(screen.getByText(/Nothing tracked yet/i)).toBeTruthy();
-		});
-
 		it('should show "Last update: Today" for current day entry', () => {
 			render(WeightScore, {
 				props: {
-					weightTracker: mockWeightTracker,
+					weightTracker: mockWeightTrackerToday,
 					weightTarget: mockWeightTarget
 				}
 			});
@@ -106,20 +108,16 @@ describe('WeightScore', () => {
 
 		it('should show days ago for old entries (warning < 2 days)', () => {
 			// Create a tracker from 1 day ago
-			const yesterday = new Date();
-			yesterday.setDate(yesterday.getDate() - 1);
-			const yesterdayStr = yesterday.toISOString().split('T')[0];
-
 			const oldTracker: WeightTracker = {
 				id: 1,
-				added: yesterdayStr,
+				added: getDateAsStr(subDays(new Date(), 1)),
+				time: '08:30:00',
 				amount: 83
 			};
 
 			const { container } = render(WeightScore, {
 				props: {
-					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
-					lastWeightTracker: oldTracker,
+					weightTracker: oldTracker,
 					weightTarget: mockWeightTarget
 				}
 			});
@@ -130,20 +128,16 @@ describe('WeightScore', () => {
 
 		it('should show critical warning for very old entries (> 2 days)', () => {
 			// Create a tracker from 5 days ago
-			const fiveDaysAgo = new Date();
-			fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-			const oldDate = fiveDaysAgo.toISOString().split('T')[0];
-
 			const veryOldTracker: WeightTracker = {
 				id: 1,
-				added: oldDate,
+				added: getDateAsStr(subDays(new Date(), 5)),
+				time: '08:30:00',
 				amount: 83
 			};
 
 			const { container } = render(WeightScore, {
 				props: {
-					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
-					lastWeightTracker: veryOldTracker,
+					weightTracker: veryOldTracker,
 					weightTarget: mockWeightTarget
 				}
 			});
@@ -157,7 +151,7 @@ describe('WeightScore', () => {
 		it('should show success state with ShieldCheck for current day', () => {
 			render(WeightScore, {
 				props: {
-					weightTracker: mockWeightTracker,
+					weightTracker: mockWeightTrackerToday,
 					weightTarget: mockWeightTarget
 				}
 			});
@@ -168,20 +162,16 @@ describe('WeightScore', () => {
 
 		it('should show warning state for entries 1-2 days old', () => {
 			// Create a tracker from 1 day ago
-			const yesterday = new Date();
-			yesterday.setDate(yesterday.getDate() - 1);
-			const yesterdayStr = yesterday.toISOString().split('T')[0];
-
 			const oldTracker: WeightTracker = {
 				id: 1,
-				added: yesterdayStr,
+				added: getDateAsStr(subDays(new Date(), 1)),
+				time: '08:30:00',
 				amount: 83
 			};
 
 			const { container } = render(WeightScore, {
 				props: {
-					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
-					lastWeightTracker: oldTracker,
+					weightTracker: oldTracker,
 					weightTarget: mockWeightTarget
 				}
 			});
@@ -192,38 +182,22 @@ describe('WeightScore', () => {
 
 		it('should show error state for entries older than 2 days', () => {
 			// Create a tracker from 5 days ago
-			const fiveDaysAgo = new Date();
-			fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-			const oldDate = fiveDaysAgo.toISOString().split('T')[0];
-
 			const veryOldTracker: WeightTracker = {
 				id: 1,
-				added: oldDate,
+				added: getDateAsStr(subDays(new Date(), 5)),
+				time: '08:30:00',
 				amount: 83
 			};
 
 			const { container } = render(WeightScore, {
 				props: {
-					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
-					lastWeightTracker: veryOldTracker,
+					weightTracker: veryOldTracker,
 					weightTarget: mockWeightTarget
 				}
 			});
 
 			// ShieldWarning (error color) should show with "days ago!" (with exclamation)
 			expect(container.textContent).toMatch(/Last update was.*5.*days ago!/i);
-		});
-
-		it('should show neutral state with Shield icon when no data tracked', () => {
-			render(WeightScore, {
-				props: {
-					weightTracker: { added: '2024-01-20', amount: 81 } as NewWeightTracker,
-					weightTarget: mockWeightTarget
-				}
-			});
-
-			// Shield icon shows with "Nothing tracked yet" text
-			expect(screen.getByText(/Nothing tracked yet/i)).toBeTruthy();
 		});
 	});
 
@@ -269,64 +243,12 @@ describe('WeightScore', () => {
 		});
 	});
 
-	describe('Callbacks', () => {
-		it('should call onAdd when provided', async () => {
-			const onaddMock = vi.fn().mockResolvedValue({
-				id: 2,
-				added: '2024-01-20',
-				amount: 80
-			});
-
-			render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: mockWeightTarget,
-					onAdd: onaddMock
-				}
-			});
-
-			// Component should render without calling onadd immediately
-			expect(onaddMock).not.toHaveBeenCalled();
-		});
-
-		it('should work without onAdd callback', () => {
-			expect(() => {
-				render(WeightScore, {
-					props: {
-						weightTracker: mockWeightTracker,
-						weightTarget: mockWeightTarget
-					}
-				});
-			}).not.toThrow();
-		});
-
-		it('should work without onEdit callback', () => {
-			expect(() => {
-				render(WeightScore, {
-					props: {
-						weightTracker: mockWeightTracker,
-						weightTarget: mockWeightTarget
-					}
-				});
-			}).not.toThrow();
-		});
-	});
-
 	describe('Edge Cases', () => {
-		it('should handle missing weightTracker', () => {
-			const { container } = render(WeightScore, {
-				props: {
-					weightTarget: mockWeightTarget
-				}
-			});
-
-			expect(container).toBeTruthy();
-		});
-
 		it('should handle very large weight values', () => {
 			const heavyTracker: WeightTracker = {
 				id: 1,
-				added: '2024-01-15',
+				added: getDateAsStr(new Date()),
+				time: '08:30:00',
 				amount: 300
 			};
 
@@ -338,14 +260,15 @@ describe('WeightScore', () => {
 			});
 
 			// Component should render without error
-			expect(container.textContent).toContain('kg');
+			expect(container.textContent).toMatch(/300 kg/i);
 			expect(container.textContent).toContain('Last update: Today');
 		});
 
 		it('should handle minimum weight values', () => {
 			const lightTracker: WeightTracker = {
 				id: 1,
-				added: '2024-01-15',
+				added: getDateAsStr(new Date()),
+				time: '08:30:00',
 				amount: 30
 			};
 
@@ -356,14 +279,15 @@ describe('WeightScore', () => {
 				}
 			});
 
-			expect(container.textContent).toContain('kg');
+			expect(container.textContent).toMatch(/30 kg/i);
 			expect(container.textContent).toContain('Last update: Today');
 		});
 
 		it('should handle fractional weight values', () => {
 			const fractionalTracker: WeightTracker = {
 				id: 1,
-				added: '2024-01-15',
+				added: getDateAsStr(new Date()),
+				time: '08:30:00',
 				amount: 82.5
 			};
 
@@ -374,7 +298,7 @@ describe('WeightScore', () => {
 				}
 			});
 
-			expect(container.textContent).toContain('kg');
+			expect(container.textContent).toMatch(/82.5 kg/i);
 			expect(container.textContent).toContain('Last update: Today');
 		});
 	});

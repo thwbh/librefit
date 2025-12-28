@@ -38,21 +38,24 @@ describe('IntakeStack', () => {
 			added: '2024-01-01',
 			category: 'b',
 			amount: 400,
-			description: 'Oatmeal'
+			description: 'Oatmeal',
+			time: '08:30:00'
 		},
 		{
 			id: 2,
 			added: '2024-01-01',
 			category: 'l',
 			amount: 600,
-			description: 'Salad'
+			description: 'Salad',
+			time: '13:10:00'
 		},
 		{
 			id: 3,
 			added: '2024-01-01',
 			category: 'd',
 			amount: 800,
-			description: 'Pasta'
+			description: 'Pasta',
+			time: '19:15:00'
 		}
 	];
 
