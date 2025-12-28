@@ -1,6 +1,6 @@
 {
 	"name": "librefit",
-	"version": "PREVIEW",
+	"version": "25.52.0",
 	"description": "Your FOSS calorie tracker!",
 	"type": "module",
 	"scripts": {
