@@ -30,7 +30,7 @@ pub struct BodyData {
     #[validate(range(
         min = 30.0,
         max = 330.0,
-        message = "Weight must be btween 30 and 330kg."
+        message = "Weight must be between 30 and 330kg."
     ))]
     pub weight: f32,
     pub sex: String,
