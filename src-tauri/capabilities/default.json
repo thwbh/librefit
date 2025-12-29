@@ -19,7 +19,12 @@
 		"fs:allow-read",
 		{
 			"identifier": "fs:scope",
-			"allow": [{ "path": "content://**" }]
-		}
+			"allow": [
+				{
+					"path": "content://**"
+				}
+			]
+		},
+		"store:default"
 	]
 }

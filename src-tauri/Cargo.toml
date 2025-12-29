@@ -38,6 +38,7 @@ tauri-plugin-haptics = "2.3.0"
 csv = "1.3"
 zip = "2.2"
 url = "2.5"
+tauri-plugin-store = "2"
 
 # satisfy linker for sqlite3 required by diesel
 [dependencies.libsqlite3-sys]
