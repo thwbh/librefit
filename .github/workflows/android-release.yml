@@ -124,6 +124,13 @@ jobs:
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo tauri android init
 
+      - name: Restore committed Android version properties
+        run: |
+          # cargo tauri android init overwrites tauri.properties - restore the committed version
+          git checkout HEAD -- src-tauri/gen/android/app/tauri.properties 2>/dev/null || echo "No committed tauri.properties found"
+          echo "Android version properties:"
+          cat src-tauri/gen/android/app/tauri.properties
+
       - name: Generate Android icons
         working-directory: src-tauri
         run: cargo tauri icon icons/icon.png
