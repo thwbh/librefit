@@ -1,6 +1,6 @@
 [package]
 name = "librefit"
-version = "0.1.0"
+version = "26.6.0"
 description = "Your FOSS calorie tracker!"
 authors = ["Stefan Poindl"]
 license = "GPL-3.0"
