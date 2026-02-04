@@ -60,15 +60,6 @@ jobs:
           sed -i 's/"version": ".*"/"version": "${{ needs.generate-version.outputs.semver }}"/' src-tauri/tauri.conf.json
           cat src-tauri/tauri.conf.json | grep version
 
-      - name: 'Update Android versionCode and versionName'
-        run: |
-          mkdir -p src-tauri/gen/android/app
-          cat > src-tauri/gen/android/app/tauri.properties << EOF
-          tauri.android.versionCode=${{ needs.generate-version.outputs.version_code }}
-          tauri.android.versionName=${{ needs.generate-version.outputs.version }}
-          EOF
-          cat src-tauri/gen/android/app/tauri.properties
-
       - name: 'Upload updated files'
         uses: actions/upload-artifact@v4
         with:
@@ -77,7 +68,6 @@ jobs:
             package.json
             src-tauri/Cargo.toml
             src-tauri/tauri.conf.json
-            src-tauri/gen/android/app/tauri.properties
 
   create-release:
     name: 'Create GitHub Release and Commit Version Updates'
@@ -94,15 +84,11 @@ jobs:
         with:
           name: version-files
 
-      - name: 'Ensure directories exist'
-        run: mkdir -p src-tauri/gen/android/app
-
       - name: 'Commit version bump'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
-          git add --force src-tauri/gen/android/app/tauri.properties
           git commit -m "chore: bump version to ${{ needs.generate-version.outputs.version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
