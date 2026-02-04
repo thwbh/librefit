@@ -1,3 +1,5 @@
+![librefit logo](/src/lib/assets/logo/librefit-app-logo@256x256.png)
+
 # LibreFit
 
 ![GitHub Release](https://img.shields.io/github/v/release/thwbh/librefit)
@@ -77,11 +79,13 @@ cd ..
 ### 3. Start Development Server
 
 **Desktop development:**
+
 ```bash
 cargo tauri dev
 ```
 
 **Android development:**
+
 ```bash
 cargo tauri android dev
 ```
@@ -89,6 +93,7 @@ cargo tauri android dev
 ### Android NDK Linker Issues
 
 If you encounter this error:
+
 ```
 java.lang.UnsatisfiedLinkError: dlopen failed: cannot locate symbol "__floatunditf"
 ```
@@ -96,6 +101,7 @@ java.lang.UnsatisfiedLinkError: dlopen failed: cannot locate symbol "__floatundi
 The linker path in `build.rs` doesn't match your system. Fix it by:
 
 1. Locate your NDK linker library:
+
    ```
    $NDK_HOME/toolchains/llvm/prebuilt/<host>/lib/clang/<version>/lib/<os>/libclang_rt.builtins-<guest>.a
    ```
@@ -110,17 +116,20 @@ The linker path in `build.rs` doesn't match your system. Fix it by:
 This project uses [nextest](https://nexte.st/) for Rust and [vitest](https://vitest.dev) for frontend tests.
 
 **Run frontend tests:**
+
 ```bash
 npm run test
 ```
 
 **Run backend tests:**
+
 ```bash
 cd src-tauri
 cargo nextest run
 ```
 
 **Run with coverage:**
+
 ```bash
 npm run test:ci              # Frontend with coverage
 cargo llvm-cov nextest       # Backend with coverage

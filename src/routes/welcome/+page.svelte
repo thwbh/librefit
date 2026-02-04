@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { fade, fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import logo from '$lib/assets/logo/librefit-logo.png';
+	import logo from '$lib/assets/logo/librefit-logo@512x512.png';
 	import { LockLaminated, LockSimple } from 'phosphor-svelte';
 
 	let mounted = false;
@@ -24,13 +24,19 @@
 	<div class="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
 		{#if mounted}
 			<!-- Logo -->
-			<div class="mb-8" in:fade={{ duration: 400 }}>
-				<img src={logo} alt="LibreFit" class="w-32 h-32 md:w-40 md:h-40 drop-shadow-xl" />
+			<div class="mb-6 self-center" in:fade={{ duration: 400 }}>
+				<img
+					src={logo}
+					alt="LibreFit"
+					class="w-60 h-60 sm:w-68 sm:h-68 md:w-74 md:h-74 drop-shadow-xl"
+				/>
 			</div>
 
 			<!-- App Name -->
 			<div in:fly={{ y: 20, duration: 400, delay: 100 }}>
-				<h1 class="text-5xl md:text-6xl font-bold text-base-content mb-2 text-center">LibreFit</h1>
+				<h1 class="sr-only text-5xl md:text-6xl font-bold text-base-content mb-2 text-center">
+					LibreFit
+				</h1>
 				<div class="w-20 h-1 bg-primary mx-auto mb-6"></div>
 			</div>
 

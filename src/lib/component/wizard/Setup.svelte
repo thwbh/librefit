@@ -286,10 +286,8 @@
 			// Wait for fade out animation to complete
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 
-			// Invalidate all layout data to refetch user profile
-			await invalidateAll();
-
-			goto('/');
+			// Navigate and invalidate all layout data to refetch user profile
+			await goto('/', { invalidateAll: true });
 		} catch (e) {
 			error(`Error during setup: ${e}`);
 			finishError = true;

@@ -4,7 +4,7 @@
 	import { Gear, Info } from 'phosphor-svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import logo from '$lib/assets/logo/librefit-logo.png';
+	import logo from '$lib/assets/logo/librefit-logo@512x512.png';
 	import { LockLaminated } from 'phosphor-svelte';
 
 	let mounted = false;
@@ -39,12 +39,18 @@
 		{#if mounted}
 			<!-- Logo -->
 			<div class="mb-6 self-center" in:fade={{ duration: 400 }}>
-				<img src={logo} alt="LibreFit" class="w-24 h-24 md:w-32 md:h-32 drop-shadow-xl" />
+				<img
+					src={logo}
+					alt="LibreFit"
+					class="w-60 h-60 sm:w-68 sm:h-68 md:w-74 md:h-74 drop-shadow-xl"
+				/>
 			</div>
 
 			<!-- App Name -->
 			<div in:fly={{ y: 20, duration: 400, delay: 100 }}>
-				<h1 class="text-4xl md:text-5xl font-bold text-base-content mb-2 text-center">LibreFit</h1>
+				<h1 class="sr-only text-4xl md:text-5xl font-bold text-base-content mb-2 text-center">
+					LibreFit
+				</h1>
 				<div class="w-16 h-1 bg-primary mx-auto mb-4"></div>
 			</div>
 
