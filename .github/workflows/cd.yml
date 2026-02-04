@@ -100,7 +100,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
-          git add src-tauri/gen/android/app/tauri.properties || true
+          git add --force src-tauri/gen/android/app/tauri.properties
           git commit -m "chore: bump version to ${{ needs.generate-version.outputs.version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
