@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
+      semver: ${{ steps.version.outputs.SEMVER }}
       tag: ${{ steps.version.outputs.TAG }}
       version_code: ${{ steps.version.outputs.VERSION_CODE }}
     steps:
@@ -31,6 +32,7 @@ jobs:
       - name: 'Display version info'
         run: |
           echo "Version: ${{ steps.version.outputs.VERSION }}"
+          echo "Semver: ${{ steps.version.outputs.SEMVER }}"
           echo "Tag: ${{ steps.version.outputs.TAG }}"
           echo "Version Code: ${{ steps.version.outputs.VERSION_CODE }}"
 
@@ -43,19 +45,19 @@ jobs:
 
       - name: 'Update package.json'
         run: |
-          sed -i 's/"version": ".*"/"version": "${{ needs.generate-version.outputs.version }}"/' package.json
+          sed -i 's/"version": ".*"/"version": "${{ needs.generate-version.outputs.semver }}"/' package.json
           cat package.json | grep version
 
       - name: 'Update Cargo.toml'
         run: |
           # Only update the version in the [package] section, not dependencies
-          sed -i '/^\[package\]/,/^\[/ s/^version = ".*"/version = "${{ needs.generate-version.outputs.version }}"/' src-tauri/Cargo.toml
+          sed -i '/^\[package\]/,/^\[/ s/^version = ".*"/version = "${{ needs.generate-version.outputs.semver }}"/' src-tauri/Cargo.toml
           echo "Updated package version:"
           sed -n '/^\[package\]/,/^\[/p' src-tauri/Cargo.toml | grep version
 
       - name: 'Update tauri.conf.json'
         run: |
-          sed -i 's/"version": ".*"/"version": "${{ needs.generate-version.outputs.version }}"/' src-tauri/tauri.conf.json
+          sed -i 's/"version": ".*"/"version": "${{ needs.generate-version.outputs.semver }}"/' src-tauri/tauri.conf.json
           cat src-tauri/tauri.conf.json | grep version
 
       - name: 'Update Android versionCode and versionName'

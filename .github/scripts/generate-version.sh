@@ -7,6 +7,7 @@ set -e
 # Get current year (last 2 digits) and week number (zero-padded)
 YEAR=$(date +%y)
 WEEK=$(date +%V)
+WEEK_NO_PAD=$((10#$WEEK))  # Remove leading zero for semver compliance
 BASE_VERSION="${YEAR}.${WEEK}"
 
 echo "Base version: ${BASE_VERSION}"
@@ -35,8 +36,12 @@ else
     VERSION="${BASE_VERSION}.${MICRO}"
 fi
 
-echo "Generated version: ${VERSION}"
+# Semver version without leading zeros (for Cargo.toml, tauri.conf.json, package.json)
+SEMVER="${YEAR}.${WEEK_NO_PAD}.${MICRO}"
+
+echo "Generated version: ${VERSION} (semver: ${SEMVER})"
 echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+echo "SEMVER=${SEMVER}" >> $GITHUB_OUTPUT
 echo "TAG=${VERSION}" >> $GITHUB_OUTPUT
 
 # Also calculate versionCode (YYWWMMMM format for Android)
