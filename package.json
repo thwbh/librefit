@@ -35,6 +35,7 @@
 		"@tailwindcss/vite": "^4.1.3",
 		"@tauri-apps/cli": "^2.1.0",
 		"@tauri-apps/plugin-log": "^2.5.0",
+		"@tauri-apps/plugin-store": "^2.4.1",
 		"@testing-library/dom": "^10.2.0",
 		"@testing-library/jest-dom": "^6.8.0",
 		"@testing-library/svelte": "^5.1.0",
