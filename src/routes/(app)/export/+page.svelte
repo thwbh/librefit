@@ -8,6 +8,7 @@
 	import {
 		AlertBox,
 		AlertType,
+		AlertVariant,
 		Breadcrumbs,
 		LoadingIndicator,
 		ModalDialog,
@@ -284,7 +285,7 @@
 			<div class="mt-6 space-y-4">
 				<!-- Status message -->
 				{#if filePath}
-					<AlertBox type={AlertType.Info} class="break-all">
+					<AlertBox type={AlertType.Info} variant={AlertVariant.Callout} class="break-all">
 						File saved to {filePath}
 					</AlertBox>
 				{/if}

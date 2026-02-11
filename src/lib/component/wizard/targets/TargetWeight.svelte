@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getWizardContext } from '$lib/context';
-	import { AlertBox, AlertType, RangeInput, StatCard } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, AlertVariant, RangeInput, StatCard } from '@thwbh/veilchen';
 
 	interface Props {
 		value: number;
@@ -41,12 +41,7 @@
 
 		<div class="stats stats-horizontal shadow w-full flex-col">
 			<StatCard title="Current Weight" value={wizardInput.weight} description="kg" />
-			<StatCard
-				title="Target Weight"
-				value={value}
-				description="kg"
-				valueClass="text-primary"
-			/>
+			<StatCard title="Target Weight" {value} description="kg" valueClass="text-primary" />
 		</div>
 
 		<div class="mt-4 space-y-3">
@@ -66,12 +61,12 @@
 		</div>
 	</div>
 
-	<AlertBox type={AlertType.Info}>
+	<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 		<strong>Maintain your healthy weight.</strong>
 		<p class="text-sm">
 			{#if value === wizardInput.weight}
-				You've chosen to maintain your current weight. This is great for staying in your healthy
-				BMI range!
+				You've chosen to maintain your current weight. This is great for staying in your healthy BMI
+				range!
 			{:else if isIncreasing}
 				You've chosen to gain {weightDifference} kg while staying within the healthy range.
 			{:else}

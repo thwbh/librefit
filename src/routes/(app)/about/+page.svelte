@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Breadcrumbs, TextSize } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, AlertVariant, Breadcrumbs, TextSize } from '@thwbh/veilchen';
 	import type { BreadcrumbItem } from '@thwbh/veilchen';
 	import { Gear, Info } from 'phosphor-svelte';
 	import { fade, fly } from 'svelte/transition';
@@ -70,7 +70,7 @@
 				<!-- Feature 1 -->
 				<div class="flex items-start gap-4">
 					<div
-						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm"
+						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-sm"
 					>
 						✓
 					</div>
@@ -85,7 +85,7 @@
 				<!-- Feature 2 -->
 				<div class="flex items-start gap-4">
 					<div
-						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm"
+						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-sm"
 					>
 						✓
 					</div>
@@ -100,7 +100,7 @@
 				<!-- Feature 3 -->
 				<div class="flex items-start gap-4">
 					<div
-						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm"
+						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-sm"
 					>
 						✓
 					</div>
@@ -114,19 +114,17 @@
 			</div>
 
 			<!-- Privacy Badge -->
-			<div
-				class="bg-info border border-info-content/20 rounded-xl px-5 py-3 mb-6 max-w-lg mx-auto w-full"
-				in:fly={{ y: 20, duration: 400, delay: 400 }}
-			>
-				<div class="flex items-center gap-3 text-sm">
-					<span class="text-2xl">
-						<LockLaminated size="1em" />
-					</span>
+			<div in:fly={{ y: 20, duration: 400, delay: 400 }}>
+				<AlertBox type={AlertType.Info} variant={AlertVariant.Callout} class="mb-6 max-w-lg">
+					{#snippet icon()}
+						<LockLaminated size="1.75em" />
+					{/snippet}
+
 					<div>
 						<p class="font-semibold text-info-content">Your data stays on your device</p>
 						<p class="text-info-content opacity-80">No ads • No tracking • Open source</p>
 					</div>
-				</div>
+				</AlertBox>
 			</div>
 
 			<!-- Version -->

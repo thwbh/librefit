@@ -3,7 +3,8 @@
 	import { fade, fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import logo from '$lib/assets/logo/librefit-logo@512x512.png';
-	import { LockLaminated, LockSimple } from 'phosphor-svelte';
+	import { LockLaminated } from 'phosphor-svelte';
+	import { AlertBox, AlertType, AlertVariant } from '@thwbh/veilchen';
 
 	let mounted = false;
 	onMount(() => {
@@ -34,15 +35,15 @@
 
 			<!-- App Name -->
 			<div in:fly={{ y: 20, duration: 400, delay: 100 }}>
-				<h1 class="sr-only text-5xl md:text-6xl font-bold text-base-content mb-2 text-center">
+				<h1 class="sr-only text-4xl md:text-5xl font-bold text-base-content mb-2 text-center">
 					LibreFit
 				</h1>
-				<div class="w-20 h-1 bg-primary mx-auto mb-6"></div>
+				<div class="w-16 h-1 bg-primary mx-auto mb-4"></div>
 			</div>
 
 			<!-- Tagline -->
 			<p
-				class="text-xl md:text-2xl text-base-content opacity-70 mb-12 text-center max-w-md"
+				class="text-lg md:text-xl text-base-content opacity-70 mb-8 text-center max-w-md mx-auto"
 				in:fly={{ y: 20, duration: 400, delay: 200 }}
 			>
 				Track smarter. Live healthier.
@@ -50,18 +51,18 @@
 
 			<!-- Feature Cards -->
 			<div
-				class="bg-base-100 rounded-2xl shadow-lg p-8 md:p-10 mb-8 max-w-lg w-full space-y-6"
+				class="bg-base-100 rounded-2xl shadow-lg p-6 md:p-8 mb-6 max-w-lg mx-auto w-full space-y-4"
 				in:fly={{ y: 20, duration: 400, delay: 300 }}
 			>
 				<!-- Feature 1 -->
 				<div class="flex items-start gap-4">
 					<div
-						class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold"
+						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-sm"
 					>
 						✓
 					</div>
 					<div>
-						<h3 class="font-semibold text-base-content mb-1 text-lg">Personalized calorie goals</h3>
+						<h3 class="font-semibold text-base-content mb-1">Personalized calorie goals</h3>
 						<p class="text-sm text-base-content opacity-60">
 							Science-based recommendations tailored to your body and goals
 						</p>
@@ -71,14 +72,12 @@
 				<!-- Feature 2 -->
 				<div class="flex items-start gap-4">
 					<div
-						class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold"
+						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-sm"
 					>
 						✓
 					</div>
 					<div>
-						<h3 class="font-semibold text-base-content mb-1 text-lg">
-							Beautiful progress tracking
-						</h3>
+						<h3 class="font-semibold text-base-content mb-1">Beautiful progress tracking</h3>
 						<p class="text-sm text-base-content opacity-60">
 							Visualize your journey with detailed charts and insights
 						</p>
@@ -88,12 +87,12 @@
 				<!-- Feature 3 -->
 				<div class="flex items-start gap-4">
 					<div
-						class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold"
+						class="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-sm"
 					>
 						✓
 					</div>
 					<div>
-						<h3 class="font-semibold text-base-content mb-1 text-lg">Simple daily tracking</h3>
+						<h3 class="font-semibold text-base-content mb-1">Simple daily tracking</h3>
 						<p class="text-sm text-base-content opacity-60">
 							Log your meals in seconds, not minutes
 						</p>
@@ -102,19 +101,17 @@
 			</div>
 
 			<!-- Privacy Badge -->
-			<div
-				class="bg-info border border-info-content/20 rounded-xl px-6 py-4 mb-8 max-w-lg w-full"
-				in:fly={{ y: 20, duration: 400, delay: 400 }}
-			>
-				<div class="flex items-center gap-3 text-sm">
-					<span class="text-2xl">
-						<LockLaminated size="1em" />
-					</span>
+			<div class="w-full max-w-lg" in:fly={{ y: 20, duration: 400, delay: 400 }}>
+				<AlertBox type={AlertType.Info} variant={AlertVariant.Callout} class="mb-6">
+					{#snippet icon()}
+						<LockLaminated size="1.75em" />
+					{/snippet}
+
 					<div>
 						<p class="font-semibold text-info-content">Your data stays on your device</p>
 						<p class="text-info-content opacity-80">No ads • No tracking • Open source</p>
 					</div>
-				</div>
+				</AlertBox>
 			</div>
 
 			<!-- CTA Button -->
@@ -128,8 +125,11 @@
 			</button>
 
 			<!-- Version -->
-			<p class="text-xs text-base-content opacity-40 mt-8" in:fade={{ duration: 400, delay: 600 }}>
-				Version 0.1.0-beta • Free & Open Source
+			<p
+				class="mt-4 text-xs text-base-content opacity-40 text-center"
+				in:fade={{ duration: 400, delay: 600 }}
+			>
+				Version {__APP_VERSION__} • Free & Open Source
 			</p>
 		{/if}
 	</div>
