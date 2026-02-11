@@ -13,6 +13,7 @@
 	import {
 		AlertBox,
 		AlertType,
+		AlertVariant,
 		Breadcrumbs,
 		LoadingIndicator,
 		ModalDialog,
@@ -205,7 +206,7 @@
 		</div>
 	</div>
 
-	<AlertBox type={AlertType.Warning}>
+	<AlertBox type={AlertType.Warning} variant={AlertVariant.Callout}>
 		<strong>Important:</strong> Importing the same file multiple times will create duplicate entries.
 		There is no automatic deduplication.
 	</AlertBox>
@@ -244,7 +245,11 @@
 			<div class="mt-6 space-y-4">
 				<!-- Status message -->
 				{#if importResult}
-					<AlertBox type={AlertType.Success} class="break-all wrap-normal">
+					<AlertBox
+						type={AlertType.Success}
+						variant={AlertVariant.Callout}
+						class="break-all wrap-normal"
+					>
 						Successfully imported all {importResult.importedCount} rows.
 					</AlertBox>
 				{/if}

@@ -64,8 +64,8 @@
 					data: data.trackerProgress.intakeChartData.legend.map(
 						(_: any) => data.trackerProgress.intakeTarget.maximumCalories
 					),
-					borderColor: getThemeColor('--color-error'),
-					backgroundColor: getThemeColor('--color-error'),
+					borderColor: getThemeColor('--color-accent'),
+					backgroundColor: getThemeColor('--color-accent'),
 					tension: 0.4
 				},
 				{
@@ -73,8 +73,8 @@
 					data: data.trackerProgress.intakeChartData.legend.map(
 						(_: any) => data.trackerProgress.intakeTarget.targetCalories
 					),
-					borderColor: getThemeColor('--color-success'),
-					backgroundColor: getThemeColor('--color-success')
+					borderColor: getThemeColor('--color-secondary'),
+					backgroundColor: getThemeColor('--color-secondary')
 				},
 				{
 					label: 'Average',
@@ -147,7 +147,7 @@
 			</div>
 			<div class="stat-desc text-right">
 				Target: {data.trackerProgress.intakeTarget.maximumCalories -
-					data.trackerProgress.intakeTarget.targetCalories} kcal
+					data.trackerProgress.intakeTarget.targetCalories}
 			</div>
 		</div>
 	</div>

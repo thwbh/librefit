@@ -15,7 +15,7 @@
 	<div class="space-y-4">
 		<div class="flex items-center gap-4">
 			<div
-				class="flex-shrink-0 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center"
+				class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-primary-content flex items-center justify-center"
 			>
 				<RocketLaunch size="1.5em" />
 			</div>
@@ -31,7 +31,7 @@
 
 		<div class="flex items-center gap-4">
 			<div
-				class="flex-shrink-0 w-12 h-12 rounded-full bg-success/20 flex items-center justify-center"
+				class="flex-shrink-0 w-12 h-12 rounded-full bg-secondary text-secondary-content flex items-center justify-center"
 			>
 				<Confetti size="1.5em" />
 			</div>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { LibreUser } from '$lib/api/gen';
-	import { AlertBox, AlertType, Avatar } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, AlertVariant, Avatar } from '@thwbh/veilchen';
 	import { fade } from 'svelte/transition';
 	import { getAvatar } from '$lib/avatar';
 
@@ -47,7 +47,7 @@
 				</h1>
 
 				{#if hasError}
-					<AlertBox type={AlertType.Error}>
+					<AlertBox type={AlertType.Error} variant={AlertVariant.Callout}>
 						<strong>Error</strong>
 						<span>{processingStep}</span>
 					</AlertBox>

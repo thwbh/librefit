@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CalculationSexSchema, type BodyData } from '$lib/api/gen';
-	import { AlertBox, AlertType } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, AlertVariant } from '@thwbh/veilchen';
 	import { goto } from '$app/navigation';
 	import { Cake, GenderFemale, GenderMale, Ruler, Scales } from 'phosphor-svelte';
 
@@ -20,7 +20,7 @@
 		<h2 class="text-xl font-bold">Body Composition</h2>
 	</div>
 
-	<AlertBox type={AlertType.Info}>
+	<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 		<span>
 			Changing your body composition requires running the setup wizard again. These parameters
 			affect your personalized fitness journey.
@@ -32,11 +32,13 @@
 			<div class="grid grid-cols-1 gap-4">
 				<!-- Sex -->
 				<div class="flex items-center gap-4">
-					<div class="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+					<div
+						class="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-content"
+					>
 						{#if bodyData.sex === CalculationSexSchema.enum.MALE}
-							<GenderMale size="1.5em" class="text-primary" />
+							<GenderMale size="1.5em" />
 						{:else if bodyData.sex === CalculationSexSchema.enum.FEMALE}
-							<GenderFemale size="1.5em" class="text-primary" />
+							<GenderFemale size="1.5em" />
 						{/if}
 					</div>
 					<div class="flex-1">
@@ -49,8 +51,10 @@
 
 				<!-- Age -->
 				<div class="flex items-center gap-4">
-					<div class="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-						<Cake size="1.5em" class="text-primary" />
+					<div
+						class="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-content"
+					>
+						<Cake size="1.5em" />
 					</div>
 					<div class="flex-1">
 						<p class="text-sm opacity-70">Age</p>
@@ -60,8 +64,10 @@
 
 				<!-- Height -->
 				<div class="flex items-center gap-4">
-					<div class="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-						<Ruler size="1.5em" class="text-primary" />
+					<div
+						class="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-content"
+					>
+						<Ruler size="1.5em" />
 					</div>
 					<div class="flex-1">
 						<p class="text-sm opacity-70">Height</p>
@@ -71,8 +77,10 @@
 
 				<!-- Weight -->
 				<div class="flex items-center gap-4">
-					<div class="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-						<Scales size="1.5em" class="text-primary" />
+					<div
+						class="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-content"
+					>
+						<Scales size="1.5em" />
 					</div>
 					<div class="flex-1">
 						<p class="text-sm opacity-70">Starting Weight</p>
