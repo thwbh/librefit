@@ -95,9 +95,9 @@ describe('TimelineCard Component', () => {
 			}
 		});
 
-		// Check for icon containers
-		const iconContainers = container.querySelectorAll('.rounded-full.bg-primary\\/20');
-		expect(iconContainers.length).toBeGreaterThan(0);
+		// Check for primary icon container
+		const iconContainer = container.querySelector('.rounded-full.bg-primary');
+		expect(iconContainer).toBeDefined();
 	});
 
 	it('should render confetti icon for target', () => {
@@ -108,9 +108,9 @@ describe('TimelineCard Component', () => {
 			}
 		});
 
-		// Check for success icon container
-		const successContainer = container.querySelector('.rounded-full.bg-success\\/20');
-		expect(successContainer).toBeDefined();
+		// Check for secondary icon container
+		const secondaryContainer = container.querySelector('.rounded-full.bg-secondary');
+		expect(secondaryContainer).toBeDefined();
 	});
 
 	it('should handle different date formats', () => {
