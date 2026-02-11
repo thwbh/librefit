@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { AlertBox, AlertType, OptionCards, type OptionCardData } from '@thwbh/veilchen';
+	import {
+		AlertBox,
+		AlertType,
+		AlertVariant,
+		OptionCards,
+		type OptionCardData
+	} from '@thwbh/veilchen';
 	import { activityLevels } from '$lib/activity';
 
 	interface Props {
@@ -30,7 +36,7 @@
 		{/snippet}
 	</OptionCards>
 
-	<AlertBox type={AlertType.Info}>
+	<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 		<strong>Please be honest.</strong>
 		<p class="text-sm">
 			The descriptions are in no way meant to be judgemental and are a rough estimate of how your

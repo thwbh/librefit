@@ -3,6 +3,7 @@
 	import {
 		AlertBox,
 		AlertType,
+		AlertVariant,
 		OptionCards,
 		RangeInput,
 		StatCard,
@@ -19,7 +20,13 @@
 		targetWeight?: number;
 	}
 
-	let { value = $bindable(), rates, targetDates, targetProgress, targetWeight = $bindable(0) }: Props = $props();
+	let {
+		value = $bindable(),
+		rates,
+		targetDates,
+		targetProgress,
+		targetWeight = $bindable(0)
+	}: Props = $props();
 
 	// Get recommendation from wizard context to determine if we're gaining, losing, or maintaining
 	const wizardState = getWizardContext();
@@ -33,9 +40,9 @@
 	// These users should select target weight instead of calorie rate
 	const isLowNormalBmi = $derived(
 		wizardState.wizardResult &&
-		wizardState.wizardResult.bmi >= 18.5 &&
-		wizardState.wizardResult.bmi < 20 &&
-		recommendation === 'GAIN'
+			wizardState.wizardResult.bmi >= 18.5 &&
+			wizardState.wizardResult.bmi < 20 &&
+			recommendation === 'GAIN'
 	);
 
 	// Show weight target selector for HOLD or low-normal GAIN users
@@ -48,15 +55,20 @@
 
 	const difficultyConfig: Record<
 		number,
-		{ badge: { text: string; color: 'success' | 'info' | 'warning' | 'error' } }
+		{
+			badge: {
+				text: string;
+				color: 'success' | 'info' | 'warning' | 'error' | 'secondary' | 'accent';
+			};
+		}
 	> = {
-		100: { badge: { text: 'Very Easy', color: 'success' } },
-		200: { badge: { text: 'Easy', color: 'success' } },
+		100: { badge: { text: 'Very Easy', color: 'secondary' } },
+		200: { badge: { text: 'Easy', color: 'secondary' } },
 		300: { badge: { text: 'Moderate', color: 'info' } },
 		400: { badge: { text: 'Moderate', color: 'info' } },
-		500: { badge: { text: 'Challenging', color: 'warning' } },
-		600: { badge: { text: 'Hard', color: 'warning' } },
-		700: { badge: { text: 'Very Hard', color: 'error' } }
+		500: { badge: { text: 'Challenging', color: 'accent' } },
+		600: { badge: { text: 'Hard', color: 'accent' } },
+		700: { badge: { text: 'Very Hard', color: 'warning' } }
 	};
 
 	const data: Array<OptionCardData> = $derived.by(() => {
@@ -90,7 +102,9 @@
 	<!-- For HOLD or low-normal GAIN users, show weight target selector -->
 	<TargetWeight
 		bind:value={targetWeight}
-		targetWeightLower={isLowNormalBmi ? wizardState.wizardInput.weight : wizardState.wizardResult.targetWeightLower}
+		targetWeightLower={isLowNormalBmi
+			? wizardState.wizardInput.weight
+			: wizardState.wizardResult.targetWeightLower}
 		targetWeightUpper={wizardState.wizardResult.targetWeightUpper}
 	/>
 
@@ -103,7 +117,7 @@
 
 			<OptionCards bind:value {data} maxHeight="50vh" />
 
-			<AlertBox type={AlertType.Info}>
+			<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 				<strong>Find your sweet spot.</strong>
 				<p class="text-sm">
 					A higher surplus means faster weight gain, but requires eating significantly more. Many
@@ -119,7 +133,7 @@
 
 		<OptionCards bind:value {data} maxHeight="50vh" />
 
-		<AlertBox type={AlertType.Info}>
+		<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 			<strong>Find your sweet spot.</strong>
 			<p class="text-sm">
 				{#if isGaining}

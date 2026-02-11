@@ -5,11 +5,9 @@
 		type WizardInput,
 		type WizardResult
 	} from '$lib/api/gen';
-	import { AlertBox, AlertType, StatCard } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, AlertVariant, StatCard } from '@thwbh/veilchen';
 	import { getBmiCategoryDisplayValue } from '$lib/enum';
 	import { z } from 'zod';
-	import { Info } from 'phosphor-svelte';
-	import { Warning } from 'postcss';
 
 	interface Props {
 		wizardResult: WizardResult;
@@ -123,7 +121,7 @@
 
 				{#if isLowNormalBmi}
 					<!-- Low-normal BMI: In healthy range (18.5+) but below optimal (20-25) -->
-					<AlertBox type={AlertType.Info}>
+					<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 						<strong> You are currently in the healthy weight range</strong>
 						<p class="text-sm mt-1">
 							Your BMI of <span class="font-semibold">{wizardResult.bmi}</span> is in the healthy
@@ -158,7 +156,7 @@
 						>
 					</div>
 				{:else}
-					<AlertBox type={AlertType.Warning}>
+					<AlertBox type={AlertType.Warning} variant={AlertVariant.Callout}>
 						<strong>Outside healthy range</strong>
 						<p class="text-sm">
 							Your target weight should be between <span class="font-semibold"
@@ -169,14 +167,13 @@
 				{/if}
 
 				{#if wizardResult.bmiCategory !== BmiCategory.StandardWeight && wizardResult.bmiCategory !== BmiCategory.Overweight}
-					<AlertBox type={AlertType.Info}>
+					<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 						<span>It is recommended to consult with a healthcare professional.</span>
 					</AlertBox>
 				{/if}
 			{/if}
 
 			{#if wizardResult.bmiCategory === BmiCategory.Underweight}
-				<div class="divider"></div>
 				<p class="leading-relaxed">
 					To reach a healthy weight ({wizardResult.targetWeightLower}kg), you should consume
 					<span class="font-semibold text-primary"
@@ -188,7 +185,6 @@
 					<span class="font-semibold">{Math.abs(wizardResult.durationDaysLower)} days</span>.
 				</p>
 			{:else if classificationLose.safeParse(wizardResult.bmiCategory).success}
-				<div class="divider"></div>
 				<p class="leading-relaxed">
 					To reach a healthy weight ({wizardResult.targetWeightUpper}kg), you should maintain a
 					<span class="font-semibold text-primary"

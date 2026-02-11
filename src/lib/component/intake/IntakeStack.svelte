@@ -1,7 +1,14 @@
 <script lang="ts">
 	import type { Intake } from '$lib/api/gen';
 	import IntakeMask from './IntakeMask.svelte';
-	import { AlertBox, AlertType, LongPressContainer, Stack, StackCard } from '@thwbh/veilchen';
+	import {
+		AlertBox,
+		AlertType,
+		AlertVariant,
+		LongPressContainer,
+		Stack,
+		StackCard
+	} from '@thwbh/veilchen';
 	import { fade, type FlyParams } from 'svelte/transition';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getFoodCategoryColor } from '$lib/api';
@@ -56,7 +63,7 @@
 	</Stack>
 {:else}
 	<div in:fade>
-		<AlertBox type={AlertType.Warning} class="border-neutral border-dashed">
+		<AlertBox type={AlertType.Warning} variant={AlertVariant.Callout} class="border-accent">
 			<strong>Nothing tracked today.</strong>
 			<span> Use the button below to add today's first entry. Stay strong! </span>
 		</AlertBox>
