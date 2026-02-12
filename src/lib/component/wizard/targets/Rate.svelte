@@ -6,8 +6,9 @@
 		AlertVariant,
 		OptionCards,
 		RangeInput,
-		StatCard,
-		type OptionCardData
+		BadgeColor,
+		type OptionCardData,
+		type OptionCardBadge
 	} from '@thwbh/veilchen';
 	import { getWizardContext } from '$lib/context';
 	import TargetWeight from './TargetWeight.svelte';
@@ -56,19 +57,16 @@
 	const difficultyConfig: Record<
 		number,
 		{
-			badge: {
-				text: string;
-				color: 'success' | 'info' | 'warning' | 'error' | 'secondary' | 'accent';
-			};
+			badge: OptionCardBadge;
 		}
 	> = {
-		100: { badge: { text: 'Very Easy', color: 'secondary' } },
-		200: { badge: { text: 'Easy', color: 'secondary' } },
-		300: { badge: { text: 'Moderate', color: 'info' } },
-		400: { badge: { text: 'Moderate', color: 'info' } },
-		500: { badge: { text: 'Challenging', color: 'accent' } },
-		600: { badge: { text: 'Hard', color: 'accent' } },
-		700: { badge: { text: 'Very Hard', color: 'warning' } }
+		100: { badge: { text: 'Very Easy', color: BadgeColor.Primary } },
+		200: { badge: { text: 'Easy', color: BadgeColor.Secondary } },
+		300: { badge: { text: 'Moderate', color: BadgeColor.Info } },
+		400: { badge: { text: 'Moderate', color: BadgeColor.Info } },
+		500: { badge: { text: 'Challenging', color: BadgeColor.Warning } },
+		600: { badge: { text: 'Hard', color: BadgeColor.Warning } },
+		700: { badge: { text: 'Very Hard', color: BadgeColor.Accent } }
 	};
 
 	const data: Array<OptionCardData> = $derived.by(() => {
@@ -82,7 +80,7 @@
 				value: rate,
 				header: `${rate} kcal/day`,
 				badge: difficultyConfig[rate].badge,
-				highlight: isRecommended ? { text: 'Recommended', color: 'primary' } : undefined,
+				highlight: isRecommended ? { text: 'Recommended', color: BadgeColor.Primary } : undefined,
 				metrics: [
 					{
 						label: progressLabel,
