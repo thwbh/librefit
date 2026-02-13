@@ -309,7 +309,7 @@
 										{calories.amount} kcal
 									</span>
 								</div>
-								<span class="badge badge-xs badge-info"
+								<span class="badge badge-xs"
 									>{getFoodCategoryLongvalue(foodCategories, calories.category)}</span
 								>
 							</div></SwipeableListItem

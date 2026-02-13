@@ -41,7 +41,7 @@
 		</div>
 		<div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
 			<span class="text-base-content opacity-70">{maximumLabel}</span>
-			<span class="font-bold" class:text-error={!isGaining && !isHolding}
+			<span class="font-bold" class:text-accent={!isGaining && !isHolding}
 				>{maximumCalories} kcal</span
 			>
 		</div>

@@ -18,12 +18,20 @@
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
-	import { ModalDialog, NumberStepper, useRefresh } from '@thwbh/veilchen';
-	import { invalidate } from '$app/navigation';
-	import { Hamburger, Plus, Scales, Trash, X } from 'phosphor-svelte';
+	import { Avatar, ModalDialog, NumberStepper, useRefresh } from '@thwbh/veilchen';
+	import { goto, invalidate } from '$app/navigation';
+	import { Plus, Trash } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
-	import { convertDateStrToDisplayDateStr, display_date_format, getDateAsStr } from '$lib/date';
+	import {
+		convertDateStrToDisplayDateStr,
+		display_date_format,
+		getDateAsStr,
+		getDisplayDateAsStr,
+		parseStringAsDate
+	} from '$lib/date';
 	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
+	import { getAvatarFromUser } from '$lib/avatar';
+	import { differenceInDays } from 'date-fns';
 
 	let { data } = $props();
 
@@ -36,6 +44,23 @@
 
 	const weightTarget: WeightTarget = dashboard.weightTarget;
 	const intakeTarget: IntakeTarget = dashboard.intakeTarget;
+
+	// Progress bar calculations (moved from WeightScore)
+	const dayDiff = differenceInDays(parseStringAsDate(weightTarget.endDate), new Date());
+	const totalDays = differenceInDays(
+		parseStringAsDate(weightTarget.endDate),
+		parseStringAsDate(weightTarget.startDate)
+	);
+
+	const progress = totalDays === 0 ? 0 : Math.round(((totalDays - dayDiff) / totalDays) * 100);
+
+	// Avatar
+	const avatarSrc = $derived(
+		userContext.user ? getAvatarFromUser(userContext.user.name, userContext.user.avatar) : ''
+	);
+
+	// Display date
+	const displayDate = getDisplayDateAsStr(new Date());
 
 	const weightTracker: WeightTracker = $state(dashboard.weightTodayList[0]);
 
@@ -101,54 +126,70 @@
 	useRefresh(() => invalidate('data:dashboardData'));
 </script>
 
-<div class="flex flex-col gap-6 overflow-x-hidden p-2">
+<div class="flex flex-col overflow-x-hidden">
 	<h1 class="sr-only">Dashboard</h1>
-	<div class="flex justify-center p-2 pt-4">
-		{#if data.dashboardData.currentDay > 0}
-			<span class="text-xl font-bold"> Day {data.dashboardData.currentDay} </span>
-		{:else}
-			<span class="text-xl font-bold"></span>
-		{/if}
+
+	<!-- Header -->
+	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
+		<div class="flex items-start justify-between">
+			<div class="flex flex-col gap-1">
+				{#if data.dashboardData.currentDay > 0}
+					<span class="text-3xl font-bold">Day {data.dashboardData.currentDay}</span>
+				{/if}
+				<span class="text-sm opacity-70">{displayDate}</span>
+			</div>
+
+			{#if avatarSrc}
+				<Avatar size="lg" src={avatarSrc} />
+			{/if}
+		</div>
+
+		<!-- Progress bar -->
+		<div class="mt-6">
+			<div class="flex justify-between items-center mb-2">
+				<span class="text-xs opacity-70">{dayDiff} days left</span>
+				<button
+					class="btn btn-xs btn-outline border-primary-content/30 text-primary-content hover:bg-primary-content hover:text-primary"
+					onclick={() => goto('/review')}
+				>
+					Review plan
+				</button>
+			</div>
+			<div class="journey-bar-track">
+				<div class="journey-bar-fill" style="width: calc({progress}% + 0.5rem)"></div>
+			</div>
+		</div>
 	</div>
 
-	<div class="flex flex-col items-center gap-2 w-full">
-		<IntakeScore {intakeTarget} entries={intakeToday} />
+	<!-- Content area -->
+	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 flex flex-col gap-6 p-4 pt-6">
+		<div class="flex flex-col items-center gap-2 w-full">
+			<IntakeScore {intakeTarget} entries={intakeToday} />
+			<IntakeStack bind:index bind:entries={intake} onEdit={modal.openEdit} class="w-full" />
+		</div>
 
-		<IntakeStack bind:index bind:entries={intake} onEdit={modal.openEdit} class="w-full" />
+		<div class="flex flex-col items-center w-full">
+			<WeightScore
+				weightTracker={lastWeightTracker}
+				{weightTarget}
+				onupdate={modalWeight.openCreate}
+			/>
+		</div>
 	</div>
-
-	<div class="flex flex-col items-center w-full">
-		<WeightScore weightTracker={lastWeightTracker} {weightTarget} />
-	</div>
-
-	<!--
-	<FAB fixed={true} icon={Plus} actions={speedDials} variant={'flower'} />
-  -->
 </div>
-<div class="fab fab-flower">
-	<!-- a focusable div with tabindex is necessary to work on all browsers. role="button" is necessary for accessibility -->
-	<div tabindex="0" role="button" class="btn btn-xl btn-circle btn-primary">
-		<Plus size="1.25em" />
-	</div>
-
-	<!-- Main Action button replaces the original button when FAB is open -->
-	<button class="fab-main-action btn btn-circle btn-xl btn-neutral"><X size="1.25em" /></button>
-
-	<!-- buttons that show up when FAB is open -->
-	<button class="btn btn-xl btn-circle btn-secondary" onclick={modal.openCreate}
-		><Hamburger size="1.25em" /></button
-	>
-	<button class="btn btn-xl btn-circle btn-secondary" onclick={modalWeight.openCreate}
-		><Scales size="1.25em" /></button
-	>
-</div>
+<button
+	class="fixed bottom-4 right-4 z-[999] btn btn-xl btn-circle btn-primary"
+	onclick={modal.openCreate}
+>
+	<Plus size="1.5em" />
+</button>
 <!-- Intake creation modal -->
 <ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
-		<span>Add Intake</span>
+		<span class="modal-header border-l-4 border-accent pl-2">Add Intake</span>
 		{#if modal.currentEntry}
-			<span class="text-xs opacity-60">
-				Date: {convertDateStrToDisplayDateStr((modal.currentEntry as NewIntake).added)}
+			<span class="text-xs opacity-70">
+				{convertDateStrToDisplayDateStr((modal.currentEntry as NewIntake).added)}
 			</span>
 		{/if}
 	{/snippet}
@@ -163,18 +204,16 @@
 <!-- Intake update modal -->
 <ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
-		<span>Edit Intake</span>
-		<span>
+		<span class="modal-header border-l-4 border-accent pl-2">Edit Intake</span>
+		<span class="flex items-center gap-2">
 			{#if modal.currentEntry}
-				<span class="text-xs opacity-60">
-					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
+				<span class="text-xs opacity-70">
+					{convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
 				</span>
 			{/if}
-			<span>
-				<button class="btn btn-xs btn-error">
-					<Trash size="1rem" onclick={modal.requestDelete} />
-				</button>
-			</span>
+			<button class="btn btn-xs btn-error">
+				<Trash size="1rem" onclick={modal.requestDelete} />
+			</button>
 		</span>
 	{/snippet}
 
@@ -201,9 +240,9 @@
 	oncancel={modalWeight.cancel}
 >
 	{#snippet title()}
-		<span> Set Weight </span>
-		<span class="text-xs">
-			Date: {getDateAsStr(new Date(), display_date_format)}
+		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
+		<span class="text-xs opacity-70">
+			{getDateAsStr(new Date(), display_date_format)}
 		</span>
 	{/snippet}
 	{#snippet content()}
@@ -230,3 +269,24 @@
 		</fieldset>
 	{/snippet}
 </ModalDialog>
+
+<style>
+	.journey-bar-track {
+		height: 0.25rem;
+		border-radius: 9999px;
+		background-color: oklch(0.85 0.02 280);
+		overflow: visible;
+		position: relative;
+	}
+
+	.journey-bar-fill {
+		height: 1rem;
+		top: 50%;
+		transform: translateY(-50%);
+		background-color: var(--color-accent);
+		position: relative;
+		min-width: 1rem;
+		transition: width 0.6s ease;
+		clip-path: polygon(0% 0%, calc(100% - 0.5rem) 0%, 100% 50%, calc(100% - 0.5rem) 100%, 0% 100%);
+	}
+</style>
