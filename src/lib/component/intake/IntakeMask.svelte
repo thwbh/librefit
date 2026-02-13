@@ -3,6 +3,7 @@
 	import { NumberStepper } from '@thwbh/veilchen';
 	import { getCategoriesContext } from '$lib/context';
 	import type { Intake, NewIntake } from '$lib/api';
+	import { Coffee, BowlFood, ForkKnife, Cookie, IceCream, PintGlass } from 'phosphor-svelte';
 
 	interface Props {
 		entry: Intake | NewIntake;
@@ -20,6 +21,15 @@
 
 	// Get categories from context instead of props
 	const categories = getCategoriesContext();
+
+	const categoryIcons: Record<string, typeof Coffee> = {
+		b: Coffee,
+		l: BowlFood,
+		d: ForkKnife,
+		s: Cookie,
+		t: IceCream,
+		u: PintGlass
+	};
 
 	const select = (categoryShortvalue: string) => {
 		entry.category = categoryShortvalue;
@@ -49,54 +59,54 @@
 		</div>
 	</fieldset>
 {:else}
-	<fieldset class={className}>
-		<span> Category </span>
-
-		<div class="w-full overflow-x-auto p-4 snap-x snap-mandatory">
-			<div class="flex gap-2 w-max">
-				{#each categories as category}
-					<button
-						class="badge badge-md whitespace-nowrap snap-start"
-						class:badge-primary={entry.category === category.shortvalue}
-						class:badge-outline-neutral={entry.category !== category.shortvalue}
-						onclick={() => select(category.shortvalue)}
-						disabled={readonly}
-						aria-label="Select {category.longvalue}"
-						aria-pressed={entry.category === category.shortvalue}
-					>
-						{category.longvalue}
-					</button>
-				{/each}
-			</div>
+	<div class="flex flex-col gap-1 w-full">
+		<span class="text-lg mt-1 font-semibold"
+			>{getFoodCategoryLongvalue(categories, entry.category)}</span
+		>
+		<div class="bg-base-200 rounded-lg p-1 flex join">
+			{#each categories as category (category.shortvalue)}
+				{@const Icon = categoryIcons[category.shortvalue]}
+				<button
+					class="btn flex-1 min-w-0 join-item"
+					class:btn-accent={entry.category === category.shortvalue}
+					class:shadow-sm={entry.category === category.shortvalue}
+					onclick={() => select(category.shortvalue)}
+					disabled={readonly}
+					aria-label="Select {category.longvalue}"
+					aria-pressed={entry.category === category.shortvalue}
+				>
+					<Icon size="1.5rem" />
+				</button>
+			{/each}
 		</div>
 
-		<div class="flex flex-col gap-2 w-full">
-			<NumberStepper
-				bind:value={entry.amount}
-				label="Amount"
-				unit="kcal"
-				min={1}
-				max={10000}
-				incrementSteps={[1, 5, 10, 100, 250]}
-				decrementSteps={[1, 5, 10, 100, 250]}
-				initialIncrementStep={10}
-				initialDecrementStep={10}
-				showLeftWheel={false}
-			/>
+		<NumberStepper
+			bind:value={entry.amount}
+			label=""
+			unit="kcal"
+			min={1}
+			max={10000}
+			incrementSteps={[1, 5, 10, 100, 250]}
+			decrementSteps={[1, 5, 10, 100, 250]}
+			initialIncrementStep={10}
+			initialDecrementStep={10}
+			showLeftWheel={false}
+		/>
 
+		<div class="flex flex-col gap-1">
 			<textarea
 				class="textarea w-full"
 				placeholder="Description..."
 				bind:value={entry.description}
 				disabled={readonly}
-				rows={3}
+				rows={2}
 				maxlength={500}
 			></textarea>
 			<span class="text-xs opacity-60 text-right">
 				{entry.description?.length || 0} / 500
 			</span>
 		</div>
-	</fieldset>
+	</div>
 {/if}
 
 <style>
