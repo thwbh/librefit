@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { getFoodCategoryLongvalue } from '$lib/api/category';
+	import { getFoodCategoryIcon, getFoodCategoryLongvalue } from '$lib/api/category';
 	import { NumberStepper } from '@thwbh/veilchen';
 	import { getCategoriesContext } from '$lib/context';
 	import type { Intake, NewIntake } from '$lib/api';
-	import { Coffee, BowlFood, ForkKnife, Cookie, IceCream, PintGlass } from 'phosphor-svelte';
 
 	interface Props {
 		entry: Intake | NewIntake;
@@ -21,15 +20,6 @@
 
 	// Get categories from context instead of props
 	const categories = getCategoriesContext();
-
-	const categoryIcons: Record<string, typeof Coffee> = {
-		b: Coffee,
-		l: BowlFood,
-		d: ForkKnife,
-		s: Cookie,
-		t: IceCream,
-		u: PintGlass
-	};
 
 	const select = (categoryShortvalue: string) => {
 		entry.category = categoryShortvalue;
@@ -65,7 +55,7 @@
 		>
 		<div class="bg-base-200 rounded-lg p-1 flex join">
 			{#each categories as category (category.shortvalue)}
-				{@const Icon = categoryIcons[category.shortvalue]}
+				{@const Icon = getFoodCategoryIcon(category.shortvalue)}
 				<button
 					class="btn flex-1 min-w-0 join-item"
 					class:btn-accent={entry.category === category.shortvalue}
