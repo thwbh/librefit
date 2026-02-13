@@ -19,8 +19,8 @@
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
 	import { Avatar, ModalDialog, NumberStepper, useRefresh } from '@thwbh/veilchen';
-	import { goto, invalidate } from '$app/navigation';
-	import { Plus, Trash } from 'phosphor-svelte';
+	import { invalidate } from '$app/navigation';
+	import { Plus, Trash, CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import {
 		convertDateStrToDisplayDateStr,
@@ -32,6 +32,10 @@
 	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
 	import { getAvatarFromUser } from '$lib/avatar';
 	import { differenceInDays } from 'date-fns';
+	import { slide, fly } from 'svelte/transition';
+	import NumberFlow from '@number-flow/svelte';
+	import CaloriePlanCard from '$lib/component/journey/CaloriePlanCard.svelte';
+	import EncouragementMessage from '$lib/component/journey/EncouragementMessage.svelte';
 
 	let { data } = $props();
 
@@ -53,6 +57,46 @@
 	);
 
 	const progress = totalDays === 0 ? 0 : Math.round(((totalDays - dayDiff) / totalDays) * 100);
+
+	// Review plan accordion
+	let showPlan = $state(false);
+
+	const currentWeight = $derived(lastWeightTracker?.amount ?? weightTarget.initialWeight);
+
+	// Average daily intake from this week's entries
+	const averageIntake = $derived.by(() => {
+		const weekList = dashboard.intakeWeekList;
+		if (weekList.length === 0) return 0;
+		const dailyTotals = new Map<string, number>();
+		for (const entry of weekList) {
+			dailyTotals.set(entry.added, (dailyTotals.get(entry.added) ?? 0) + entry.amount);
+		}
+		const total = [...dailyTotals.values()].reduce((a, b) => a + b, 0);
+		return Math.round(total / dailyTotals.size);
+	});
+	const weightTrackedToday = $derived(lastWeightTracker?.added === getDateAsStr(new Date()));
+	const weightLabel = $derived(
+		!lastWeightTracker
+			? 'No data'
+			: weightTrackedToday
+				? 'Today'
+				: convertDateStrToDisplayDateStr(lastWeightTracker.added)
+	);
+	const daysElapsed = $derived(
+		Math.max(0, differenceInDays(new Date(), parseStringAsDate(weightTarget.startDate)))
+	);
+	const weightChange = $derived(weightTarget.initialWeight - currentWeight);
+	const isGaining = $derived(weightTarget.targetWeight > weightTarget.initialWeight);
+	const isOnTrack = $derived(
+		isGaining
+			? currentWeight >= weightTarget.initialWeight
+			: currentWeight <= weightTarget.initialWeight
+	);
+	const goalReached = $derived(
+		isGaining
+			? currentWeight >= weightTarget.targetWeight
+			: currentWeight <= weightTarget.targetWeight
+	);
 
 	// Avatar
 	const avatarSrc = $derived(
@@ -124,6 +168,16 @@
 	debug(`user profile=${JSON.stringify(userContext.user)}`);
 
 	useRefresh(() => invalidate('data:dashboardData'));
+
+	/** Moves an element to document.body so `position: fixed` works inside transformed ancestors. */
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			}
+		};
+	}
 </script>
 
 <div class="flex flex-col overflow-x-hidden">
@@ -150,15 +204,96 @@
 				<span class="text-xs opacity-70">{dayDiff} days left</span>
 				<button
 					class="btn btn-xs btn-outline border-primary-content/30 text-primary-content hover:bg-primary-content hover:text-primary"
-					onclick={() => goto('/review')}
+					onclick={() => (showPlan = !showPlan)}
 				>
 					Review plan
+					<CaretDown
+						size="0.75em"
+						class="transition-transform duration-300 {showPlan ? 'rotate-180' : ''}"
+					/>
 				</button>
 			</div>
 			<div class="journey-bar-track">
 				<div class="journey-bar-fill" style="width: calc({progress}% + 0.5rem)"></div>
 			</div>
+
+			<!-- Start / Target labels around the progress bar -->
+			{#if showPlan}
+				<div transition:slide={{ duration: 300 }}>
+					<div class="flex justify-between mt-4" in:fly={{ y: 10, duration: 300 }}>
+						<div class="flex flex-col">
+							<span class="text-2xl font-bold">
+								<NumberFlow value={weightTarget.initialWeight} /> <span class="text-xs">kg</span>
+							</span>
+							<span class="text-xs opacity-70"
+								>{convertDateStrToDisplayDateStr(weightTarget.startDate)}</span
+							>
+						</div>
+						<div class="flex flex-col items-end">
+							<span class="text-2xl font-bold">
+								<NumberFlow value={weightTarget.targetWeight} /> <span class="text-xs">kg</span>
+							</span>
+							<span class="text-xs opacity-70"
+								>{convertDateStrToDisplayDateStr(weightTarget.endDate)}</span
+							>
+						</div>
+					</div>
+
+					<!-- Today callout -->
+					<div
+						class="bg-base-100 text-base-content rounded-lg p-3 mt-4 flex items-center justify-between"
+						in:fly={{ y: 10, duration: 300, delay: 100 }}
+					>
+						<div class="flex items-center gap-2">
+							<Lightning size="1.25rem" weight="bold" />
+							<span class="font-semibold">{weightLabel}</span>
+						</div>
+						<div class="flex items-center gap-2">
+							<span class="text-xl font-bold">
+								<NumberFlow value={currentWeight} /> <span class="text-xs">kg</span>
+							</span>
+							{#if weightChange === 0}
+								<span class="text-xs opacity-60">No change yet</span>
+							{:else if isOnTrack}
+								{#if isGaining}
+									<TrendUp size="1rem" weight="bold" />
+								{:else}
+									<TrendDown size="1rem" weight="bold" />
+								{/if}
+								<span class="text-xs">{Math.abs(weightChange).toFixed(1)} kg</span>
+							{/if}
+						</div>
+					</div>
+				</div>
+			{/if}
 		</div>
+
+		<!-- Calorie plan & encouragement below the progress bar -->
+		{#if showPlan}
+			<div transition:slide={{ duration: 300 }} class="flex flex-col gap-4 mt-4">
+				<div in:fly={{ y: 20, duration: 400, delay: 150 }}>
+					<CaloriePlanCard
+						dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
+						recommendation={weightTarget.targetWeight > weightTarget.initialWeight
+							? 'GAIN'
+							: 'LOSE'}
+						targetCalories={intakeTarget.targetCalories}
+						maximumCalories={intakeTarget.maximumCalories}
+						{averageIntake}
+					/>
+				</div>
+
+				<div in:fly={{ y: 20, duration: 400, delay: 250 }}>
+					<EncouragementMessage
+						{daysElapsed}
+						daysLeft={dayDiff}
+						{averageIntake}
+						targetCalories={intakeTarget.targetCalories}
+						{goalReached}
+					/>
+				</div>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Content area -->
@@ -178,8 +313,9 @@
 	</div>
 </div>
 <button
-	class="fixed bottom-4 right-4 z-[999] btn btn-xl btn-circle btn-primary"
+	class="fixed bottom-20 right-4 z-[999] btn btn-xl btn-circle btn-primary shadow-lg"
 	onclick={modal.openCreate}
+	use:portal
 >
 	<Plus size="1.5em" />
 </button>
