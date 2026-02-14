@@ -48,51 +48,54 @@
 		<span class="text-sm opacity-60 mt-1">kcal / day</span>
 	</div>
 
-	<!-- Stacked bars -->
-	<div class="mb-4 flex flex-col gap-2">
-		<!-- Target bar -->
-		<div>
-			<div class="flex justify-between mb-1">
-				<span class="text-xs opacity-70">Target</span>
-				<span class="text-xs font-semibold text-primary">{targetCalories} kcal</span>
-			</div>
-			<div class="h-2 bg-base-200 rounded-full">
+	<!-- Stacked bars with target marker -->
+	<div class="mb-4 relative">
+		<!-- Labels row: Target -->
+		<div class="flex justify-between mb-1">
+			<span class="text-xs opacity-70">Target</span>
+			<span class="text-xs font-semibold text-primary">{targetCalories} kcal</span>
+		</div>
+
+		<!-- Bars container (relative for the marker overlay) -->
+		<div class="relative">
+			<!-- Target bar -->
+			<div class="h-2 bg-primary/15 rounded-full">
 				<div
 					class="h-full bg-primary rounded-full transition-all duration-500"
 					style="width: {targetPercent}%"
 				></div>
 			</div>
-		</div>
 
-		<!-- Average intake bar -->
-		<div>
-			<div class="flex justify-between mb-1">
+			<!-- Labels row: Your average -->
+			<div class="flex justify-between mt-2 mb-1">
 				<span class="text-xs opacity-70">Your average</span>
 				{#if averageIntake}
-					<span
-						class="text-xs font-semibold"
-						class:text-success={!averageOverTarget}
-						class:text-warning={averageOverTarget}
-					>
-						{averageIntake} kcal
-					</span>
+					<span class="text-xs font-semibold text-accent">{averageIntake} kcal</span>
 				{:else}
 					<span class="text-xs opacity-50">No data yet</span>
 				{/if}
 			</div>
-			<div class="h-2 bg-base-200 rounded-full">
+
+			<!-- Average intake bar -->
+			<div class="h-2 bg-accent/15 rounded-full">
 				<div
-					class="h-full rounded-full transition-all duration-500"
-					class:bg-success={!averageOverTarget}
-					class:bg-warning={averageOverTarget}
+					class="h-full bg-accent rounded-full transition-all duration-500"
 					style="width: {averagePercent ?? 0}%"
 				></div>
 			</div>
-		</div>
 
-		<div class="flex justify-between mt-0.5">
-			<span class="text-xs opacity-50">0</span>
-			<span class="text-xs opacity-50">{maximumCalories} kcal max</span>
+			<!-- Target position marker: caret + dashed line spanning both bars -->
+			{#if averageIntake}
+				<div
+					class="absolute flex flex-col items-center pointer-events-none"
+					style="left: {targetPercent}%; transform: translateX(-50%); top: -8px; height: calc(100% + 8px);"
+				>
+					<!-- Caret pointing down -->
+					<div class="target-caret"></div>
+					<!-- Dashed line from caret to bottom bar -->
+					<div class="flex-1 border-l border-dashed border-accent-content/40"></div>
+				</div>
+			{/if}
 		</div>
 	</div>
 
@@ -100,14 +103,12 @@
 	{#if !isHolding || dailyRate !== 0}
 		<div class="flex justify-between items-center text-sm py-2 border-t border-base-200">
 			<span class="opacity-70">Daily {rateLabel}</span>
-			<span class="font-semibold text-primary">{dailyRate} kcal</span>
+			<span class="font-semibold text-secondary">{dailyRate} kcal</span>
 		</div>
 	{/if}
 	<div class="flex justify-between items-center text-sm py-2 border-t border-base-200">
 		<span class="opacity-70">Maximum</span>
-		<span class="font-semibold" class:text-accent={!isGaining && !isHolding}
-			>{maximumCalories} kcal</span
-		>
+		<span class="font-semibold opacity-50">{maximumCalories} kcal</span>
 	</div>
 
 	{#if isHolding}
@@ -116,3 +117,14 @@
 		</p>
 	{/if}
 </div>
+
+<style>
+	.target-caret {
+		width: 0;
+		height: 0;
+		border-left: 6px solid transparent;
+		border-right: 6px solid transparent;
+		border-top: 8px solid var(--color-accent);
+		flex-shrink: 0;
+	}
+</style>
