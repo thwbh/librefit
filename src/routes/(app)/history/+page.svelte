@@ -10,8 +10,8 @@
 	import { convertDateStrToDisplayDateStr, getDateAsStr, parseStringAsDate } from '$lib/date.js';
 	import NumberFlow from '@number-flow/svelte';
 	import { addDays, compareAsc, subDays } from 'date-fns';
-	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import { CaretLeft, CaretRight, HandTap, Pencil, Trash } from 'phosphor-svelte';
+	import { getFoodCategoryIcon, getFoodCategoryLongvalue } from '$lib/api/category';
+	import { CaretLeft, CaretRight, ForkKnife, HandTap, Pencil, Trash } from 'phosphor-svelte';
 	import { ModalDialog, NumberStepper, SwipeableListItem } from '@thwbh/veilchen';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
@@ -340,6 +340,18 @@
 					/>
 				</div>
 
+				<!-- Tracked Categories -->
+				<div class="bg-base-200 rounded-lg p-1 flex join">
+					{#each foodCategories as cat (cat.shortvalue)}
+						{@const Icon = getFoodCategoryIcon(cat.shortvalue)}
+						{@const isTracked = intakeHistory.some((e) => e.category === cat.shortvalue)}
+
+						<button class="btn flex-1 min-w-0 join-item" class:btn-accent={isTracked}>
+							<Icon size="1.5rem" />
+						</button>
+					{/each}
+				</div>
+
 				<!-- Entry list -->
 				{#if intakeHistory.length > 0}
 					<div class="bg-base-100 rounded-box shadow overflow-hidden">
@@ -374,6 +386,16 @@
 								</div>
 							</SwipeableListItem>
 						{/each}
+					</div>
+				{:else}
+					<div
+						class="rounded-box border-2 border-dashed border-base-300 p-8 flex flex-col items-center gap-3"
+					>
+						<ForkKnife size="2.5rem" class="opacity-20" />
+						<div class="text-center">
+							<p class="font-medium opacity-40">No meals logged</p>
+							<p class="text-xs opacity-30 mt-1">Tap below to start tracking</p>
+						</div>
 					</div>
 				{/if}
 
