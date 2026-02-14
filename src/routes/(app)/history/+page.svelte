@@ -3,6 +3,7 @@
 		type Intake,
 		type IntakeTarget,
 		type NewIntake,
+		type NewWeightTracker,
 		type TrackerHistory,
 		type WeightTracker
 	} from '$lib/api';
@@ -10,8 +11,8 @@
 	import NumberFlow from '@number-flow/svelte';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import { getFoodCategoryLongvalue } from '$lib/api/category';
-	import { CaretLeft, CaretRight, Pencil, Trash } from 'phosphor-svelte';
-	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
+	import { CaretLeft, CaretRight, HandTap, Pencil, Trash } from 'phosphor-svelte';
+	import { ModalDialog, NumberStepper, SwipeableListItem } from '@thwbh/veilchen';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
@@ -21,9 +22,11 @@
 	import { cubicOut } from 'svelte/easing';
 	import {
 		createIntake,
+		createWeightTrackerEntry,
 		deleteIntake,
 		getTrackerHistory,
-		updateIntake
+		updateIntake,
+		updateWeightTrackerEntry
 	} from '$lib/api/gen/commands.js';
 	import { debug } from '@tauri-apps/plugin-log';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
@@ -112,6 +115,42 @@
 		}
 	});
 
+	const modalWeight = useEntryModal<WeightTracker, NewWeightTracker>({
+		onCreate: (entry) => createWeightTrackerEntry({ newEntry: entry }),
+		onUpdate: (id, entry) => updateWeightTrackerEntry({ trackerId: id, updatedEntry: entry }),
+		onDelete: (_) => {
+			throw new Error('Delete not supported for weight entries');
+		},
+		getBlankEntry: () => ({
+			added: selectedDateStr,
+			amount: 0
+		}),
+		onCreateSuccess: (newEntry) => {
+			trackerHistory = {
+				...trackerHistory,
+				weightHistory: {
+					...trackerHistory.weightHistory,
+					[selectedDateStr]: [...trackerHistory.weightHistory[selectedDateStr], newEntry]
+				}
+			};
+		},
+		onUpdateSuccess: (updatedEntry) => {
+			const entries = [...trackerHistory.weightHistory[selectedDateStr]];
+
+			const idx = entries.findIndex((e) => e.id === updatedEntry.id);
+			if (idx !== -1) {
+				entries[idx] = updatedEntry;
+				trackerHistory = {
+					...trackerHistory,
+					weightHistory: {
+						...trackerHistory.weightHistory,
+						[selectedDateStr]: entries
+					}
+				};
+			}
+		}
+	});
+
 	const selectHistory = (dateStr: string) => {
 		debug(`selectHistory dateStr={${dateStr}}`);
 		swipeDirection = null; // Reset direction when clicking a date
@@ -154,7 +193,9 @@
 	};
 
 	const getActiveClass = (dateStr: string) =>
-		dateStr === selectedDateStr ? 'bg-primary text-primary-content' : '';
+		dateStr === selectedDateStr
+			? 'bg-primary-content text-primary'
+			: 'text-primary-content/70 hover:bg-primary-content/10';
 
 	const edit = async (calories: Intake) => {
 		await vibrate(2);
@@ -164,6 +205,16 @@
 	const remove = async (calories: Intake) => {
 		await vibrate(2);
 		modal.openDelete(calories);
+	};
+
+	const createWeight = async () => {
+		await vibrate(2);
+		modalWeight.openCreate();
+	};
+
+	const editWeight = async (weight: WeightTracker) => {
+		await vibrate(2);
+		modalWeight.openEdit(weight);
 	};
 
 	// Animation parameters based on swipe direction
@@ -217,25 +268,32 @@
 	};
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col overflow-x-hidden">
 	<h1 class="sr-only">History</h1>
 
-	<div class="flex flex-col pt-4">
+	<!-- Header -->
+	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
 		{#if selectedDateStr}
 			{@const selectedDate = parseStringAsDate(selectedDateStr)}
-			<div class="flex items-center mx-auto pt-4 pb-2">
-				<span class="text-xl font-bold">
-					{getDateAsStr(selectedDate, 'MMMM yyyy')}
-				</span>
+			<div class="flex items-center justify-between">
+				<span class="text-3xl font-bold">{getDateAsStr(selectedDate, 'MMMM yyyy')}</span>
+				<div class="flex flex-col items-end">
+					<span class="text-2xl font-bold">
+						<NumberFlow value={trackerHistory.caloriesAverage} />
+					</span>
+					<span class="text-xs opacity-70">avg kcal/day</span>
+				</div>
 			</div>
 		{/if}
+
+		<!-- Date selector -->
 		<div
-			class="border-b-base-300 grid grid-cols-9 gap-2 border-b border-dashed- pb-3 overflow-x-scroll p-4"
+			class="grid grid-cols-9 gap-1 mt-6"
 			use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
 			onswipe={handleWeekSwipe}
 		>
-			<button class="btn-ghost w-fit place-self-center" onclick={scrollLeft}>
-				<span><CaretLeft size="1em" /></span>
+			<button class="place-self-center opacity-70 hover:opacity-100" onclick={scrollLeft}>
+				<CaretLeft size="1.25em" />
 			</button>
 
 			{#each dates as dateStr}
@@ -243,20 +301,18 @@
 				{@const dayName = getDateAsStr(parseStringAsDate(dateStr), 'EE')}
 				<button
 					onclick={() => selectHistory(dateStr)}
-					class="btn-ghost rounded-field flex flex-col items-center px-2 py-1 {getActiveClass(
+					class="rounded-field flex flex-col items-center px-2 py-1 transition-colors {getActiveClass(
 						dateStr
 					)}"
 				>
-					<span class="text-sm font-semibold">
-						{dayNumber}
-					</span>
-					<span class="text-[10px] font-semibold opacity-50">{dayName}</span>
+					<span class="text-sm font-semibold">{dayNumber}</span>
+					<span class="text-[10px] font-semibold opacity-60">{dayName}</span>
 				</button>
 			{/each}
 
 			{#if showRightCaret}
-				<button class="btn-ghost w-fit place-self-center" onclick={scrollRight}>
-					<CaretRight size="1em" />
+				<button class="place-self-center opacity-70 hover:opacity-100" onclick={scrollRight}>
+					<CaretRight size="1.25em" />
 				</button>
 			{:else}
 				<div></div>
@@ -264,20 +320,19 @@
 		</div>
 	</div>
 
-	<div class="flex flex-col overflow-y-scroll">
+	<!-- Content -->
+	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 flex flex-col p-4 pt-6">
 		{#key selectedDateStr}
-			<div in:fly={flyParams} out:fly={{ x: -flyParams.x, duration: 150, easing: cubicOut }}>
+			<div
+				in:fly={flyParams}
+				out:fly={{ x: -flyParams.x, duration: 150, easing: cubicOut }}
+				class="flex flex-col gap-4"
+			>
+				<!-- Intake score (swipeable for day nav) -->
 				<div
 					use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
 					onswipe={handleDaySwipe}
 				>
-					<div class="stats">
-						<div class="stat">
-							<div class="stat-title">Average calories</div>
-							<div class="stat-value"><NumberFlow value={trackerHistory.caloriesAverage} /></div>
-						</div>
-					</div>
-
 					<IntakeScore
 						{intakeTarget}
 						entries={intakeHistory.map((c) => c.amount)}
@@ -285,66 +340,88 @@
 					/>
 				</div>
 
-				<div class="divide-base-300 divide-y p-6">
-					{#each intakeHistory as calories}
-						<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
+				<!-- Entry list -->
+				{#if intakeHistory.length > 0}
+					<div class="bg-base-100 rounded-box shadow overflow-hidden">
+						{#each intakeHistory as calories, i}
+							<SwipeableListItem onleft={() => edit(calories)} onright={() => remove(calories)}>
+								{#snippet leftAction()}
+									<span><Pencil size="1.75rem" color={'var(--color-primary)'} /></span>
+								{/snippet}
+
+								{#snippet rightAction()}
+									<span><Trash size="1.75rem" color={'var(--color-error)'} /></span>
+								{/snippet}
+
+								<div
+									class="flex items-center justify-between gap-2 px-4 py-3 {i > 0
+										? 'border-t border-base-200'
+										: ''}"
+									use:longpress
+									onlongpress={() => edit(calories)}
+								>
+									<div class="flex flex-col">
+										<span class="text-base font-semibold">
+											{calories.description}
+										</span>
+										<span class="text-sm opacity-60">
+											{calories.amount} kcal
+										</span>
+									</div>
+									<span class="badge badge-xs"
+										>{getFoodCategoryLongvalue(foodCategories, calories.category)}</span
+									>
+								</div>
+							</SwipeableListItem>
+						{/each}
+					</div>
+				{/if}
+
+				<button class="btn btn-neutral w-full" onclick={modal.openCreate}> Add Intake </button>
+
+				<!-- Weight (display creation option conditionally) -->
+				<div class="bg-base-100 rounded-box shadow overflow-hidden">
+					{#if weightHistory.length > 0}
+						<SwipeableListItem onleft={() => editWeight(weightHistory[0])}>
 							{#snippet leftAction()}
 								<span><Pencil size="1.75rem" color={'var(--color-primary)'} /></span>
 							{/snippet}
-
-							{#snippet rightAction()}
-								<span><Trash size="1.75rem" color={'var(--color-error)'} /> </span>
-							{/snippet}
-
-							<div
-								class="border-t-base-content/5 flex items-center justify-between gap-2 border-t border-dashed py-2"
-								use:longpress
-								onlongpress={() => edit(calories)}
-							>
-								<div class="flex flex-col">
-									<span class="text-lg font-semibold">
-										{calories.description}
-									</span>
-									<span class="stat-desc">
-										{calories.amount} kcal
-									</span>
+							<div class="p-4">
+								<span class="text-xs opacity-70">Weight</span>
+								<div class="text-2xl font-bold mt-1">
+									<NumberFlow value={weightHistory[0].amount} />
+									<span class="text-sm font-normal">kg</span>
 								</div>
-								<span class="badge badge-xs"
-									>{getFoodCategoryLongvalue(foodCategories, calories.category)}</span
-								>
-							</div></SwipeableListItem
-						>
-					{/each}
-
-					<button class="btn btn-neutral w-full mt-4" onclick={modal.openCreate}>
-						Add Intake
-					</button>
-				</div>
-				<div
-					class="stats"
-					use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
-					onswipe={handleDaySwipe}
-				>
-					<div class="stat">
-						<div class="stat-title">Weight</div>
-
-						{#if weightHistory.length > 0}
-							<div class="stat-value">
-								{weightHistory[0].amount} <span class="text-sm">kg</span>
 							</div>
-						{:else}
-							<div class="stat-value">No weight tracked.</div>
-						{/if}
-					</div>
+						</SwipeableListItem>
+					{:else}
+						<div class="flex flex-row justify-between p-4">
+							<div>
+								<span class="text-xs opacity-70">Weight</span>
+
+								<div class="text-lg font-semibold mt-1 opacity-50">No weight tracked.</div>
+							</div>
+
+							<button
+								class="flex flex-row gap-1 items-center cursor-pointer text-left"
+								aria-label="Update weight"
+								onclick={createWeight}
+							>
+								<span class="text-xs opacity-70 font-bold">Tap to update</span>
+								<HandTap size="2rem" class="motion-safe:animate-pulse" />
+							</button>
+						</div>
+					{/if}
 				</div>
 			</div>
 		{/key}
 	</div>
 </div>
 
+<!-- Create Intake modal -->
 <ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
-		<span>Add Intake</span>
+		<span class="modal-header border-l-4 border-accent pl-2">Add Intake</span>
 		<span class="text-xs opacity-60">
 			Date: {convertDateStrToDisplayDateStr(selectedDateStr)}
 		</span>
@@ -357,10 +434,11 @@
 	{/snippet}
 </ModalDialog>
 
+<!-- Edit Intake modal -->
 <ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
 		{#if modal.currentEntry}
-			<span>Edit Intake</span>
+			<span class="modal-header border-l-4 border-accent pl-2">Edit Intake</span>
 			<span>
 				<span class="text-xs opacity-60">
 					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
@@ -390,6 +468,7 @@
 	{/snippet}
 </ModalDialog>
 
+<!-- Delete Intake modal -->
 <ModalDialog
 	bind:dialog={modal.deleteDialog.value}
 	onconfirm={modal.deleteEntry}
@@ -409,5 +488,83 @@
 	{#snippet footer()}
 		<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
 		<button class="btn" onclick={modal.cancel}>Cancel</button>
+	{/snippet}
+</ModalDialog>
+
+<!-- Create WeightTracker modal -->
+<ModalDialog
+	bind:dialog={modalWeight.createDialog.value}
+	onconfirm={modalWeight.save}
+	oncancel={modalWeight.cancel}
+>
+	{#snippet title()}
+		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
+		{#if modalWeight.currentEntry}
+			<span class="text-xs opacity-70">
+				{convertDateStrToDisplayDateStr((modalWeight.currentEntry as WeightTracker).added)}
+			</span>
+		{/if}
+	{/snippet}
+	{#snippet content()}
+		<fieldset class="fieldset rounded-box">
+			{#if modalWeight.errorMessage}
+				<div class="alert alert-error mb-4">
+					<span>{modalWeight.errorMessage}</span>
+				</div>
+			{/if}
+			{#if modalWeight.currentEntry}
+				<NumberStepper
+					bind:value={modalWeight.currentEntry.amount}
+					label="Current Weight"
+					unit="kg"
+					min={30}
+					max={330}
+					incrementSteps={[0.5, 1, 2, 5, 20, 50]}
+					decrementSteps={[0.5, 1, 2, 5, 20, 50]}
+					initialIncrementStep={1}
+					initialDecrementStep={1}
+					showLeftWheel={false}
+				/>
+			{/if}
+		</fieldset>
+	{/snippet}
+</ModalDialog>
+
+<!-- Edit WeightTracker modal -->
+<ModalDialog
+	bind:dialog={modalWeight.editDialog.value}
+	onconfirm={modalWeight.save}
+	oncancel={modalWeight.cancel}
+>
+	{#snippet title()}
+		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
+		{#if modalWeight.currentEntry}
+			<span class="text-xs opacity-70">
+				{convertDateStrToDisplayDateStr((modalWeight.currentEntry as WeightTracker).added)}
+			</span>
+		{/if}
+	{/snippet}
+	{#snippet content()}
+		<fieldset class="fieldset rounded-box">
+			{#if modalWeight.errorMessage}
+				<div class="alert alert-error mb-4">
+					<span>{modalWeight.errorMessage}</span>
+				</div>
+			{/if}
+			{#if modalWeight.currentEntry}
+				<NumberStepper
+					bind:value={modalWeight.currentEntry.amount}
+					label="Current Weight"
+					unit="kg"
+					min={30}
+					max={330}
+					incrementSteps={[0.5, 1, 2, 5]}
+					decrementSteps={[0.5, 1, 2, 5]}
+					initialIncrementStep={1}
+					initialDecrementStep={1}
+					showLeftWheel={false}
+				/>
+			{/if}
+		</fieldset>
 	{/snippet}
 </ModalDialog>
