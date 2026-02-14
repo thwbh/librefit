@@ -59,7 +59,7 @@ describe('CaloriePlanCard Component', () => {
 		expect(container.textContent).toContain('kcal / day');
 	});
 
-	it('should display daily deficit for weight loss', () => {
+	it('should display planned deficit for weight loss', () => {
 		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'LOSE',
@@ -69,11 +69,11 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(container.textContent).toContain('Daily deficit');
+		expect(container.textContent).toContain('Planned deficit');
 		expect(container.textContent).toContain('500 kcal');
 	});
 
-	it('should display daily surplus for weight gain', () => {
+	it('should display planned surplus for weight gain', () => {
 		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'GAIN',
@@ -83,7 +83,7 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(container.textContent).toContain('Daily surplus');
+		expect(container.textContent).toContain('Planned surplus');
 		expect(container.textContent).toContain('300 kcal');
 	});
 
@@ -113,7 +113,7 @@ describe('CaloriePlanCard Component', () => {
 		expect(container.textContent).toContain('Gain Weight');
 	});
 
-	it('should display maximum calories', () => {
+	it('should display target calories in bar label', () => {
 		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'LOSE',
@@ -123,8 +123,8 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(container.textContent).toContain('Maximum');
-		expect(container.textContent).toContain('2000 kcal');
+		expect(container.textContent).toContain('Target');
+		expect(container.textContent).toContain('1800 kcal');
 	});
 
 	it('should handle HOLD recommendation', () => {
@@ -164,7 +164,7 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(container.textContent).not.toContain('Daily adjustment');
+		expect(container.textContent).not.toContain('Planned adjustment');
 	});
 
 	it('should render target bar', () => {
@@ -194,11 +194,11 @@ describe('CaloriePlanCard Component', () => {
 
 		expect(container.textContent).toContain('1600 kcal');
 		expect(container.textContent).toContain('Your average');
-		const bar = container.querySelector('.bg-success.rounded-full');
+		const bar = container.querySelector('.bg-accent.rounded-full');
 		expect(bar).toBeTruthy();
 	});
 
-	it('should show warning bar when average exceeds target', () => {
+	it('should show accent bar when average exceeds target', () => {
 		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'LOSE',
@@ -209,7 +209,7 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		const bar = container.querySelector('.bg-warning.rounded-full');
+		const bar = container.querySelector('.bg-accent.rounded-full');
 		expect(bar).toBeTruthy();
 	});
 
