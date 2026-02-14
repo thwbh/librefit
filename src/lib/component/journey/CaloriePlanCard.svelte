@@ -7,10 +7,19 @@
 		targetCalories: number;
 		maximumCalories: number;
 		averageIntake?: number;
+		showAverage?: boolean;
+		showMaximum?: boolean;
 	}
 
-	let { recommendation, dailyRate, targetCalories, maximumCalories, averageIntake }: Props =
-		$props();
+	let {
+		recommendation,
+		dailyRate,
+		targetCalories,
+		maximumCalories,
+		averageIntake,
+		showAverage = true,
+		showMaximum = false
+	}: Props = $props();
 
 	const isGaining = $derived(recommendation === 'GAIN');
 	const isHolding = $derived(recommendation === 'HOLD');
@@ -71,22 +80,24 @@
 			</div>
 
 			<!-- Labels row: Your average -->
-			<div class="flex justify-between mt-2 mb-1">
-				<span class="text-xs opacity-70">Your average</span>
-				{#if averageIntake}
-					<span class="text-xs font-semibold text-accent">{averageIntake} kcal</span>
-				{:else}
-					<span class="text-xs opacity-50">No data yet</span>
-				{/if}
-			</div>
+			{#if showAverage}
+				<div class="flex justify-between mt-2 mb-1">
+					<span class="text-xs opacity-70">Your average</span>
+					{#if averageIntake}
+						<span class="text-xs font-semibold text-accent">{averageIntake} kcal</span>
+					{:else}
+						<span class="text-xs opacity-50">No data yet</span>
+					{/if}
+				</div>
 
-			<!-- Average intake bar -->
-			<div class="h-2 bg-accent/15 rounded-full">
-				<div
-					class="h-full bg-accent rounded-full transition-all duration-500"
-					style="width: {averagePercent ?? 0}%"
-				></div>
-			</div>
+				<!-- Average intake bar -->
+				<div class="h-2 bg-accent/15 rounded-full">
+					<div
+						class="h-full bg-accent rounded-full transition-all duration-500"
+						style="width: {averagePercent ?? 0}%"
+					></div>
+				</div>
+			{/if}
 
 			<!-- Target position marker: caret + dashed line spanning both bars -->
 			{#if averageIntake}
@@ -110,10 +121,18 @@
 			<span class="font-semibold text-primary">{dailyRate} kcal</span>
 		</div>
 	{/if}
+
 	{#if actualDeficit != null}
 		<div class="flex justify-between items-center text-sm py-2 border-t border-base-200">
 			<span class="opacity-70">Actual {rateLabel}</span>
 			<span class="font-semibold text-accent">{Math.abs(actualDeficit)} kcal</span>
+		</div>
+	{/if}
+
+	{#if showMaximum}
+		<div class="flex justify-between items-center text-sm py-2 border-t border-base-200">
+			<span class="opacity-70">Maximum</span>
+			<span class="font-semibold text-accent">{Math.abs(maximumCalories)} kcal</span>
 		</div>
 	{/if}
 
