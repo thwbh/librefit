@@ -32,6 +32,10 @@
 	);
 
 	const averageOverTarget = $derived(averageIntake != null && averageIntake > targetCalories);
+
+	const actualDeficit = $derived(
+		averageIntake != null ? maximumCalories - averageIntake : undefined
+	);
 </script>
 
 <div class="bg-base-100 text-base-content rounded-box p-6 shadow">
@@ -102,14 +106,16 @@
 	<!-- Supporting info -->
 	{#if !isHolding || dailyRate !== 0}
 		<div class="flex justify-between items-center text-sm py-2 border-t border-base-200">
-			<span class="opacity-70">Daily {rateLabel}</span>
-			<span class="font-semibold text-secondary">{dailyRate} kcal</span>
+			<span class="opacity-70">Planned {rateLabel}</span>
+			<span class="font-semibold text-primary">{dailyRate} kcal</span>
 		</div>
 	{/if}
-	<div class="flex justify-between items-center text-sm py-2 border-t border-base-200">
-		<span class="opacity-70">Maximum</span>
-		<span class="font-semibold opacity-50">{maximumCalories} kcal</span>
-	</div>
+	{#if actualDeficit != null}
+		<div class="flex justify-between items-center text-sm py-2 border-t border-base-200">
+			<span class="opacity-70">Actual {rateLabel}</span>
+			<span class="font-semibold text-accent">{Math.abs(actualDeficit)} kcal</span>
+		</div>
+	{/if}
 
 	{#if isHolding}
 		<p class="text-xs opacity-60 mt-3">
