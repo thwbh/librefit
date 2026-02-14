@@ -1,6 +1,35 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import CaloriePlanCard from './CaloriePlanCard.svelte';
+
+// Mock NumberFlow
+vi.mock('@number-flow/svelte', () => {
+	const NumberFlowMock = function (anchor: any, props: any) {
+		const value = props?.value ?? 0;
+		const textNode = document.createTextNode(String(value));
+
+		if (anchor && anchor.parentNode) {
+			anchor.parentNode.insertBefore(textNode, anchor);
+		}
+
+		return {
+			p: (newProps: any) => {
+				if (newProps.value !== undefined) {
+					textNode.textContent = String(newProps.value);
+				}
+			},
+			d: () => {
+				if (textNode.parentNode) {
+					textNode.parentNode.removeChild(textNode);
+				}
+			}
+		};
+	};
+
+	return {
+		default: NumberFlowMock
+	};
+});
 
 describe('CaloriePlanCard Component', () => {
 	it('should render calorie plan title', () => {
@@ -16,8 +45,8 @@ describe('CaloriePlanCard Component', () => {
 		expect(screen.getByText('Calorie Plan')).toBeInTheDocument();
 	});
 
-	it('should display daily deficit for weight loss', () => {
-		render(CaloriePlanCard, {
+	it('should display hero target calories number', () => {
+		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -26,12 +55,26 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(screen.getByText('Daily Deficit')).toBeInTheDocument();
-		expect(screen.getByText('500 kcal')).toBeInTheDocument();
+		expect(container.textContent).toContain('1800');
+		expect(container.textContent).toContain('kcal / day');
 	});
 
-	it('should display daily surplus for weight gain', () => {
-		render(CaloriePlanCard, {
+	it('should display planned deficit for weight loss', () => {
+		const { container } = render(CaloriePlanCard, {
+			props: {
+				recommendation: 'LOSE',
+				dailyRate: 500,
+				targetCalories: 1800,
+				maximumCalories: 2000
+			}
+		});
+
+		expect(container.textContent).toContain('Planned deficit');
+		expect(container.textContent).toContain('500 kcal');
+	});
+
+	it('should display planned surplus for weight gain', () => {
+		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'GAIN',
 				dailyRate: 300,
@@ -40,12 +83,12 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(screen.getByText('Daily Surplus')).toBeInTheDocument();
-		expect(screen.getByText('300 kcal')).toBeInTheDocument();
+		expect(container.textContent).toContain('Planned surplus');
+		expect(container.textContent).toContain('300 kcal');
 	});
 
-	it('should display target intake with correct label for weight loss', () => {
-		render(CaloriePlanCard, {
+	it('should display goal label for weight loss', () => {
+		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -54,12 +97,11 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(screen.getByText('Target Intake (Loss)')).toBeInTheDocument();
-		expect(screen.getByText('1800 kcal')).toBeInTheDocument();
+		expect(container.textContent).toContain('Lose Weight');
 	});
 
-	it('should display target intake with correct label for weight gain', () => {
-		render(CaloriePlanCard, {
+	it('should display goal label for weight gain', () => {
+		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'GAIN',
 				dailyRate: 300,
@@ -68,12 +110,11 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(screen.getByText('Target Intake (Gain)')).toBeInTheDocument();
-		expect(screen.getByText('2500 kcal')).toBeInTheDocument();
+		expect(container.textContent).toContain('Gain Weight');
 	});
 
-	it('should display maximum calories', () => {
-		render(CaloriePlanCard, {
+	it('should display target calories in bar label', () => {
+		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -82,12 +123,12 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(screen.getByText('Maximum Limit')).toBeInTheDocument();
-		expect(screen.getByText('2000 kcal')).toBeInTheDocument();
+		expect(container.textContent).toContain('Target');
+		expect(container.textContent).toContain('1800 kcal');
 	});
 
 	it('should handle HOLD recommendation', () => {
-		render(CaloriePlanCard, {
+		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'HOLD',
 				dailyRate: 0,
@@ -96,12 +137,12 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(screen.getByText('Target Intake (Maintain)')).toBeInTheDocument();
-		expect(screen.getByText('2200 kcal')).toBeInTheDocument();
+		expect(container.textContent).toContain('Maintain Weight');
+		expect(container.textContent).toContain('2200');
 	});
 
 	it('should show maintenance message for HOLD', () => {
-		render(CaloriePlanCard, {
+		const { container } = render(CaloriePlanCard, {
 			props: {
 				recommendation: 'HOLD',
 				dailyRate: 0,
@@ -110,9 +151,7 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		expect(
-			screen.getByText(/Your calorie target is set to maintain your current weight/i)
-		).toBeInTheDocument();
+		expect(container.textContent).toMatch(/maintain current weight/i);
 	});
 
 	it('should not show daily rate when HOLD with zero rate', () => {
@@ -125,8 +164,67 @@ describe('CaloriePlanCard Component', () => {
 			}
 		});
 
-		// Should not show "Daily Adjustment" when rate is 0
-		expect(screen.queryByText('Daily Adjustment')).not.toBeInTheDocument();
+		expect(container.textContent).not.toContain('Planned adjustment');
+	});
+
+	it('should render target bar', () => {
+		const { container } = render(CaloriePlanCard, {
+			props: {
+				recommendation: 'LOSE',
+				dailyRate: 500,
+				targetCalories: 1800,
+				maximumCalories: 2000
+			}
+		});
+
+		const bar = container.querySelector('.bg-primary.rounded-full');
+		expect(bar).toBeTruthy();
+	});
+
+	it('should render average intake bar when provided', () => {
+		const { container } = render(CaloriePlanCard, {
+			props: {
+				recommendation: 'LOSE',
+				dailyRate: 500,
+				targetCalories: 1800,
+				maximumCalories: 2000,
+				averageIntake: 1600
+			}
+		});
+
+		expect(container.textContent).toContain('1600 kcal');
+		expect(container.textContent).toContain('Your average');
+		const bar = container.querySelector('.bg-accent.rounded-full');
+		expect(bar).toBeTruthy();
+	});
+
+	it('should show accent bar when average exceeds target', () => {
+		const { container } = render(CaloriePlanCard, {
+			props: {
+				recommendation: 'LOSE',
+				dailyRate: 500,
+				targetCalories: 1800,
+				maximumCalories: 2000,
+				averageIntake: 1900
+			}
+		});
+
+		const bar = container.querySelector('.bg-accent.rounded-full');
+		expect(bar).toBeTruthy();
+	});
+
+	it('should show no data message when average intake is zero', () => {
+		const { container } = render(CaloriePlanCard, {
+			props: {
+				recommendation: 'LOSE',
+				dailyRate: 500,
+				targetCalories: 1800,
+				maximumCalories: 2000,
+				averageIntake: 0
+			}
+		});
+
+		expect(container.textContent).toContain('No data yet');
 	});
 
 	it('should apply correct styling', () => {

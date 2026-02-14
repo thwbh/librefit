@@ -75,8 +75,8 @@ describe('WeightScore', () => {
 			expect(container.textContent).toMatch(/82 kg/i);
 		});
 
-		it('should show dash when no weight data', () => {
-			const newEntry: WeightTracker = {
+		it('should show tap to update when entry is stale', () => {
+			const staleEntry: WeightTracker = {
 				id: 1,
 				added: '2024-01-20',
 				time: '09:15:00',
@@ -85,12 +85,12 @@ describe('WeightScore', () => {
 
 			const { container } = render(WeightScore, {
 				props: {
-					weightTracker: newEntry,
+					weightTracker: staleEntry,
 					weightTarget: mockWeightTarget
 				}
 			});
 
-			expect(container.textContent).toContain('-');
+			expect(container.textContent).toContain('Tap to update');
 		});
 	});
 
@@ -201,47 +201,7 @@ describe('WeightScore', () => {
 		});
 	});
 
-	describe('Progress Information', () => {
-		it('should show days left in target period', () => {
-			// Mock with a target that ends in the future
-			const futureTarget: WeightTarget = {
-				...mockWeightTarget,
-				endDate: '2099-12-31' // Far future
-			};
-
-			const { container } = render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: futureTarget
-				}
-			});
-
-			expect(container.textContent).toMatch(/\d+ days left/i);
-		});
-
-		it('should show review plan button', () => {
-			render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: mockWeightTarget
-				}
-			});
-
-			expect(screen.getByText(/Review plan/i)).toBeTruthy();
-		});
-
-		it('should show progress bar', () => {
-			const { container } = render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: mockWeightTarget
-				}
-			});
-
-			const progressBar = container.querySelector('progress.progress');
-			expect(progressBar).toBeTruthy();
-		});
-	});
+	// Progress bar, "days left", and "Review plan" have been moved to the dashboard header
 
 	describe('Edge Cases', () => {
 		it('should handle very large weight values', () => {
@@ -318,15 +278,6 @@ describe('WeightScore', () => {
 			expect(container.querySelector('.stat-desc')).toBeTruthy();
 		});
 
-		it('should have progress container', () => {
-			const { container } = render(WeightScore, {
-				props: {
-					weightTracker: mockWeightTracker,
-					weightTarget: mockWeightTarget
-				}
-			});
-
-			expect(container.querySelector('.progress-container')).toBeTruthy();
-		});
+		// Progress container has been moved to the dashboard header
 	});
 });

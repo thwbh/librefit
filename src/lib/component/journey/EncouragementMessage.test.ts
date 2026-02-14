@@ -7,38 +7,65 @@ import { setupVeilchenMock } from '../../../../tests/utils/mocks';
 setupVeilchenMock();
 
 describe('EncouragementMessage Component', () => {
-	it('should render the encouragement message', () => {
-		render(EncouragementMessage);
+	const defaultProps = {
+		daysElapsed: 10,
+		daysLeft: 100,
+		averageIntake: 0,
+		targetCalories: 1800,
+		goalReached: false
+	};
 
-		expect(screen.getByText('Remember:')).toBeInTheDocument();
+	it('should render a contextual message', () => {
+		const { container } = render(EncouragementMessage, { props: defaultProps });
+
+		expect(container.querySelector('.text-sm')).toBeDefined();
 	});
 
-	it('should display the motivational text', () => {
-		render(EncouragementMessage);
+	it('should show goal reached message', () => {
+		const { container } = render(EncouragementMessage, {
+			props: { ...defaultProps, goalReached: true }
+		});
 
-		expect(
-			screen.getByText('Consistency is key. Small daily actions lead to big results!')
-		).toBeInTheDocument();
+		expect(container.textContent).toContain('You did it!');
 	});
 
-	it('should render as an info alert', () => {
-		const { container } = render(EncouragementMessage);
+	it('should show near-end message when close to finish', () => {
+		const { container } = render(EncouragementMessage, {
+			props: { ...defaultProps, daysLeft: 10, daysElapsed: 100, averageIntake: 1500 }
+		});
 
-		// The component uses AlertBox with AlertType.Info
-		expect(container.querySelector('.alert')).toBeDefined();
+		expect(container.textContent).toContain('finish line');
 	});
 
-	it('should apply correct text styling', () => {
-		const { container } = render(EncouragementMessage);
+	it('should show early start message for new journeys', () => {
+		const { container } = render(EncouragementMessage, {
+			props: { ...defaultProps, daysElapsed: 1, daysLeft: 120 }
+		});
 
-		const textElement = container.querySelector('.text-sm');
-		expect(textElement).toBeDefined();
+		expect(container.textContent).toContain('Great start');
 	});
 
-	it('should render without props', () => {
-		const { container } = render(EncouragementMessage);
+	it('should show no-data message when average intake is zero', () => {
+		const { container } = render(EncouragementMessage, {
+			props: { ...defaultProps, averageIntake: 0 }
+		});
 
-		expect(container).toBeDefined();
-		expect(screen.getByText('Remember:')).toBeInTheDocument();
+		expect(container.textContent).toContain('Consistency');
+	});
+
+	it('should show on-target message when average is within target', () => {
+		const { container } = render(EncouragementMessage, {
+			props: { ...defaultProps, averageIntake: 1700, targetCalories: 1800 }
+		});
+
+		expect(container.textContent).toContain('within your daily target');
+	});
+
+	it('should show above-target message when averaging over', () => {
+		const { container } = render(EncouragementMessage, {
+			props: { ...defaultProps, averageIntake: 2100, targetCalories: 1800 }
+		});
+
+		expect(container.textContent).toContain('above target');
 	});
 });

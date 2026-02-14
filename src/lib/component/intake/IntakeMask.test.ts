@@ -61,8 +61,9 @@ describe('IntakeMask', () => {
 		it('should not show category selector in readonly mode', () => {
 			const { container } = renderWithContext(mockEntry, { readonly: true });
 
-			const categoryButtons = container.querySelectorAll('.badge-outline-neutral');
-			expect(categoryButtons.length).toBe(0);
+			// In readonly mode, there should be no join group (icon buttons)
+			const joinGroup = container.querySelector('.join');
+			expect(joinGroup).toBeNull();
 		});
 	});
 
@@ -70,17 +71,15 @@ describe('IntakeMask', () => {
 		it('should show category selector when isEditing is true', () => {
 			const { container } = renderWithContext(mockEntry, { isEditing: true });
 
-			// Should show all category options
-			mockCategories.forEach((cat) => {
-				expect(container.textContent).toContain(cat.longvalue);
-			});
+			// Should show selected category longvalue as heading
+			expect(container.textContent).toContain('Lunch');
 		});
 
 		it('should highlight selected category', () => {
 			const { container } = renderWithContext(mockEntry, { isEditing: true });
 
 			const lunchButton = screen.getByLabelText(/Select Lunch/i);
-			expect(lunchButton.className).toContain('badge-primary');
+			expect(lunchButton.className).toContain('btn-accent');
 		});
 
 		it('should allow category selection', async () => {
@@ -92,7 +91,7 @@ describe('IntakeMask', () => {
 			await user.click(dinnerButton);
 
 			// After clicking, the button should be highlighted
-			expect(dinnerButton.className).toContain('badge-primary');
+			expect(dinnerButton.className).toContain('btn-accent');
 		});
 
 		it('should show all categories as selectable', () => {
@@ -120,17 +119,17 @@ describe('IntakeMask', () => {
 	});
 
 	describe('Default Mode (Non-editing)', () => {
-		it('should show category badge', () => {
+		it('should show category name', () => {
 			renderWithContext(mockEntry, { isEditing: false });
 
 			expect(screen.getByText('Lunch')).toBeTruthy();
 		});
 
-		it('should show category selector as badges in default mode', () => {
+		it('should show category selector as icon buttons in default mode', () => {
 			const { container } = renderWithContext(mockEntry, { isEditing: false });
 
-			// Category selector shows all categories as badges
-			const categorySelector = container.querySelector('.snap-x');
+			// Category selector shows all categories as buttons in a join group
+			const categorySelector = container.querySelector('.join');
 			expect(categorySelector).toBeTruthy();
 		});
 	});
@@ -268,23 +267,23 @@ describe('IntakeMask', () => {
 			await user.click(snackButton);
 
 			// After clicking, snack should be highlighted
-			expect(snackButton.className).toContain('badge-primary');
+			expect(snackButton.className).toContain('btn-accent');
 		});
 	});
 
-	describe('Custom className', () => {
-		it('should use default className', () => {
+	describe('Layout', () => {
+		it('should render category icon buttons in a join group', () => {
 			const { container } = renderWithContext(mockEntry);
 
-			const fieldset = container.querySelector('.fieldset.rounded-box');
-			expect(fieldset).toBeTruthy();
+			const joinGroup = container.querySelector('.join');
+			expect(joinGroup).toBeTruthy();
 		});
 
-		it('should accept custom class prop', () => {
-			const { container } = renderWithContext(mockEntry, { class: 'custom-class' });
+		it('should render textarea for description', () => {
+			renderWithContext(mockEntry);
 
-			const fieldset = container.querySelector('.custom-class');
-			expect(fieldset).toBeTruthy();
+			const textarea = document.querySelector('textarea');
+			expect(textarea).toBeTruthy();
 		});
 	});
 

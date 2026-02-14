@@ -11,7 +11,6 @@
 	} from '@thwbh/veilchen';
 	import { fade, type FlyParams } from 'svelte/transition';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
-	import { getFoodCategoryColor } from '$lib/api';
 
 	interface Props {
 		index: number;
@@ -53,7 +52,7 @@
 				class="card-side w-full"
 			>
 				{#snippet side()}
-					<figure class="{getFoodCategoryColor(entries[cardKey].category)} w-4"></figure>
+					<figure class="bg-accent w-4"></figure>
 				{/snippet}
 				<LongPressContainer onlongpress={() => onlongpress(cardKey)}>
 					<IntakeMask entry={entries[cardKey]} readonly />

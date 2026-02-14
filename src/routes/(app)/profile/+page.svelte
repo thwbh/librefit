@@ -9,7 +9,7 @@
 	} from '@thwbh/veilchen';
 	import type { BreadcrumbItem } from '@thwbh/veilchen';
 	import { getUserContext } from '$lib/context';
-	import { Gear, IdentificationCard, PencilSimple } from 'phosphor-svelte';
+	import { IdentificationCard, PencilSimple } from 'phosphor-svelte';
 	import type { LibreUser } from '$lib/api/index.js';
 	import { updateUser } from '$lib/api/gen/commands';
 	import UserAvatar from '$lib/component/profile/UserAvatar.svelte';
@@ -18,6 +18,7 @@
 	import { getAvatar } from '$lib/avatar';
 	import { slide } from 'svelte/transition';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
+	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 
 	let { data } = $props();
 
@@ -64,8 +65,7 @@
 	const items: BreadcrumbItem[] = [
 		{
 			id: '1',
-			icon: Gear,
-			iconProps: { weight: 'bold' }
+			icon: SettingsIcon
 		},
 		{
 			id: '2',

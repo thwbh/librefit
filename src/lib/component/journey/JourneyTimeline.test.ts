@@ -34,43 +34,22 @@ describe('JourneyTimeline Component', () => {
 		expect(screen.getByText('Journey Timeline')).toBeInTheDocument();
 	});
 
-	it('should display starting weight label', () => {
-		render(JourneyTimeline, { props: mockProps });
-
-		expect(screen.getByText('Starting Weight')).toBeInTheDocument();
-	});
-
 	it('should display today label', () => {
 		render(JourneyTimeline, { props: mockProps });
 
 		expect(screen.getByText('Today')).toBeInTheDocument();
 	});
 
-	it('should display target weight label', () => {
-		render(JourneyTimeline, { props: mockProps });
+	it('should display days left', () => {
+		const { container } = render(JourneyTimeline, { props: mockProps });
 
-		expect(screen.getByText('Target Weight')).toBeInTheDocument();
+		expect(container.textContent).toMatch(/days left/);
 	});
 
 	it('should show weight loss progress', () => {
-		render(JourneyTimeline, { props: mockProps });
+		const { container } = render(JourneyTimeline, { props: mockProps });
 
-		// Should show "kg lost" for weight loss
-		expect(screen.getByText(/kg lost/i)).toBeInTheDocument();
-	});
-
-	it('should show weight gain progress', () => {
-		render(JourneyTimeline, {
-			props: {
-				...mockProps,
-				initialWeight: 60,
-				targetWeight: 70,
-				currentWeight: 65
-			}
-		});
-
-		// Should show "kg gained" for weight gain
-		expect(screen.getByText(/kg gained/i)).toBeInTheDocument();
+		expect(container.textContent).toMatch(/5\.0 kg/);
 	});
 
 	it('should show no change message when weight unchanged', () => {
@@ -84,28 +63,25 @@ describe('JourneyTimeline Component', () => {
 		expect(screen.getByText('No change yet')).toBeInTheDocument();
 	});
 
-	it('should render timeline structure', () => {
+	it('should render progress bar', () => {
 		const { container } = render(JourneyTimeline, { props: mockProps });
 
-		const timeline = container.querySelector('.timeline.timeline-vertical');
-		expect(timeline).toBeDefined();
-
-		// Should have 3 timeline items (start, current, target)
-		const timelineItems = container.querySelectorAll('.timeline');
-		expect(timelineItems.length).toBeGreaterThan(0);
+		const track = container.querySelector('.journey-bar-track');
+		const fill = container.querySelector('.journey-bar-fill');
+		expect(track).toBeTruthy();
+		expect(fill).toBeTruthy();
 	});
 
-	it('should apply correct card styling', () => {
+	it('should apply primary card styling', () => {
 		const { container } = render(JourneyTimeline, { props: mockProps });
 
-		const wrapper = container.querySelector('.bg-base-100.rounded-box.p-6.shadow');
-		expect(wrapper).toBeDefined();
+		const wrapper = container.querySelector('.bg-primary');
+		expect(wrapper).toBeTruthy();
 	});
 
 	it('should display formatted dates', () => {
 		render(JourneyTimeline, { props: mockProps });
 
-		// Check that dates are rendered (formatted by mock)
 		expect(screen.getByText(/Jan.*1.*2025/i)).toBeInTheDocument();
 		expect(screen.getByText(/Jun.*1.*2025/i)).toBeInTheDocument();
 	});
@@ -121,45 +97,14 @@ describe('JourneyTimeline Component', () => {
 			}
 		});
 
-		// Should show timeline even when maintaining weight
 		expect(screen.getByText('Journey Timeline')).toBeInTheDocument();
 		expect(screen.getByText('Today')).toBeInTheDocument();
 	});
 
-	it('should show calendar icon for start date', () => {
+	it('should render today callout with inverted colors', () => {
 		const { container } = render(JourneyTimeline, { props: mockProps });
 
-		// Check for timeline structure with calendar icon
-		expect(container.querySelector('.timeline-start')).toBeDefined();
-	});
-
-	it('should show lightning icon for current date', () => {
-		const { container } = render(JourneyTimeline, { props: mockProps });
-
-		// Check for current date with accent styling
-		const currentBox = container.querySelector('.bg-secondary.text-secondary-content');
-		expect(currentBox).toBeDefined();
-	});
-
-	it('should show target icon for end date', () => {
-		const { container } = render(JourneyTimeline, { props: mockProps });
-
-		// Check for target date timeline item
-		expect(container.querySelector('.timeline-start')).toBeDefined();
-	});
-
-	it('should calculate weight change correctly', () => {
-		render(JourneyTimeline, {
-			props: {
-				startDate: '2025-01-01',
-				endDate: '2025-06-01',
-				initialWeight: 80,
-				targetWeight: 70,
-				currentWeight: 75
-			}
-		});
-
-		// 80 - 75 = 5 kg lost
-		expect(screen.getByText('5.0 kg lost')).toBeInTheDocument();
+		const todayCallout = container.querySelector('.bg-primary-content.text-primary');
+		expect(todayCallout).toBeTruthy();
 	});
 });

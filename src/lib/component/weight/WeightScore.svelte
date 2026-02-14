@@ -3,15 +3,15 @@
 	import type { WeightTarget, WeightTracker } from '$lib/api/gen';
 	import NumberFlow from '@number-flow/svelte';
 	import { differenceInDays } from 'date-fns';
-	import { ShieldCheck, ShieldWarning, TrendDown, TrendUp } from 'phosphor-svelte';
-	import { goto } from '$app/navigation';
+	import { HandTap, ShieldCheck, ShieldWarning, TrendDown, TrendUp } from 'phosphor-svelte';
 
 	interface Props {
 		weightTracker: WeightTracker;
 		weightTarget: WeightTarget;
+		onupdate?: () => void;
 	}
 
-	let { weightTracker, weightTarget }: Props = $props();
+	let { weightTracker, weightTarget, onupdate }: Props = $props();
 
 	let percentage = $derived.by(() => {
 		const diff = weightTarget.initialWeight - weightTracker.amount;
@@ -24,9 +24,11 @@
 	let lastEntryDayDiff = $derived(
 		differenceInDays(new Date(), parseStringAsDate(weightTracker?.added!))
 	);
+
+	let needsUpdate = $derived(lastEntryDayDiff > 0);
 </script>
 
-<div class="stat weight-stat">
+{#snippet weightContent()}
 	<div class="stat-title">Current Weight</div>
 	<div class="flex flex-row justify-between stat-value">
 		<span>
@@ -34,7 +36,10 @@
 			<span class="text-sm">kg</span>
 		</span>
 		<span class="flex items-center gap-1">
-			{#if modifier === '-'}
+			{#if needsUpdate}
+				<span class="text-xs opacity-70">Tap to update</span>
+				<HandTap size="2rem" class="motion-safe:animate-pulse" />
+			{:else if modifier === '-'}
 				<TrendDown weight="bold" size="2rem" />
 			{:else if modifier === '+'}
 				<TrendUp weight="bold" size="2rem" />
@@ -54,38 +59,29 @@
 				Last update: {lastEntryDayDiff} days ago.
 			{/if}
 		</span>
-		<span>
-			{modifier}{Math.abs(percentage)}%
-		</span>
+		{#if !needsUpdate}
+			<span>{modifier}{Math.abs(percentage)}%</span>
+		{/if}
 	</div>
-</div>
-{#if weightTarget}
-	{@const dayDiff = differenceInDays(parseStringAsDate(weightTarget.endDate), new Date())}
-	{@const totalDays = differenceInDays(
-		parseStringAsDate(weightTarget.endDate),
-		parseStringAsDate(weightTarget.startDate)
-	)}
-	{@const progress = totalDays === 0 ? 0 : Math.round(((totalDays - dayDiff) / totalDays) * 100)}
-	<div class="progress-container w-full">
-		<span class="flex flex-row justify-between items-center">
-			<p class="text-sm opacity-60">
-				{dayDiff} days left.
-			</p>
-			<button class="btn btn-sm" onclick={() => goto('/review')}> Review plan </button>
-		</span>
+{/snippet}
 
-		<progress class="progress w-full" value={progress} max="100"></progress>
+{#if needsUpdate}
+	<button
+		class="stat weight-stat cursor-pointer text-left"
+		aria-label="Update weight"
+		onclick={onupdate}
+	>
+		{@render weightContent()}
+	</button>
+{:else}
+	<div class="stat weight-stat">
+		{@render weightContent()}
 	</div>
 {/if}
 
 <style>
 	.stat-value {
 		font-size: 2rem;
-	}
-
-	.progress-container {
-		padding-inline: calc(0.25rem * 6);
-		padding-block: calc(0.25rem * 4);
 	}
 
 	.weight-stat {

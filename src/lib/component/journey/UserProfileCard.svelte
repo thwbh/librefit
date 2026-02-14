@@ -16,7 +16,7 @@
 	let ActivityIcon = $derived(activityInfo.icon);
 </script>
 
-<div class="bg-base-100 rounded-box p-6 shadow">
+<div class="bg-base-100 rounded-box p-6 shadow border-l-4 border-accent">
 	<div class="flex items-center gap-6">
 		<div class="flex-1 space-y-3">
 			<div>

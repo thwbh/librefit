@@ -2,11 +2,14 @@
 	import { page } from '$app/state';
 	import { AppShell, ToastContainer, createRefreshContext } from '@thwbh/veilchen';
 	import type { BottomNavItem } from '@thwbh/veilchen';
-	import { ChartLine, DotsThreeVertical, House, ListBullets } from 'phosphor-svelte';
 	import Settings from '$lib/component/settings/Settings.svelte';
 	import { fade } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { afterNavigate } from '$app/navigation';
+	import JournalIcon from '$lib/component/navigation/JournalIcon.svelte';
+	import ProgressIcon from '$lib/component/navigation/ProgressIcon.svelte';
+	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
+	import HistoryIcon from '$lib/component/navigation/HistoryIcon.svelte';
 
 	let { children } = $props();
 
@@ -23,27 +26,28 @@
 			id: 'home',
 			label: 'Home',
 			href: '/',
-			icon: House,
+			/*			icon: House,*/
+			icon: JournalIcon,
 			iconProps: { size: '1.25em', weight: 'bold' }
 		},
 		{
 			id: 'progress',
 			label: 'Progress',
 			href: '/progress',
-			icon: ChartLine,
+			icon: ProgressIcon,
 			iconProps: { size: '1.25em', weight: 'bold' }
 		},
 		{
 			id: 'history',
 			label: 'History',
 			href: '/history',
-			icon: ListBullets,
+			icon: HistoryIcon,
 			iconProps: { size: '1.25em', weight: 'bold' }
 		},
 		{
 			id: 'settings',
 			label: 'Settings',
-			icon: DotsThreeVertical,
+			icon: SettingsIcon,
 			iconProps: { size: '1.25em', weight: 'bold' },
 			onclick: () => {
 				isSettingsOpen = !isSettingsOpen;
@@ -77,3 +81,17 @@
 </AppShell>
 
 <Settings bind:open={isSettingsOpen} />
+
+<style>
+	:global(.dock-item .indicator) {
+		fill: var(--color-secondary);
+	}
+
+	:global(.dock-active .indicator) {
+		fill: var(--color-accent);
+	}
+
+	:global(.breadcrumb-link .indicator) {
+		fill: var(--color-accent);
+	}
+</style>
