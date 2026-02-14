@@ -1,18 +1,17 @@
 <script lang="ts">
-	import type { LibreUser } from '$lib/api/index.js';
+	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 	import Setup from '$lib/component/wizard/Setup.svelte';
 	import { getUserContext } from '$lib/context';
 	import { Breadcrumbs, TextSize } from '@thwbh/veilchen';
 	import type { BreadcrumbItem } from '@thwbh/veilchen';
-	import { Gear, MagicWand } from 'phosphor-svelte';
+	import { MagicWand } from 'phosphor-svelte';
 
 	let { data } = $props();
 
 	const items: BreadcrumbItem[] = [
 		{
 			id: '1',
-			icon: Gear,
-			iconProps: { weight: 'bold' }
+			icon: SettingsIcon
 		},
 		{
 			id: '2',

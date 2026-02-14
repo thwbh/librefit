@@ -10,6 +10,7 @@
 	const foodCategories = getCategoriesContext();
 
 	const progress = data.trackerProgress;
+
 	const { weightTarget, intakeTarget, daysPassed, daysTotal } = progress;
 	const wcd = progress.weightChartData;
 	const icd = progress.intakeChartData;
@@ -29,16 +30,6 @@
 	// Intake
 	const deficit = intakeTarget.maximumCalories - icd.dailyAverage;
 	const targetDeficit = intakeTarget.maximumCalories - intakeTarget.targetCalories;
-
-	// Category breakdown
-	const categoryLabels: Record<string, string> = {
-		b: 'Breakfast',
-		l: 'Lunch',
-		d: 'Dinner',
-		s: 'Snack',
-		t: 'Treat',
-		u: 'Drink'
-	};
 
 	const categories = Object.entries(icd.categoryAverage)
 		.filter(([_, avg]) => avg > 0)

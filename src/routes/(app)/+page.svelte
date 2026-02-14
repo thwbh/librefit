@@ -49,12 +49,8 @@
 	const weightTarget: WeightTarget = dashboard.weightTarget;
 	const intakeTarget: IntakeTarget = dashboard.intakeTarget;
 
-	// Progress bar calculations (moved from WeightScore)
-	const dayDiff = differenceInDays(parseStringAsDate(weightTarget.endDate), new Date());
-	const totalDays = differenceInDays(
-		parseStringAsDate(weightTarget.endDate),
-		parseStringAsDate(weightTarget.startDate)
-	);
+	const totalDays = dashboard.daysTotal;
+	const dayDiff = totalDays - dashboard.currentDay;
 
 	const progress = totalDays === 0 ? 0 : Math.round(((totalDays - dayDiff) / totalDays) * 100);
 
