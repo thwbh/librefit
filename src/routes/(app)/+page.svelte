@@ -173,9 +173,7 @@
 	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
 		<div class="flex items-start justify-between">
 			<div class="flex flex-col gap-1">
-				{#if data.dashboardData.currentDay > 0}
-					<span class="text-3xl font-bold">Day {data.dashboardData.currentDay}</span>
-				{/if}
+				<span class="text-3xl font-bold">Day {dashboard.currentDay + 1}</span>
 				<span class="text-sm opacity-70">{displayDate}</span>
 			</div>
 

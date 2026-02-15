@@ -67,7 +67,8 @@ impl Progress {
         let today_date: NaiveDate = NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
             .map_err(|_| "Invalid date format".to_string())?;
 
-        let end_date: NaiveDate = if today_date < intake_target_end_date {
+        // Query up to yesterday to avoid incomplete data skewing charts
+        let query_end_date: NaiveDate = if today_date <= intake_target_end_date {
             today_date
                 .checked_sub_days(Days::new(1))
                 .ok_or("Failed to subtract day".to_string())?
@@ -75,22 +76,29 @@ impl Progress {
             intake_target_end_date
         };
 
-        let end_date_str = end_date.format("%Y-%m-%d").to_string();
+        let query_end_str = query_end_date.format("%Y-%m-%d").to_string();
 
         let intake: Vec<Intake> =
-            Intake::find_by_date_range(conn, &intake_target.start_date, &end_date_str)
+            Intake::find_by_date_range(conn, &intake_target.start_date, &query_end_str)
                 .unwrap_or_default();
 
         let weight_tracker: Vec<WeightTracker> =
-            WeightTracker::find_by_date_range(conn, &weight_target.start_date, &end_date_str)
+            WeightTracker::find_by_date_range(conn, &weight_target.start_date, &query_end_str)
                 .unwrap_or_default();
 
         let intake_chart_data = process_intake(conn, &intake)?;
         let weight_chart_data = process_weight(&weight_tracker);
 
-        let days_passed: i32 = end_date
-            .signed_duration_since(intake_target_start_date)
-            .num_days() as i32;
+        // Elapsed days (0-indexed: 0 on first day), capped at days_total after plan ends
+        let days_passed: i32 = if today_date < intake_target_end_date {
+            today_date
+                .signed_duration_since(intake_target_start_date)
+                .num_days() as i32
+        } else {
+            intake_target_end_date
+                .signed_duration_since(intake_target_start_date)
+                .num_days() as i32
+        };
 
         let days_total: i32 = intake_target_end_date
             .signed_duration_since(intake_target_start_date)
