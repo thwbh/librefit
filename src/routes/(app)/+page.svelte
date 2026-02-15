@@ -164,16 +164,6 @@
 	debug(`user profile=${JSON.stringify(userContext.user)}`);
 
 	useRefresh(() => invalidate('data:dashboardData'));
-
-	/** Moves an element to document.body so `position: fixed` works inside transformed ancestors. */
-	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
-		return {
-			destroy() {
-				node.remove();
-			}
-		};
-	}
 </script>
 
 <div class="flex flex-col overflow-x-hidden">
@@ -309,9 +299,8 @@
 	</div>
 </div>
 <button
-	class="fixed bottom-20 right-4 z-[39] btn btn-xl btn-circle btn-primary shadow-lg"
+	class="fixed bottom-4 right-4 z-[39] btn btn-xl btn-circle btn-primary shadow-lg"
 	onclick={modal.openCreate}
-	use:portal
 >
 	<Plus size="1.5em" />
 </button>
