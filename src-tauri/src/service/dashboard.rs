@@ -25,6 +25,7 @@ pub struct Dashboard {
     pub food_categories: Vec<FoodCategory>,
     pub current_day: i32,
     pub days_total: i32,
+    pub weight_latest: WeightTracker,
 }
 
 // ============================================================================
@@ -93,6 +94,9 @@ impl Dashboard {
             .signed_duration_since(intake_target_start_date)
             .num_days() as i32;
 
+        let weight_latest =
+            WeightTracker::get_latest(conn).map_err(|_| "No weight tracker found".to_string())?;
+
         Ok(Self {
             user_data,
             intake_target,
@@ -104,6 +108,7 @@ impl Dashboard {
             food_categories,
             current_day,
             days_total,
+            weight_latest,
         })
     }
 }

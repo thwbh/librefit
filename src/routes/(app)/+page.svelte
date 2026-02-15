@@ -44,7 +44,7 @@
 
 	let index: number = $state(0);
 	let intake: Array<Intake> = $state(dashboard.intakeTodayList);
-	let lastWeightTracker: WeightTracker = $state(dashboard.weightMonthList[0]);
+	let lastWeightTracker: WeightTracker = $state(dashboard.weightLatest);
 
 	const weightTarget: WeightTarget = dashboard.weightTarget;
 	const intakeTarget: IntakeTarget = dashboard.intakeTarget;
