@@ -2,7 +2,7 @@ use crate::helpers::{
     create_test_intake_entry, create_test_intake_target, create_test_user,
     create_test_weight_entry, create_test_weight_target, setup_test_pool,
 };
-use librefit_lib::service::dashboard::daily_dashboard;
+use librefit_lib::service::{dashboard::daily_dashboard, weight::create_weight_tracker_entry};
 use tauri::Manager;
 
 #[test]
@@ -61,6 +61,7 @@ fn test_daily_dashboard_first_day() {
     create_test_user(&pool, "User", "avatar.png");
     create_test_intake_target(&pool, "2025-01-01", "2025-06-01", 2000, 2500);
     create_test_weight_target(&pool, "2025-01-01", "2025-06-01", 85.0, 75.0);
+    create_test_weight_entry(&pool, "2025-01-01", 85.0);
 
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -73,7 +74,7 @@ fn test_daily_dashboard_first_day() {
     // First day should be day 0 (0 days completed on day 1)
     assert_eq!(dashboard.current_day, 0);
     assert_eq!(dashboard.intake_today_list.len(), 0);
-    assert_eq!(dashboard.weight_today_list.len(), 0);
+    assert_eq!(dashboard.weight_today_list.len(), 1);
 }
 
 #[test]
@@ -83,6 +84,8 @@ fn test_daily_dashboard_last_day_of_target() {
     create_test_user(&pool, "User", "avatar.png");
     create_test_intake_target(&pool, "2025-01-01", "2025-01-31", 2000, 2500);
     create_test_weight_target(&pool, "2025-01-01", "2025-01-31", 85.0, 75.0);
+
+    create_test_weight_entry(&pool, "2025-01-31", 75.0);
 
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -110,6 +113,8 @@ fn test_daily_dashboard_date_beyond_target() {
     create_test_intake_entry(&pool, "2025-01-27", 2000, "l", None);
     create_test_intake_entry(&pool, "2025-01-31", 2000, "l", None);
 
+    create_test_weight_entry(&pool, "2025-01-31", 85.0);
+
     let app = tauri::test::mock_app();
     app.manage(pool);
 
@@ -135,6 +140,7 @@ fn test_daily_dashboard_with_week_data() {
     // Add entries over the past week
     for day in 8..=15 {
         create_test_intake_entry(&pool, &format!("2025-01-{:02}", day), 1800, "l", None);
+        create_test_weight_entry(&pool, &format!("2025-01-{:02}", day), 85.4);
     }
 
     let app = tauri::test::mock_app();
@@ -147,6 +153,7 @@ fn test_daily_dashboard_with_week_data() {
 
     // Should have 8 days of data (Jan 8-15)
     assert_eq!(dashboard.intake_week_list.len(), 8);
+    assert_eq!(dashboard.weight_month_list.len(), 8);
 }
 
 #[test]
@@ -247,14 +254,7 @@ fn test_daily_dashboard_empty_trackers() {
 
     let result = daily_dashboard(app.state(), "2025-01-15".to_string());
 
-    assert!(result.is_ok());
-    let dashboard = result.unwrap();
-
-    // Should succeed with empty lists
-    assert_eq!(dashboard.intake_today_list.len(), 0);
-    assert_eq!(dashboard.intake_week_list.len(), 0);
-    assert_eq!(dashboard.weight_today_list.len(), 0);
-    assert_eq!(dashboard.weight_month_list.len(), 0);
+    assert!(result.is_err());
 }
 
 #[test]
@@ -271,6 +271,8 @@ fn test_daily_dashboard_multiple_categories() {
     create_test_intake_entry(&pool, "2025-01-15", 700, "d", Some("Dinner".to_string()));
     create_test_intake_entry(&pool, "2025-01-15", 200, "s", Some("Snack".to_string()));
     create_test_intake_entry(&pool, "2025-01-15", 100, "t", Some("Treat".to_string()));
+
+    create_test_weight_entry(&pool, "2025-01-15", 85.0);
 
     let app = tauri::test::mock_app();
     app.manage(pool);
