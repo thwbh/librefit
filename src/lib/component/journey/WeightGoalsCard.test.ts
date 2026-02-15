@@ -7,76 +7,39 @@ import { setupVeilchenMock } from '../../../../tests/utils/mocks';
 setupVeilchenMock();
 
 describe('WeightGoalsCard Component', () => {
-	it('should render current weight', () => {
+	it('should render start and target labels', () => {
 		render(WeightGoalsCard, {
 			props: {
-				currentWeight: 75,
-				targetWeight: 70
+				initialWeight: 85,
+				targetWeight: 80
 			}
 		});
 
-		expect(screen.getByText('Current Weight')).toBeInTheDocument();
+		expect(screen.getByText('Start')).toBeInTheDocument();
+		expect(screen.getByText('Target')).toBeInTheDocument();
 	});
 
-	it('should render target weight', () => {
-		render(WeightGoalsCard, {
-			props: {
-				currentWeight: 80,
-				targetWeight: 75
-			}
-		});
-
-		expect(screen.getByText('Target Weight')).toBeInTheDocument();
-	});
-
-	it('should display weights as numbers', () => {
+	it('should render weight difference', () => {
 		const { container } = render(WeightGoalsCard, {
 			props: {
-				currentWeight: 85.5,
-				targetWeight: 80.0
+				initialWeight: 85,
+				targetWeight: 80
 			}
 		});
 
-		// The component uses StatCard which renders the values
+		expect(screen.getByText('5.0 kg')).toBeInTheDocument();
 		expect(container).toBeDefined();
 	});
 
-	it('should apply correct styling', () => {
+	it('should handle weight gain scenario', () => {
 		const { container } = render(WeightGoalsCard, {
 			props: {
-				currentWeight: 90,
-				targetWeight: 85
-			}
-		});
-
-		const wrapper = container.querySelector('.bg-base-100');
-		expect(wrapper).toBeDefined();
-
-		const stats = container.querySelector('.stats');
-		expect(stats).toBeDefined();
-	});
-
-	it('should handle weight gain scenario', () => {
-		render(WeightGoalsCard, {
-			props: {
-				currentWeight: 60,
+				initialWeight: 60,
 				targetWeight: 70
 			}
 		});
 
-		expect(screen.getByText('Current Weight')).toBeInTheDocument();
-		expect(screen.getByText('Target Weight')).toBeInTheDocument();
-	});
-
-	it('should handle weight loss scenario', () => {
-		render(WeightGoalsCard, {
-			props: {
-				currentWeight: 100,
-				targetWeight: 85
-			}
-		});
-
-		expect(screen.getByText('Current Weight')).toBeInTheDocument();
-		expect(screen.getByText('Target Weight')).toBeInTheDocument();
+		expect(screen.getByText('10.0 kg')).toBeInTheDocument();
+		expect(container).toBeDefined();
 	});
 });

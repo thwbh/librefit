@@ -1,21 +1,42 @@
 <script lang="ts">
+	import NumberFlow from '@number-flow/svelte';
+	import { TrendDown, TrendUp } from 'phosphor-svelte';
+
 	interface Props {
-		currentWeight: number;
+		initialWeight: number;
 		targetWeight: number;
 	}
 
-	let { currentWeight, targetWeight }: Props = $props();
+	let { initialWeight, targetWeight }: Props = $props();
+
+	const weightDiff = targetWeight - initialWeight;
+	const isGaining = targetWeight > initialWeight;
 </script>
 
-<div class="grid grid-cols-2 gap-3">
-	<div class="rounded-box bg-base-100 border border-base-300 p-4 flex flex-col gap-1">
-		<span class="text-xs font-medium opacity-60 uppercase tracking-wide">Current Weight</span>
-		<span class="text-3xl font-bold text-base-content">{currentWeight}</span>
-		<span class="text-sm text-base-content/60">kg</span>
-	</div>
-	<div class="rounded-box bg-base-100 border border-base-300 p-4 flex flex-col gap-1">
-		<span class="text-xs font-medium opacity-60 uppercase tracking-wide">Target Weight</span>
-		<span class="text-3xl font-bold text-primary">{targetWeight}</span>
-		<span class="text-sm text-base-content/60">kg</span>
+<div class="bg-base-100 rounded-box p-6 shadow">
+	<h3 class="text-lg font-semibold text-base-content mb-4">Weight Goal</h3>
+	<div class="flex justify-between items-end">
+		<div class="flex flex-col">
+			<span class="text-2xl font-bold">
+				<NumberFlow value={initialWeight} /> <span class="text-xs font-normal">kg</span>
+			</span>
+			<span class="text-xs opacity-70">Start</span>
+		</div>
+
+		<div class="flex items-center gap-1 opacity-80">
+			{#if isGaining}
+				<TrendUp size="1rem" weight="bold" />
+			{:else}
+				<TrendDown size="1rem" weight="bold" />
+			{/if}
+			<span class="text-sm font-semibold">{Math.abs(weightDiff).toFixed(1)} kg</span>
+		</div>
+
+		<div class="flex flex-col items-end">
+			<span class="text-2xl font-bold text-primary">
+				<NumberFlow value={targetWeight} /> <span class="text-xs font-normal">kg</span>
+			</span>
+			<span class="text-xs opacity-70">Target</span>
+		</div>
 	</div>
 </div>

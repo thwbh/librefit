@@ -23,7 +23,7 @@
 	/>
 
 	<WeightGoalsCard
-		currentWeight={weightTarget!.initialWeight}
+		initialWeight={weightTarget!.initialWeight}
 		targetWeight={weightTarget!.targetWeight}
 	/>
 
