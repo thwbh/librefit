@@ -22,7 +22,7 @@
 
 <div class="min-h-screen bg-base-200 flex flex-col">
 	<!-- Main content -->
-	<div class="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
+	<div class="flex-1 flex flex-col items-center justify-center p-6 mt-8 md:p-12">
 		{#if mounted}
 			<!-- Logo -->
 			<div class="mb-6 self-center" in:fade={{ duration: 400 }}>
