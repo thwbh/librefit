@@ -2,7 +2,7 @@ use crate::db::connection::DbPool;
 use crate::service::intake::{FoodCategory, Intake, IntakeTarget};
 use crate::service::user::LibreUser;
 use crate::service::weight::{WeightTarget, WeightTracker};
-use chrono::{Days, NaiveDate, TimeDelta};
+use chrono::{NaiveDate, TimeDelta};
 use diesel::SqliteConnection;
 use serde::{Deserialize, Serialize};
 use std::ops::Sub;
@@ -52,14 +52,6 @@ impl Dashboard {
         let intake_target_end_date = NaiveDate::parse_from_str(&intake_target.end_date, "%Y-%m-%d")
             .map_err(|_| "Invalid date format".to_string())?;
 
-        // Calculate end_date for current_day calculation
-        let today_date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").unwrap();
-        let end_date: NaiveDate = if today_date < intake_target_end_date {
-            today_date.checked_sub_days(Days::new(1)).unwrap()
-        } else {
-            intake_target_end_date
-        };
-
         // Calculate date ranges
         let week_start_str = get_date_range_begin(&date, chrono::Duration::days(7));
         let month_start_str = get_date_range_begin(&date, chrono::Duration::weeks(4));
@@ -84,11 +76,16 @@ impl Dashboard {
         // Fetch food categories
         let food_categories = FoodCategory::all(conn).unwrap_or_else(|_| vec![]);
 
-        // Calculate current day
-        let day_count: i32 = end_date
-            .signed_duration_since(intake_target_start_date)
-            .num_days() as i32;
-        let current_day: i32 = day_count + 1; // Day count will be zero at the first day
+        let current_day: i32 = if date < intake_target_end_date {
+            // Elapsed days (0 on first day)
+            date.signed_duration_since(intake_target_start_date)
+                .num_days() as i32
+        } else {
+            // Plan complete: cap at total
+            intake_target_end_date
+                .signed_duration_since(intake_target_start_date)
+                .num_days() as i32
+        };
 
         let days_total: i32 = intake_target_end_date
             .signed_duration_since(intake_target_start_date)

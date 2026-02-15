@@ -1,40 +1,22 @@
 <script lang="ts">
 	import { AlertBox, AlertType, AlertVariant, Breadcrumbs, TextSize } from '@thwbh/veilchen';
-	import type { BreadcrumbItem } from '@thwbh/veilchen';
-	import { Info } from 'phosphor-svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import logo from '$lib/assets/logo/librefit-logo@512x512.png';
 	import { LockLaminated } from 'phosphor-svelte';
-	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 
 	let mounted = false;
+
 	onMount(() => {
 		mounted = true;
 	});
-
-	const items: BreadcrumbItem[] = [
-		{
-			id: '1',
-			icon: SettingsIcon
-		},
-		{
-			id: '2',
-			href: '/about',
-			label: 'About',
-			icon: Info,
-			iconProps: { weight: 'bold' }
-		}
-	];
 </script>
 
 <svelte:head>
 	<title>About LibreFit</title>
 </svelte:head>
 
-<div class="p-4">
-	<Breadcrumbs {items} size={TextSize.XL} class="font-semibold mb-4" />
-
+<div class="p-4 mt-12">
 	<div class="flex flex-col">
 		{#if mounted}
 			<!-- Logo -->

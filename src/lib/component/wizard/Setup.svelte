@@ -39,32 +39,37 @@
 	interface Props {
 		userData?: LibreUser;
 		bodyData?: BodyData;
+		currentStep?: number;
+		recommendation?: string;
 	}
 
 	const CalculationGoal = CalculationGoalSchema.enum;
 	const CalculationSex = CalculationSexSchema.enum;
 	const WizardRecommendation = WizardRecommendationSchema.enum;
 
-	let props: Props = $props();
+	let {
+		userData: userDataProp,
+		bodyData: bodyDataProp,
+		currentStep = $bindable(1),
+		recommendation = $bindable('')
+	}: Props = $props();
 
 	// Create reactive local state for userData with default
 	let userData = $state(
-		props.userData || {
+		userDataProp || {
 			id: 1,
 			name: 'Arnie',
 			avatar: ''
 		}
 	);
 
-	let bodyData = props.bodyData || {
+	let bodyData = bodyDataProp || {
 		id: 0,
 		age: 30,
 		sex: CalculationSex.MALE,
 		weight: 85,
 		height: 180
 	};
-
-	let currentStep = $state(1);
 
 	let wizardInput: WizardInput = $state({
 		age: bodyData.age,
@@ -144,6 +149,7 @@
 
 			if (result) {
 				wizardResult = result;
+				recommendation = result.recommendation;
 
 				if (result.recommendation === WizardRecommendation.LOSE) {
 					chosenOption.customDetails = result.targetWeightUpper;
@@ -309,52 +315,20 @@
 {#if !showCompletion}
 	<Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
 		{#snippet step1()}
-			<div class="mb-6">
-				<h2 class="text-2xl font-bold text-base-content mb-2">Body Parameters</h2>
-				<p class="text-sm text-base-content opacity-60">
-					Let's start with some basic information about you
-				</p>
-			</div>
 			<Body bind:wizardInput bind:userData />
 		{/snippet}
 
 		{#snippet step2()}
-			<div class="mb-6">
-				<h2 class="text-2xl font-bold text-base-content mb-2">Activity Level</h2>
-				<p class="text-sm text-base-content opacity-60">
-					How active are you during your day? Choose what describes your daily activity level best.
-				</p>
-			</div>
 			<ActivityLevel bind:value={wizardInput.activityLevel} />
 		{/snippet}
 
 		{#snippet step3()}
-			<div class="mb-6">
-				<h2 class="text-2xl font-bold text-base-content mb-2">Your Results</h2>
-				<p class="text-sm text-base-content opacity-60">
-					Here's what your body composition and metabolism look like
-				</p>
-			</div>
 			{#if wizardResult}
 				<Report {wizardInput} {wizardResult} />
 			{/if}
 		{/snippet}
 
 		{#snippet step4()}
-			<div class="mb-6">
-				{#if wizardResult?.recommendation === WizardRecommendation.HOLD}
-					<h2 class="text-2xl font-bold text-base-content mb-2">Select Your Target Weight</h2>
-				{:else}
-					<h2 class="text-2xl font-bold text-base-content mb-2">Choose Your Pace</h2>
-				{/if}
-				<p class="text-sm text-base-content opacity-60">
-					{#if wizardResult?.recommendation === WizardRecommendation.HOLD}
-						Choose a target weight within your healthy weight range
-					{:else}
-						Select a calorie deficit that fits your lifestyle and goals
-					{/if}
-				</p>
-			</div>
 			{#if wizardTargetWeightResult}
 				{@const rates = Object.keys(wizardTargetWeightResult.dateByRate).map((v) => +v)}
 				{@const targetDates = wizardTargetWeightResult.dateByRate}
@@ -370,12 +344,6 @@
 		{/snippet}
 
 		{#snippet step5()}
-			<div class="mb-6">
-				<h2 class="text-2xl font-bold text-base-content mb-2">Your Personalized Plan</h2>
-				<p class="text-sm text-base-content opacity-60">
-					Here's your customized fitness journey roadmap
-				</p>
-			</div>
 			<Finish />
 		{/snippet}
 	</Stepper>
@@ -391,3 +359,22 @@
 		onRetry={handleRetry}
 	/>
 {/if}
+
+<style>
+	/* Hide default step timeline — replaced by branded header progress bar */
+	:global(.timeline-container) {
+		display: none;
+	}
+
+	/* Style Next button with accent color */
+	:global(.stepper-buttons-wrapper .btn-neutral) {
+		background-color: var(--color-accent);
+		color: var(--color-accent-content);
+		border-color: var(--color-accent);
+	}
+
+	:global(.stepper-buttons-wrapper .btn-neutral:hover) {
+		background-color: color-mix(in oklch, var(--color-accent) 85%, black);
+		border-color: color-mix(in oklch, var(--color-accent) 85%, black);
+	}
+</style>
