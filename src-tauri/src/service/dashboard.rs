@@ -88,7 +88,7 @@ impl Dashboard {
         let day_count: i32 = end_date
             .signed_duration_since(intake_target_start_date)
             .num_days() as i32;
-        let current_day: i32 = day_count + 1; // Day count will be zero at the first day
+        let current_day: i32 = day_count + 2; // Day count will be zero at the first day
 
         let days_total: i32 = intake_target_end_date
             .signed_duration_since(intake_target_start_date)
