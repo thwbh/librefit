@@ -315,7 +315,7 @@ impl IntakeTarget {
     /// Find the last intake target
     pub fn find_last(conn: &mut SqliteConnection) -> QueryResult<Self> {
         intake_target::table
-            .order(intake_target::id.desc())
+            .order(intake_target::added.desc())
             .first::<Self>(conn)
     }
 }

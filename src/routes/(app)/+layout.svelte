@@ -26,7 +26,6 @@
 			id: 'home',
 			label: 'Home',
 			href: '/',
-			/*			icon: House,*/
 			icon: JournalIcon,
 			iconProps: { size: '1.25em', weight: 'bold' }
 		},
@@ -34,21 +33,18 @@
 			id: 'progress',
 			label: 'Progress',
 			href: '/progress',
-			icon: ProgressIcon,
-			iconProps: { size: '1.25em', weight: 'bold' }
+			icon: ProgressIcon
 		},
 		{
 			id: 'history',
 			label: 'History',
 			href: '/history',
-			icon: HistoryIcon,
-			iconProps: { size: '1.25em', weight: 'bold' }
+			icon: HistoryIcon
 		},
 		{
 			id: 'settings',
 			label: 'Settings',
 			icon: SettingsIcon,
-			iconProps: { size: '1.25em', weight: 'bold' },
 			onclick: () => {
 				isSettingsOpen = !isSettingsOpen;
 			}
@@ -63,7 +59,7 @@
 				item.href &&
 				(page.url.pathname === item.href ||
 					(page.url.pathname.startsWith(item.href) && item.href !== '/'))
-		)?.id
+		)?.id ?? 'settings'
 	);
 </script>
 

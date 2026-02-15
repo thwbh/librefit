@@ -1,13 +1,5 @@
 <script lang="ts">
-	import {
-		Breadcrumbs,
-		TextSize,
-		SwipeableListItem,
-		ModalDialog,
-		Avatar,
-		ValidatedInput
-	} from '@thwbh/veilchen';
-	import type { BreadcrumbItem } from '@thwbh/veilchen';
+	import { SwipeableListItem, ModalDialog, Avatar, ValidatedInput } from '@thwbh/veilchen';
 	import { getUserContext } from '$lib/context';
 	import { IdentificationCard, PencilSimple } from 'phosphor-svelte';
 	import type { LibreUser } from '$lib/api/index.js';
@@ -18,7 +10,6 @@
 	import { getAvatar } from '$lib/avatar';
 	import { slide } from 'svelte/transition';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
-	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 
 	let { data } = $props();
 
@@ -61,27 +52,26 @@
 		showAvatarPicker = false;
 		modal.cancel();
 	}
-
-	const items: BreadcrumbItem[] = [
-		{
-			id: '1',
-			icon: SettingsIcon
-		},
-		{
-			id: '2',
-			href: '/profile',
-			label: 'Profile',
-			icon: IdentificationCard,
-			iconProps: { weight: 'bold' }
-		}
-	];
 </script>
 
-<div class="p-4">
+<div class="flex flex-col overflow-x-hidden">
 	<h1 class="sr-only">User Profile</h1>
-	<Breadcrumbs {items} size={TextSize.XL} class="font-semibold" />
 
-	<div class="space-y-6">
+	<!-- Branded Header -->
+	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
+		<div class="flex items-start justify-between">
+			<div class="flex flex-col gap-1">
+				<span class="text-2xl font-bold">Profile</span>
+				<span class="text-sm opacity-70">Manage your personal information</span>
+			</div>
+			<span class="opacity-50">
+				<IdentificationCard size="2.5rem" weight="duotone" />
+			</span>
+		</div>
+	</div>
+
+	<!-- Content card with overlap -->
+	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 p-4 pt-6 space-y-6">
 		<!-- Profile Header with swipe-to-edit -->
 		<SwipeableListItem onleft={() => openEdit()}>
 			{#snippet leftAction()}

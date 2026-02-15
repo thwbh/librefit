@@ -95,8 +95,8 @@ fn test_daily_dashboard_last_day_of_target() {
     assert!(result.is_ok());
     let dashboard = result.unwrap();
 
-    // Last day should be day 31 (when querying on the last day, it shows 31)
-    assert_eq!(dashboard.current_day, 31);
+    // Last day: 0-indexed elapsed days capped at days_total (30 for a Jan 1–Jan 31 range)
+    assert_eq!(dashboard.current_day, dashboard.days_total);
 }
 
 #[test]
@@ -124,9 +124,8 @@ fn test_daily_dashboard_date_beyond_target() {
     assert!(result.is_ok());
     let dashboard = result.unwrap();
 
-    // When querying beyond target, it should still return successfully
-    // The current_day should be based on the end date, not the query date
-    assert_eq!(dashboard.current_day, 31);
+    // When querying beyond target, current_day caps at days_total
+    assert_eq!(dashboard.current_day, dashboard.days_total);
 }
 
 #[test]

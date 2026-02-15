@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { cancelExport, exportDatabaseFile, type ExportProgress } from '$lib/api';
 	import { ExportFormatSchema, ExportStageSchema } from '$lib/api/gen/types';
-	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 	import { Channel } from '@tauri-apps/api/core';
 	import { save } from '@tauri-apps/plugin-dialog';
 	import { writeFile } from '@tauri-apps/plugin-fs';
@@ -10,12 +9,9 @@
 		AlertBox,
 		AlertType,
 		AlertVariant,
-		Breadcrumbs,
 		LoadingIndicator,
 		ModalDialog,
 		OptionCards,
-		TextSize,
-		type BreadcrumbItem,
 		type OptionCardData
 	} from '@thwbh/veilchen';
 	import {
@@ -201,57 +197,74 @@
 		bytesInfo = '';
 		exportStarted = false;
 	}
-
-	const items: BreadcrumbItem[] = [
-		{
-			id: '1',
-			icon: SettingsIcon
-		},
-		{
-			id: '2',
-			href: '/export',
-			label: 'Export Data',
-			icon: TreeStructure,
-			iconProps: { weight: 'bold' }
-		}
-	];
 </script>
 
-<div class="flex flex-col p-4 gap-4">
+<div class="flex flex-col overflow-x-hidden">
 	<h1 class="sr-only">Data Export</h1>
-	<Breadcrumbs {items} size={TextSize.XL} class="font-semibold" />
 
-	<div class="prose prose-sm max-w-none">
-		<h2 class="text-lg font-semibold">Your Data, Your Control</h2>
-		<p>
-			Export a complete backup of your LibreFit data. This includes all your tracked meals, weight
-			entries, targets, and personal settings.
-		</p>
-
-		<h3 class="text-md font-medium mt-4">What's included:</h3>
-		<ul class="list-disc list-inside text-sm space-y-1">
-			<li>All calorie tracking entries</li>
-			<li>Weight history and targets</li>
-			<li>Your profile and body data</li>
-			<li>Custom settings and preferences</li>
-		</ul>
+	<!-- Branded Header -->
+	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
+		<div class="flex items-start justify-between">
+			<div class="flex flex-col gap-1">
+				<span class="text-2xl font-bold">Export Data</span>
+				<span class="text-sm opacity-70">Back up your LibreFit data</span>
+			</div>
+			<span class="opacity-50">
+				<TreeStructure size="2.5rem" weight="duotone" />
+			</span>
+		</div>
 	</div>
 
-	<div>
-		<OptionCards bind:value={exportFormat} data={exportOptions} scrollable={false}>
-			{#snippet icon(option)}
-				{#if option.value === 'raw'}
-					<Database size="2em" />
-				{:else if option.value === 'csv'}
-					<FileCsv size="2em" />
-				{:else if option.value === 'pdf'}
-					<FilePdf size="2em" />
-				{/if}
-			{/snippet}
-		</OptionCards>
-	</div>
+	<!-- Content card with overlap -->
+	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 p-4 pt-6 flex flex-col gap-4">
+		<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
+			<span class="font-bold">Your data, your control</span>
+			<span>
+				Export a complete backup of your LibreFit data. This includes all your tracked meals, weight
+				entries, targets, and personal settings.
+			</span>
+		</AlertBox>
 
-	<button class="btn btn-primary w-full" onclick={showModal}> Start Export </button>
+		<div class="rounded-box border border-base-300 overflow-hidden">
+			<div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
+				<h3 class="text-sm font-semibold text-base-content tracking-wide">What's included</h3>
+			</div>
+			<div class="divide-y divide-base-200">
+				<div class="flex items-center gap-3 px-4 py-3">
+					<span class="list-caret"></span>
+					<span class="text-sm text-base-content/80">All calorie tracking entries</span>
+				</div>
+				<div class="flex items-center gap-3 px-4 py-3">
+					<span class="list-caret"></span>
+					<span class="text-sm text-base-content/80">Weight history and targets</span>
+				</div>
+				<div class="flex items-center gap-3 px-4 py-3">
+					<span class="list-caret"></span>
+					<span class="text-sm text-base-content/80">Your profile and body data</span>
+				</div>
+				<div class="flex items-center gap-3 px-4 py-3">
+					<span class="list-caret"></span>
+					<span class="text-sm text-base-content/80">Custom settings and preferences</span>
+				</div>
+			</div>
+		</div>
+
+		<div>
+			<OptionCards bind:value={exportFormat} data={exportOptions} scrollable={false}>
+				{#snippet icon(option)}
+					{#if option.value === 'raw'}
+						<Database size="2em" />
+					{:else if option.value === 'csv'}
+						<FileCsv size="2em" />
+					{:else if option.value === 'pdf'}
+						<FilePdf size="2em" />
+					{/if}
+				{/snippet}
+			</OptionCards>
+		</div>
+
+		<button class="btn btn-primary w-full" onclick={showModal}> Start Export </button>
+	</div>
 </div>
 
 <ModalDialog bind:dialog>
@@ -313,3 +326,20 @@
 		</div>
 	{/snippet}
 </ModalDialog>
+
+<style>
+	.list-caret {
+		display: inline-block;
+		width: 1rem;
+		height: 0.625rem;
+		flex-shrink: 0;
+		background-color: var(--color-accent);
+		clip-path: polygon(
+			0% 0%,
+			calc(100% - 0.25rem) 0%,
+			100% 50%,
+			calc(100% - 0.25rem) 100%,
+			0% 100%
+		);
+	}
+</style>

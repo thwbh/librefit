@@ -253,7 +253,7 @@ impl WeightTracker {
     /// Find most recent weight tracker entry
     pub fn get_latest(conn: &mut SqliteConnection) -> QueryResult<Self> {
         weight_tracker::table
-            .order(weight_tracker::id.desc())
+            .order(weight_tracker::added.desc())
             .first::<Self>(conn)
     }
 }

@@ -5,7 +5,7 @@
 		type WizardInput,
 		type WizardResult
 	} from '$lib/api/gen';
-	import { AlertBox, AlertType, AlertVariant, StatCard } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, AlertVariant } from '@thwbh/veilchen';
 	import { getBmiCategoryDisplayValue } from '$lib/enum';
 	import { z } from 'zod';
 
@@ -20,7 +20,6 @@
 	let { wizardResult, wizardInput }: Props = $props();
 
 	// Check if user is in low-normal BMI range (18.5-19.9)
-	// This is when they're in healthy range but have GAIN recommendation
 	let isLowNormalBmi = $derived(
 		wizardResult.bmi >= 18.5 &&
 			wizardResult.bmi < 20 &&
@@ -35,71 +34,72 @@
 
 	const getClassificationStyle = (category: string) => {
 		if (classificationLose.safeParse(category).success) {
-			return 'badge-error';
+			return 'bg-error text-content-error';
 		} else if (category === BmiCategory.Underweight) {
-			return 'badge-warning';
+			return 'bg-warning text-content-warning';
 		} else {
-			return 'badge-success';
+			return 'bg-success text-content-success';
 		}
 	};
 </script>
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-4">
 	<!-- Key Metrics Cards -->
-	<div class="stats stats-horizontal shadow w-full flex-col">
-		<StatCard
-			title="Body Mass Index"
-			value={wizardResult.bmi}
-			description={getBmiCategoryDisplayValue(wizardResult.bmiCategory)}
-			descClass="badge {getClassificationStyle(wizardResult.bmiCategory)} badge-sm mt-2"
-		/>
-		<StatCard
-			title="Recommendation"
-			value={wizardResult.recommendation.toLowerCase()}
-			valueClass="capitalize"
-			description={`${wizardInput.weight} kg`}
-			descClass="badge badge-primary badge-sm mt-2"
-		/>
+	<div class="grid grid-cols-2 gap-3">
+		<div class="rounded-box bg-base-100 border border-base-300 p-4 flex flex-col gap-2">
+			<span class="text-xs font-medium opacity-60 uppercase tracking-wide">BMI</span>
+			<span class="text-3xl font-bold text-base-content">{wizardResult.bmi}</span>
+			<span class="badge badge-sm {getClassificationStyle(wizardResult.bmiCategory)} font-medium">
+				{getBmiCategoryDisplayValue(wizardResult.bmiCategory)}
+			</span>
+		</div>
+		<div class="rounded-box bg-base-100 border border-base-300 p-4 flex flex-col gap-2">
+			<span class="text-xs font-medium opacity-60 uppercase tracking-wide">Recommendation</span>
+			<span class="text-3xl font-bold text-base-content capitalize"
+				>{wizardResult.recommendation.toLowerCase()}</span
+			>
+			<span class="badge badge-sm bg-primary text-primary-content font-medium">
+				{wizardInput.weight} kg
+			</span>
+		</div>
 	</div>
 
-	<!-- Detailed Metrics Table -->
-	<div class="bg-base-100 rounded-box p-6 shadow">
-		<h3 class="text-lg font-semibold text-base-content mb-4">Your Metabolic Profile</h3>
-		<table class="table table-sm">
-			<tbody>
-				<tr>
-					<td class="text-base-content opacity-70">Age</td>
-					<td class="text-right font-semibold">{wizardInput.age} years</td>
-				</tr>
-
-				<tr>
-					<td class="text-base-content opacity-70">Height</td>
-					<td class="text-right font-semibold">{wizardInput.height} cm</td>
-				</tr>
-
-				<tr>
-					<td class="text-base-content opacity-70">Current Weight</td>
-					<td class="text-right font-semibold">{wizardInput.weight} kg</td>
-				</tr>
-
-				<tr class="border-t border-base-300">
-					<td class="text-base-content opacity-70">Basal Metabolic Rate</td>
-					<td class="text-right font-semibold text-primary">{wizardResult.bmr} kcal</td>
-				</tr>
-
-				<tr>
-					<td class="text-base-content opacity-70">Total Daily Energy Expenditure</td>
-					<td class="text-right font-semibold text-primary">{wizardResult.tdee} kcal</td>
-				</tr>
-			</tbody>
-		</table>
+	<!-- Metabolic Profile -->
+	<div class="rounded-box border border-base-300 overflow-hidden">
+		<div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
+			<h3 class="text-sm font-semibold text-base-content uppercase tracking-wide">
+				Metabolic Profile
+			</h3>
+		</div>
+		<div class="divide-y divide-base-200">
+			<div class="flex justify-between items-center px-4 py-3">
+				<span class="text-sm text-base-content/70">Age</span>
+				<span class="text-sm font-semibold">{wizardInput.age} years</span>
+			</div>
+			<div class="flex justify-between items-center px-4 py-3">
+				<span class="text-sm text-base-content/70">Height</span>
+				<span class="text-sm font-semibold">{wizardInput.height} cm</span>
+			</div>
+			<div class="flex justify-between items-center px-4 py-3">
+				<span class="text-sm text-base-content/70">Weight</span>
+				<span class="text-sm font-semibold">{wizardInput.weight} kg</span>
+			</div>
+			<div class="flex justify-between items-center px-4 py-3 bg-primary/5">
+				<span class="text-sm font-medium text-base-content">Basal Metabolic Rate</span>
+				<span class="text-sm font-bold text-primary">{wizardResult.bmr} kcal</span>
+			</div>
+			<div class="flex justify-between items-center px-4 py-3 bg-primary/5">
+				<span class="text-sm font-medium text-base-content">Daily Energy Expenditure</span>
+				<span class="text-sm font-bold text-primary">{wizardResult.tdee} kcal</span>
+			</div>
+		</div>
 	</div>
 
 	<!-- Analysis & Recommendations -->
-	<div class="bg-base-200 rounded-box p-6">
-		<h3 class="text-lg font-semibold text-base-content mb-4">Your Analysis</h3>
+	<div class="rounded-box border-l-4 border-l-accent bg-base-200/50 p-5">
+		<h3 class="text-sm font-semibold text-base-content mb-3 uppercase tracking-wide">Analysis</h3>
 
-		<div class="space-y-3 text-base-content opacity-80">
+		<div class="space-y-3 text-sm text-base-content/80">
 			<p class="leading-relaxed">
 				Your <span class="font-semibold text-base-content">basal metabolic rate</span> is
 				<span class="font-semibold text-primary">{wizardResult.bmr} kcal</span>. To maintain your
@@ -108,7 +108,7 @@
 			</p>
 
 			{#if wizardResult.targetBmi}
-				<div class="divider"></div>
+				<div class="divider my-2"></div>
 
 				<p class="leading-relaxed">
 					At {wizardInput.height}cm and {wizardInput.weight}kg, your BMI is
@@ -120,7 +120,6 @@
 				</p>
 
 				{#if isLowNormalBmi}
-					<!-- Low-normal BMI: In healthy range (18.5+) but below optimal (20-25) -->
 					<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 						<strong> You are currently in the healthy weight range</strong>
 						<p class="text-sm mt-1">
@@ -137,24 +136,11 @@
 						</p>
 					</AlertBox>
 				{:else if wizardResult.targetBmiLower <= wizardResult.bmi && wizardResult.bmi <= wizardResult.targetBmiUpper}
-					<!-- In optimal BMI range -->
-					<div class="alert alert-success">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="stroke-current shrink-0 h-6 w-6"
-							fill="none"
-							viewBox="0 0 24 24"
-							><path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-							/></svg
-						>
+					<AlertBox type={AlertType.Success} variant={AlertVariant.Callout}>
 						<span
 							>You are currently <span class="font-bold">in the healthy weight range</span>!</span
 						>
-					</div>
+					</AlertBox>
 				{:else}
 					<AlertBox type={AlertType.Warning} variant={AlertVariant.Callout}>
 						<strong>Outside healthy range</strong>
