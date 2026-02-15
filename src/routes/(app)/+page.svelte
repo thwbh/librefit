@@ -309,7 +309,7 @@
 	</div>
 </div>
 <button
-	class="fixed bottom-20 right-4 z-[999] btn btn-xl btn-circle btn-primary shadow-lg"
+	class="fixed bottom-20 right-4 z-[39] btn btn-xl btn-circle btn-primary shadow-lg"
 	onclick={modal.openCreate}
 	use:portal
 >
