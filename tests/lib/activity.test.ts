@@ -52,11 +52,11 @@ describe('activity utilities', () => {
 		});
 
 		it('should have appropriate badge colors', () => {
-			expect(activityLevels[0].badge.color).toBe('secondary');
-			expect(activityLevels[1].badge.color).toBe('secondary');
-			expect(activityLevels[2].badge.color).toBe('secondary');
-			expect(activityLevels[3].badge.color).toBe('accent');
-			expect(activityLevels[4].badge.color).toBe('warning');
+			expect(activityLevels[0].badge.color).toBe('badge-secondary');
+			expect(activityLevels[1].badge.color).toBe('badge-secondary');
+			expect(activityLevels[2].badge.color).toBe('badge-secondary');
+			expect(activityLevels[3].badge.color).toBe('badge-warning');
+			expect(activityLevels[4].badge.color).toBe('badge-accent');
 		});
 	});
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { convertFormDataToJson, createTargetWeightTargets } from '../../../src/lib/api/util';
 import type { WizardInput, WizardResult, WizardTargetWeightResult } from '../../../src/lib/api/gen';
+import { getDateAsStr } from '$lib/date';
 
 // ============================================================================
 // convertFormDataToJson TESTS
@@ -255,8 +256,7 @@ describe('createTargetWeightTargets', () => {
 	});
 
 	test('should include today as "added" date', () => {
-		const today = new Date();
-		const todayStr = today.toISOString().split('T')[0];
+		const todayStr = getDateAsStr(new Date());
 
 		const wizardInput: WizardInput = {
 			weight: 75,

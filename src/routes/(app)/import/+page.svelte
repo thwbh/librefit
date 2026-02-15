@@ -7,6 +7,7 @@
 		ImportTableSchema,
 		type ImportResult
 	} from '$lib/api/gen/types';
+	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 	import { Channel } from '@tauri-apps/api/core';
 	import { open } from '@tauri-apps/plugin-dialog';
 	import { debug, error } from '@tauri-apps/plugin-log';
@@ -22,7 +23,7 @@
 		type BreadcrumbItem,
 		type OptionCardData
 	} from '@thwbh/veilchen';
-	import { Check, Gear, Hamburger, Scales, Upload, Warning } from 'phosphor-svelte';
+	import { Check, ForkKnife, Scales, Upload, Warning } from 'phosphor-svelte';
 
 	const ImportFormat = ImportFormatSchema.enum;
 	const ImportTable = ImportTableSchema.enum;
@@ -56,8 +57,7 @@
 	const items: BreadcrumbItem[] = [
 		{
 			id: '1',
-			icon: Gear,
-			iconProps: { weight: 'bold' }
+			icon: SettingsIcon
 		},
 		{
 			id: '2',
@@ -185,7 +185,7 @@
 		<OptionCards bind:value={importTarget} data={importOptions} scrollable={false}>
 			{#snippet icon(option)}
 				{#if option.value === ImportTable.intake}
-					<Hamburger size="2em" />
+					<ForkKnife size="2em" />
 				{:else if option.value === ImportTable.weightTracker}
 					<Scales size="2em" />
 				{/if}

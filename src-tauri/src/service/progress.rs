@@ -169,7 +169,7 @@ fn process_intake(
             .into_iter()
             .map(|(category, (sum, count))| {
                 FoodCategory::find_by_key(conn, category)
-                    .map(|cat| (cat.longvalue, math_f32::floor_f32(sum / count as f32, 0)))
+                    .map(|cat| (cat.shortvalue, math_f32::floor_f32(sum / count as f32, 0)))
                     .map_err(|e| format!("Failed to get food category: {}", e))
             })
             .collect::<Result<BTreeMap<String, f32>, String>>()?;

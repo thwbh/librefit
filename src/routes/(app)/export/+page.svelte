@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cancelExport, exportDatabaseFile, type ExportProgress } from '$lib/api';
 	import { ExportFormatSchema, ExportStageSchema } from '$lib/api/gen/types';
+	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 	import { Channel } from '@tauri-apps/api/core';
 	import { save } from '@tauri-apps/plugin-dialog';
 	import { writeFile } from '@tauri-apps/plugin-fs';
@@ -26,7 +27,6 @@
 		FileCsv,
 		FilePdf,
 		FloppyDisk,
-		Gear,
 		MagnifyingGlass,
 		TreeStructure,
 		Warning
@@ -205,8 +205,7 @@
 	const items: BreadcrumbItem[] = [
 		{
 			id: '1',
-			icon: Gear,
-			iconProps: { weight: 'bold' }
+			icon: SettingsIcon
 		},
 		{
 			id: '2',

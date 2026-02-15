@@ -24,6 +24,8 @@ pub struct Dashboard {
     pub weight_month_list: Vec<WeightTracker>,
     pub food_categories: Vec<FoodCategory>,
     pub current_day: i32,
+    pub days_total: i32,
+    pub weight_latest: WeightTracker,
 }
 
 // ============================================================================
@@ -88,6 +90,13 @@ impl Dashboard {
             .num_days() as i32;
         let current_day: i32 = day_count + 1; // Day count will be zero at the first day
 
+        let days_total: i32 = intake_target_end_date
+            .signed_duration_since(intake_target_start_date)
+            .num_days() as i32;
+
+        let weight_latest =
+            WeightTracker::get_latest(conn).map_err(|_| "No weight tracker found".to_string())?;
+
         Ok(Self {
             user_data,
             intake_target,
@@ -98,6 +107,8 @@ impl Dashboard {
             weight_month_list,
             food_categories,
             current_day,
+            days_total,
+            weight_latest,
         })
     }
 }

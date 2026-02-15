@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { AlertBox, AlertType, AlertVariant, Breadcrumbs, TextSize } from '@thwbh/veilchen';
 	import type { BreadcrumbItem } from '@thwbh/veilchen';
-	import { Gear, Info } from 'phosphor-svelte';
+	import { Info } from 'phosphor-svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import logo from '$lib/assets/logo/librefit-logo@512x512.png';
 	import { LockLaminated } from 'phosphor-svelte';
+	import SettingsIcon from '$lib/component/navigation/SettingsIcon.svelte';
 
 	let mounted = false;
 	onMount(() => {
@@ -15,8 +16,7 @@
 	const items: BreadcrumbItem[] = [
 		{
 			id: '1',
-			icon: Gear,
-			iconProps: { weight: 'bold' }
+			icon: SettingsIcon
 		},
 		{
 			id: '2',

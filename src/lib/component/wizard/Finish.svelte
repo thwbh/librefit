@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { getWizardContext } from '$lib/context';
 	import CaloriePlanCard from '$lib/component/journey/CaloriePlanCard.svelte';
-	import EncouragementMessage from '$lib/component/journey/EncouragementMessage.svelte';
 	import TimelineCard from '$lib/component/journey/TimelineCard.svelte';
 	import UserProfileCard from '$lib/component/journey/UserProfileCard.svelte';
 	import WeightGoalsCard from '$lib/component/journey/WeightGoalsCard.svelte';
+	import { AlertBox, AlertType, AlertVariant } from '@thwbh/veilchen';
 
 	// Get wizard state from context
 	const wizardState = getWizardContext();
@@ -32,9 +32,13 @@
 		dailyRate={chosenRate}
 		targetCalories={intakeTarget!.targetCalories}
 		maximumCalories={intakeTarget!.maximumCalories}
+		showAverage={false}
+		showMaximum={true}
 	/>
 
 	<TimelineCard startDate={weightTarget!.startDate} endDate={weightTarget!.endDate} />
 
-	<EncouragementMessage />
+	<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
+		Remember: Small actions can lead to big results!
+	</AlertBox>
 </div>
