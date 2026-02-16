@@ -272,7 +272,7 @@
 	<h1 class="sr-only">History</h1>
 
 	<!-- Header -->
-	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
+	<div class="bg-primary text-primary-content px-6 pb-14 safe-top">
 		{#if selectedDateStr}
 			{@const selectedDate = parseStringAsDate(selectedDateStr)}
 			<div class="flex items-center justify-between">

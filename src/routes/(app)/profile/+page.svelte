@@ -58,7 +58,7 @@
 	<h1 class="sr-only">User Profile</h1>
 
 	<!-- Branded Header -->
-	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
+	<div class="bg-primary text-primary-content px-6 pb-14 safe-top">
 		<div class="flex items-start justify-between">
 			<div class="flex flex-col gap-1">
 				<span class="text-2xl font-bold">Profile</span>

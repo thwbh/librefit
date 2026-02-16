@@ -10,7 +10,8 @@
 				"height": 800,
 				"resizable": true,
 				"title": "librefit",
-				"width": 420
+				"width": 420,
+				"backgroundColor": [249, 248, 246, 255]
 			}
 		]
 	},

@@ -43,9 +43,21 @@
 }
 
 /* Safe area insets for devices with notches / rounded corners */
+html {
+	background-color: oklch(
+		98% 0.001 106.423
+	); /* --color-base-100, neutral fill behind system bars */
+}
+
 body {
-	padding-top: env(safe-area-inset-top);
-	padding-bottom: env(safe-area-inset-bottom);
 	padding-left: env(safe-area-inset-left);
 	padding-right: env(safe-area-inset-right);
+	overscroll-behavior: none; /* prevent WebView overscroll bounce */
 }
+
+/* Page headers that extend behind the status bar */
+.safe-top {
+	padding-top: calc(env(safe-area-inset-top) + 2rem); /* safe-area + original pt-8 */
+}
+
+/* Bottom dock safe area handled by AppShell */
