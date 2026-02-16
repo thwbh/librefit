@@ -9,13 +9,13 @@ set -e
 
 PATCH_MODE=false
 
-# Detect patch mode from merge commit message
-# GitHub merge commits look like: "Merge pull request #N from user/patch/..."
-# or "Merge branch 'patch/...'"
-if [ -n "$COMMIT_MESSAGE" ]; then
-    if echo "$COMMIT_MESSAGE" | grep -qiE "(from [^ ]+/patch/|Merge branch 'patch/)"; then
+# Look up the source branch via GitHub API (works with squash merges)
+if [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GH_TOKEN" ]; then
+    SOURCE_BRANCH=$(gh api "/repos/${GITHUB_REPOSITORY}/commits/$(git rev-parse HEAD)/pulls" --jq '.[0].head.ref' 2>/dev/null || echo "")
+
+    if echo "$SOURCE_BRANCH" | grep -q "^patch/"; then
         PATCH_MODE=true
-        echo "Patch mode detected from merge commit"
+        echo "Patch mode detected from source branch: ${SOURCE_BRANCH}"
     fi
 fi
 

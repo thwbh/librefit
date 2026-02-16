@@ -29,7 +29,7 @@ jobs:
           chmod +x .github/scripts/generate-version.sh
           .github/scripts/generate-version.sh
         env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 'Display version info'
         run: |
