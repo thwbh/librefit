@@ -28,6 +28,8 @@ jobs:
         run: |
           chmod +x .github/scripts/generate-version.sh
           .github/scripts/generate-version.sh
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
       - name: 'Display version info'
         run: |
