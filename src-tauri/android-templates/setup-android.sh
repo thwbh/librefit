@@ -73,7 +73,40 @@ else
     echo "   ⚠️  AndroidManifest.xml template not found"
 fi
 
-# 5. Force correct NDK path and version in local.properties and build.gradle.kts
+# 5. Apply custom MainActivity.kt (edge-to-edge + overscroll fix)
+if [ -f "$SCRIPT_DIR/MainActivity.kt" ]; then
+    echo "📱 Applying custom MainActivity.kt..."
+    MAIN_ACTIVITY_DIR="$ANDROID_DIR/app/src/main/java/io/tohowabohu/librefit"
+    cp "$SCRIPT_DIR/MainActivity.kt" "$MAIN_ACTIVITY_DIR/MainActivity.kt"
+    echo "   ✅ MainActivity.kt applied (edge-to-edge + overscroll disabled)"
+else
+    echo "   ⚠️  MainActivity.kt template not found"
+fi
+
+# 6. Apply custom themes.xml (window background + transparent system bars)
+if [ -f "$SCRIPT_DIR/themes.xml" ]; then
+    echo "🎨 Applying custom themes.xml..."
+    cp "$SCRIPT_DIR/themes.xml" "$ANDROID_DIR/app/src/main/res/values/themes.xml"
+    # Also apply to night theme
+    NIGHT_DIR="$ANDROID_DIR/app/src/main/res/values-night"
+    if [ -d "$NIGHT_DIR" ]; then
+        cp "$SCRIPT_DIR/themes.xml" "$NIGHT_DIR/themes.xml"
+    fi
+    echo "   ✅ themes.xml applied (primary window background)"
+else
+    echo "   ⚠️  themes.xml template not found"
+fi
+
+# 7. Apply custom colors.xml (app color definitions)
+if [ -f "$SCRIPT_DIR/colors.xml" ]; then
+    echo "🎨 Applying custom colors.xml..."
+    cp "$SCRIPT_DIR/colors.xml" "$ANDROID_DIR/app/src/main/res/values/colors.xml"
+    echo "   ✅ colors.xml applied (includes primary color)"
+else
+    echo "   ⚠️  colors.xml template not found"
+fi
+
+# 8. Force correct NDK path and version in local.properties and build.gradle.kts
 if [ -n "$NDK_PATH" ]; then
     echo "🔧 Setting NDK path in local.properties..."
 

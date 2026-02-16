@@ -63,7 +63,7 @@
 	<h1 class="sr-only">Setup Wizard</h1>
 
 	<!-- Branded Header -->
-	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
+	<div class="bg-primary text-primary-content px-6 pb-14 safe-top">
 		<div class="flex items-start justify-between">
 			<div class="flex flex-col gap-1">
 				<span class="text-xs font-medium opacity-70">Step {currentStep} of {totalSteps}</span>

@@ -187,7 +187,7 @@
 	<h1 class="sr-only">Dashboard</h1>
 
 	<!-- Header -->
-	<div class="bg-primary text-primary-content px-6 pt-8 pb-14">
+	<div class="bg-primary text-primary-content px-6 pb-14 safe-top">
 		<div class="flex items-start justify-between">
 			<div class="flex flex-col gap-1">
 				<span class="text-3xl font-bold">Day {dashboard.currentDay + 1}</span>

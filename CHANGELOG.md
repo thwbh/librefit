@@ -5,6 +5,13 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
+## [26.07.3] - 2026-02-16
+
+### Fixed
+
+- Background color for Android system bar in edge 2 edge
+- Disabled Android app window overscrolling
+
 ## [26.07.2] - 2026-02-15
 
 ### Changed
@@ -85,6 +92,7 @@ and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO fo
 - F-Droid compatible build process
 - Reproducible builds support
 
+[26.07.3] https://github.com/thwbh/librefit/releases/tag/26.07.3
 [26.07.2]: https://github.com/thwbh/librefit/releases/tag/26.07.2
 [26.07.1]: https://github.com/thwbh/librefit/releases/tag/26.07.1
 [26.07]: https://github.com/thwbh/librefit/releases/tag/26.07
