@@ -1,0 +1,44 @@
+schema: spec-driven
+
+context: |
+  LibreFit is a Tauri 2 + SvelteKit 5 + Rust + Diesel + SQLite
+  app, targeting desktop and Android. Frontend uses Tailwind v4, DaisyUI,
+  and the @thwbh/veilchen component library.
+
+  Source of truth: specs in openspec/specs/ describe all application
+  behavior and requirements. If a behavior is not in the specs, it is not
+  yet a requirement.
+
+  Spec organization:
+  - Feature specs: openspec/specs/<feature>/spec.md (e.g. intake-tracking,
+    wizard, history, weight-tracking, onboarding, ...)
+  - Cross-cutting conventions: openspec/specs/_conv-*/spec.md — these are
+    hand-written and never produced by the openspec change workflow. The
+    underscore prefix only sorts them to the top; no priority is implied
+    between conventions.
+
+  Conventions worth referencing when proposing:
+  - _conv-user-errors  — how user-facing errors and toasts are handled
+  - _conv-validation   — backend validation rules and formats
+  - _conv-modals       — modal/dialog UX
+  - _conv-empty-states — empty-data UX
+  - _conv-gestures, _conv-animations, _conv-progress-stages
+
+  Definition of Done for any feature change includes end-to-end tests
+  covering the spec scenarios (convention forthcoming as _conv-e2e-tests).
+
+  Versioning: CalVer YY.WW.MICRO (e.g. 26.05.0).
+
+rules:
+  proposal:
+    - Lead with the user-visible behavior change, not the implementation.
+    - Reference the feature spec(s) the change touches by name.
+    - Include explicit "Non-goals" when scope is ambiguous.
+  design:
+    - Capture decisions and trade-offs, not requirements. Requirements
+      belong in the spec delta.
+    - Note which convention specs constrain the implementation.
+  tasks:
+    - Break work into chunks small enough to commit independently.
+    - Include a task for adding/updating e2e coverage matching new or
+      changed spec scenarios.
