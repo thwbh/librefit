@@ -20,6 +20,6 @@ export const load: PageLoad = async ({ parent }) => {
 
 	return {
 		trackerHistory: await getTrackerHistory({ dateFromStr, dateToStr }),
-		calorieTarget: await getLastIntakeTarget()
+		intakeTarget: await getLastIntakeTarget()
 	};
 };

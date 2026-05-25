@@ -238,8 +238,8 @@ describe('IntakeMask', () => {
 		});
 	});
 
-	describe('NewCalorieTracker Support', () => {
-		it('should work with NewCalorieTracker entry', () => {
+	describe('NewIntake Support', () => {
+		it('should work with NewIntake entry', () => {
 			const newEntry: NewIntake = {
 				added: '2024-01-15',
 				category: 'l',

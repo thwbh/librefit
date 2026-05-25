@@ -206,7 +206,7 @@
 			);
 
 			weightTarget = targets.weightTarget;
-			intakeTarget = targets.calorieTarget;
+			intakeTarget = targets.intakeTarget;
 		}
 	};
 

@@ -38,7 +38,7 @@
 
 	// default history is 1 week
 	let trackerHistory: TrackerHistory = $state(data.trackerHistory);
-	let intakeTarget: IntakeTarget = data.calorieTarget;
+	let intakeTarget: IntakeTarget = data.intakeTarget;
 	let lastDateStr = data.trackerHistory.dateLastStr;
 
 	let dates = $derived(Object.keys(trackerHistory?.intakeHistory));

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import CaloriePlanCard from './CaloriePlanCard.svelte';
+import IntakePlanCard from './IntakePlanCard.svelte';
 
 // Mock NumberFlow
 vi.mock('@number-flow/svelte', () => {
@@ -31,9 +31,9 @@ vi.mock('@number-flow/svelte', () => {
 	};
 });
 
-describe('CaloriePlanCard Component', () => {
+describe('IntakePlanCard Component', () => {
 	it('should render calorie plan title', () => {
-		render(CaloriePlanCard, {
+		render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -46,7 +46,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should display hero target calories number', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -60,7 +60,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should display planned deficit for weight loss', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -74,7 +74,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should display planned surplus for weight gain', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'GAIN',
 				dailyRate: 300,
@@ -88,7 +88,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should display goal label for weight loss', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -101,7 +101,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should display goal label for weight gain', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'GAIN',
 				dailyRate: 300,
@@ -114,7 +114,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should display target calories in bar label', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -128,7 +128,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should handle HOLD recommendation', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'HOLD',
 				dailyRate: 0,
@@ -142,7 +142,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should show maintenance message for HOLD', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'HOLD',
 				dailyRate: 0,
@@ -155,7 +155,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should not show daily rate when HOLD with zero rate', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'HOLD',
 				dailyRate: 0,
@@ -168,7 +168,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should render target bar', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -182,7 +182,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should render average intake bar when provided', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -199,7 +199,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should show accent bar when average exceeds target', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -214,7 +214,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should show no data message when average intake is zero', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,
@@ -228,7 +228,7 @@ describe('CaloriePlanCard Component', () => {
 	});
 
 	it('should apply correct styling', () => {
-		const { container } = render(CaloriePlanCard, {
+		const { container } = render(IntakePlanCard, {
 			props: {
 				recommendation: 'LOSE',
 				dailyRate: 500,

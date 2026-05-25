@@ -9,11 +9,11 @@
  * Import commands from `gen/commands` and use with pre-configured hooks for toast notifications:
  *
  * ```typescript
- * import { createCalorieTrackerEntry } from '$lib/api/gen/commands';
+ * import { createIntake } from '$lib/api/gen/commands';
  * import { CommonHooks } from '$lib/api';
  *
  * // Automatically shows success/error toasts
- * const entry = await createCalorieTrackerEntry(
+ * const entry = await createIntake(
  *   { newEntry: { added: '2024-01-01', amount: 500, category: 'l' } },
  *   CommonHooks.create('Entry')
  * );
@@ -23,10 +23,10 @@
  * For fine-grained control over notifications:
  *
  * ```typescript
- * import { createCalorieTrackerEntry } from '$lib/api/gen/commands';
+ * import { createIntake } from '$lib/api/gen/commands';
  * import { createCommandHooks } from '$lib/api';
  *
- * const entry = await createCalorieTrackerEntry(
+ * const entry = await createIntake(
  *   params,
  *   createCommandHooks({
  *     successMessage: 'Entry saved!',
@@ -76,7 +76,7 @@
  * Import types from `gen/types`:
  *
  * ```typescript
- * import type { CalorieTracker, NewCalorieTracker } from '$lib/api/gen/types';
+ * import type { Intake, NewIntake } from '$lib/api/gen/types';
  * ```
  */
 

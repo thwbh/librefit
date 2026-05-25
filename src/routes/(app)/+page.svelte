@@ -34,7 +34,7 @@
 	import { differenceInDays } from 'date-fns';
 	import { slide, fly } from 'svelte/transition';
 	import NumberFlow from '@number-flow/svelte';
-	import CaloriePlanCard from '$lib/component/journey/CaloriePlanCard.svelte';
+	import IntakePlanCard from '$lib/component/journey/IntakePlanCard.svelte';
 	import EncouragementMessage from '$lib/component/journey/EncouragementMessage.svelte';
 
 	let { data } = $props();
@@ -256,7 +256,7 @@
 		{#if showPlan}
 			<div transition:slide={{ duration: 300 }} class="flex flex-col gap-4 mt-4">
 				<div in:fly={{ y: 20, duration: 400, delay: 150 }}>
-					<CaloriePlanCard
+					<IntakePlanCard
 						dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
 						recommendation={weightTarget.targetWeight > weightTarget.initialWeight
 							? 'GAIN'
