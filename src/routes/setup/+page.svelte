@@ -79,7 +79,7 @@
 	</div>
 
 	<!-- Content card with overlap -->
-	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 p-4 pt-6">
+	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 p-4 pt-6 safe-bottom">
 		<Setup bind:currentStep bind:recommendation />
 	</div>
 </div>
