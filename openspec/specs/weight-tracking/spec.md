@@ -1,47 +1,83 @@
 ## Purpose
 
+**ID prefix:** `WT`
+
 Track body weight over time by logging daily measurements. Display current weight with trend indicators and progress toward weight targets.
 
 ## Requirements
 
 ### Requirement: View current weight
 
-The system SHALL display the latest weight measurement with a trend icon (TrendUp if gaining, TrendDown if losing), the last update date, and progress percentage against the weight target. If no weight has been tracked today, the system SHALL show a pulsing prompt (see `_conv-empty-states`).
+The system SHALL display the latest weight measurement with a trend icon, the last update date, and progress percentage against the weight target. If no weight has been tracked today, the system SHALL show a pulsing prompt (see `_conv-empty-states`).
 
-#### Scenario: Weight tracked today
+#### Scenario: [WT-001] Weight tracked today
 
 - **WHEN** a weight entry exists for today
 - **THEN** the weight score displays the value with trend, date, and progress percentage
 
-#### Scenario: Weight stale
+#### Scenario: [WT-002] Weight stale
 
 - **WHEN** no weight entry exists for today
 - **THEN** a pulsing HandTap icon appears prompting the user to update
 
 ### Requirement: Log weight
 
-The system SHALL allow logging weight via a NumberStepper (range 0.5-330 kg). The date SHALL be set to the context date (today on dashboard, selected date on history). If a weight entry already exists for the date, the system SHALL open the existing entry for editing following `_conv-modals` (pre-filled edit modal).
+The system SHALL allow logging weight via a NumberStepper. The date SHALL be set to the context date (today on dashboard, selected date on history). If a weight entry already exists for the date, the system SHALL open the existing entry for editing following `_conv-modals`.
 
-#### Scenario: Create new weight entry
+#### Scenario: [WT-003] Create new weight entry
 
 - **WHEN** the user sets a weight value and clicks Save with no existing entry for the date
 - **THEN** a new weight tracker entry is created and the weight score updates
 
-#### Scenario: Edit existing weight entry
+#### Scenario: [WT-004] Edit existing weight entry
 
 - **WHEN** a weight entry already exists for the selected date
 - **THEN** the edit modal opens with the current value pre-filled
 
-### Requirement: Backend weight validation
+### Requirement: Weight value bounds
 
-The system SHALL validate weight entries at the backend following `_conv-validation`: date format YYYY-MM-DD, weight 30-330 kg, time format HH:MM:SS with default to current time.
+The system SHALL accept weight values within the closed interval declared by these scenarios. The frontend stepper permits a wider lower range than the backend; the backend remains authoritative per `_conv-validation`.
 
-#### Scenario: Valid weight entry
+#### Scenario: [WT-005] Weight at backend lower bound accepted
 
-- **WHEN** a valid NewWeightTracker is submitted
-- **THEN** the entry is created with an auto-assigned ID
+- **WHEN** a weight of 30.0 kg is submitted
+- **THEN** the entry is created
 
-#### Scenario: Out-of-range weight rejected
+#### Scenario: [WT-006] Weight at upper bound accepted
 
-- **WHEN** a weight below 30 kg or above 330 kg is submitted
+- **WHEN** a weight of 330.0 kg is submitted
+- **THEN** the entry is created
+
+#### Scenario: [WT-007] Weight below backend lower bound rejected
+
+- **WHEN** a weight of 29.9 kg is submitted
 - **THEN** the backend returns a validation error
+
+#### Scenario: [WT-008] Weight above upper bound rejected
+
+- **WHEN** a weight of 330.1 kg is submitted
+- **THEN** the backend returns a validation error
+
+#### Scenario: [WT-009] UI permits value below backend lower bound
+
+- **WHEN** the user sets the weight stepper to 25 kg via the UI
+- **THEN** the UI accepts the input but the backend rejects the submit with a validation error
+
+### Requirement: Weight entry temporal fields
+
+The system SHALL validate weight date and time at the backend following `_conv-validation`.
+
+#### Scenario: [WT-010] Date format YYYY-MM-DD accepted
+
+- **WHEN** a weight with date `2026-05-25` is submitted
+- **THEN** the entry is created
+
+#### Scenario: [WT-011] Invalid date format rejected
+
+- **WHEN** a weight with date `2026/05/25` is submitted
+- **THEN** the backend returns a validation error
+
+#### Scenario: [WT-012] Time defaults to now
+
+- **WHEN** a weight entry is submitted without a time value
+- **THEN** the system assigns the current time

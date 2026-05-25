@@ -9,6 +9,45 @@ Stack: Tauri 2 + SvelteKit 5 + Rust + Diesel + SQLite. Mobile target is Android.
 - Feature specs: `openspec/specs/<feature>/spec.md` (e.g. `intake-tracking`, `wizard`, `history`)
 - Cross-cutting conventions: `openspec/specs/_conv-*/spec.md` — these are **hand-written**, not produced via the openspec change workflow. They sort to the top because of the underscore prefix; the prefix is the only thing carrying that ordering, no priority is implied between conventions.
 
+## Scenario IDs (traceability convention)
+
+Every spec declares an **ID prefix** in its `## Purpose` section. Every `#### Scenario:` heading begins with `[<PREFIX>-<NNN>]`, where `NNN` is a zero-padded three-digit monotonically increasing number scoped to that spec.
+
+```markdown
+## Purpose
+
+**ID prefix:** `WT`
+
+...
+
+#### Scenario: [WT-007] Weight below lower bound rejected
+
+- **WHEN** a weight of 29.9 kg is submitted
+- **THEN** the backend returns a validation error
+```
+
+Rules:
+
+- Numbers are **flat per spec** (not nested per requirement); a scenario keeps the same ID even if it moves between requirements.
+- Numbers **never get reused** — removed scenarios leave gaps. New scenarios take the next free number.
+- Every test (Rust, Vitest, Playwright) MUST be traceable to one or more scenario IDs. Cite the ID in the test name or a comment so the link survives renames.
+- Concrete values (ranges, lengths, formats) live **inside scenarios**, not inside the SHALL prose. A scenario is a test case; the SHALL describes the behavior. Keep SHALLs behavioral and short.
+
+The current prefix registry:
+
+| Spec            | Prefix |     | Spec                    | Prefix |
+| --------------- | ------ | --- | ----------------------- | ------ |
+| onboarding      | `OB`   |     | `_conv-user-errors`     | `ERR`  |
+| intake-tracking | `IT`   |     | `_conv-validation`      | `VAL`  |
+| weight-tracking | `WT`   |     | `_conv-modals`          | `MOD`  |
+| plan-review     | `PR`   |     | `_conv-empty-states`    | `EMP`  |
+| history         | `HI`   |     | `_conv-gestures`        | `GES`  |
+| progress        | `PG`   |     | `_conv-animations`      | `ANI`  |
+| profile         | `PF`   |     | `_conv-progress-stages` | `STG`  |
+| data-export     | `EX`   |     |                         |        |
+| data-import     | `IM`   |     |                         |        |
+| app-shell       | `AS`   |     |                         |        |
+
 ## Change workflow
 
 For any non-trivial change to behavior, use OpenSpec:

@@ -1,5 +1,7 @@
 ## Purpose
 
+**ID prefix:** `STG`
+
 Define the consistent multi-stage progress tracking pattern used for long-running operations.
 
 ## Requirements
@@ -8,12 +10,12 @@ Define the consistent multi-stage progress tracking pattern used for long-runnin
 
 The system SHALL stream real-time progress updates for long-running operations. Progress SHALL advance through named stages in a defined order. The UI SHALL display the current stage name and overall progress.
 
-#### Scenario: Progress stages advance
+#### Scenario: [STG-001] Progress stages advance
 
 - **WHEN** a long-running operation is in progress
 - **THEN** the UI shows the current stage and updates in real-time
 
-#### Scenario: Operation completes
+#### Scenario: [STG-002] Operation completes
 
 - **WHEN** the final stage (Complete) is reached
 - **THEN** a success message is displayed and the Close/Done action becomes available
@@ -22,7 +24,7 @@ The system SHALL stream real-time progress updates for long-running operations. 
 
 The system SHALL allow cancelling a long-running operation while it is in progress. Cancellation SHALL stop the operation and return the UI to its initial state.
 
-#### Scenario: Cancel during operation
+#### Scenario: [STG-003] Cancel during operation
 
 - **WHEN** the user clicks Cancel during an active operation
 - **THEN** the operation stops and the UI resets

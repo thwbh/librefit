@@ -38,7 +38,19 @@ rules:
     - Capture decisions and trade-offs, not requirements. Requirements
       belong in the spec delta.
     - Note which convention specs constrain the implementation.
+  specs:
+    - Keep SHALL statements behavioral and short. Push concrete values
+      (ranges, lengths, formats) into scenarios. Each scenario is a
+      test case.
+    - Every `#### Scenario:` heading MUST begin with `[<PREFIX>-<NNN>]`,
+      where PREFIX is the spec's declared ID prefix and NNN is a
+      zero-padded three-digit number monotonically increasing per spec.
+      Removed scenarios leave gaps; numbers are never reused.
+    - When MODIFYING a requirement, existing scenarios keep their IDs.
+      New scenarios in the same MODIFIED block take the next free number
+      for that spec.
   tasks:
     - Break work into chunks small enough to commit independently.
     - Include a task for adding/updating e2e coverage matching new or
-      changed spec scenarios.
+      changed spec scenarios. Every test MUST be traceable to one or
+      more scenario IDs (cite the ID in test name or comment).
