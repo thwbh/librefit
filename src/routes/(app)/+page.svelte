@@ -164,23 +164,6 @@
 	debug(`user profile=${JSON.stringify(userContext.user)}`);
 
 	useRefresh(() => invalidate('data:dashboardData'));
-
-	const cubicOut = 'cubic-bezier(0.33, 1, 0.68, 1)';
-
-	// FAB transitioning effect
-	const portal = (node: HTMLElement) => {
-		document.body.appendChild(node);
-		node.style.opacity = '0';
-		node.style.transition = `opacity 150ms ${cubicOut}`;
-		setTimeout(() => (node.style.opacity = '1'), 100);
-		return {
-			destroy() {
-				node.style.transition = `opacity 100ms ${cubicOut}`;
-				node.style.opacity = '0';
-				setTimeout(() => node.remove(), 100);
-			}
-		};
-	};
 </script>
 
 <div class="flex flex-col overflow-x-hidden">
@@ -313,11 +296,7 @@
 		</div>
 	</div>
 </div>
-<button
-	use:portal
-	class="fixed bottom-20 right-4 z-[39] btn btn-xl btn-circle btn-primary shadow-lg"
-	onclick={modal.openCreate}
->
+<button class="fab-button btn btn-xl btn-circle btn-primary shadow-lg" onclick={modal.openCreate}>
 	<Plus size="1.5em" />
 </button>
 <!-- Intake creation modal -->
@@ -408,6 +387,15 @@
 </ModalDialog>
 
 <style>
+	.fab-button {
+		position: sticky;
+		bottom: 1rem;
+		float: right;
+		margin-right: 1rem;
+		margin-top: -4rem;
+		z-index: 39;
+	}
+
 	.journey-bar-track {
 		height: 0.25rem;
 		border-radius: 9999px;
