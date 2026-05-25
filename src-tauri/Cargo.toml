@@ -18,6 +18,12 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.0.5", features = [] }
 tauri-typegen = "0.4.0"
 
+[features]
+# Enable test-only Tauri commands used by the e2e suite (see e2e/README.md).
+# Build with `cargo tauri build --debug --features e2e-seed`. Production
+# builds MUST NOT enable this feature.
+e2e-seed = []
+
 [dependencies]
 serde_json = "1.0.137"
 serde = { version = "1.0.217", features = ["derive"] }
