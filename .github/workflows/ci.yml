@@ -137,8 +137,8 @@ jobs:
       with:
         name: typescript-bindings
         path: src/lib/api/gen/
-    - name: 'Build Tauri debug binary'
-      run: npm run tauri -- build --debug
+    - name: 'Build Tauri debug binary (with e2e-seed feature)'
+      run: npm run tauri -- build --debug --features e2e-seed
     - name: 'Run Playwright e2e'
       run: xvfb-run -a npm run test:e2e
     - name: 'Upload Playwright artifacts on failure'
