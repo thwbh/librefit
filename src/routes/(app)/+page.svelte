@@ -30,6 +30,7 @@
 		parseStringAsDate
 	} from '$lib/date';
 	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
+	import { defaultCategoryForDate } from '$lib/api/category';
 	import { getAvatarFromUser } from '$lib/avatar';
 	import { differenceInDays } from 'date-fns';
 	import { slide, fly } from 'svelte/transition';
@@ -107,9 +108,10 @@
 	let intakeToday: Array<number> = $derived(intake.map((tracker) => tracker.amount));
 
 	const getBlankEntry = (): NewIntake => {
+		const now = new Date();
 		return {
-			category: 'l',
-			added: getDateAsStr(new Date()),
+			category: defaultCategoryForDate(now),
+			added: getDateAsStr(now),
 			amount: 0,
 			description: ''
 		};

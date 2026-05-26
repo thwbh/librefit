@@ -53,9 +53,13 @@ rules:
       for that spec.
   tasks:
     - Break work into chunks small enough to commit independently.
-    - Include a task for adding/updating tests at the cheapest correct
+    - >-
+      Include a task for adding/updating tests at the cheapest correct
       layer that covers new or changed spec scenarios. Every test MUST
-      be traceable to one or more scenario IDs, cited in the test name
-      itself (Vitest: literal `[XX-NNN]`; Rust: snake-case `xx_nnn_`
-      prefix on the fn name + `/// [XX-NNN]` doc comment). See
-      _conv-test-traceability.
+      be traceable to one or more scenario IDs, surfaced where the test
+      runner prints them on failure. For Vitest, embed the literal
+      bracketed form in `it(...)` — e.g. `it('[IT-005] ...', ...)`.
+      For Rust, call `scenario!("[XX-NNN]")` as the first line of the
+      test body (macro defined in `src-tauri/src/test_support.rs`) and
+      let the function name describe the behavior. See
+      `_conv-test-traceability` for the authoritative rule.
