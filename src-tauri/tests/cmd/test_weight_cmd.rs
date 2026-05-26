@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::weight::{
     create_weight_target, create_weight_tracker_entry, delete_weight_tracker_entry,
     get_last_weight_target, get_last_weight_tracker, get_weight_tracker_for_date_range,
@@ -160,10 +161,9 @@ fn test_create_weight_target_validation_end_before_start() {
 // WEIGHT TRACKER TESTS
 // ============================================================================
 
-/// [WT-003] Create new weight entry
-/// [WT-010] Date format YYYY-MM-DD accepted (valid date)
 #[test]
-fn wt_003_create_new_weight_entry() {
+fn create_new_weight_entry() {
+    scenario!("[WT-003]", "[WT-010]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -178,9 +178,9 @@ fn wt_003_create_new_weight_entry() {
     assert_eq!(entry.added, "2026-01-15");
 }
 
-/// [WT-007] Weight below backend lower bound rejected
 #[test]
-fn wt_007_weight_below_backend_lower_bound_rejected() {
+fn weight_below_backend_lower_bound_rejected() {
+    scenario!("[WT-007]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -193,9 +193,9 @@ fn wt_007_weight_below_backend_lower_bound_rejected() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
-/// [WT-008] Weight above upper bound rejected
 #[test]
-fn wt_008_weight_above_upper_bound_rejected() {
+fn weight_above_upper_bound_rejected() {
+    scenario!("[WT-008]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -208,9 +208,9 @@ fn wt_008_weight_above_upper_bound_rejected() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
-/// [WT-004] Edit existing weight entry
 #[test]
-fn wt_004_edit_existing_weight_entry() {
+fn edit_existing_weight_entry() {
+    scenario!("[WT-004]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -528,9 +528,9 @@ fn test_get_last_weight_tracker_different_dates_same_day() {
     assert_eq!(last_entry.amount, 75.2);
 }
 
-/// [WT-005] Weight at backend lower bound accepted (30.0 kg)
 #[test]
-fn wt_005_weight_at_lower_bound_accepted() {
+fn weight_at_lower_bound_accepted() {
+    scenario!("[WT-005]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -547,9 +547,9 @@ fn wt_005_weight_at_lower_bound_accepted() {
     assert_eq!(result.unwrap().amount, 30.0);
 }
 
-/// [WT-006] Weight at upper bound accepted (330.0 kg)
 #[test]
-fn wt_006_weight_at_upper_bound_accepted() {
+fn weight_at_upper_bound_accepted() {
+    scenario!("[WT-006]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -566,9 +566,9 @@ fn wt_006_weight_at_upper_bound_accepted() {
     assert_eq!(result.unwrap().amount, 330.0);
 }
 
-/// [WT-011] Invalid date format rejected
 #[test]
-fn wt_011_invalid_date_format_rejected() {
+fn invalid_date_format_rejected() {
+    scenario!("[WT-011]", "[VAL-002]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -581,10 +581,9 @@ fn wt_011_invalid_date_format_rejected() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
-/// [WT-012] Time defaults to now when unset
-/// [VAL-004] Time defaults to now
 #[test]
-fn wt_012_time_defaults_when_unset() {
+fn time_defaults_when_unset() {
+    scenario!("[WT-012]", "[VAL-004]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

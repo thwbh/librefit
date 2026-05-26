@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use chrono::{Days, NaiveDate};
 
+use librefit_lib::scenario;
 use librefit_lib::service::intake::{IntakeTarget, NewIntakeTarget};
 use librefit_lib::service::weight::{
     NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker,
@@ -16,10 +17,9 @@ use validator::Validate;
 
 use crate::helpers::setup_test_pool;
 
-/// [OB-009] Standard weight loss recommendation
-/// [OB-013] Rate selection for weight loss (deficit + target + duration)
 #[test]
-fn ob_009_weight_loss_calculation_for_men() {
+fn weight_loss_calculation_for_men() {
+    scenario!("[OB-009]", "[OB-013]");
     let input: WizardInput = WizardInput {
         age: 30,
         weight: 90.0,
@@ -50,9 +50,9 @@ fn ob_009_weight_loss_calculation_for_men() {
     assert_eq!(239, result.duration_days);
 }
 
-/// [OB-014] Step 4 with HOLD-range BMI (Standard) and GAIN goal
 #[test]
-fn ob_014_weight_gain_for_women_in_hold_range() {
+fn weight_gain_for_women_in_hold_range() {
+    scenario!("[OB-014]");
     let input = WizardInput {
         age: 25,
         weight: 52.0,
@@ -84,9 +84,9 @@ fn ob_014_weight_gain_for_women_in_hold_range() {
     assert_eq!(147, result.duration_days);
 }
 
-/// [OB-011] Weight gain recommendation (BMI < 20 → underweight)
 #[test]
-fn ob_011_underweight_classification_for_men() {
+fn underweight_classification_for_men() {
+    scenario!("[OB-011]");
     let input_underweight = WizardInput {
         age: 25,
         weight: 59.7,
@@ -103,9 +103,9 @@ fn ob_011_underweight_classification_for_men() {
     assert_eq!(result_underweight.bmi_category, BmiCategory::Underweight);
 }
 
-/// [OB-009] Standard weight loss recommendation (BMI > 25 → obese)
 #[test]
-fn ob_009_obese_classification_for_men() {
+fn obese_classification_for_men() {
+    scenario!("[OB-009]");
     let input_obese = WizardInput {
         age: 25,
         weight: 125.0,
@@ -122,9 +122,9 @@ fn ob_009_obese_classification_for_men() {
     assert_eq!(result_obese.bmi, 38.6);
 }
 
-/// [OB-009] Standard weight loss recommendation (BMI > 40 → severely obese)
 #[test]
-fn ob_009_severely_obese_classification_for_men() {
+fn severely_obese_classification_for_men() {
+    scenario!("[OB-009]");
     let input_severely_obese = WizardInput {
         age: 45,
         weight: 150.0,
@@ -144,9 +144,9 @@ fn ob_009_severely_obese_classification_for_men() {
     assert_eq!(result_severely_obese.bmi, 46.3);
 }
 
-/// [OB-009] Standard weight loss recommendation (BMI > 25 → obese, women)
 #[test]
-fn ob_009_obese_classification_for_women() {
+fn obese_classification_for_women() {
+    scenario!("[OB-009]");
     let input_obese = WizardInput {
         age: 30,
         weight: 80.0,
@@ -163,9 +163,9 @@ fn ob_009_obese_classification_for_women() {
     assert_eq!(result_obese.bmi, 31.2);
 }
 
-/// [OB-011] Weight gain recommendation (BMI < 20 → underweight, women)
 #[test]
-fn ob_011_underweight_classification_for_women() {
+fn underweight_classification_for_women() {
+    scenario!("[OB-011]");
     let input_underweight = WizardInput {
         age: 18,
         weight: 40.0,
@@ -182,9 +182,9 @@ fn ob_011_underweight_classification_for_women() {
     assert_eq!(result_underweight.bmi, 17.8);
 }
 
-/// [OB-009] Standard weight loss recommendation (severely obese, women)
 #[test]
-fn ob_009_severely_obese_classification_for_women() {
+fn severely_obese_classification_for_women() {
+    scenario!("[OB-009]");
     let input_severely_obese = WizardInput {
         age: 45,
         weight: 120.0,
@@ -480,9 +480,9 @@ fn return_severely_obese_classification() {
     assert_eq!(result.message, "wizard.classification.severely_obese");
 }
 
-/// [OB-012] Low-normal BMI alert (underweight warning)
 #[test]
-fn ob_012_underweight_warning() {
+fn return_underweight_warning() {
+    scenario!("[OB-012]");
     let underweight_target_weight_input = WizardTargetWeightInput {
         age: 30,
         sex: CalculationSex::MALE,
@@ -730,10 +730,9 @@ fn calculate_target_weights_for_specific_weight_gain_goal() {
     });
 }
 
-/// [OB-017] Atomic target creation — wizard_create_targets persists all three
-/// records in a single transaction (happy path).
 #[test]
-fn ob_017_wizard_create_targets_persists_all_three_records() {
+fn wizard_create_targets_persists_all_three_records() {
+    scenario!("[OB-017]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool.clone());
@@ -770,12 +769,11 @@ fn ob_017_wizard_create_targets_persists_all_three_records() {
     assert_eq!(WeightTracker::all(&mut conn).unwrap().len(), 1);
 }
 
-/// [OB-010] Standard maintenance recommendation (BMI 20.0–25.0 → StandardWeight)
-///
 /// The frontend derives the HOLD/LOSE/GAIN recommendation from
 /// `result.bmi_category`. StandardWeight maps to HOLD.
 #[test]
-fn ob_010_bmi_in_hold_range_yields_standard_weight() {
+fn bmi_in_hold_range_yields_standard_weight() {
+    scenario!("[OB-010]");
     let input = WizardInput {
         age: 30,
         weight: 70.0, // BMI = 70 / 1.75^2 ≈ 22.86 → StandardWeight

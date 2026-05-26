@@ -30,7 +30,7 @@ Rules:
 
 - Numbers are **flat per spec** (not nested per requirement); a scenario keeps the same ID even if it moves between requirements.
 - Numbers **never get reused** — removed scenarios leave gaps. New scenarios take the next free number.
-- Every test (Rust, Vitest) MUST be traceable to one or more scenario IDs. The ID belongs in the test **name**, not just a comment, so failure output is self-locating. For Vitest, use the literal bracketed form: `it('[IT-005] add intake creates entry', ...)`. For Rust, use a snake-case head + a doc comment with the bracketed form: `/// [IT-021] amount below lower bound rejected` above `fn it_021_amount_below_lower_bound_rejected()`. Multi-scenario tests list every covered ID. See `_conv-test-traceability` for the authoritative rule.
+- Every test (Rust, Vitest) MUST be traceable to one or more scenario IDs, surfaced where the runner prints them on failure. For Vitest, use the literal bracketed form in `it(...)`: `it('[IT-005] add intake creates entry', ...)`. For Rust, call the `scenario!` macro (defined in `src-tauri/src/test_support.rs`) as the first line of the test body — `scenario!("[IT-021]", "[VAL-007]");` — and let the function name describe the _behavior_, not the ID: `fn amount_below_lower_bound_rejected()`. nextest captures the macro's stdout per-test and prints it on failure, so every cited ID surfaces in CI output. See `_conv-test-traceability` for the authoritative rule.
 - Concrete values (ranges, lengths, formats) live **inside scenarios**, not inside the SHALL prose. A scenario is a test case; the SHALL describes the behavior. Keep SHALLs behavioral and short.
 
 The current prefix registry:

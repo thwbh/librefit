@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::weight::{
     NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker,
 };
@@ -241,9 +242,9 @@ fn test_find_last_weight_target_empty() {
 // Weight Tracker Tests
 // ============================================================================
 
-/// [WT-010] Date format YYYY-MM-DD accepted (valid date persisted)
 #[test]
-fn wt_010_create_weight_tracker_entry_with_valid_date() {
+fn create_weight_tracker_entry_with_valid_date() {
+    scenario!("[WT-010]", "[VAL-001]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -320,9 +321,9 @@ fn test_delete_weight_tracker_entry() {
     assert_eq!(entries.len(), 0);
 }
 
-/// [HI-012] Weight exists for date — repo lookup by added date
 #[test]
-fn hi_012_find_weight_tracker_by_date() {
+fn find_weight_tracker_by_date() {
+    scenario!("[HI-012]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -346,9 +347,9 @@ fn hi_012_find_weight_tracker_by_date() {
     assert!(entries.iter().all(|e| e.added == "2025-01-15"));
 }
 
-/// [HI-013] No weight for date — repo returns empty list
 #[test]
-fn hi_013_find_weight_tracker_by_date_no_results() {
+fn find_weight_tracker_by_date_no_results() {
+    scenario!("[HI-013]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -465,10 +466,9 @@ fn test_weight_precision() {
 // Validation Tests
 // ============================================================================
 
-/// [WT-007] Weight below backend lower bound rejected (validator layer)
-/// [VAL-007] Backend rejects out-of-range numeric value
 #[test]
-fn wt_007_weight_below_backend_lower_bound_rejected_validator() {
+fn weight_below_backend_lower_bound_rejected_validator() {
+    scenario!("[WT-007]", "[VAL-007]");
     use validator::Validate;
 
     // Invalid: below minimum of 30.0
@@ -478,9 +478,9 @@ fn wt_007_weight_below_backend_lower_bound_rejected_validator() {
     assert!(validation.is_err());
 }
 
-/// [WT-008] Weight above upper bound rejected (validator layer)
 #[test]
-fn wt_008_weight_above_upper_bound_rejected_validator() {
+fn weight_above_upper_bound_rejected_validator() {
+    scenario!("[WT-008]");
     use validator::Validate;
 
     // Invalid: above maximum of 330.0

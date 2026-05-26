@@ -22,6 +22,7 @@ TEST_ROOTS=(
 	"$REPO_ROOT/src-tauri/tests"
 	"$REPO_ROOT/src-tauri/src"
 	"$REPO_ROOT/src"
+	"$REPO_ROOT/tests"
 	"$REPO_ROOT/e2e"
 )
 

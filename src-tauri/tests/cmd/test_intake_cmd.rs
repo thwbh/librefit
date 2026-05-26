@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::intake::{
     create_intake, create_intake_target, delete_intake, get_food_categories,
     get_intake_dates_in_range, get_intake_for_date_range, get_last_intake_target, update_intake,
@@ -171,9 +172,9 @@ fn test_create_intake_success() {
     assert_eq!(entry.description, Some("Breakfast".to_string()));
 }
 
-/// [IT-021] Amount below lower bound rejected
 #[test]
-fn it_021_amount_below_lower_bound_rejected() {
+fn amount_below_lower_bound_rejected() {
+    scenario!("[IT-021]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -186,9 +187,9 @@ fn it_021_amount_below_lower_bound_rejected() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
-/// [IT-022] Amount above upper bound rejected
 #[test]
-fn it_022_amount_above_upper_bound_rejected() {
+fn amount_above_upper_bound_rejected() {
+    scenario!("[IT-022]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -344,9 +345,9 @@ fn test_get_food_categories_success() {
     assert!(breakfast_exists);
 }
 
-/// [IT-019] Amount at lower bound accepted
 #[test]
-fn it_019_amount_at_lower_bound_accepted() {
+fn amount_at_lower_bound_accepted() {
+    scenario!("[IT-019]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -359,9 +360,9 @@ fn it_019_amount_at_lower_bound_accepted() {
     assert_eq!(result.unwrap().amount, 1);
 }
 
-/// [IT-020] Amount at upper bound accepted
 #[test]
-fn it_020_amount_at_upper_bound_accepted() {
+fn amount_at_upper_bound_accepted() {
+    scenario!("[IT-020]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -378,9 +379,9 @@ fn it_020_amount_at_upper_bound_accepted() {
     assert_eq!(result.unwrap().amount, 10000);
 }
 
-/// [IT-026] Invalid date format rejected
 #[test]
-fn it_026_invalid_date_format_rejected() {
+fn invalid_date_format_rejected() {
+    scenario!("[IT-026]", "[VAL-002]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -394,10 +395,9 @@ fn it_026_invalid_date_format_rejected() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
-/// [IT-027] Time defaults to now when unset
-/// [VAL-004] Time defaults to now
 #[test]
-fn it_027_time_defaults_when_unset() {
+fn time_defaults_when_unset() {
+    scenario!("[IT-027]", "[VAL-004]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::user::{get_user, update_user};
 use tauri::Manager;
 
@@ -71,9 +72,9 @@ fn test_get_user_returns_created_profile() {
     assert_eq!(user.avatar, "avatar1");
 }
 
-/// [PF-012] Nickname below backend lower bound rejected at server
 #[test]
-fn pf_012_nickname_below_backend_lower_bound_rejected() {
+fn nickname_below_backend_lower_bound_rejected() {
+    scenario!("[PF-012]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -98,9 +99,9 @@ fn test_update_user_with_empty_avatar() {
     assert_eq!(user.avatar, "");
 }
 
-/// [PF-013] Nickname above backend upper bound rejected at server
 #[test]
-fn pf_013_nickname_above_backend_upper_bound_rejected() {
+fn nickname_above_backend_upper_bound_rejected() {
+    scenario!("[PF-013]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

@@ -24,16 +24,16 @@ Every `#### Scenario:` heading in any spec under `openspec/specs/` SHALL begin w
 - **WHEN** a scenario is removed from a spec
 - **THEN** its number is not reassigned to a new scenario
 
-### Requirement: Tests cite the scenarios they cover in the test name
+### Requirement: Tests cite the scenarios they cover
 
-Tests that exercise a documented scenario SHALL include the scenario ID in the test name itself, so that test runner output is self-locating against the spec. Test failures, CI logs, and IDE test browsers all surface the test name; embedding the ID there makes "what scenario broke" answerable without grepping.
+Tests that exercise a documented scenario SHALL surface the scenario ID(s) somewhere the test runner output makes visible on failure, so that "what scenario broke" is answerable without grepping the file. CI logs and IDE test browsers surface different things per framework — embed the ID where they look.
 
 Per-layer form:
 
-- **Vitest / Mocha / any framework with freeform test names:** include the bracketed form literally — e.g. `it('[IT-005] [IT-015] add intake creates entry and updates score', ...)`. Multiple IDs separated by spaces when one test covers several scenarios.
-- **Rust (`#[test]` / nextest):** function names cannot contain `[]`. Use the prefix and number as a snake-case head of the function name — e.g. `fn it_021_amount_below_lower_bound_rejected()` — and include a doc comment with the literal bracketed form for grep-ability: `/// [IT-021] amount below lower bound rejected`.
+- **Vitest / Mocha / any framework with freeform test names:** include the bracketed form literally — e.g. `it('[IT-005] [IT-015] add intake creates entry and updates score', ...)`. Multiple IDs separated by spaces when one test covers several scenarios. Vitest surfaces the full `it(...)` string in failure output, so the IDs are immediately visible.
+- **Rust (`#[test]` / nextest):** function names cannot contain `[]`, and stacking IDs into the function name (`it_021_val_007_amount_below_lower_bound_rejected`) gets unreadable with 2+ aliases. Use the `scenario!` macro (defined in `src-tauri/src/test_support.rs`) as the first line of the test body, passing each ID as a bracketed string literal: `scenario!("[IT-021]", "[VAL-007]");`. The macro `println!`s the IDs; nextest captures stdout per-test and prints it on failure, so the IDs surface in CI output. Function names are then free to describe the _behavior_, not the ID — e.g. `fn amount_below_lower_bound_rejected()`.
 
-Additional citations MAY appear in a comment within five lines of the declaration when a single test covers more scenarios than fit comfortably in the name.
+The `scenario!` macro is the only required form for Rust tests citing one or more scenarios. Doc-comments listing the IDs are NOT a substitute (they don't appear in test runner output).
 
 Tests that exist for internal correctness reasons (helpers, harness verification) without covering a documented scenario MAY omit the citation; they will not be counted toward spec coverage and will not trigger the gate.
 
@@ -42,15 +42,15 @@ Tests that exist for internal correctness reasons (helpers, harness verification
 - **WHEN** a Vitest test verifies a documented spec scenario
 - **THEN** the string passed to `it(...)` or `test(...)` contains the corresponding `[<PREFIX>-<NNN>]` substring
 
-#### Scenario: [TRC-008] Rust test function name contains the snake-case ID
+#### Scenario: [TRC-008] Rust test body invokes `scenario!` with the bracketed ID
 
 - **WHEN** a Rust `#[test]` function verifies a documented spec scenario
-- **THEN** the function name begins with `<prefix_lower>_<nnn>_` (e.g. `it_021_`) and a doc comment within five lines contains the literal `[<PREFIX>-<NNN>]` form
+- **THEN** the first line of the function body is `scenario!("[<PREFIX>-<NNN>]");` (one bracketed string-literal argument per cited ID)
 
 #### Scenario: [TRC-009] Multi-scenario test cites each ID
 
 - **WHEN** a single test covers more than one scenario
-- **THEN** the test name contains every covered ID, separated by spaces (Vitest), or the first ID is in the function name and the rest are listed in the doc comment (Rust)
+- **THEN** the test name contains every covered ID separated by spaces (Vitest), or the `scenario!` call lists every covered ID as separate bracketed string-literal arguments (Rust)
 
 ### Requirement: Cheapest correct layer
 

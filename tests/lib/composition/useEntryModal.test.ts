@@ -94,7 +94,7 @@ describe('useEntryModal', () => {
 			expect(modal.errorMessage).toBeUndefined();
 		});
 
-		it('should save new entry successfully', async () => {
+		it('[ERR-001] should save new entry successfully (success callback fires, drives success toast upstream)', async () => {
 			const newEntry: TestEntry = { id: 1, name: 'New Entry', value: 100 };
 			onCreateMock.mockResolvedValue(newEntry);
 
@@ -118,7 +118,7 @@ describe('useEntryModal', () => {
 			expect(modal.enableDelete).toBe(false);
 		});
 
-		it('should handle create error and prevent modal close', async () => {
+		it('[ERR-002] should handle create error and prevent modal close (failed action surfaces error)', async () => {
 			const error = new Error('Validation failed');
 			onCreateMock.mockRejectedValue(error);
 
@@ -174,7 +174,7 @@ describe('useEntryModal', () => {
 	});
 
 	describe('Edit Mode', () => {
-		it('should open edit modal with entry copy', () => {
+		it('[MOD-001] should open edit modal with entry copy (fields pre-filled with current values)', () => {
 			const entry: TestEntry = { id: 1, name: 'Existing', value: 50 };
 
 			const modal = useEntryModal<TestEntry, NewTestEntry>({
@@ -284,7 +284,7 @@ describe('useEntryModal', () => {
 			expect(modal.errorMessage).toBeUndefined();
 		});
 
-		it('should delete entry via save() in delete mode', async () => {
+		it('[MOD-002] should delete entry via save() in delete mode (confirm delete persists)', async () => {
 			const entry: TestEntry = { id: 1, name: 'To Delete', value: 50 };
 			onDeleteMock.mockResolvedValue(1);
 
@@ -397,7 +397,7 @@ describe('useEntryModal', () => {
 	});
 
 	describe('Cancel Functionality', () => {
-		it('should reset state on cancel', () => {
+		it('[MOD-003] [MOD-004] should reset state on cancel (cancel discards changes, entry unchanged)', () => {
 			const entry: TestEntry = { id: 1, name: 'Test', value: 50 };
 
 			const modal = useEntryModal<TestEntry, NewTestEntry>({

@@ -171,9 +171,9 @@ No tests today for the layout. All scenarios become new Vitest tests.
 
 Cross-cited from feature tests where they exercise the rule. Partially in place via multi-citations done in steps 1–2; the remainder lands as more feature tests pick up the conventions.
 
-- [ ] 11.1 `_conv-user-errors` (ERR-001..ERR-007) — cite from Vitest tests that exercise toast notification flows. None cited yet.
-- [ ] 11.2 `_conv-validation` (VAL-001..VAL-011) — partial. VAL-004 cited (it_027, wt_012); VAL-005 (it_023); VAL-006 (it_024); VAL-007 cited in IT-021 + WT-007. Others pending.
-- [ ] 11.3 `_conv-modals` (MOD-001..MOD-004) — partial. MOD-004 cited from `UserAvatar.test.ts`. MOD-001..MOD-003 pending.
+- [ ] 11.1 `_conv-user-errors` (ERR-001..ERR-007) — partial. ERR-001/ERR-002 cited from `useEntryModal.test.ts` (the contract that drives success/error toasts upstream of the composition). ERR-003/004/005/006/007 still pending — need tests on the actual toast/log emission path which the project doesn't have yet; defer to `refactor-extract-testable-units` (toast emission helper) or a dedicated `add-toast-emission-tests` change.
+- [ ] 11.2 `_conv-validation` (VAL-001..VAL-011) — partial. VAL-001 cited from `it_025_*` + `wt_010_*`; VAL-002 cited from `it_026_*` + `wt_011_*`; VAL-004 cited (it_027, wt_012); VAL-005 (it_023); VAL-006 (it_024); VAL-007 cited in IT-021 + WT-007. VAL-003 (valid time HH:MM:SS) pending (no test exercises explicit time literals); VAL-008 = [WT-009] (SKIP); VAL-009/010/011 (enum bounds) pending (Rust type system prevents constructing invalid enum values in tests; would need API-boundary tests with raw JSON).
+- [x] 11.3 `_conv-modals` (MOD-001..MOD-004) — all four cited. MOD-001/MOD-002/MOD-003/MOD-004 from `tests/lib/composition/useEntryModal.test.ts`; MOD-004 also from `UserAvatar.test.ts` and `Settings.svelte.test.ts`. (Required adding `$REPO_ROOT/tests` to the traceability script's TEST_ROOTS — see `scripts/check-spec-traceability.sh`.)
 - [x] 11.4 `_conv-empty-states` (EMP-001..EMP-003) — all three cited. EMP-001 from `IntakeStack.test.ts`, EMP-002 from `progress/+page.test.ts` (multi-cited with [PG-004]), EMP-003 from `WeightScore.test.ts`.
 - [ ] 11.5 `_conv-gestures` (GES-001..GES-008) — partial. GES-001 cited from `IntakeStack.test.ts`, GES-003 from `UserAvatar.test.ts`. GES-002, GES-004..GES-008 pending.
 - [ ] 11.6 `_conv-animations` (ANI-001..ANI-003) — cite from layout/route-transition tests as they land.
@@ -196,9 +196,11 @@ Step 3 — New Vitest tests (UI flows)                          ◐ DONE within 
 Step 4 — Convention cross-citations                           ⌛ PARTIAL
 Step 5 — Validate + archive                                   ⌛ TODO
 
-Traceability gate: 93 / 163 covered (57%)
+Traceability gate: 100 / 163 covered (61%)
 Vitest: 375 passing, 36 files
 Rust tests: 231 passing, 0 failing
+Script fix: added `$REPO_ROOT/tests` to `scripts/check-spec-traceability.sh::TEST_ROOTS` so citations in legacy `tests/` paths count (MOD-001..004 + ERR-001/002 surfaced via this).
+Convention change: Rust tests now use the `scenario!(...)` macro (defined in `src-tauri/src/test_support.rs`) as the first line of the test body to cite scenario IDs, in place of the previous `<prefix>_<nnn>_<descriptor>` function-name + doc-comment scheme. This removes the asymmetry where multi-cited Rust tests hid alias IDs from nextest failure output (the macro `println!`s the IDs, which nextest captures per-test and surfaces on failure). All 231 Rust tests migrated; `_conv-test-traceability` (TRC-003, TRC-008, TRC-009) and `CLAUDE.md` updated accordingly.
 ```
 
 ### Step 3 audit outcome

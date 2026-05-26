@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::intake::{Intake, IntakeTarget, NewIntake, NewIntakeTarget};
 
 // ============================================================================
@@ -196,10 +197,9 @@ fn test_find_last_intake_target_empty() {
 // Intake Tests
 // ============================================================================
 
-/// [IT-025] Date format YYYY-MM-DD accepted
-/// [HI-009] Add intake on historical date (entry.added set explicitly)
 #[test]
-fn it_025_create_intake_entry_with_explicit_date() {
+fn create_intake_entry_with_explicit_date() {
+    scenario!("[IT-025]", "[HI-009]", "[VAL-001]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -463,10 +463,9 @@ fn test_multiple_entries_same_date_same_category() {
 // Validation Tests
 // ============================================================================
 
-/// [IT-021] Amount below lower bound rejected (validator layer)
-/// [VAL-007] Backend rejects out-of-range numeric value
 #[test]
-fn it_021_amount_below_lower_bound_rejected_validator() {
+fn amount_below_lower_bound_rejected_validator() {
+    scenario!("[IT-021]", "[VAL-007]");
     use validator::Validate;
 
     // Invalid: below minimum of 1
@@ -476,9 +475,9 @@ fn it_021_amount_below_lower_bound_rejected_validator() {
     assert!(validation.is_err());
 }
 
-/// [IT-022] Amount above upper bound rejected (validator layer)
 #[test]
-fn it_022_amount_above_upper_bound_rejected_validator() {
+fn amount_above_upper_bound_rejected_validator() {
+    scenario!("[IT-022]");
     use validator::Validate;
 
     // Invalid: above maximum of 10000
@@ -499,10 +498,9 @@ fn test_intake_validation_category_too_long() {
     assert!(validation.is_err());
 }
 
-/// [IT-024] Description over maximum rejected
-/// [VAL-006] Text exceeds declared limit
 #[test]
-fn it_024_description_above_max_length_rejected() {
+fn description_above_max_length_rejected() {
+    scenario!("[IT-024]", "[VAL-006]");
     use validator::Validate;
 
     // Invalid: exceeds 500 characters
@@ -549,10 +547,9 @@ fn test_intake_target_validation_maximum_too_high() {
     assert!(validation.is_err());
 }
 
-/// [IT-023] Description at maximum length accepted (500 chars)
-/// [VAL-005] Text within declared limit
 #[test]
-fn it_023_description_at_max_length_accepted() {
+fn description_at_max_length_accepted() {
+    scenario!("[IT-023]", "[VAL-005]");
     use validator::Validate;
 
     let entry = NewIntake::new(
