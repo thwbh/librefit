@@ -548,3 +548,24 @@ fn test_intake_target_validation_maximum_too_high() {
     let validation = target.validate();
     assert!(validation.is_err());
 }
+
+/// [IT-023] Description at maximum length accepted (500 chars)
+/// [VAL-005] Text within declared limit
+#[test]
+fn it_023_description_at_max_length_accepted() {
+    use validator::Validate;
+
+    let entry = NewIntake::new(
+        "2025-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("a".repeat(500)),
+    );
+
+    let validation = entry.validate();
+    assert!(
+        validation.is_ok(),
+        "500-character description should be accepted: {:?}",
+        validation
+    );
+}

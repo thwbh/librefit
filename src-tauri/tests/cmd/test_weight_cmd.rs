@@ -527,3 +527,74 @@ fn test_get_last_weight_tracker_different_dates_same_day() {
     assert_eq!(last_entry.id, created_entry2.id);
     assert_eq!(last_entry.amount, 75.2);
 }
+
+/// [WT-005] Weight at backend lower bound accepted (30.0 kg)
+#[test]
+fn wt_005_weight_at_lower_bound_accepted() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026-01-15".to_string(), 30.0);
+
+    let result = create_weight_tracker_entry(app.state(), new_entry);
+
+    assert!(
+        result.is_ok(),
+        "weight=30.0 should be accepted: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap().amount, 30.0);
+}
+
+/// [WT-006] Weight at upper bound accepted (330.0 kg)
+#[test]
+fn wt_006_weight_at_upper_bound_accepted() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026-01-15".to_string(), 330.0);
+
+    let result = create_weight_tracker_entry(app.state(), new_entry);
+
+    assert!(
+        result.is_ok(),
+        "weight=330.0 should be accepted: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap().amount, 330.0);
+}
+
+/// [WT-011] Invalid date format rejected
+#[test]
+fn wt_011_invalid_date_format_rejected() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026/01/15".to_string(), 75.5);
+
+    let result = create_weight_tracker_entry(app.state(), new_entry);
+
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Validation failed"));
+}
+
+/// [WT-012] Time defaults to now when unset
+/// [VAL-004] Time defaults to now
+#[test]
+fn wt_012_time_defaults_when_unset() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026-01-15".to_string(), 75.5);
+
+    let entry = create_weight_tracker_entry(app.state(), new_entry).unwrap();
+
+    // Time should be set (defaulted), 8 chars in HH:MM:SS form.
+    assert_eq!(entry.time.len(), 8);
+    assert_eq!(entry.time.chars().nth(2), Some(':'));
+    assert_eq!(entry.time.chars().nth(5), Some(':'));
+}

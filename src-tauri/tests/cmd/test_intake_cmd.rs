@@ -343,3 +343,71 @@ fn test_get_food_categories_success() {
     let breakfast_exists = categories.iter().any(|c| c.shortvalue == "b");
     assert!(breakfast_exists);
 }
+
+/// [IT-019] Amount at lower bound accepted
+#[test]
+fn it_019_amount_at_lower_bound_accepted() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 1, "b".to_string(), None);
+
+    let result = create_intake(app.state(), new_entry);
+
+    assert!(result.is_ok(), "amount=1 should be accepted: {:?}", result);
+    assert_eq!(result.unwrap().amount, 1);
+}
+
+/// [IT-020] Amount at upper bound accepted
+#[test]
+fn it_020_amount_at_upper_bound_accepted() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 10000, "b".to_string(), None);
+
+    let result = create_intake(app.state(), new_entry);
+
+    assert!(
+        result.is_ok(),
+        "amount=10000 should be accepted: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap().amount, 10000);
+}
+
+/// [IT-026] Invalid date format rejected
+#[test]
+fn it_026_invalid_date_format_rejected() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    // Non-YYYY-MM-DD format (slashes instead of hyphens, day-first).
+    let new_entry = NewIntake::new("15/01/2026".to_string(), 500, "b".to_string(), None);
+
+    let result = create_intake(app.state(), new_entry);
+
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Validation failed"));
+}
+
+/// [IT-027] Time defaults to now when unset
+/// [VAL-004] Time defaults to now
+#[test]
+fn it_027_time_defaults_when_unset() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 500, "b".to_string(), None);
+
+    let entry = create_intake(app.state(), new_entry).unwrap();
+
+    // Time should be set (defaulted), 8 chars in HH:MM:SS form.
+    assert_eq!(entry.time.len(), 8);
+    assert_eq!(entry.time.chars().nth(2), Some(':'));
+    assert_eq!(entry.time.chars().nth(5), Some(':'));
+}

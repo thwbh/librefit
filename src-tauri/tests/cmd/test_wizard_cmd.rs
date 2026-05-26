@@ -2,12 +2,19 @@ use std::collections::HashMap;
 
 use chrono::{Days, NaiveDate};
 
+use librefit_lib::service::intake::{IntakeTarget, NewIntakeTarget};
+use librefit_lib::service::weight::{
+    NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker,
+};
 use librefit_lib::service::wizard::{
     wizard_calculate_for_target_date, wizard_calculate_for_target_weight, wizard_calculate_tdee,
-    BmiCategory, CalculationGoal, CalculationSex, WizardInput, WizardResult, WizardTargetDateInput,
-    WizardTargetWeightInput,
+    wizard_create_targets, BmiCategory, CalculationGoal, CalculationSex, Wizard, WizardInput,
+    WizardResult, WizardTargetDateInput, WizardTargetWeightInput,
 };
+use tauri::Manager;
 use validator::Validate;
+
+use crate::helpers::setup_test_pool;
 
 /// [OB-009] Standard weight loss recommendation
 /// [OB-013] Rate selection for weight loss (deficit + target + duration)
@@ -721,4 +728,70 @@ fn calculate_target_weights_for_specific_weight_gain_goal() {
             *wizard_result.bmi_by_rate.get(&rate).unwrap()
         );
     });
+}
+
+/// [OB-017] Atomic target creation — wizard_create_targets persists all three
+/// records in a single transaction (happy path).
+#[test]
+fn ob_017_wizard_create_targets_persists_all_three_records() {
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool.clone());
+
+    let input = Wizard {
+        intake_target: NewIntakeTarget {
+            added: "2026-01-01".to_string(),
+            start_date: "2026-01-01".to_string(),
+            end_date: "2026-04-01".to_string(),
+            target_calories: 2000,
+            maximum_calories: 2500,
+        },
+        weight_target: NewWeightTarget {
+            added: "2026-01-01".to_string(),
+            start_date: "2026-01-01".to_string(),
+            end_date: "2026-04-01".to_string(),
+            initial_weight: 75.0,
+            target_weight: 70.0,
+        },
+        weight_tracker: NewWeightTracker::new("2026-01-01".to_string(), 75.0),
+    };
+
+    let result = wizard_create_targets(app.state(), input);
+    assert!(
+        result.is_ok(),
+        "happy-path create should succeed: {:?}",
+        result
+    );
+
+    // All three rows now exist.
+    let mut conn = pool.get().unwrap();
+    assert_eq!(WeightTarget::all(&mut conn).unwrap().len(), 1);
+    assert_eq!(IntakeTarget::all(&mut conn).unwrap().len(), 1);
+    assert_eq!(WeightTracker::all(&mut conn).unwrap().len(), 1);
+}
+
+/// [OB-010] Standard maintenance recommendation (BMI 20.0–25.0 → StandardWeight)
+///
+/// The frontend derives the HOLD/LOSE/GAIN recommendation from
+/// `result.bmi_category`. StandardWeight maps to HOLD.
+#[test]
+fn ob_010_bmi_in_hold_range_yields_standard_weight() {
+    let input = WizardInput {
+        age: 30,
+        weight: 70.0, // BMI = 70 / 1.75^2 ≈ 22.86 → StandardWeight
+        height: 175.0,
+        sex: CalculationSex::MALE,
+        activity_level: 1.5,
+        weekly_difference: 0,
+        calculation_goal: CalculationGoal::LOSS,
+    };
+
+    let result = wizard_calculate_tdee(input).unwrap();
+
+    assert_eq!(BmiCategory::StandardWeight, result.bmi_category);
+    assert!(
+        result.bmi >= 20.0 && result.bmi <= 25.0,
+        "BMI {} should fall in the HOLD range 20.0..=25.0",
+        result.bmi
+    );
 }
