@@ -29,8 +29,10 @@ fn get_future_test_dates() -> (String, String, String, String) {
 // PROGRESS TRACKER TESTS
 // ============================================================================
 
+/// [PG-001] Sufficient data renders charts (backend data shape)
+/// [PG-003] Progress header content (days_passed / days_total / targets)
 #[test]
-fn test_get_tracker_progress_success() {
+fn pg_001_get_tracker_progress_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -125,8 +127,9 @@ fn test_get_tracker_progress_no_weight_target() {
     assert!(result.unwrap_err().contains("No weight target found"));
 }
 
+/// [PG-004] New user with one day → insufficient data state (backend data shape)
 #[test]
-fn test_get_tracker_progress_empty_trackers() {
+fn pg_004_get_tracker_progress_empty_trackers() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

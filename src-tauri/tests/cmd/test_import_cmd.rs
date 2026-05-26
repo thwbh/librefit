@@ -32,8 +32,11 @@ fn create_test_channel() -> (Channel<ImportProgress>, Arc<Mutex<Vec<ImportProgre
 // INTAKE IMPORT TESTS
 // ============================================================================
 
+/// [IM-001] Import intake data
+/// [STG-001] Streamed progress updates advance through stages
+/// [STG-002] Operation completes
 #[test]
-fn test_import_intake_csv_success() {
+fn im_001_import_intake_csv_success() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -74,8 +77,9 @@ fn test_import_intake_csv_success() {
     });
 }
 
+/// [IM-003] Partial import with failures (validation-error path)
 #[test]
-fn test_import_intake_csv_with_validation_errors() {
+fn im_003_import_intake_csv_with_validation_errors() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -115,8 +119,9 @@ fn test_import_intake_csv_with_validation_errors() {
     });
 }
 
+/// [IM-003] Partial import with failures (parse-error path)
 #[test]
-fn test_import_intake_csv_with_parse_errors() {
+fn im_003_import_intake_csv_with_parse_errors() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -190,8 +195,9 @@ fn test_import_intake_csv_empty_file() {
 // WEIGHT TRACKER IMPORT TESTS
 // ============================================================================
 
+/// [IM-002] Import weight data
 #[test]
-fn test_import_weight_tracker_csv_success() {
+fn im_002_import_weight_tracker_csv_success() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -273,8 +279,10 @@ fn test_import_weight_tracker_csv_with_validation_errors() {
 // CANCELLATION TESTS
 // ============================================================================
 
+/// [IM-004] Import cancellation
+/// [STG-003] Cancel during operation
 #[test]
-fn test_import_cancellation() {
+fn im_004_import_cancellation() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();

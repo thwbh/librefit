@@ -196,8 +196,10 @@ fn test_find_last_intake_target_empty() {
 // Intake Tests
 // ============================================================================
 
+/// [IT-025] Date format YYYY-MM-DD accepted
+/// [HI-009] Add intake on historical date (entry.added set explicitly)
 #[test]
-fn test_create_intake_entry() {
+fn it_025_create_intake_entry_with_explicit_date() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -461,8 +463,10 @@ fn test_multiple_entries_same_date_same_category() {
 // Validation Tests
 // ============================================================================
 
+/// [IT-021] Amount below lower bound rejected (validator layer)
+/// [VAL-007] Backend rejects out-of-range numeric value
 #[test]
-fn test_intake_validation_amount_too_low() {
+fn it_021_amount_below_lower_bound_rejected_validator() {
     use validator::Validate;
 
     // Invalid: below minimum of 1
@@ -472,8 +476,9 @@ fn test_intake_validation_amount_too_low() {
     assert!(validation.is_err());
 }
 
+/// [IT-022] Amount above upper bound rejected (validator layer)
 #[test]
-fn test_intake_validation_amount_too_high() {
+fn it_022_amount_above_upper_bound_rejected_validator() {
     use validator::Validate;
 
     // Invalid: above maximum of 10000
@@ -494,8 +499,10 @@ fn test_intake_validation_category_too_long() {
     assert!(validation.is_err());
 }
 
+/// [IT-024] Description over maximum rejected
+/// [VAL-006] Text exceeds declared limit
 #[test]
-fn test_intake_validation_description_too_long() {
+fn it_024_description_above_max_length_rejected() {
     use validator::Validate;
 
     // Invalid: exceeds 500 characters

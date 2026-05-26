@@ -71,8 +71,9 @@ fn test_get_user_returns_created_profile() {
     assert_eq!(user.avatar, "avatar1");
 }
 
+/// [PF-012] Nickname below backend lower bound rejected at server
 #[test]
-fn test_update_user_validation_empty_name() {
+fn pf_012_nickname_below_backend_lower_bound_rejected() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -97,8 +98,9 @@ fn test_update_user_with_empty_avatar() {
     assert_eq!(user.avatar, "");
 }
 
+/// [PF-013] Nickname above backend upper bound rejected at server
 #[test]
-fn test_update_user_validation_name_too_long() {
+fn pf_013_nickname_above_backend_upper_bound_rejected() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

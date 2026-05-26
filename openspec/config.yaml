@@ -55,5 +55,7 @@ rules:
     - Break work into chunks small enough to commit independently.
     - Include a task for adding/updating tests at the cheapest correct
       layer that covers new or changed spec scenarios. Every test MUST
-      be traceable to one or more scenario IDs (cite the ID in the test
-      name or in a comment within 5 lines of the declaration).
+      be traceable to one or more scenario IDs, cited in the test name
+      itself (Vitest: literal `[XX-NNN]`; Rust: snake-case `xx_nnn_`
+      prefix on the fn name + `/// [XX-NNN]` doc comment). See
+      _conv-test-traceability.

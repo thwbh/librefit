@@ -60,7 +60,7 @@ describe('IntakeStack', () => {
 	];
 
 	describe('Empty State', () => {
-		it('should display empty state when no entries', () => {
+		it('[IT-018] [EMP-001] should display empty state when no entries', () => {
 			renderWithContext({ entries: [] });
 
 			expect(screen.getByText(/Nothing tracked today/i)).toBeTruthy();
@@ -108,7 +108,7 @@ describe('IntakeStack', () => {
 	});
 
 	describe('Stack Navigation', () => {
-		it('should display entry at current index', () => {
+		it('[IT-017] should display entry at current index', () => {
 			const { container } = renderWithContext({ entries: mockEntries, index: 1 });
 
 			expect(container.textContent).toContain('Lunch');
@@ -129,7 +129,7 @@ describe('IntakeStack', () => {
 	});
 
 	describe('Edit Functionality', () => {
-		it('should call onEdit when entry is long-pressed', async () => {
+		it('[IT-011] [GES-001] should call onEdit when entry is long-pressed', async () => {
 			const onEditMock = vi.fn();
 			const { container } = renderWithContext({
 				entries: mockEntries,

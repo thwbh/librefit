@@ -29,7 +29,7 @@ describe('UserAvatar', () => {
 			expect(avatar).toBeTruthy();
 		});
 
-		it('should show username-based avatar when avatar is empty', () => {
+		it('[OB-007] should show username-based avatar when avatar is empty', () => {
 			const { container } = render(UserAvatar, {
 				props: {
 					userData: { ...mockUserData, avatar: '' }
@@ -138,7 +138,7 @@ describe('UserAvatar', () => {
 			}
 		});
 
-		it('should close modal when cancel is clicked', async () => {
+		it('[PF-004] [MOD-004] should close modal when cancel is clicked', async () => {
 			const user = userEvent.setup();
 
 			const { container } = render(UserAvatar, {
@@ -173,7 +173,7 @@ describe('UserAvatar', () => {
 	});
 
 	describe('Avatar selection and confirmation', () => {
-		it('should call onAvatarChange when confirming selection', async () => {
+		it('[PF-003] should call onAvatarChange when confirming selection', async () => {
 			const user = userEvent.setup();
 			const onAvatarChangeMock = vi.fn();
 
@@ -229,7 +229,7 @@ describe('UserAvatar', () => {
 			}
 		});
 
-		it('should not change avatar when canceling modal', async () => {
+		it('[PF-004] should not change avatar when canceling modal', async () => {
 			const user = userEvent.setup();
 			const onAvatarChangeMock = vi.fn();
 			const userData = { ...mockUserData, avatar: 'OriginalSeed' };
@@ -267,7 +267,7 @@ describe('UserAvatar', () => {
 	});
 
 	describe('Randomization in modal', () => {
-		it('should generate new random avatar when swiping', async () => {
+		it('[PF-006] [GES-003] should generate new random avatar when swiping', async () => {
 			const user = userEvent.setup();
 
 			const { container } = render(UserAvatar, {
@@ -290,7 +290,7 @@ describe('UserAvatar', () => {
 			}
 		});
 
-		it('should reset to username-based avatar on reset', async () => {
+		it('[PF-007] should reset to username-based avatar on reset', async () => {
 			const user = userEvent.setup();
 			const userData = { ...mockUserData, name: 'TestUser', avatar: 'CustomSeed' };
 

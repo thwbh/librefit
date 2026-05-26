@@ -241,8 +241,9 @@ fn test_find_last_weight_target_empty() {
 // Weight Tracker Tests
 // ============================================================================
 
+/// [WT-010] Date format YYYY-MM-DD accepted (valid date persisted)
 #[test]
-fn test_create_weight_tracker_entry() {
+fn wt_010_create_weight_tracker_entry_with_valid_date() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -319,8 +320,9 @@ fn test_delete_weight_tracker_entry() {
     assert_eq!(entries.len(), 0);
 }
 
+/// [HI-012] Weight exists for date — repo lookup by added date
 #[test]
-fn test_find_weight_tracker_by_date() {
+fn hi_012_find_weight_tracker_by_date() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -344,8 +346,9 @@ fn test_find_weight_tracker_by_date() {
     assert!(entries.iter().all(|e| e.added == "2025-01-15"));
 }
 
+/// [HI-013] No weight for date — repo returns empty list
 #[test]
-fn test_find_weight_tracker_by_date_no_results() {
+fn hi_013_find_weight_tracker_by_date_no_results() {
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -462,8 +465,10 @@ fn test_weight_precision() {
 // Validation Tests
 // ============================================================================
 
+/// [WT-007] Weight below backend lower bound rejected (validator layer)
+/// [VAL-007] Backend rejects out-of-range numeric value
 #[test]
-fn test_weight_tracker_validation_amount_too_low() {
+fn wt_007_weight_below_backend_lower_bound_rejected_validator() {
     use validator::Validate;
 
     // Invalid: below minimum of 30.0
@@ -473,8 +478,9 @@ fn test_weight_tracker_validation_amount_too_low() {
     assert!(validation.is_err());
 }
 
+/// [WT-008] Weight above upper bound rejected (validator layer)
 #[test]
-fn test_weight_tracker_validation_amount_too_high() {
+fn wt_008_weight_above_upper_bound_rejected_validator() {
     use validator::Validate;
 
     // Invalid: above maximum of 330.0

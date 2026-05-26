@@ -160,8 +160,10 @@ fn test_create_weight_target_validation_end_before_start() {
 // WEIGHT TRACKER TESTS
 // ============================================================================
 
+/// [WT-003] Create new weight entry
+/// [WT-010] Date format YYYY-MM-DD accepted (valid date)
 #[test]
-fn test_create_weight_tracker_entry_success() {
+fn wt_003_create_new_weight_entry() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -176,8 +178,9 @@ fn test_create_weight_tracker_entry_success() {
     assert_eq!(entry.added, "2026-01-15");
 }
 
+/// [WT-007] Weight below backend lower bound rejected
 #[test]
-fn test_create_weight_tracker_entry_validation_weight_too_low() {
+fn wt_007_weight_below_backend_lower_bound_rejected() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -190,8 +193,9 @@ fn test_create_weight_tracker_entry_validation_weight_too_low() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
+/// [WT-008] Weight above upper bound rejected
 #[test]
-fn test_create_weight_tracker_entry_validation_weight_too_high() {
+fn wt_008_weight_above_upper_bound_rejected() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -204,8 +208,9 @@ fn test_create_weight_tracker_entry_validation_weight_too_high() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
+/// [WT-004] Edit existing weight entry
 #[test]
-fn test_update_weight_tracker_entry_success() {
+fn wt_004_edit_existing_weight_entry() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

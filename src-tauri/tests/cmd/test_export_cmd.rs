@@ -72,8 +72,12 @@ fn test_export_raw_database_empty() {
     });
 }
 
+/// [EX-002] Raw SQLite export
+/// [EX-004] Export completion (Complete stage reached)
+/// [STG-001] Streamed progress updates advance through stages
+/// [STG-002] Operation completes
 #[test]
-fn test_export_raw_database_with_data() {
+fn ex_002_raw_sqlite_export_with_data() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -130,8 +134,11 @@ fn test_export_raw_database_with_data() {
     });
 }
 
+/// [EX-003] Export cancellation (raw)
+/// [EX-006] Cancel during export
+/// [STG-003] Cancel during operation
 #[test]
-fn test_export_raw_cancellation() {
+fn ex_003_raw_export_cancellation() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -251,8 +258,11 @@ fn test_export_csv_empty_database() {
     });
 }
 
+/// [EX-001] CSV export
+/// [STG-001] Streamed progress updates advance through stages
+/// [STG-002] Operation completes
 #[test]
-fn test_export_csv_with_data() {
+fn ex_001_csv_export_with_data() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -300,8 +310,10 @@ fn test_export_csv_with_data() {
     });
 }
 
+/// [EX-003] Export cancellation (csv)
+/// [STG-003] Cancel during operation
 #[test]
-fn test_export_csv_cancellation() {
+fn ex_003_csv_export_cancellation() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -333,8 +345,9 @@ fn test_export_csv_cancellation() {
     });
 }
 
+/// [EX-005] Raw export contains all tables (CSV variant)
 #[test]
-fn test_export_csv_all_tables_included() {
+fn ex_005_csv_export_all_tables_included() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -370,8 +383,9 @@ fn test_export_csv_all_tables_included() {
 // CANCELLATION COMMAND TESTS
 // ============================================================================
 
+/// [EX-006] Cancel during export — cancel_export sets the cancellation flag
 #[test]
-fn test_cancel_export_command() {
+fn ex_006_cancel_export_command_sets_flag() {
     let cancellation = ExportCancellation::new();
     let app = tauri::test::mock_app();
     app.manage(cancellation.clone());
@@ -419,8 +433,9 @@ fn test_format_bytes_helper() {
 // PROGRESS STAGE TESTS
 // ============================================================================
 
+/// [EX-004] Export completion — all stages emitted (raw)
 #[test]
-fn test_export_raw_all_stages_present() {
+fn ex_004_raw_export_all_stages_present() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -449,8 +464,9 @@ fn test_export_raw_all_stages_present() {
     });
 }
 
+/// [EX-004] Export completion — all stages emitted (csv)
 #[test]
-fn test_export_csv_all_stages_present() {
+fn ex_004_csv_export_all_stages_present() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();

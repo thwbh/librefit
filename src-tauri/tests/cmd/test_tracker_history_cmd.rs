@@ -8,8 +8,9 @@ use tauri::Manager;
 // TRACKER HISTORY TESTS
 // ============================================================================
 
+/// [HI-001] Load current week — get_tracker_history returns range with intake + weight entries
 #[test]
-fn test_get_tracker_history_success() {
+fn hi_001_get_tracker_history_success() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

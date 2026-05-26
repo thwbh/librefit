@@ -82,7 +82,7 @@ describe('IntakeMask', () => {
 			expect(lunchButton.className).toContain('btn-accent');
 		});
 
-		it('should allow category selection', async () => {
+		it('[IT-016] should allow category selection (single-select)', async () => {
 			const user = userEvent.setup();
 
 			const { container } = renderWithContext(mockEntry, { isEditing: true });
@@ -94,7 +94,7 @@ describe('IntakeMask', () => {
 			expect(dinnerButton.className).toContain('btn-accent');
 		});
 
-		it('should show all categories as selectable', () => {
+		it('[IT-015] should show all categories as selectable', () => {
 			renderWithContext(mockEntry, { isEditing: true });
 
 			mockCategories.forEach((cat) => {

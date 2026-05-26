@@ -171,8 +171,9 @@ fn test_create_intake_success() {
     assert_eq!(entry.description, Some("Breakfast".to_string()));
 }
 
+/// [IT-021] Amount below lower bound rejected
 #[test]
-fn test_create_intake_validation_amount_too_low() {
+fn it_021_amount_below_lower_bound_rejected() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -185,8 +186,9 @@ fn test_create_intake_validation_amount_too_low() {
     assert!(result.unwrap_err().contains("Validation failed"));
 }
 
+/// [IT-022] Amount above upper bound rejected
 #[test]
-fn test_create_intake_validation_amount_too_high() {
+fn it_022_amount_above_upper_bound_rejected() {
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

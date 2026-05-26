@@ -24,14 +24,33 @@ Every `#### Scenario:` heading in any spec under `openspec/specs/` SHALL begin w
 - **WHEN** a scenario is removed from a spec
 - **THEN** its number is not reassigned to a new scenario
 
-### Requirement: Tests cite the scenarios they cover
+### Requirement: Tests cite the scenarios they cover in the test name
 
-Tests that exercise a documented scenario SHALL cite the scenario ID using the form `[<PREFIX>-<NNN>]` in the test name or in a comment within five lines of the declaration. Tests that exist for internal correctness reasons without covering a documented scenario MAY omit the citation; they will not be counted toward spec coverage.
+Tests that exercise a documented scenario SHALL include the scenario ID in the test name itself, so that test runner output is self-locating against the spec. Test failures, CI logs, and IDE test browsers all surface the test name; embedding the ID there makes "what scenario broke" answerable without grepping.
 
-#### Scenario: [TRC-003] Test cites the ID it covers
+Per-layer form:
 
-- **WHEN** a test verifies a documented spec scenario
-- **THEN** its name or a nearby comment contains the corresponding `[<PREFIX>-<NNN>]` reference
+- **Vitest / Mocha / any framework with freeform test names:** include the bracketed form literally — e.g. `it('[IT-005] [IT-015] add intake creates entry and updates score', ...)`. Multiple IDs separated by spaces when one test covers several scenarios.
+- **Rust (`#[test]` / nextest):** function names cannot contain `[]`. Use the prefix and number as a snake-case head of the function name — e.g. `fn it_021_amount_below_lower_bound_rejected()` — and include a doc comment with the literal bracketed form for grep-ability: `/// [IT-021] amount below lower bound rejected`.
+
+Additional citations MAY appear in a comment within five lines of the declaration when a single test covers more scenarios than fit comfortably in the name.
+
+Tests that exist for internal correctness reasons (helpers, harness verification) without covering a documented scenario MAY omit the citation; they will not be counted toward spec coverage and will not trigger the gate.
+
+#### Scenario: [TRC-003] Vitest test name contains the literal bracketed ID
+
+- **WHEN** a Vitest test verifies a documented spec scenario
+- **THEN** the string passed to `it(...)` or `test(...)` contains the corresponding `[<PREFIX>-<NNN>]` substring
+
+#### Scenario: [TRC-008] Rust test function name contains the snake-case ID
+
+- **WHEN** a Rust `#[test]` function verifies a documented spec scenario
+- **THEN** the function name begins with `<prefix_lower>_<nnn>_` (e.g. `it_021_`) and a doc comment within five lines contains the literal `[<PREFIX>-<NNN>]` form
+
+#### Scenario: [TRC-009] Multi-scenario test cites each ID
+
+- **WHEN** a single test covers more than one scenario
+- **THEN** the test name contains every covered ID, separated by spaces (Vitest), or the first ID is in the function name and the rest are listed in the doc comment (Rust)
 
 ### Requirement: Cheapest correct layer
 

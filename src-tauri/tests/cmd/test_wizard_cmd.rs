@@ -9,9 +9,10 @@ use librefit_lib::service::wizard::{
 };
 use validator::Validate;
 
-/// Test integrity of the default calculation function.
+/// [OB-009] Standard weight loss recommendation
+/// [OB-013] Rate selection for weight loss (deficit + target + duration)
 #[test]
-fn calculate_weight_loss_for_men() {
+fn ob_009_weight_loss_calculation_for_men() {
     let input: WizardInput = WizardInput {
         age: 30,
         weight: 90.0,
@@ -42,9 +43,9 @@ fn calculate_weight_loss_for_men() {
     assert_eq!(239, result.duration_days);
 }
 
-/// Test integrity of the default calculation function.
+/// [OB-014] Step 4 with HOLD-range BMI (Standard) and GAIN goal
 #[test]
-fn calculate_weight_gain_for_women() {
+fn ob_014_weight_gain_for_women_in_hold_range() {
     let input = WizardInput {
         age: 25,
         weight: 52.0,
@@ -76,9 +77,9 @@ fn calculate_weight_gain_for_women() {
     assert_eq!(147, result.duration_days);
 }
 
-/// Verify expected result: Current BMI is classified as 'underweight'.
+/// [OB-011] Weight gain recommendation (BMI < 20 → underweight)
 #[test]
-fn calculate_underweight_classification_for_men() {
+fn ob_011_underweight_classification_for_men() {
     let input_underweight = WizardInput {
         age: 25,
         weight: 59.7,
@@ -95,9 +96,9 @@ fn calculate_underweight_classification_for_men() {
     assert_eq!(result_underweight.bmi_category, BmiCategory::Underweight);
 }
 
-/// Verify expected result: Current BMI is classified as 'obese'.
+/// [OB-009] Standard weight loss recommendation (BMI > 25 → obese)
 #[test]
-fn calculate_obese_classification_for_men() {
+fn ob_009_obese_classification_for_men() {
     let input_obese = WizardInput {
         age: 25,
         weight: 125.0,
@@ -114,9 +115,9 @@ fn calculate_obese_classification_for_men() {
     assert_eq!(result_obese.bmi, 38.6);
 }
 
-/// Verify expected result: Current BMI is classified as 'severely obese'.
+/// [OB-009] Standard weight loss recommendation (BMI > 40 → severely obese)
 #[test]
-fn calulcate_severely_obese_classification_for_men() {
+fn ob_009_severely_obese_classification_for_men() {
     let input_severely_obese = WizardInput {
         age: 45,
         weight: 150.0,
@@ -136,9 +137,9 @@ fn calulcate_severely_obese_classification_for_men() {
     assert_eq!(result_severely_obese.bmi, 46.3);
 }
 
-/// Verify expected result: Current BMI is classified as 'obese'.
+/// [OB-009] Standard weight loss recommendation (BMI > 25 → obese, women)
 #[test]
-fn calculate_obese_classification_for_women() {
+fn ob_009_obese_classification_for_women() {
     let input_obese = WizardInput {
         age: 30,
         weight: 80.0,
@@ -155,9 +156,9 @@ fn calculate_obese_classification_for_women() {
     assert_eq!(result_obese.bmi, 31.2);
 }
 
-/// Verify expected result: Current BMI is classified as 'underweight'.
+/// [OB-011] Weight gain recommendation (BMI < 20 → underweight, women)
 #[test]
-fn calculate_underweight_classification_for_women() {
+fn ob_011_underweight_classification_for_women() {
     let input_underweight = WizardInput {
         age: 18,
         weight: 40.0,
@@ -174,9 +175,9 @@ fn calculate_underweight_classification_for_women() {
     assert_eq!(result_underweight.bmi, 17.8);
 }
 
-/// Verify expected result: Current BMI is classified as 'severely obese'.
+/// [OB-009] Standard weight loss recommendation (severely obese, women)
 #[test]
-fn calulcate_severely_obese_classification_for_women() {
+fn ob_009_severely_obese_classification_for_women() {
     let input_severely_obese = WizardInput {
         age: 45,
         weight: 120.0,
@@ -472,9 +473,9 @@ fn return_severely_obese_classification() {
     assert_eq!(result.message, "wizard.classification.severely_obese");
 }
 
-/// Verify that input leads to warning for already 'underweight' classified BMI values.
+/// [OB-012] Low-normal BMI alert (underweight warning)
 #[test]
-fn return_underweight_warning() {
+fn ob_012_underweight_warning() {
     let underweight_target_weight_input = WizardTargetWeightInput {
         age: 30,
         sex: CalculationSex::MALE,
