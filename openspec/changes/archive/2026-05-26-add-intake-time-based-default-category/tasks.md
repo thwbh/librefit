@@ -20,4 +20,4 @@
 
 ## 5. Archive
 
-- [ ] 5.1 `openspec archive add-intake-time-based-default-category` once the change merges to `main`.
+- [x] 5.1 `openspec archive add-intake-time-based-default-category` once the change merges to `main`.
