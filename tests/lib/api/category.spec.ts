@@ -26,43 +26,32 @@ describe('category', () => {
 });
 
 describe('defaultCategoryForHour', () => {
-	it('[IT-006] defaults to Breakfast at 08:00', () => {
+	it('[IT-006] Breakfast window 05–10: endpoints both default to b', () => {
+		expect(defaultCategoryForHour(5)).toBe('b');
+		expect(defaultCategoryForHour(10)).toBe('b');
+		// midpoint sanity
 		expect(defaultCategoryForHour(8)).toBe('b');
 	});
 
-	it('[IT-007] defaults to Lunch at 13:00', () => {
+	it('[IT-007] Lunch window 11–14: endpoints both default to l', () => {
+		expect(defaultCategoryForHour(11)).toBe('l');
+		expect(defaultCategoryForHour(14)).toBe('l');
 		expect(defaultCategoryForHour(13)).toBe('l');
 	});
 
-	it('[IT-008] defaults to Dinner at 18:00', () => {
+	it('[IT-008] Dinner window 15–20: endpoints both default to d', () => {
+		expect(defaultCategoryForHour(15)).toBe('d');
+		expect(defaultCategoryForHour(20)).toBe('d');
 		expect(defaultCategoryForHour(18)).toBe('d');
 	});
 
-	it('[IT-009] defaults to Snack at 02:00', () => {
-		expect(defaultCategoryForHour(2)).toBe('s');
-	});
-
-	it('[IT-028] returns Breakfast at the 05:00 lower bound of the breakfast window', () => {
-		expect(defaultCategoryForHour(5)).toBe('b');
-	});
-
-	it('[IT-029] Breakfast/Lunch boundary: 10 → b, 11 → l', () => {
-		expect(defaultCategoryForHour(10)).toBe('b');
-		expect(defaultCategoryForHour(11)).toBe('l');
-	});
-
-	it('[IT-030] Lunch/Dinner boundary: 14 → l, 15 → d', () => {
-		expect(defaultCategoryForHour(14)).toBe('l');
-		expect(defaultCategoryForHour(15)).toBe('d');
-	});
-
-	it('[IT-031] Dinner/Snack boundary: 20 → d, 21 → s', () => {
-		expect(defaultCategoryForHour(20)).toBe('d');
+	it('[IT-009] Snack: hours outside the meal windows default to s', () => {
+		// first hour after dinner window
 		expect(defaultCategoryForHour(21)).toBe('s');
-	});
-
-	it('[IT-032] Snack/Breakfast boundary: 4 → s', () => {
+		// last hour before breakfast window
 		expect(defaultCategoryForHour(4)).toBe('s');
+		// middle of the snack window
+		expect(defaultCategoryForHour(2)).toBe('s');
 	});
 });
 

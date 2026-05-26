@@ -24,7 +24,7 @@ export const getFoodCategoryIcon = (shortvalue: string): Component => {
 
 /**
  * Pick the default intake category for a given local-time hour, per
- * `intake-tracking` scenarios [IT-006..IT-009], [IT-028], [IT-029].
+ * `intake-tracking` scenarios [IT-006..IT-009].
  *
  * Windows:
  *   05:00 – 10:59 → Breakfast ('b')
