@@ -35,18 +35,18 @@ Rules:
 
 The current prefix registry:
 
-| Spec            | Prefix |     | Spec                    | Prefix |
-| --------------- | ------ | --- | ----------------------- | ------ |
-| onboarding      | `OB`   |     | `_conv-user-errors`     | `ERR`  |
-| intake-tracking | `IT`   |     | `_conv-validation`      | `VAL`  |
-| weight-tracking | `WT`   |     | `_conv-modals`          | `MOD`  |
-| plan-review     | `PR`   |     | `_conv-empty-states`    | `EMP`  |
-| history         | `HI`   |     | `_conv-gestures`        | `GES`  |
-| progress        | `PG`   |     | `_conv-animations`      | `ANI`  |
-| profile         | `PF`   |     | `_conv-progress-stages` | `STG`  |
-| data-export     | `EX`   |     |                         |        |
-| data-import     | `IM`   |     |                         |        |
-| app-shell       | `AS`   |     |                         |        |
+| Spec            | Prefix |     | Spec                      | Prefix |
+| --------------- | ------ | --- | ------------------------- | ------ |
+| onboarding      | `OB`   |     | `_conv-user-errors`       | `ERR`  |
+| intake-tracking | `IT`   |     | `_conv-validation`        | `VAL`  |
+| weight-tracking | `WT`   |     | `_conv-modals`            | `MOD`  |
+| plan-review     | `PR`   |     | `_conv-empty-states`      | `EMP`  |
+| history         | `HI`   |     | `_conv-gestures`          | `GES`  |
+| progress        | `PG`   |     | `_conv-animations`        | `ANI`  |
+| profile         | `PF`   |     | `_conv-progress-stages`   | `STG`  |
+| data-export     | `EX`   |     | `_conv-test-traceability` | `TRC`  |
+| data-import     | `IM`   |     |                           |        |
+| app-shell       | `AS`   |     |                           |        |
 
 ## Change workflow
 
@@ -67,4 +67,4 @@ CalVer in the form `YY.WW.MICRO` (e.g. `26.05.0`). Android `versionCode` is `YYW
 
 - Several long planning docs that used to live at the repo root (prop drilling analysis, state management refactor, error handling implementation, test coverage summaries) have been deleted — their conclusions are now either applied in code, captured as convention specs (e.g. `_conv-user-errors`), or pending as OpenSpec changes.
 - `USE_CASES.md` will be absorbed into feature spec scenarios via the `reconcile-specs-from-use-cases` change and then deleted.
-- E2E tests are a Definition of Done for every feature spec. The convention and tooling are introduced by the `conv-e2e-tests` change.
+- Test traceability is enforced by `_conv-test-traceability` (prefix `TRC`): every spec scenario must be cited by at least one test, at the cheapest correct layer (Rust integration, Vitest component, etc.). End-to-end testing was evaluated and dropped — see the archived `conv-e2e-tests` change for the journey and the conditions to revisit.

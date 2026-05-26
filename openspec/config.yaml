@@ -24,8 +24,10 @@ context: |
   - _conv-empty-states — empty-data UX
   - _conv-gestures, _conv-animations, _conv-progress-stages
 
-  Definition of Done for any feature change includes end-to-end tests
-  covering the spec scenarios (convention forthcoming as _conv-e2e-tests).
+  Test traceability is enforced by _conv-test-traceability: every spec
+  scenario must be cited by at least one test, at the cheapest correct
+  layer (Rust integration, Vitest component, etc.). End-to-end testing
+  was evaluated and dropped — see the archived conv-e2e-tests change.
 
   Versioning: CalVer YY.WW.MICRO (e.g. 26.05.0).
 
@@ -51,6 +53,7 @@ rules:
       for that spec.
   tasks:
     - Break work into chunks small enough to commit independently.
-    - Include a task for adding/updating e2e coverage matching new or
-      changed spec scenarios. Every test MUST be traceable to one or
-      more scenario IDs (cite the ID in test name or comment).
+    - Include a task for adding/updating tests at the cheapest correct
+      layer that covers new or changed spec scenarios. Every test MUST
+      be traceable to one or more scenario IDs (cite the ID in the test
+      name or in a comment within 5 lines of the declaration).

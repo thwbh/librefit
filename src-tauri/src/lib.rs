@@ -29,20 +29,12 @@ use crate::service::weight::{
 
 use crate::db::{connection, migrations};
 
-// E2E-only seed commands (gated by the `e2e-seed` Cargo feature).
-#[cfg(feature = "e2e-seed")]
-use crate::cmd::seed::{
-    seed_body_data, seed_intake_entry, seed_intake_target, seed_user, seed_weight_entry,
-    seed_weight_target,
-};
-
 use dotenv::dotenv;
 use std::env;
 use tauri::path::BaseDirectory;
 use tauri::{App, Manager};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
-pub mod cmd;
 pub mod db;
 pub mod i18n;
 pub mod service;
@@ -97,19 +89,7 @@ pub fn run() {
             export_database_file,
             cancel_export,
             import_data_file,
-            cancel_import,
-            #[cfg(feature = "e2e-seed")]
-            seed_user,
-            #[cfg(feature = "e2e-seed")]
-            seed_body_data,
-            #[cfg(feature = "e2e-seed")]
-            seed_intake_target,
-            #[cfg(feature = "e2e-seed")]
-            seed_weight_target,
-            #[cfg(feature = "e2e-seed")]
-            seed_intake_entry,
-            #[cfg(feature = "e2e-seed")]
-            seed_weight_entry,
+            cancel_import
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
