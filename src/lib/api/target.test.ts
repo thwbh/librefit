@@ -1,8 +1,8 @@
 import { assert, beforeAll, describe, expect, it } from 'vitest';
 import { mockIPC } from '@tauri-apps/api/mocks';
 import { randomFillSync } from 'crypto';
-import { createIntakeTarget, createWeightTarget } from '../../../src/lib/api/gen';
-import type { NewIntakeTarget, NewWeightTarget, WeightTarget } from '../../../src/lib/api/gen';
+import { createIntakeTarget, createWeightTarget } from './gen';
+import type { NewIntakeTarget, NewWeightTarget, WeightTarget } from './gen';
 
 const mockIntakeTarget: NewIntakeTarget = {
 	added: '2022-08-12',

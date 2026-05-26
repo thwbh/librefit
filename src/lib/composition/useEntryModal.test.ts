@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useEntryModal } from '../../../src/lib/composition/useEntryModal.svelte';
+import { useEntryModal } from './useEntryModal.svelte';
 
 // Mock Tauri logger
 vi.mock('@tauri-apps/plugin-log', () => ({

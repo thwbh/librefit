@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
-	convertDateStrToDisplayDateStr, Daytime,
+	convertDateStrToDisplayDateStr,
+	Daytime,
 	default_date_format,
 	display_date_format,
-	getDateAsStr, getDaytimeFoodCategory, getDaytimeGreeting, getDisplayDateAsStr,
+	getDateAsStr,
+	getDaytimeFoodCategory,
+	getDaytimeGreeting,
+	getDisplayDateAsStr,
 	parseStringAsDate
-} from '../../src/lib/date';
+} from './date';
 
 describe('getDateAsStr function', () => {
 	it('should return date string in default format', () => {

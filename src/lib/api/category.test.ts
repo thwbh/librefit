@@ -1,10 +1,10 @@
 import { describe, test, it, expect } from 'vitest';
-import type { FoodCategory } from '../../../src/lib/api/gen';
+import type { FoodCategory } from './gen';
 import {
 	defaultCategoryForDate,
 	defaultCategoryForHour,
 	getFoodCategoryLongvalue
-} from '../../../src/lib/api/category';
+} from './category';
 
 describe('category', () => {
 	test('should return the correct long value of food category', () => {
