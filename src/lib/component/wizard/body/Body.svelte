@@ -7,14 +7,18 @@
 	interface Props {
 		wizardInput: WizardInput;
 		userData: LibreUser;
+		/** Per-field Zod error messages, keyed by field name. Empty until the user attempts to advance. */
+		errors?: Record<string, string>;
 	}
 
-	let { wizardInput = $bindable(), userData = $bindable() }: Props = $props();
+	let { wizardInput = $bindable(), userData = $bindable(), errors = {} }: Props = $props();
 
 	let sexSelection: Array<KeyValuePair> = [
 		{ key: CalculationSexSchema.enum.MALE, value: 'Male' },
 		{ key: CalculationSexSchema.enum.FEMALE, value: 'Female' }
 	];
+
+	const errorFor = (field: string) => errors[field];
 </script>
 
 <div class="p-4">
@@ -30,12 +34,18 @@
 						label="Nickname"
 						required
 					/>
+					{#if errorFor('name')}
+						<p class="text-error mt-1 text-xs">{errorFor('name')}</p>
+					{/if}
 				</div>
 				<UserAvatar bind:userData />
 			</div>
 		</div>
 
 		<ButtonGroup label="Sex" bind:value={wizardInput.sex} entries={sexSelection} />
+		{#if errorFor('sex')}
+			<p class="text-error mt-1 text-xs">{errorFor('sex')}</p>
+		{/if}
 
 		<span class="flex flex-col gap-4">
 			<RangeInput label="Age" min={18} max={99} bind:value={wizardInput.age} />

@@ -12,6 +12,8 @@
 	import {
 		CalculationGoalSchema,
 		CalculationSexSchema,
+		LibreUserSchema,
+		WizardInputSchema,
 		WizardRecommendationSchema
 	} from '$lib/api/gen/types';
 	import type {
@@ -54,31 +56,77 @@
 		recommendation = $bindable('')
 	}: Props = $props();
 
-	// Create reactive local state for userData with default
+	// Local reactive state. For first-time runs, `name` and `sex` are deliberately
+	// left blank so the generated Zod schemas reject the draft until the user fills
+	// them in — see step1Valid below. On wizard re-run, the loader-supplied props
+	// carry valid values and the wizard is advance-ready immediately.
 	let userData = $state(
-		userDataProp || {
+		userDataProp ?? {
 			id: 1,
-			name: 'Arnie',
+			name: '',
 			avatar: ''
 		}
 	);
 
-	let bodyData = bodyDataProp || {
+	let bodyData = bodyDataProp ?? {
 		id: 0,
 		age: 30,
-		sex: CalculationSex.MALE,
+		sex: undefined as unknown as BodyData['sex'],
 		weight: 85,
 		height: 180
 	};
 
+	// `wizardInput` is typed as `WizardInput` so Body's bindings stay strongly typed,
+	// but on first-time runs `sex` is undefined at runtime. The Stepper `onnext`
+	// short-circuit + `step1Parse.success` guard before any Tauri call ensure that
+	// by the time `wizardInput` reaches a backend command it has a real sex value.
 	let wizardInput: WizardInput = $state({
 		age: bodyData.age,
-		sex: CalculationSexSchema.safeParse(bodyData.sex).data!,
+		sex: bodyDataProp
+			? CalculationSexSchema.safeParse(bodyData.sex).data!
+			: (undefined as unknown as WizardInput['sex']),
 		weight: bodyData.weight,
 		height: bodyData.height,
 		activityLevel: 1,
 		weeklyDifference: 1,
 		calculationGoal: CalculationGoal.LOSS
+	});
+
+	// Validity for Step 1 is derived by running the generated Zod schemas against
+	// the live form state. The backend `validator`-crate annotations are the single
+	// source of truth for bounds (see `_conv-validation [VAL-011]`); `tauri-typegen`
+	// propagates `length`/`range` messages into these Zod schemas. Enum messages are
+	// NOT propagated (tauri-typegen 0.4.0 parses only `length`/`range` constraints),
+	// so we curate enum-error messages here via Zod's per-parse `error` hook.
+	const wizardErrorMap: import('zod').core.$ZodErrorMap = (issue) =>
+		issue.path?.[0] === 'sex'
+			? { message: 'Please choose Male or Female before continuing.' }
+			: undefined;
+
+	const step1Parse = $derived(WizardInputSchema.safeParse(wizardInput, { error: wizardErrorMap }));
+	const userParse = $derived(LibreUserSchema.safeParse(userData));
+	const step1Valid = $derived(step1Parse.success && userParse.success);
+
+	// Per-field error messages from the failing Zod schemas, surfaced under each
+	// offending input. Empty map until the user attempts to advance — validation
+	// errors should not appear on initial render before any interaction (per [OB-020]).
+	let hasAttemptedAdvance: boolean = $state(false);
+	const step1Errors = $derived.by<Record<string, string>>(() => {
+		if (!hasAttemptedAdvance) return {};
+		const errors: Record<string, string> = {};
+		if (!step1Parse.success) {
+			for (const issue of step1Parse.error.issues) {
+				const field = String(issue.path[0]);
+				if (!(field in errors)) errors[field] = issue.message;
+			}
+		}
+		if (!userParse.success) {
+			for (const issue of userParse.error.issues) {
+				const field = String(issue.path[0]);
+				if (!(field in errors)) errors[field] = issue.message;
+			}
+		}
+		return errors;
 	});
 
 	let wizardResult: WizardResult | undefined = $state();
@@ -128,7 +176,18 @@
 	});
 
 	const onnext = async () => {
-		if (currentStep === 1) {
+		// veilchen's Stepper increments `currentStep` BEFORE invoking onnext, so by
+		// the time we run, `currentStep` is the step we just moved TO. To gate the
+		// Step 1 → Step 2 transition we check `currentStep === 2` (arrived at step 2)
+		// and roll back synchronously if Step 1 wasn't valid. Synchronous re-assign
+		// happens in the same tick as the Stepper's mutation so Svelte flushes once.
+		if (currentStep === 2 && !step1Valid) {
+			hasAttemptedAdvance = true;
+			currentStep = 1;
+			return;
+		}
+
+		if (currentStep === 2) {
 			// Lock in avatar to name if user never opened the picker
 			if (!userData.avatar) {
 				userData.avatar = userData.name!;
@@ -143,8 +202,11 @@
 		}
 
 		if (currentStep === 3) {
+			// step1Parse.success is guaranteed here because Step 1 gating throws otherwise.
+			// Using the parsed `data` instead of the raw draft pins the type at the boundary.
+			if (!step1Parse.success) throw new Error('unreachable: Step 1 not valid at Step 3');
 			const result = await wizardCalculateTdee({
-				input: wizardInput
+				input: step1Parse.data
 			});
 
 			if (result) {
@@ -155,22 +217,24 @@
 					chosenOption.customDetails = result.targetWeightUpper;
 				} else if (result.recommendation === WizardRecommendation.HOLD) {
 					// Initialize target weight to current weight for HOLD users
-					chosenTargetWeight = wizardInput.weight;
+					chosenTargetWeight = step1Parse.data.weight;
 				} else if (result.recommendation === WizardRecommendation.GAIN) {
 					chosenOption.customDetails = result.targetWeightLower;
 					// Also initialize for potential override to HOLD
-					chosenTargetWeight = wizardInput.weight;
+					chosenTargetWeight = step1Parse.data.weight;
 				}
 			}
 		}
 
 		if (currentStep === 4) {
+			if (!step1Parse.success) throw new Error('unreachable: Step 1 not valid at Step 4');
+			const input1 = step1Parse.data;
 			const result = await wizardCalculateForTargetWeight({
 				input: {
-					age: wizardInput.age,
-					sex: wizardInput.sex,
-					currentWeight: wizardInput.weight,
-					height: wizardInput.height,
+					age: input1.age,
+					sex: input1.sex,
+					currentWeight: input1.weight,
+					height: input1.height,
 					targetWeight: chosenTargetWeight,
 					startDate: getDateAsStr(new Date())
 				}
@@ -182,10 +246,12 @@
 		}
 
 		if (currentStep === 5) {
+			if (!step1Parse.success) throw new Error('unreachable: Step 1 not valid at Step 5');
+			const input1 = step1Parse.data;
 			// For GAIN users, check if they selected target weight equal to current weight (maintain)
 			const isGainUserMaintaining =
 				wizardResult!.recommendation === WizardRecommendation.GAIN &&
-				chosenTargetWeight === wizardInput.weight;
+				chosenTargetWeight === input1.weight;
 
 			// Determine effective recommendation
 			const effectiveRecommendation = isGainUserMaintaining
@@ -193,7 +259,7 @@
 				: wizardResult!.recommendation;
 
 			const targets = createTargetWeightTargets(
-				wizardInput,
+				input1,
 				wizardResult!,
 				wizardTargetWeightResult!,
 				new Date(),
@@ -219,14 +285,16 @@
 		if (
 			currentStep === 4 &&
 			wizardResult?.recommendation === WizardRecommendation.GAIN &&
-			chosenTargetWeight !== wizardInput.weight
+			step1Parse.success &&
+			chosenTargetWeight !== step1Parse.data.weight
 		) {
+			const input1 = step1Parse.data;
 			wizardCalculateForTargetWeight({
 				input: {
-					age: wizardInput.age,
-					sex: wizardInput.sex,
-					currentWeight: wizardInput.weight,
-					height: wizardInput.height,
+					age: input1.age,
+					sex: input1.sex,
+					currentWeight: input1.weight,
+					height: input1.height,
 					targetWeight: chosenTargetWeight,
 					startDate: getDateAsStr(new Date())
 				}
@@ -262,12 +330,14 @@
 
 			processingStep = 'Recording body measurements...';
 			await new Promise((resolve) => setTimeout(resolve, 800));
+			if (!step1Parse.success) throw new Error('unreachable: Step 1 not valid at performSetup');
+			const input1 = step1Parse.data;
 			await updateBodyData({
-				age: wizardInput.age,
-				sex: wizardInput.sex,
-				height: wizardInput.height,
-				weight: wizardInput.weight,
-				activityLevel: wizardInput.activityLevel
+				age: input1.age,
+				sex: input1.sex,
+				height: input1.height,
+				weight: input1.weight,
+				activityLevel: input1.activityLevel
 			});
 
 			processingStep = 'Creating your personalized plan...';
@@ -315,7 +385,7 @@
 {#if !showCompletion}
 	<Stepper bind:currentStep backLabel="Back" {onnext} {onback} {onfinish}>
 		{#snippet step1()}
-			<Body bind:wizardInput bind:userData />
+			<Body bind:wizardInput bind:userData errors={step1Errors} />
 		{/snippet}
 
 		{#snippet step2()}

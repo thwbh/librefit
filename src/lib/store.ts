@@ -1,7 +1,6 @@
-import { Store } from '@tauri-apps/plugin-store';
+// `@tauri-apps/plugin-store`-backed settings store is not yet wired up — the
+// plugin isn't installed. `showHint` is a no-op stub until the feature lands.
 
-const store = new Store('settings.json');
-
-export const showHint = async (feat: string) => {
+export const showHint = async (_feat: string) => {
 	return false;
 };

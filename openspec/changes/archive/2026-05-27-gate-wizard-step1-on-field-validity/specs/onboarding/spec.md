@@ -32,3 +32,12 @@ The system SHALL collect the user's nickname, biological sex, age, height, weigh
 - **AND** all other required fields are valid (including sex selected)
 - **AND** the user clicks Next
 - **THEN** the wizard advances to Step 2
+
+#### Scenario: [OB-020] Validation errors are deferred until the user attempts to advance
+
+- **WHEN** the user opens Step 1 for the first time and has not yet clicked Next
+- **THEN** no validation error message is shown under any required field
+- **AND WHEN** the user clicks Next while one or more required fields are invalid
+- **THEN** an error message is shown under each invalid field (one error per field)
+- **AND WHEN** the user subsequently fixes a previously-invalid field
+- **THEN** that field's error message disappears while errors on the remaining invalid fields stay visible
