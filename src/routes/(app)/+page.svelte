@@ -20,9 +20,9 @@
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
-	import { Avatar, ModalDialog, useRefresh } from '@thwbh/veilchen';
+	import { Avatar, useRefresh } from '@thwbh/veilchen';
 	import { invalidate } from '$app/navigation';
-	import { Trash, CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
+	import { CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import {
 		convertDateStrToDisplayDateStr,
@@ -30,7 +30,7 @@
 		getDisplayDateAsStr,
 		parseStringAsDate
 	} from '$lib/date';
-	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
+	import IntakeModal from '$lib/component/intake/IntakeModal.svelte';
 	import { defaultCategoryForDate } from '$lib/api/category';
 	import { getAvatarFromUser } from '$lib/avatar';
 	import { differenceInDays } from 'date-fns';
@@ -301,54 +301,27 @@
 </div>
 <IntakeFab onclick={modal.openCreate} />
 <!-- Intake creation modal -->
-<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Add Intake</span>
-		{#if modal.currentEntry}
-			<span class="text-xs opacity-70">
-				{convertDateStrToDisplayDateStr((modal.currentEntry as NewIntake).added)}
-			</span>
-		{/if}
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask bind:entry={modal.currentEntry} isEditing={true} readonly={modal.enableDelete} />
-		{/if}
-	{/snippet}
-</ModalDialog>
+<IntakeModal
+	bind:dialog={modal.createDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="create"
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
+	oncancel={modal.cancel}
+/>
 
 <!-- Intake update modal -->
-<ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Edit Intake</span>
-		<span class="flex items-center gap-2">
-			{#if modal.currentEntry}
-				<span class="text-xs opacity-70">
-					{convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
-				</span>
-			{/if}
-			<button class="btn btn-xs btn-error">
-				<Trash size="1rem" onclick={modal.requestDelete} />
-			</button>
-		</span>
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask entry={modal.currentEntry as Intake} isEditing={modal.isEditing} />
-		{/if}
-	{/snippet}
-
-	{#snippet footer()}
-		{#if modal.enableDelete}
-			<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
-		{:else}
-			<button class="btn btn-primary" onclick={modal.save}>Save</button>
-		{/if}
-		<button class="btn" onclick={modal.cancel}>Cancel</button>
-	{/snippet}
-</ModalDialog>
+<IntakeModal
+	bind:dialog={modal.editDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="edit"
+	enableDelete={modal.enableDelete}
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
+	oncancel={modal.cancel}
+	onrequestdelete={modal.requestDelete}
+	ondelete={modal.deleteEntry}
+/>
 
 <!-- Weight modal -->
 <WeightModal
