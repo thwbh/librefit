@@ -22,6 +22,24 @@ beforeAll(() => {
 		};
 	}
 
+	// jsdom queues a real navigation when an <a href> is clicked, then logs
+	// "Error: Not implemented: navigation (except hash changes)" asynchronously
+	// (the test has already passed by then, but the noise pollutes test output).
+	// Suppress at the source by canceling link clicks at the capture phase —
+	// component tests assert the click handler ran via spies / state, not via
+	// real navigation.
+	if (typeof document !== 'undefined') {
+		document.addEventListener(
+			'click',
+			(event) => {
+				const target = event.target as HTMLElement | null;
+				const anchor = target?.closest?.('a[href]');
+				if (anchor) event.preventDefault();
+			},
+			true
+		);
+	}
+
 	if (typeof Element !== 'undefined' && !Element.prototype.animate) {
 		Element.prototype.animate = function () {
 			return {
