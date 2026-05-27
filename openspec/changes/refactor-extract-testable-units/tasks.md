@@ -21,9 +21,9 @@ Component file paths follow the test-layout convention: tests are colocated as `
 
 ## 3. Profile — edit modal
 
-- [ ] 3.1 Extract `ProfileEditModal.svelte` into `src/lib/component/profile/`. Props: `open`, `profile`, callbacks `onsave`, `oncancel`. Wraps the existing nickname `ValidatedInput` + avatar `UserAvatar`.
-- [ ] 3.2 Update `src/routes/(app)/profile/+page.svelte` to compose the new modal; swipe-to-open stays in the route.
-- [ ] 3.3 Add `src/lib/component/profile/ProfileEditModal.svelte.test.ts` citing `[PF-003]` (save propagates new nickname), `[PF-008..PF-011]` (frontend lower/upper bound accept/reject for nickname). Multi-cite `[MOD-001..MOD-004]` for backdrop/escape/focus.
+- [x] 3.1 Extract `ProfileEditModal.svelte` into `src/lib/component/profile/`. Props: `dialog` (bindable), `entry` (bindable LibreUser | null/undefined), `errorMessage`, callbacks `onsave`, `oncancel`. Owns its `showAvatarPicker` toggle internally; resets the picker view each time the modal opens via `$effect` tracking entry-presence transitions.
+- [x] 3.2 Update `src/routes/(app)/profile/+page.svelte` to compose the new modal; swipe-to-open `SwipeableListItem` stays in the route. Removed inline `ModalDialog`/`Avatar`/`ValidatedInput`/`AvatarPickerContent` imports + the route-local `showAvatarPicker` state + `handleCancel` (the modal handles its own reset).
+- [x] 3.3 Add `src/lib/component/profile/ProfileEditModal.svelte.test.ts` — 7 tests citing `[PF-003]` (bind:entry round-trips name mutation), `[PF-008]..[PF-011]` (nickname bounds 2/40 enforced via native `minLength`/`maxLength`), `[MOD-001]` (errorMessage surfaces as alert), `[MOD-004]` (avatar click opens picker).
 
 ## 4. Weight — modal
 
