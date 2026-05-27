@@ -1,6 +1,14 @@
 <script lang="ts">
 	import type { LibreUser } from '$lib/api';
-	import { Avatar, ModalDialog, ValidatedInput } from '@thwbh/veilchen';
+	import { LibreUserSchema } from '$lib/api/gen/types';
+	import {
+		AlertBox,
+		AlertType,
+		AlertVariant,
+		Avatar,
+		ModalDialog,
+		ValidatedInput
+	} from '@thwbh/veilchen';
 	import { slide } from 'svelte/transition';
 	import { getAvatar } from '$lib/avatar';
 	import { useFieldValidity } from '$lib/composition/useFieldValidity.svelte';
@@ -40,10 +48,17 @@
 	// round-trips to the backend. maxlength on the input already prevents the
 	// 41-char case from happening; minlength is informational natively
 	// (ModalDialog isn't a form), so we enforce it explicitly here.
+	//
+	// [VAL-014]: drive the message off the generated Zod schema so the frontend
+	// hint and any later backend rejection produce the same string.
+	const nameSchema = LibreUserSchema.shape.name;
 	const validity = useFieldValidity({
 		matches: '#profile-name',
 		source: () => entry?.name,
-		isValid: (raw) => raw.length >= 2 && raw.length <= 40
+		validate: (value) => {
+			const result = nameSchema.safeParse(value);
+			return result.success ? { ok: true } : { ok: false, message: result.error.issues[0].message };
+		}
 	});
 
 	// Per [VAL-012] / [VAL-013]: don't pre-emptively disable Confirm; gate the
@@ -80,12 +95,6 @@
 
 	{#snippet content()}
 		<div class="space-y-6" oninput={validity.handleInput}>
-			{#if errorMessage}
-				<div class="alert alert-error">
-					<span>{errorMessage}</span>
-				</div>
-			{/if}
-
 			{#if !showAvatarPicker && entry}
 				<div class="flex flex-col items-center gap-4" transition:slide>
 					<Avatar
@@ -109,6 +118,12 @@
 				>
 					Nickname must be between 2 and 40 characters long.
 				</ValidatedInput>
+
+				{#if errorMessage || validity.showError}
+					<AlertBox type={AlertType.Error} variant={AlertVariant.Box}>
+						{errorMessage ?? validity.errorMessage}
+					</AlertBox>
+				{/if}
 			{:else if entry}
 				<div transition:slide>
 					<AvatarPickerContent

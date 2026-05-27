@@ -171,6 +171,23 @@ describe('WeightModal', () => {
 		expect(oncancel).toHaveBeenCalledTimes(1);
 	});
 
+	it('[VAL-014] client-side validation message matches the generated schema text', async () => {
+		const user = userEvent.setup();
+		const props = $state(baseProps({ entry: makeEntry({ amount: 25 }) }));
+		const { container } = render(WeightModal, { props });
+		openDialog(container);
+
+		await user.click(screen.getByRole('button', { name: /^Save$/ }));
+
+		const { NewWeightTrackerSchema } = await import('$lib/api/gen/types');
+		const expected = NewWeightTrackerSchema.shape.amount.safeParse(25);
+		// safeParse fails on 25 → assert we surfaced exactly the schema's message.
+		expect(expected.success).toBe(false);
+		const schemaMessage = expected.success ? '' : expected.error.issues[0].message;
+
+		expect(queryMessage(container)?.textContent).toContain(schemaMessage);
+	});
+
 	it('[VAL-007] backend error message surfaces in the modal alert', () => {
 		const { container } = render(WeightModal, {
 			props: baseProps({

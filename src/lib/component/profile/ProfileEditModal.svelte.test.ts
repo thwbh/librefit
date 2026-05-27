@@ -65,6 +65,27 @@ describe('ProfileEditModal', () => {
 		expect(onsave).toHaveBeenCalled();
 	});
 
+	it('[VAL-014] client-side validation message matches the generated schema text', async () => {
+		const user = userEvent.setup();
+		const onsave = vi.fn();
+		const { container } = render(ProfileEditModal, { props: baseProps({ onsave }) });
+		openDialog(container);
+
+		const nickname = screen.getByLabelText(/Nickname/i) as HTMLInputElement;
+		await user.clear(nickname);
+		await user.type(nickname, 'A');
+
+		await user.click(screen.getByRole('button', { name: /^Confirm$/ }));
+
+		const { LibreUserSchema } = await import('$lib/api/gen/types');
+		const expected = LibreUserSchema.shape.name.safeParse('A');
+		expect(expected.success).toBe(false);
+		const schemaMessage = expected.success ? '' : expected.error.issues[0].message;
+
+		// The AlertBox renders the schema's message verbatim.
+		expect(container.querySelector('.alert-error')?.textContent).toContain(schemaMessage);
+	});
+
 	it('[PF-010] [VAL-013] Confirm with a 1-char nickname does NOT invoke onsave', async () => {
 		const user = userEvent.setup();
 		const onsave = vi.fn();

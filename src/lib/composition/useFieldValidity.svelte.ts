@@ -13,29 +13,46 @@
  *   - Modals can have N fields. Composing N `useFieldValidity` instances is
  *     more natural than baking N validators into useEntryModal's config.
  *
+ * The `validate` callback returns the error message string on failure — per
+ * `_conv-validation` [VAL-014], call into the generated Zod schemas from
+ * `$lib/api/gen/types` so the frontend message is byte-identical to whatever
+ * the backend would emit for the same input.
+ *
  * Usage:
  *
  *   const validity = useFieldValidity({
- *     isValid: (raw) => raw !== '' && parseFloat(raw) >= 30,
+ *     source: () => entry?.amount,
+ *     validate: (raw) => {
+ *       const r = NewWeightTrackerSchema.shape.amount.safeParse(raw);
+ *       return r.success
+ *         ? { ok: true }
+ *         : { ok: false, message: r.error.issues[0].message };
+ *     }
  *   });
  *
  *   <fieldset oninput={validity.handleInput}>
  *     <input type="number" ... />
  *   </fieldset>
- *   {#if !validity.displayValid}
- *     <p class="text-error">Out of range.</p>
+ *   {#if validity.showError}
+ *     <AlertBox type={AlertType.Error}>{validity.errorMessage}</AlertBox>
  *   {/if}
- *   <button disabled={!validity.displayValid} onclick={save}>Save</button>
+ *   <button onclick={() => { if (validity.attempt()) save(); }}>Save</button>
  */
+
+export type ValidationResult = { ok: true } | { ok: false; message: string };
 
 export interface UseFieldValidityOptions {
 	/**
-	 * Predicate called with the raw string value of the input. Return false to
-	 * surface the invalid state (message visible, submit disabled). The caller
-	 * decides what "valid" means — typical predicates: non-empty + within
-	 * numeric range, length-bounded, format-conformant, etc.
+	 * Validator called with whatever `source` returned (or the raw input string
+	 * when triggered by `handleInput`). Return `{ ok: true }` when the value
+	 * satisfies the rule, or `{ ok: false, message }` to surface an invalid
+	 * state. The `message` becomes `errorMessage` and drives the inline alert.
+	 *
+	 * Per [VAL-014], implementations SHOULD source the message from a generated
+	 * Zod schema's `safeParse(...).error.issues[0].message` rather than
+	 * hand-rolling a string.
 	 */
-	isValid: (rawValue: string) => boolean;
+	validate: (value: unknown) => ValidationResult;
 	/**
 	 * Restrict to inputs matching this selector. Defaults to `'input'`. Useful
 	 * when the wrapping element (e.g. a `<fieldset>`) contains other inputs
@@ -50,12 +67,17 @@ export interface UseFieldValidityOptions {
 	 * null for "not present"; the composable treats both as the empty string
 	 * for predicate purposes.
 	 */
-	source?: () => string | number | null | undefined;
+	source?: () => unknown;
 }
 
 export interface FieldValidity {
-	/** Reactive: true while the displayed value satisfies `isValid` (initial: true). */
+	/** Reactive: true while the displayed value satisfies `validate` (initial: true). */
 	readonly displayValid: boolean;
+	/**
+	 * Reactive: the message from the most recent invalid result, or undefined
+	 * when valid. Templates wire this through an AlertBox (see [VAL-014]).
+	 */
+	readonly errorMessage: string | undefined;
 	/**
 	 * Reactive: true once the user has attempted submit at least once via
 	 * `attempt()`. Use this to gate error-message visibility per [VAL-012] — we
@@ -85,23 +107,35 @@ export interface FieldValidity {
 	 * Manually re-evaluate validity against an arbitrary raw value. Useful when
 	 * the value changes via a non-input path (e.g. a programmatic reset).
 	 */
-	revalidate: (rawValue: string) => void;
+	revalidate: (value: unknown) => void;
 }
 
 export function useFieldValidity(options: UseFieldValidityOptions): FieldValidity {
 	const matches = options.matches ?? 'input';
 	let displayValid = $state(true);
+	let errorMessage = $state<string | undefined>(undefined);
 	let hasAttempted = $state(false);
+
+	function apply(value: unknown) {
+		const result = options.validate(value);
+		if (result.ok) {
+			displayValid = true;
+			errorMessage = undefined;
+		} else {
+			displayValid = false;
+			errorMessage = result.message;
+		}
+	}
 
 	function handleInput(e: Event) {
 		const target = e.target as HTMLElement | null;
 		if (!target || !target.matches?.(matches)) return;
 		const value = (target as HTMLInputElement).value ?? '';
-		displayValid = options.isValid(value);
+		apply(value);
 	}
 
-	function revalidate(rawValue: string) {
-		displayValid = options.isValid(rawValue);
+	function revalidate(value: unknown) {
+		apply(value);
 	}
 
 	function attempt(): boolean {
@@ -111,14 +145,16 @@ export function useFieldValidity(options: UseFieldValidityOptions): FieldValidit
 
 	if (options.source) {
 		$effect(() => {
-			const raw = options.source!();
-			displayValid = options.isValid(raw == null ? '' : String(raw));
+			apply(options.source!());
 		});
 	}
 
 	return {
 		get displayValid() {
 			return displayValid;
+		},
+		get errorMessage() {
+			return errorMessage;
 		},
 		get hasAttempted() {
 			return hasAttempted;

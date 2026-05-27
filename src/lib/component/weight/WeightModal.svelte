@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { NewWeightTracker, WeightTracker } from '$lib/api';
+	import { NewWeightTrackerSchema } from '$lib/api/gen/types';
 	import { convertDateStrToDisplayDateStr, display_date_format, getDateAsStr } from '$lib/date';
 	import { useFieldValidity } from '$lib/composition/useFieldValidity.svelte';
 	import { AlertBox, AlertType, AlertVariant, ModalDialog, NumberStepper } from '@thwbh/veilchen';
@@ -39,15 +40,18 @@
 	// what the user sees, not to whatever stale value happens to be bound
 	// (e.g. NumberStepper silently skips NaN, leaving entry.amount unchanged
 	// while the input visually shows empty).
+	//
+	// Per [VAL-014]: drive the message off the generated Zod schema so the
+	// frontend hint and any later backend rejection produce the same string.
+	const amountSchema = NewWeightTrackerSchema.shape.amount;
 	const validity = useFieldValidity({
 		matches: 'input[type="number"]',
 		// Also revalidate when entry.amount changes via paths that don't fire
 		// an input event (NumberStepper's +/- buttons mutate `value` directly).
 		source: () => entry?.amount,
-		isValid: (raw) => {
-			if (raw === '') return false;
-			const parsed = parseFloat(raw);
-			return !Number.isNaN(parsed) && parsed >= min && parsed <= max;
+		validate: (value) => {
+			const result = amountSchema.safeParse(value);
+			return result.success ? { ok: true } : { ok: false, message: result.error.issues[0].message };
 		}
 	});
 
@@ -87,11 +91,6 @@
 
 	{#snippet content()}
 		<fieldset class="fieldset rounded-box" oninput={validity.handleInput}>
-			{#if errorMessage}
-				<div class="alert alert-error mb-4">
-					<span>{errorMessage}</span>
-				</div>
-			{/if}
 			{#if entry}
 				<NumberStepper
 					bind:value={entry.amount}
@@ -106,11 +105,11 @@
 					initialDecrementStep={1}
 					showLeftWheel={false}
 				/>
-				{#if validity.showError}
-					<AlertBox type={AlertType.Error} variant={AlertVariant.Box}>
-						Weight must be between {min} and {max} kg.
-					</AlertBox>
-				{/if}
+			{/if}
+			{#if errorMessage || validity.showError}
+				<AlertBox type={AlertType.Error} variant={AlertVariant.Box}>
+					{errorMessage ?? validity.errorMessage}
+				</AlertBox>
 			{/if}
 		</fieldset>
 	{/snippet}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { useFieldValidity } from './useFieldValidity.svelte';
+import { useFieldValidity, type ValidationResult } from './useFieldValidity.svelte';
 
 function makeInputEvent(value: string, type = 'number'): Event {
 	const input = document.createElement('input');
@@ -10,17 +10,26 @@ function makeInputEvent(value: string, type = 'number'): Event {
 	return event;
 }
 
+// Convenience: build a numeric-range validator with a single message.
+function rangeValidator(min: number, max: number, message = 'out of range') {
+	return (value: unknown): ValidationResult => {
+		const raw = value == null ? '' : String(value);
+		if (raw === '') return { ok: false, message };
+		const parsed = parseFloat(raw);
+		if (Number.isNaN(parsed) || parsed < min || parsed > max) return { ok: false, message };
+		return { ok: true };
+	};
+}
+
 describe('useFieldValidity', () => {
 	it('[VAL-012] starts with showError=false even if the initial value would be invalid (deferred until attempt)', () => {
-		const validity = useFieldValidity({ isValid: () => false });
+		const validity = useFieldValidity({ validate: () => ({ ok: false, message: 'nope' }) });
 		expect(validity.hasAttempted).toBe(false);
 		expect(validity.showError).toBe(false);
 	});
 
-	it('[VAL-012] displayValid flips to false when the predicate rejects the input — but showError stays false pre-attempt', () => {
-		const validity = useFieldValidity({
-			isValid: (raw) => raw !== '' && parseFloat(raw) >= 30
-		});
+	it('[VAL-012] displayValid flips to false when validate rejects the input — but showError stays false pre-attempt', () => {
+		const validity = useFieldValidity({ validate: rangeValidator(30, Infinity) });
 
 		validity.handleInput(makeInputEvent('25'));
 		expect(validity.displayValid).toBe(false);
@@ -28,9 +37,7 @@ describe('useFieldValidity', () => {
 	});
 
 	it('[VAL-013] attempt() marks the field as attempted and returns the current validity', () => {
-		const validity = useFieldValidity({
-			isValid: (raw) => parseFloat(raw) >= 30
-		});
+		const validity = useFieldValidity({ validate: rangeValidator(30, Infinity) });
 
 		validity.handleInput(makeInputEvent('25'));
 		const ok = validity.attempt();
@@ -40,9 +47,7 @@ describe('useFieldValidity', () => {
 	});
 
 	it('[VAL-012] showError tracks live validity once hasAttempted is set', () => {
-		const validity = useFieldValidity({
-			isValid: (raw) => parseFloat(raw) >= 30 && parseFloat(raw) <= 330
-		});
+		const validity = useFieldValidity({ validate: rangeValidator(30, 330) });
 
 		validity.handleInput(makeInputEvent('25'));
 		validity.attempt();
@@ -55,17 +60,30 @@ describe('useFieldValidity', () => {
 		expect(validity.showError).toBe(true);
 	});
 
-	it('[VAL-012] empty input is rejected when the predicate excludes it', () => {
-		const validity = useFieldValidity({
-			isValid: (raw) => raw !== '' && parseFloat(raw) >= 30
-		});
+	it('[VAL-012] empty input is rejected when the validator excludes it', () => {
+		const validity = useFieldValidity({ validate: rangeValidator(30, Infinity) });
 
 		validity.handleInput(makeInputEvent(''));
 		expect(validity.displayValid).toBe(false);
 	});
 
+	it('[VAL-014] errorMessage exposes the message returned by validate', () => {
+		const validity = useFieldValidity({
+			validate: (value) => {
+				const raw = String(value);
+				return raw === 'ok' ? { ok: true } : { ok: false, message: 'value must equal "ok"' };
+			}
+		});
+
+		validity.handleInput(makeInputEvent('nope', 'text'));
+		expect(validity.errorMessage).toBe('value must equal "ok"');
+
+		validity.handleInput(makeInputEvent('ok', 'text'));
+		expect(validity.errorMessage).toBeUndefined();
+	});
+
 	it('ignores events whose target is not an input (defaults to selector "input")', () => {
-		const validity = useFieldValidity({ isValid: () => false });
+		const validity = useFieldValidity({ validate: () => ({ ok: false, message: 'nope' }) });
 
 		const div = document.createElement('div');
 		const event = new Event('input', { bubbles: true });
@@ -77,7 +95,7 @@ describe('useFieldValidity', () => {
 
 	it('matches selector option scopes which inputs drive the validity', () => {
 		const validity = useFieldValidity({
-			isValid: () => false,
+			validate: () => ({ ok: false, message: 'nope' }),
 			matches: 'input[type="number"]'
 		});
 
@@ -90,15 +108,17 @@ describe('useFieldValidity', () => {
 		expect(validity.displayValid).toBe(false);
 	});
 
-	it('revalidate(raw) lets callers re-evaluate without an event (e.g. programmatic reset)', () => {
+	it('revalidate(value) lets callers re-evaluate without an event (e.g. programmatic reset)', () => {
 		const validity = useFieldValidity({
-			isValid: (raw) => raw === 'ok'
+			validate: (value) => (value === 'ok' ? { ok: true } : { ok: false, message: 'wrong' })
 		});
 
 		validity.revalidate('nope');
 		expect(validity.displayValid).toBe(false);
+		expect(validity.errorMessage).toBe('wrong');
 
 		validity.revalidate('ok');
 		expect(validity.displayValid).toBe(true);
+		expect(validity.errorMessage).toBeUndefined();
 	});
 });
