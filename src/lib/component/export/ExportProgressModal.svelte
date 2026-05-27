@@ -16,18 +16,18 @@
 		MagnifyingGlass,
 		Warning
 	} from 'phosphor-svelte';
+	// Check + Warning are used inside LoadingIndicator's finishedContent/errorContent snippets below.
 
 	const ExportStage = ExportStageSchema.enum;
 
-	const stageIcons = {
+	// In-progress stages only. Terminal stages (complete / cancelled / error) are
+	// owned by LoadingIndicator's finishedContent / errorContent snippets below.
+	const inProgressStageIcons: Partial<Record<string, typeof Coffee>> = {
 		[ExportStage.initializing]: Coffee,
 		[ExportStage.analyzingDatabase]: MagnifyingGlass,
 		[ExportStage.creatingBackup]: FloppyDisk,
 		[ExportStage.readingFile]: Eyeglasses,
-		[ExportStage.finalizing]: ArrowClockwise,
-		[ExportStage.complete]: Check,
-		[ExportStage.cancelled]: Warning,
-		[ExportStage.error]: Warning
+		[ExportStage.finalizing]: ArrowClockwise
 	};
 
 	interface Props {
@@ -56,7 +56,7 @@
 
 	const stageIcon = $derived.by(() => {
 		const value = ExportStageSchema.safeParse(stage).data;
-		return value ? stageIcons[value] : null;
+		return value ? (inProgressStageIcons[value] ?? null) : null;
 	});
 </script>
 
@@ -69,7 +69,7 @@
 			{#if isExporting && stageIcon}
 				{@const Icon = stageIcon}
 				<div class="flex justify-center mb-3" data-testid="stage-icon">
-					<Icon size="2em" weight="duotone" />
+					<Icon size="2em" weight="duotone" color="var(--color-accent)" />
 				</div>
 			{/if}
 

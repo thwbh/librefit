@@ -127,6 +127,19 @@ describe('ExportProgressModal', () => {
 		expect(screen.queryByTestId('stage-icon')).toBeNull();
 	});
 
+	it('stage icon is hidden for terminal stages even while isExporting is still true (file-picker wait)', () => {
+		// Reproduces the bug observed during CSV export: the backend reports stage='complete'
+		// before save() returns, so isExporting is still true. The terminal-stage icon must
+		// not render here — LoadingIndicator's finishedContent / errorContent owns that.
+		for (const terminal of ['complete', 'cancelled', 'error'] as const) {
+			const { container } = render(ExportProgressModal, {
+				props: baseProps({ isExporting: true, stage: terminal })
+			});
+			openDialog(container);
+			expect(screen.queryByTestId('stage-icon')).toBeNull();
+		}
+	});
+
 	it('clicking Close invokes onclose', async () => {
 		const onclose = vi.fn();
 		const user = userEvent.setup();
