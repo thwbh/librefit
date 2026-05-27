@@ -37,6 +37,7 @@
 	import { error } from '@tauri-apps/plugin-log';
 	import { createTargetWeightTargets } from '$lib/api/util';
 	import { setWizardContext, tryGetUserContext } from '$lib/context';
+	import { performSetup as runSetup } from './setup-orchestration';
 
 	interface Props {
 		userData?: LibreUser;
@@ -306,49 +307,56 @@
 		}
 	});
 
+	const stepMessages = {
+		profile: 'Saving your profile...',
+		body: 'Recording body measurements...',
+		targets: 'Creating your personalized plan...'
+	};
+
 	const performSetup = async () => {
 		showCompletion = true;
 		isProcessing = true;
 		finishError = false;
 
-		try {
-			processingStep = 'Saving your profile...';
-			await new Promise((resolve) => setTimeout(resolve, 800));
-			const userResult = await updateUser({
-				userName: userData.name!,
-				userAvatar: userData.avatar!
-			});
+		if (!step1Parse.success) throw new Error('unreachable: Step 1 not valid at performSetup');
 
+		const result = await runSetup(
+			{
+				userName: userData.name!,
+				userAvatar: userData.avatar!,
+				input: step1Parse.data,
+				weightTracker: weightTracker!,
+				weightTarget: weightTarget!,
+				intakeTarget: intakeTarget!
+			},
+			{
+				updateUser,
+				updateBodyData,
+				wizardCreateTargets,
+				onStepStart: async (step) => {
+					processingStep = stepMessages[step];
+					await new Promise((resolve) => setTimeout(resolve, 800));
+				}
+			}
+		);
+
+		if (!result.ok) {
+			error(`Error during setup: ${result.error}`);
+			finishError = true;
+			isProcessing = false;
+			processingStep = 'An error occurred. Please try again.';
+			return;
+		}
+
+		try {
 			// Update user context so the profile page reflects new data
-			if (userContext && userResult) {
+			if (userContext && result.user) {
 				userContext.updateUser({
-					id: userResult.id,
-					name: userResult.name!,
-					avatar: userResult.avatar!
+					id: result.user.id,
+					name: result.user.name!,
+					avatar: result.user.avatar!
 				});
 			}
-
-			processingStep = 'Recording body measurements...';
-			await new Promise((resolve) => setTimeout(resolve, 800));
-			if (!step1Parse.success) throw new Error('unreachable: Step 1 not valid at performSetup');
-			const input1 = step1Parse.data;
-			await updateBodyData({
-				age: input1.age,
-				sex: input1.sex,
-				height: input1.height,
-				weight: input1.weight,
-				activityLevel: input1.activityLevel
-			});
-
-			processingStep = 'Creating your personalized plan...';
-			await new Promise((resolve) => setTimeout(resolve, 800));
-			await wizardCreateTargets({
-				input: {
-					weightTracker: weightTracker!,
-					weightTarget: weightTarget!,
-					intakeTarget: intakeTarget!
-				}
-			});
 
 			processingStep = 'All set! Taking you to your dashboard...';
 			isProcessing = false;
@@ -365,9 +373,10 @@
 			// Navigate and invalidate all layout data to refetch user profile
 			await goto('/', { invalidateAll: true });
 		} catch (e) {
-			error(`Error during setup: ${e}`);
+			error(`Error during setup finalization: ${e}`);
 			finishError = true;
 			isProcessing = false;
+			isFadingOut = false;
 			processingStep = 'An error occurred. Please try again.';
 		}
 	};

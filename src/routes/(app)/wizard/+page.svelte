@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Setup from '$lib/component/wizard/Setup.svelte';
+	import { deriveStep4Title } from '$lib/component/wizard/title';
 	import { getUserContext } from '$lib/context';
 	import { Person, Heartbeat, ChartBar, Gauge, CheckCircle } from 'phosphor-svelte';
 
@@ -45,18 +46,7 @@
 		}
 	];
 
-	// Step 4 title is dynamic based on recommendation
-	let currentConfig = $derived.by(() => {
-		const config = stepConfig[currentStep - 1];
-		if (currentStep === 4 && recommendation === 'HOLD') {
-			return {
-				...config,
-				title: 'Select Your Target Weight',
-				subtitle: 'Choose a target weight within your healthy range'
-			};
-		}
-		return config;
-	});
+	let currentConfig = $derived(deriveStep4Title(stepConfig, currentStep, recommendation));
 </script>
 
 <div class="flex flex-col overflow-x-hidden">
