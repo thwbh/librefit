@@ -15,9 +15,9 @@ Component file paths follow the test-layout convention: tests are colocated as `
 
 ## 2. Export — progress modal
 
-- [ ] 2.1 Extract `ExportProgressModal.svelte` into `src/lib/component/export/`. Props: `stage`, `progress`, `format`, callbacks `oncancel`, `onclose`. `Close` is `disabled` unless `stage === 'complete'`.
-- [ ] 2.2 Update `src/routes/(app)/export/+page.svelte` to compose the new modal.
-- [ ] 2.3 Add `src/lib/component/export/ExportProgressModal.svelte.test.ts` citing `[EX-007]` — Close disabled while running, enabled at `complete`. Multi-cite `[STG-001..STG-003]` if the modal renders the stage label.
+- [x] 2.1 Extract `ExportProgressModal.svelte` into `src/lib/component/export/`. Props: `dialog` (bindable), `message`, `stage`, `progress`, `isExporting`, `filePath`, `bytesInfo`, callbacks `oncancel`, `onclose`. Close is `disabled={isExporting}` (preserved from original to honor Non-Goal "no interaction redesign"; design.md proposed `stage === 'complete'` but that would have been stricter than current shipping behavior).
+- [x] 2.2 Update `src/routes/(app)/export/+page.svelte` to compose the new modal. Removed inlined `LoadingIndicator`/`ModalDialog` block + unused `stageIcons`/`stageIcon` derivation + phosphor icons that only lived inside the modal.
+- [x] 2.3 Add `src/lib/component/export/ExportProgressModal.svelte.test.ts` — 9 tests citing `[EX-007]` (Close disabled/enabled), `[EX-006]` (Cancel enabled then disabled), `[EX-004]` (file-path alert), `[STG-001..STG-003]` (badge state transitions per progress %).
 
 ## 3. Profile — edit modal
 

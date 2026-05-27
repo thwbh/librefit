@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cancelExport, exportDatabaseFile, type ExportProgress } from '$lib/api';
 	import { ExportFormatSchema, ExportStageSchema } from '$lib/api/gen/types';
+	import ExportProgressModal from '$lib/component/export/ExportProgressModal.svelte';
 	import { Channel } from '@tauri-apps/api/core';
 	import { save } from '@tauri-apps/plugin-dialog';
 	import { writeFile } from '@tauri-apps/plugin-fs';
@@ -9,24 +10,10 @@
 		AlertBox,
 		AlertType,
 		AlertVariant,
-		LoadingIndicator,
-		ModalDialog,
 		OptionCards,
 		type OptionCardData
 	} from '@thwbh/veilchen';
-	import {
-		ArrowClockwise,
-		Check,
-		Coffee,
-		Database,
-		Eyeglasses,
-		FileCsv,
-		FilePdf,
-		FloppyDisk,
-		MagnifyingGlass,
-		TreeStructure,
-		Warning
-	} from 'phosphor-svelte';
+	import { Database, FileCsv, FilePdf, TreeStructure } from 'phosphor-svelte';
 
 	const ExportStage = ExportStageSchema.enum;
 	const ExportFormat = ExportFormatSchema.enum;
@@ -66,23 +53,6 @@
 	let exportFormat = $state(ExportFormat.csv);
 
 	let dialog: HTMLDialogElement | undefined = $state();
-
-	const stageIcons = {
-		[ExportStage.initializing]: Coffee,
-		[ExportStage.analyzingDatabase]: MagnifyingGlass,
-		[ExportStage.creatingBackup]: FloppyDisk,
-		[ExportStage.readingFile]: Eyeglasses,
-		[ExportStage.finalizing]: ArrowClockwise,
-		[ExportStage.complete]: Check,
-		[ExportStage.cancelled]: Warning,
-		[ExportStage.error]: Warning
-	};
-
-	let stageIcon = $derived.by(() => {
-		const value = ExportStageSchema.safeParse(exportStage).data!;
-
-		return stageIcons[value];
-	});
 
 	let exportStarted = $state(false);
 
@@ -267,65 +237,17 @@
 	</div>
 </div>
 
-<ModalDialog bind:dialog>
-	{#snippet title()}
-		<h3 class="text-lg font-bold">Data Export</h3>
-	{/snippet}
-	{#snippet content()}
-		<div class="export-container max-w-md mx-auto">
-			<LoadingIndicator
-				variant="bars"
-				label={exportMessage}
-				finished={!isExporting}
-				error={exportStage === ExportStage.error || exportStage === ExportStage.cancelled}
-			>
-				{#snippet finishedContent()}
-					<div class="flex flex-col items-center justify-center gap-2">
-						<Check size="2em" color={'var(--color-success)'} />
-						<span class="text-sm opacity-70">Finished.</span>
-					</div>
-				{/snippet}
-
-				{#snippet errorContent()}
-					<div class="flex flex-col items-center justify-center gap-2">
-						<Warning size="2em" color={'var(--color-warning)'} />
-						<span class="text-sm opacity-70 wrap-normal">{exportMessage}</span>
-					</div>
-				{/snippet}
-			</LoadingIndicator>
-
-			<div class="mt-6 space-y-4">
-				<!-- Status message -->
-				{#if filePath}
-					<AlertBox type={AlertType.Info} variant={AlertVariant.Callout} class="break-all">
-						File saved to {filePath}
-					</AlertBox>
-				{/if}
-
-				<!-- Bytes info (when available) -->
-				{#if bytesInfo}
-					<p class="text-xs text-gray-500 font-mono">{bytesInfo}</p>
-				{/if}
-
-				<!-- Stage pills -->
-				<div class="flex gap-2 flex-wrap">
-					<span class="badge badge-sm" class:badge-success={exportProgress > 5}>Initialize</span>
-					<span class="badge badge-sm" class:badge-success={exportProgress > 10}>Analyze</span>
-					<span class="badge badge-sm" class:badge-success={exportProgress > 60}>Backup</span>
-					<span class="badge badge-sm" class:badge-success={exportProgress > 95}>Read</span>
-					<span class="badge badge-sm" class:badge-success={exportProgress >= 100}>Done</span>
-				</div>
-			</div>
-		</div>
-	{/snippet}
-
-	{#snippet footer()}
-		<div class="flex flex-col gap-2">
-			<button class="btn btn-error" onclick={cancel} disabled={!isExporting}>Cancel</button>
-			<button class="btn" onclick={closeModal} disabled={isExporting}>Close</button>
-		</div>
-	{/snippet}
-</ModalDialog>
+<ExportProgressModal
+	bind:dialog
+	message={exportMessage}
+	stage={exportStage}
+	progress={exportProgress}
+	{isExporting}
+	{filePath}
+	{bytesInfo}
+	oncancel={cancel}
+	onclose={closeModal}
+/>
 
 <style>
 	.list-caret {
