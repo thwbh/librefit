@@ -39,11 +39,11 @@ Component file paths follow the test-layout convention: tests are colocated as `
 
 ## 5. Dashboard — intake FAB + modal + plan-review
 
-- [ ] 5.1 Extract `IntakeFab.svelte` into `src/lib/component/intake/`. Props: callback `onclick`. Renders the floating action button.
+- [x] 5.1 Extract `IntakeFab.svelte` into `src/lib/component/intake/`. Props: callback `onclick`. Renders the floating action button.
 - [ ] 5.2 Extract `IntakeModal.svelte` into `src/lib/component/intake/`. Props: `open`, `entry`, `categories`, callbacks `onsave`, `oncancel`, `ondelete`. Wraps `IntakeMask` + save/cancel/delete actions; consumes `useEntryModal`.
 - [ ] 5.3 Extract `PlanReviewPanel.svelte` into `src/lib/component/dashboard/`. Props: `plan`, `expanded`, callbacks `ontoggle`.
 - [ ] 5.4 Update `src/routes/(app)/+page.svelte` to compose `IntakeFab`, `IntakeModal`, `PlanReviewPanel`. The route owns the data (`load`) and the Tauri command wiring.
-- [ ] 5.5 Add `src/lib/component/intake/IntakeFab.svelte.test.ts` citing `[IT-005]` (click invokes onclick → opens create modal — covered by composition assertion).
+- [x] 5.5 Add `src/lib/component/intake/IntakeFab.svelte.test.ts` citing `[IT-005]` (click invokes onclick → opens create modal — covered by composition assertion).
 - [ ] 5.6 Add `src/lib/component/intake/IntakeModal.svelte.test.ts` citing `[IT-010]` (cancel without saving), `[IT-012]` (save edited entry), `[IT-013]` (delete with confirmation), `[IT-014]` (cancel delete). Multi-cite `[MOD-001..MOD-004]`.
 - [ ] 5.7 Add `src/lib/component/dashboard/PlanReviewPanel.svelte.test.ts` citing `[PR-001]` (expand), `[PR-002]` (collapse). Multi-cite `[ANI-001..ANI-003]` if the transition primitives are observable.
 

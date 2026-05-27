@@ -1,4 +1,5 @@
 <script lang="ts">
+	import IntakeFab from '$lib/component/intake/IntakeFab.svelte';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
 	import IntakeStack from '$lib/component/intake/IntakeStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
@@ -21,7 +22,7 @@
 	import { debug } from '@tauri-apps/plugin-log';
 	import { Avatar, ModalDialog, useRefresh } from '@thwbh/veilchen';
 	import { invalidate } from '$app/navigation';
-	import { Plus, Trash, CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
+	import { Trash, CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import {
 		convertDateStrToDisplayDateStr,
@@ -298,9 +299,7 @@
 		</div>
 	</div>
 </div>
-<button class="fab-button btn btn-xl btn-circle btn-primary shadow-lg" onclick={modal.openCreate}>
-	<Plus size="1.5em" />
-</button>
+<IntakeFab onclick={modal.openCreate} />
 <!-- Intake creation modal -->
 <ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
 	{#snippet title()}
@@ -361,15 +360,6 @@
 />
 
 <style>
-	.fab-button {
-		position: sticky;
-		bottom: 1rem;
-		float: right;
-		margin-right: 1rem;
-		margin-top: -4rem;
-		z-index: 39;
-	}
-
 	.journey-bar-track {
 		height: 0.25rem;
 		border-radius: 9999px;
