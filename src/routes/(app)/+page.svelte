@@ -36,8 +36,7 @@
 	import { differenceInDays } from 'date-fns';
 	import { slide, fly } from 'svelte/transition';
 	import NumberFlow from '@number-flow/svelte';
-	import IntakePlanCard from '$lib/component/journey/IntakePlanCard.svelte';
-	import EncouragementMessage from '$lib/component/journey/EncouragementMessage.svelte';
+	import PlanReviewPanel from '$lib/component/dashboard/PlanReviewPanel.svelte';
 
 	let { data } = $props();
 
@@ -256,31 +255,17 @@
 		</div>
 
 		<!-- Calorie plan & encouragement below the progress bar -->
-		{#if showPlan}
-			<div transition:slide={{ duration: 300 }} class="flex flex-col gap-4 mt-4">
-				<div in:fly={{ y: 20, duration: 400, delay: 150 }}>
-					<IntakePlanCard
-						dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
-						recommendation={weightTarget.targetWeight > weightTarget.initialWeight
-							? 'GAIN'
-							: 'LOSE'}
-						targetCalories={intakeTarget.targetCalories}
-						maximumCalories={intakeTarget.maximumCalories}
-						{averageIntake}
-					/>
-				</div>
-
-				<div in:fly={{ y: 20, duration: 400, delay: 250 }}>
-					<EncouragementMessage
-						{daysElapsed}
-						daysLeft={dayDiff}
-						{averageIntake}
-						targetCalories={intakeTarget.targetCalories}
-						{goalReached}
-					/>
-				</div>
-			</div>
-		{/if}
+		<PlanReviewPanel
+			expanded={showPlan}
+			dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
+			recommendation={weightTarget.targetWeight > weightTarget.initialWeight ? 'GAIN' : 'LOSE'}
+			targetCalories={intakeTarget.targetCalories}
+			maximumCalories={intakeTarget.maximumCalories}
+			{averageIntake}
+			{daysElapsed}
+			daysLeft={dayDiff}
+			{goalReached}
+		/>
 	</div>
 
 	<!-- Content area -->
