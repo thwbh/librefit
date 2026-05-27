@@ -37,36 +37,35 @@ describe('ProfileEditModal', () => {
 		expect(props.entry!.name).toBe('Bob');
 	});
 
-	it('[PF-008] nickname at frontend lower bound (2 chars) enables Save', async () => {
+	it('[PF-008] nickname at frontend lower bound (2 chars) lets save through', async () => {
 		const user = userEvent.setup();
-		const { container } = render(ProfileEditModal, { props: baseProps() });
+		const onsave = vi.fn();
+		const { container } = render(ProfileEditModal, { props: baseProps({ onsave }) });
 		openDialog(container);
 
 		const nickname = screen.getByLabelText(/Nickname/i) as HTMLInputElement;
 		await user.clear(nickname);
 		await user.type(nickname, 'Al');
 
-		const confirm = screen.getByRole('button', { name: /^Confirm$/ }) as HTMLButtonElement;
-		expect(nickname.value).toBe('Al');
-		expect(confirm.disabled).toBe(false);
+		await user.click(screen.getByRole('button', { name: /^Confirm$/ }));
+		expect(onsave).toHaveBeenCalled();
 	});
 
-	it('[PF-009] nickname at frontend upper bound (40 chars) enables Save', async () => {
+	it('[PF-009] nickname at frontend upper bound (40 chars) lets save through', async () => {
 		const user = userEvent.setup();
-		const { container } = render(ProfileEditModal, { props: baseProps() });
+		const onsave = vi.fn();
+		const { container } = render(ProfileEditModal, { props: baseProps({ onsave }) });
 		openDialog(container);
 
 		const nickname = screen.getByLabelText(/Nickname/i) as HTMLInputElement;
-		const fortyChars = 'A'.repeat(40);
 		await user.clear(nickname);
-		await user.type(nickname, fortyChars);
+		await user.type(nickname, 'A'.repeat(40));
 
-		const confirm = screen.getByRole('button', { name: /^Confirm$/ }) as HTMLButtonElement;
-		expect(nickname.value).toBe(fortyChars);
-		expect(confirm.disabled).toBe(false);
+		await user.click(screen.getByRole('button', { name: /^Confirm$/ }));
+		expect(onsave).toHaveBeenCalled();
 	});
 
-	it('[PF-010] nickname below frontend lower bound (1 char) disables Save', async () => {
+	it('[PF-010] [VAL-013] Confirm with a 1-char nickname does NOT invoke onsave', async () => {
 		const user = userEvent.setup();
 		const onsave = vi.fn();
 		const { container } = render(ProfileEditModal, { props: baseProps({ onsave }) });
@@ -76,30 +75,36 @@ describe('ProfileEditModal', () => {
 		await user.clear(nickname);
 		await user.type(nickname, 'A');
 
-		const confirm = screen.getByRole('button', { name: /^Confirm$/ }) as HTMLButtonElement;
-		expect(confirm.disabled).toBe(true);
-
-		// Defense-in-depth: even if the button somehow gets clicked, onsave must not fire.
-		await user.click(confirm);
+		await user.click(screen.getByRole('button', { name: /^Confirm$/ }));
 		expect(onsave).not.toHaveBeenCalled();
 	});
 
-	it('[PF-011] maxlength prevents typing the 41st character; Save stays enabled at 40', async () => {
+	it('[PF-011] maxlength prevents typing the 41st character; Confirm at 40 chars proceeds', async () => {
 		const user = userEvent.setup();
-		const { container } = render(ProfileEditModal, { props: baseProps() });
+		const onsave = vi.fn();
+		const { container } = render(ProfileEditModal, { props: baseProps({ onsave }) });
 		openDialog(container);
 
 		const nickname = screen.getByLabelText(/Nickname/i) as HTMLInputElement;
 		await user.clear(nickname);
 		await user.type(nickname, 'A'.repeat(41));
 
-		// The native input respects maxlength=40 and refuses the 41st character —
-		// so a 41-char nickname can never actually exist in the UI.
 		expect(nickname.maxLength).toBe(40);
 		expect(nickname.value.length).toBe(40);
 
-		const confirm = screen.getByRole('button', { name: /^Confirm$/ }) as HTMLButtonElement;
-		expect(confirm.disabled).toBe(false);
+		await user.click(screen.getByRole('button', { name: /^Confirm$/ }));
+		expect(onsave).toHaveBeenCalled();
+	});
+
+	it('[VAL-012] ValidatedInput renders its constraint message text in the DOM', () => {
+		const { container } = render(ProfileEditModal, { props: baseProps() });
+		openDialog(container);
+
+		// ValidatedInput renders the children snippet inside its hint span.
+		// The visibility of that hint is DaisyUI :invalid-driven CSS — we only
+		// assert presence here.
+		const hint = container.textContent ?? '';
+		expect(hint).toMatch(/Nickname must be between 2 and 40 characters long/);
 	});
 
 	it('[MOD-001] errorMessage prop surfaces as an alert inside the modal', () => {

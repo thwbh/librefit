@@ -2,6 +2,7 @@
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
 	import IntakeStack from '$lib/component/intake/IntakeStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
+	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import {
 		createIntake,
 		createWeightTrackerEntry,
@@ -18,13 +19,12 @@
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
-	import { Avatar, ModalDialog, NumberStepper, useRefresh } from '@thwbh/veilchen';
+	import { Avatar, ModalDialog, useRefresh } from '@thwbh/veilchen';
 	import { invalidate } from '$app/navigation';
 	import { Plus, Trash, CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import {
 		convertDateStrToDisplayDateStr,
-		display_date_format,
 		getDateAsStr,
 		getDisplayDateAsStr,
 		parseStringAsDate
@@ -352,41 +352,13 @@
 </ModalDialog>
 
 <!-- Weight modal -->
-<ModalDialog
+<WeightModal
 	bind:dialog={modalWeight.createDialog.value}
-	onconfirm={modalWeight.save}
+	bind:entry={modalWeight.currentEntry}
+	errorMessage={modalWeight.errorMessage}
+	onsave={modalWeight.save}
 	oncancel={modalWeight.cancel}
->
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
-		<span class="text-xs opacity-70">
-			{getDateAsStr(new Date(), display_date_format)}
-		</span>
-	{/snippet}
-	{#snippet content()}
-		<fieldset class="fieldset rounded-box">
-			{#if modalWeight.errorMessage}
-				<div class="alert alert-error mb-4">
-					<span>{modalWeight.errorMessage}</span>
-				</div>
-			{/if}
-			{#if modalWeight.currentEntry}
-				<NumberStepper
-					bind:value={modalWeight.currentEntry.amount}
-					label="Current Weight"
-					unit="kg"
-					min={30}
-					max={330}
-					incrementSteps={[0.5, 1, 2, 5]}
-					decrementSteps={[0.5, 1, 2, 5]}
-					initialIncrementStep={1}
-					initialDecrementStep={1}
-					showLeftWheel={false}
-				/>
-			{/if}
-		</fieldset>
-	{/snippet}
-</ModalDialog>
+/>
 
 <style>
 	.fab-button {

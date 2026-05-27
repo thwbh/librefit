@@ -6,7 +6,7 @@ Several feature scenarios across `intake-tracking`, `weight-tracking`, `history`
 
 - Extract dashboard FAB + intake create/edit/delete flow into a standalone component (or composable) so `IntakeFab` + `IntakeModal` can be unit-tested without rendering the full dashboard.
 - Extract dashboard plan-review expand/collapse into `PlanReviewPanel` so its toggle behavior is testable in isolation.
-- Extract weight create/edit flow on the dashboard into `WeightModal`, mirroring `IntakeMask`'s shape, so frontend lower-bound rejection ([WT-009]) is assertable.
+- Extract weight create/edit flow on the dashboard into `WeightModal`, mirroring `IntakeMask`'s shape. Tighten `[WT-009]` (and the `Weight value bounds` requirement that contains it) so the UI clamps out-of-bounds typed input to the nearest valid value on commit (blur / before submit) instead of letting it round-trip and be rejected by the backend. `[WT-009]` was the only scenario in the codebase that previously documented a deliberate UI-permissive / backend-strict gap; closing it matches the post-`[PF-010]` direction (frontend gates obviously-invalid input, backend stays authoritative).
 - Extract `wizard/Setup.svelte`'s `performSetup` orchestration into a pure-ish function (returns either an error or all three created targets) so [OB-015], [OB-016], [OB-017], [PF-015] can be unit-tested without driving the full `Stepper`.
 - Extract `wizard/+page.svelte` step-4 title derivation into a pure helper so [OB-014] becomes a one-line assertion.
 - Extract `history/+page.svelte` (592 lines) into `HistoryWeek` (week pager + swipe across week boundary) and `HistoryDayCard` (single day card with badges, swipe-to-edit/delete, weight read-out) so [HI-001]..[HI-013] UI parts are testable.
@@ -16,7 +16,7 @@ Several feature scenarios across `intake-tracking`, `weight-tracking`, `history`
 
 **Non-goals**
 
-- No spec scenarios change. Every requirement and acceptance criterion in `openspec/specs/<feature>/spec.md` stays as-is. Scenario IDs are not renumbered.
+- No spec scenarios change **except** `weight-tracking [WT-009]` and its enclosing requirement, which are rewritten to describe the new clamp-on-commit behavior (see _Modified Capabilities_ below). All other scenario IDs and acceptance criteria across every spec stay as-is; no scenario IDs are renumbered.
 - No visual or interaction redesign. Extractions must produce the same DOM and the same user-observable behavior.
 - Not changing the Tauri command surface, the Diesel schema, or any Rust code. This is purely a frontend structural refactor plus the unit tests it unlocks.
 - Not introducing a new state-management library or pattern. Extracted components receive props and emit callbacks the way the rest of the codebase already does.
@@ -30,11 +30,14 @@ _None._ This is a structural refactor; no new behavior is introduced.
 
 ### Modified Capabilities
 
-_None._ No requirement-level behavior changes. Affected feature specs (`intake-tracking`, `weight-tracking`, `history`, `plan-review`, `profile`, `onboarding`, `data-export`, `app-shell`) keep their current scenarios unchanged — this change only makes the existing scenarios reachable from Vitest. Convention specs (`_conv-gestures`, `_conv-animations`, `_conv-validation`) also remain unchanged; their pending IDs simply gain citations from the new component tests.
+- `_conv-validation`: new requirement `Inline feedback for invalid input` added (project-wide UI convention). Two new scenarios: `[VAL-012]` (validation message visible whenever input is invalid) and `[VAL-013]` (submit disabled while any required field is invalid). Surfaced during weight-modal smoke testing — the same shape applies to nickname / intake amount / any future user-editable form input. Test citations land in the new `WeightModal` + `ProfileEditModal` tests now; future feature modals are expected to cite the same IDs.
+- `weight-tracking`: `Weight value bounds` requirement updated. `[WT-009]` is rewritten from _"UI permits value below backend lower bound"_ (documented gap) to _"UI clamps out-of-bounds typed input on commit"_ (gap closed). The requirement's preamble now reflects that the modal clamps on blur / before submit, while the backend remains authoritative. `[WT-005]..[WT-008]` are unchanged. See `specs/weight-tracking/spec.md` for the delta.
+
+All other affected feature specs (`intake-tracking`, `history`, `plan-review`, `profile`, `onboarding`, `data-export`, `app-shell`) keep their current scenarios unchanged — for those, this change only makes the existing scenarios reachable from Vitest. Convention specs (`_conv-gestures`, `_conv-animations`, `_conv-validation`) also remain unchanged; their pending IDs simply gain citations from the new component tests. Note: `[VAL-008]` ("Tighter UI range does not override backend") is no longer cited by `[WT-009]` after this change — `[WT-009]` is the only feature scenario that historically demonstrated the deliberate-permissive pattern, so `[VAL-008]` becomes uncited until another flow surfaces the same shape.
 
 ## Impact
 
-- **Code** — net-new components under `src/lib/component/` (`intake/IntakeFab.svelte`, `intake/IntakeModal.svelte`, `dashboard/PlanReviewPanel.svelte`, `weight/WeightModal.svelte`, `wizard/setup-orchestration.ts` + `wizard/title.ts`, `history/HistoryWeek.svelte`, `history/HistoryDayCard.svelte`, `profile/ProfileEditModal.svelte`, `export/ExportProgressModal.svelte`). Each route file (`dashboard`, `history`, `wizard`, `profile`, `export`) shrinks substantially and becomes a thin composition layer.
+- **Code** — net-new components under `src/lib/component/` (`intake/IntakeFab.svelte`, `intake/IntakeModal.svelte`, `dashboard/PlanReviewPanel.svelte`, `weight/WeightModal.svelte`, `wizard/setup-orchestration.ts` + `wizard/title.ts`, `history/HistoryWeek.svelte`, `history/HistoryDayCard.svelte`, `profile/ProfileEditModal.svelte`, `export/ExportProgressModal.svelte`). New composable `src/lib/composition/useFieldValidity.svelte.ts` carries the `[VAL-012]` / `[VAL-013]` contract project-wide. Each route file (`dashboard`, `history`, `wizard`, `profile`, `export`) shrinks substantially and becomes a thin composition layer.
 - **Tests** — ~25 new Vitest files / cases colocated next to the extracted units per the test layout convention. Citations land in the new tests; the traceability gate (`scripts/check-spec-traceability.sh`) is expected to move from 100/163 to ~150+/163 once this change ships.
 - **APIs / Tauri commands** — unchanged.
 - **Dependencies** — none added.

@@ -12,7 +12,8 @@
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import { getFoodCategoryIcon, getFoodCategoryLongvalue } from '$lib/api/category';
 	import { CaretLeft, CaretRight, ForkKnife, HandTap, Pencil, Trash } from 'phosphor-svelte';
-	import { ModalDialog, NumberStepper, SwipeableListItem } from '@thwbh/veilchen';
+	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
+	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { getCategoriesContext } from '$lib/context';
@@ -514,79 +515,21 @@
 </ModalDialog>
 
 <!-- Create WeightTracker modal -->
-<ModalDialog
+<WeightModal
 	bind:dialog={modalWeight.createDialog.value}
-	onconfirm={modalWeight.save}
+	bind:entry={modalWeight.currentEntry}
+	errorMessage={modalWeight.errorMessage}
+	incrementSteps={[0.5, 1, 2, 5, 20, 50]}
+	decrementSteps={[0.5, 1, 2, 5, 20, 50]}
+	onsave={modalWeight.save}
 	oncancel={modalWeight.cancel}
->
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
-		{#if modalWeight.currentEntry}
-			<span class="text-xs opacity-70">
-				{convertDateStrToDisplayDateStr((modalWeight.currentEntry as WeightTracker).added)}
-			</span>
-		{/if}
-	{/snippet}
-	{#snippet content()}
-		<fieldset class="fieldset rounded-box">
-			{#if modalWeight.errorMessage}
-				<div class="alert alert-error mb-4">
-					<span>{modalWeight.errorMessage}</span>
-				</div>
-			{/if}
-			{#if modalWeight.currentEntry}
-				<NumberStepper
-					bind:value={modalWeight.currentEntry.amount}
-					label="Current Weight"
-					unit="kg"
-					min={30}
-					max={330}
-					incrementSteps={[0.5, 1, 2, 5, 20, 50]}
-					decrementSteps={[0.5, 1, 2, 5, 20, 50]}
-					initialIncrementStep={1}
-					initialDecrementStep={1}
-					showLeftWheel={false}
-				/>
-			{/if}
-		</fieldset>
-	{/snippet}
-</ModalDialog>
+/>
 
 <!-- Edit WeightTracker modal -->
-<ModalDialog
+<WeightModal
 	bind:dialog={modalWeight.editDialog.value}
-	onconfirm={modalWeight.save}
+	bind:entry={modalWeight.currentEntry}
+	errorMessage={modalWeight.errorMessage}
+	onsave={modalWeight.save}
 	oncancel={modalWeight.cancel}
->
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
-		{#if modalWeight.currentEntry}
-			<span class="text-xs opacity-70">
-				{convertDateStrToDisplayDateStr((modalWeight.currentEntry as WeightTracker).added)}
-			</span>
-		{/if}
-	{/snippet}
-	{#snippet content()}
-		<fieldset class="fieldset rounded-box">
-			{#if modalWeight.errorMessage}
-				<div class="alert alert-error mb-4">
-					<span>{modalWeight.errorMessage}</span>
-				</div>
-			{/if}
-			{#if modalWeight.currentEntry}
-				<NumberStepper
-					bind:value={modalWeight.currentEntry.amount}
-					label="Current Weight"
-					unit="kg"
-					min={30}
-					max={330}
-					incrementSteps={[0.5, 1, 2, 5]}
-					decrementSteps={[0.5, 1, 2, 5]}
-					initialIncrementStep={1}
-					initialDecrementStep={1}
-					showLeftWheel={false}
-				/>
-			{/if}
-		</fieldset>
-	{/snippet}
-</ModalDialog>
+/>

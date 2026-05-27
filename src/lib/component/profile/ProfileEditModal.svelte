@@ -3,6 +3,7 @@
 	import { Avatar, ModalDialog, ValidatedInput } from '@thwbh/veilchen';
 	import { slide } from 'svelte/transition';
 	import { getAvatar } from '$lib/avatar';
+	import { useFieldValidity } from '$lib/composition/useFieldValidity.svelte';
 	import AvatarPickerContent from './AvatarPickerContent.svelte';
 
 	interface Props {
@@ -35,14 +36,36 @@
 
 	const currentAvatar = $derived(getAvatar(entry?.avatar || entry?.name || ''));
 
-	// PF-010 / PF-011: gate Save at the UI so a sub-min nickname never round-trips
-	// to the backend. maxlength on the input already prevents the 41-char case from
-	// happening; minlength does not block submission natively (ModalDialog isn't a
-	// form), so we enforce it explicitly here.
-	const isNicknameValid = $derived.by(() => {
-		const n = entry?.name;
-		return typeof n === 'string' && n.length >= 2 && n.length <= 40;
+	// [PF-010] / [VAL-013]: gate Save at the UI so a sub-min nickname never
+	// round-trips to the backend. maxlength on the input already prevents the
+	// 41-char case from happening; minlength is informational natively
+	// (ModalDialog isn't a form), so we enforce it explicitly here.
+	const validity = useFieldValidity({
+		matches: '#profile-name',
+		source: () => entry?.name,
+		isValid: (raw) => raw.length >= 2 && raw.length <= 40
 	});
+
+	// Per [VAL-012] / [VAL-013]: don't pre-emptively disable Confirm; gate the
+	// actual save behind `validity.attempt()` and shake on the first invalid
+	// attempt of each "still invalid" period.
+	let shaken = $state(false);
+	let shakeKey = $state(0);
+
+	$effect(() => {
+		if (validity.displayValid) shaken = false;
+	});
+
+	function handleConfirmClick(event?: Event) {
+		if (validity.attempt()) {
+			onsave(event);
+			return;
+		}
+		if (!shaken) {
+			shaken = true;
+			shakeKey++;
+		}
+	}
 
 	function handleCancel() {
 		showAvatarPicker = false;
@@ -50,13 +73,13 @@
 	}
 </script>
 
-<ModalDialog bind:dialog oncancel={handleCancel} onconfirm={onsave}>
+<ModalDialog bind:dialog oncancel={handleCancel} onconfirm={handleConfirmClick}>
 	{#snippet title()}
 		<h3 class="text-lg font-bold">Edit Profile</h3>
 	{/snippet}
 
 	{#snippet content()}
-		<div class="space-y-6">
+		<div class="space-y-6" oninput={validity.handleInput}>
 			{#if errorMessage}
 				<div class="alert alert-error">
 					<span>{errorMessage}</span>
@@ -104,7 +127,36 @@
 	{/snippet}
 
 	{#snippet footer()}
-		<button class="btn btn-primary" onclick={onsave} disabled={!isNicknameValid}>Confirm</button>
+		{#key shakeKey}
+			<button
+				class="btn btn-primary confirm-button"
+				class:shake={shakeKey > 0}
+				onclick={handleConfirmClick}
+			>
+				Confirm
+			</button>
+		{/key}
 		<button class="btn" onclick={handleCancel}>Cancel</button>
 	{/snippet}
 </ModalDialog>
+
+<style>
+	@keyframes shake {
+		0%,
+		100% {
+			transform: translateX(0);
+		}
+		20%,
+		60% {
+			transform: translateX(-6px);
+		}
+		40%,
+		80% {
+			transform: translateX(6px);
+		}
+	}
+
+	.confirm-button.shake {
+		animation: shake 0.3s ease-in-out;
+	}
+</style>
