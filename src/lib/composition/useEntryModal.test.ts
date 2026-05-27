@@ -540,6 +540,21 @@ describe('useEntryModal', () => {
 
 			expect(modal.enableDelete).toBe(true);
 		});
+
+		it('cancelDelete flips enableDelete back to false (trash-toggle recovery)', () => {
+			const modal = useEntryModal<TestEntry, NewTestEntry>({
+				onCreate: onCreateMock,
+				onUpdate: onUpdateMock,
+				onDelete: onDeleteMock,
+				getBlankEntry: () => blankEntry
+			});
+
+			modal.requestDelete();
+			expect(modal.enableDelete).toBe(true);
+
+			modal.cancelDelete();
+			expect(modal.enableDelete).toBe(false);
+		});
 	});
 
 	describe('Dialog Bindings', () => {

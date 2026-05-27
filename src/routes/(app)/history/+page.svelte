@@ -7,12 +7,12 @@
 		type TrackerHistory,
 		type WeightTracker
 	} from '$lib/api';
-	import { convertDateStrToDisplayDateStr, getDateAsStr, parseStringAsDate } from '$lib/date.js';
+	import { getDateAsStr, parseStringAsDate } from '$lib/date.js';
 	import NumberFlow from '@number-flow/svelte';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import { getFoodCategoryIcon, getFoodCategoryLongvalue } from '$lib/api/category';
 	import { CaretLeft, CaretRight, ForkKnife, HandTap, Pencil, Trash } from 'phosphor-svelte';
-	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
+	import { SwipeableListItem } from '@thwbh/veilchen';
 	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import { longpress } from '$lib/gesture/long-press';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
@@ -31,7 +31,7 @@
 	} from '$lib/api/gen/commands.js';
 	import { debug } from '@tauri-apps/plugin-log';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
-	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
+	import IntakeModal from '$lib/component/intake/IntakeModal.svelte';
 
 	let { data } = $props();
 
@@ -442,77 +442,34 @@
 </div>
 
 <!-- Create Intake modal -->
-<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Add Intake</span>
-		<span class="text-xs opacity-60">
-			Date: {convertDateStrToDisplayDateStr(selectedDateStr)}
-		</span>
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask bind:entry={modal.currentEntry} isEditing={true} />
-		{/if}
-	{/snippet}
-</ModalDialog>
-
-<!-- Edit Intake modal -->
-<ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		{#if modal.currentEntry}
-			<span class="modal-header border-l-4 border-accent pl-2">Edit Intake</span>
-			<span>
-				<span class="text-xs opacity-60">
-					Added: {convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
-				</span>
-				<span>
-					<button class="btn btn-xs btn-error">
-						<Trash size="1rem" onclick={modal.requestDelete} />
-					</button>
-				</span>
-			</span>
-		{/if}
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask bind:entry={modal.currentEntry as Intake} isEditing={modal.isEditing} />
-		{/if}
-	{/snippet}
-
-	{#snippet footer()}
-		{#if modal.enableDelete}
-			<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
-		{:else}
-			<button class="btn btn-primary" onclick={modal.save}>Save</button>
-		{/if}
-		<button class="btn" onclick={modal.cancel}>Cancel</button>
-	{/snippet}
-</ModalDialog>
-
-<!-- Delete Intake modal -->
-<ModalDialog
-	bind:dialog={modal.deleteDialog.value}
-	onconfirm={modal.deleteEntry}
+<IntakeModal
+	bind:dialog={modal.createDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="create"
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
 	oncancel={modal.cancel}
->
-	{#snippet title()}
-		<span>Delete Intake</span>
-		<span class="text-sm font-normal opacity-70"> Are you sure? </span>
-	{/snippet}
+/>
 
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask entry={modal.currentEntry as Intake} readonly={true} />
-		{/if}
-	{/snippet}
+<!-- Edit Intake modal — no trash button (history has swipe-to-delete on the row) -->
+<IntakeModal
+	bind:dialog={modal.editDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="edit"
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
+	oncancel={modal.cancel}
+/>
 
-	{#snippet footer()}
-		<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
-		<button class="btn" onclick={modal.cancel}>Cancel</button>
-	{/snippet}
-</ModalDialog>
+<!-- Delete Intake modal (swipe-to-delete direct entry) -->
+<IntakeModal
+	bind:dialog={modal.deleteDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="delete"
+	errorMessage={modal.errorMessage}
+	oncancel={modal.cancel}
+	ondelete={modal.deleteEntry}
+/>
 
 <!-- Create WeightTracker modal -->
 <WeightModal

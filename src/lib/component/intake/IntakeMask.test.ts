@@ -35,20 +35,20 @@ describe('IntakeMask', () => {
 
 	describe('Readonly Mode', () => {
 		it('should display category badge in readonly mode', () => {
-			const { container } = renderWithContext(mockEntry, { readonly: true });
+			const { container } = renderWithContext(mockEntry, { compact: true });
 
 			expect(container.textContent).toContain('Lunch');
 		});
 
 		it('should show category badge without edit button', () => {
-			const { container } = renderWithContext(mockEntry, { readonly: true });
+			const { container } = renderWithContext(mockEntry, { compact: true });
 
 			const editButton = screen.queryByLabelText(/press to edit/i);
 			expect(editButton).toBeNull();
 		});
 
 		it('should display description as paragraph in readonly mode', () => {
-			renderWithContext(mockEntry, { readonly: true });
+			renderWithContext(mockEntry, { compact: true });
 
 			// In readonly mode, there should be no textarea
 			const textarea = document.querySelector('textarea');
@@ -59,7 +59,7 @@ describe('IntakeMask', () => {
 		});
 
 		it('should not show category selector in readonly mode', () => {
-			const { container } = renderWithContext(mockEntry, { readonly: true });
+			const { container } = renderWithContext(mockEntry, { compact: true });
 
 			// In readonly mode, there should be no join group (icon buttons)
 			const joinGroup = container.querySelector('.join');
@@ -115,6 +115,37 @@ describe('IntakeMask', () => {
 
 			const textarea = document.querySelector('textarea');
 			expect(textarea?.disabled).toBe(false);
+		});
+	});
+
+	describe('Readonly full form (modal delete-confirm)', () => {
+		it('readonly + not compact renders the full form (not the summary card)', () => {
+			const { container } = renderWithContext(mockEntry, { readonly: true });
+
+			// The summary `.fieldset.rounded-box` card layout is only used when
+			// compact=true; readonly alone keeps the full form structure visible.
+			const join = container.querySelector('.join');
+			expect(join).not.toBeNull();
+			expect(document.querySelector('textarea')).not.toBeNull();
+		});
+
+		it('readonly wraps the form in fieldset[disabled] (browser propagates to descendants)', () => {
+			const { container } = renderWithContext(mockEntry, { readonly: true });
+
+			// fieldset[disabled] is the HTML-standard way to disable an entire
+			// form group. The browser propagates :disabled to every descendant
+			// form control via CSS — we just need to verify the wrapper is set.
+			const fs = container.querySelector('fieldset[disabled]');
+			expect(fs).not.toBeNull();
+
+			// Directly-rendered controls (textarea, category buttons) keep their
+			// per-control disabled wiring too, so jsdom's lack of full
+			// :disabled propagation doesn't matter here.
+			const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+			expect(textarea.disabled).toBe(true);
+
+			const categoryButtons = container.querySelectorAll('button[aria-pressed]');
+			categoryButtons.forEach((b) => expect((b as HTMLButtonElement).disabled).toBe(true));
 		});
 	});
 
@@ -193,7 +224,7 @@ describe('IntakeMask', () => {
 		});
 
 		it('should not render textarea in readonly mode', () => {
-			renderWithContext(mockEntry, { readonly: true });
+			renderWithContext(mockEntry, { compact: true });
 
 			// In readonly mode, description is shown as text, not a textarea
 			const textarea = document.querySelector('textarea');
@@ -204,35 +235,35 @@ describe('IntakeMask', () => {
 	describe('Category Mapping', () => {
 		it('should display Breakfast category', () => {
 			const entry = { ...mockEntry, category: 'b' };
-			const { container } = renderWithContext(entry, { readonly: true });
+			const { container } = renderWithContext(entry, { compact: true });
 
 			expect(container.textContent).toContain('Breakfast');
 		});
 
 		it('should display Lunch category', () => {
 			const entry = { ...mockEntry, category: 'l' };
-			const { container } = renderWithContext(entry, { readonly: true });
+			const { container } = renderWithContext(entry, { compact: true });
 
 			expect(container.textContent).toContain('Lunch');
 		});
 
 		it('should display Dinner category', () => {
 			const entry = { ...mockEntry, category: 'd' };
-			const { container } = renderWithContext(entry, { readonly: true });
+			const { container } = renderWithContext(entry, { compact: true });
 
 			expect(container.textContent).toContain('Dinner');
 		});
 
 		it('should display Snack category', () => {
 			const entry = { ...mockEntry, category: 's' };
-			const { container } = renderWithContext(entry, { readonly: true });
+			const { container } = renderWithContext(entry, { compact: true });
 
 			expect(container.textContent).toContain('Snack');
 		});
 
 		it('should display Treat category', () => {
 			const entry = { ...mockEntry, category: 't' };
-			const { container } = renderWithContext(entry, { readonly: true });
+			const { container } = renderWithContext(entry, { compact: true });
 
 			expect(container.textContent).toContain('Treat');
 		});

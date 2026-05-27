@@ -81,6 +81,32 @@ describe('IntakeModal', () => {
 		expect(screen.getByText('Save failed')).toBeTruthy();
 	});
 
+	it('[VAL-013] [VAL-014] Save click with an invalid amount does NOT invoke onsave and reveals the schema message', async () => {
+		const user = userEvent.setup();
+		const onsave = vi.fn();
+
+		// amount=0 is below the NewIntake bound (must be 1-10,000).
+		const props = $state({
+			entry: makeNewIntake({ amount: 0 }) as Intake | NewIntake | null | undefined,
+			mode: 'create' as const,
+			onsave,
+			oncancel: vi.fn()
+		});
+		const { container } = renderModal(props);
+		openDialog(container);
+
+		await user.click(screen.getByRole('button', { name: /^Save$/ }));
+
+		expect(onsave).not.toHaveBeenCalled();
+
+		const { NewIntakeSchema } = await import('$lib/api/gen/types');
+		const expected = NewIntakeSchema.safeParse({ ...makeNewIntake({ amount: 0 }) });
+		expect(expected.success).toBe(false);
+		const schemaMessage = expected.success ? '' : expected.error.issues[0].message;
+
+		expect(container.querySelector('.alert-error')?.textContent).toContain(schemaMessage);
+	});
+
 	it('[IT-010] [MOD-004] cancel in create mode fires oncancel and not onsave', async () => {
 		const user = userEvent.setup();
 		const onsave = vi.fn();
@@ -120,6 +146,34 @@ describe('IntakeModal', () => {
 
 		expect(onsave).toHaveBeenCalledTimes(1);
 		expect((props.entry as Intake).category).toBe('d');
+	});
+
+	it('trash toggles delete-confirm: a second click fires oncanceldelete and returns to edit', async () => {
+		const user = userEvent.setup();
+		const oncanceldelete = vi.fn();
+
+		const props = $state({
+			entry: makeIntake() as Intake | NewIntake | null | undefined,
+			mode: 'edit' as const,
+			enableDelete: true, // already in delete-confirm view
+			onsave: vi.fn(),
+			oncancel: vi.fn(),
+			onrequestdelete: vi.fn(),
+			oncanceldelete,
+			ondelete: vi.fn()
+		});
+		const { container } = renderModal(props);
+		openDialog(container);
+
+		// Title reflects the view, not the mode.
+		expect(container.textContent).toContain('Delete Intake');
+
+		// Trash button stays in the title bar so the user can back out.
+		const trash = screen.getByLabelText(/Delete intake/i);
+		expect(trash.getAttribute('aria-pressed')).toBe('true');
+
+		await user.click(trash);
+		expect(oncanceldelete).toHaveBeenCalledTimes(1);
 	});
 
 	it('[IT-013] [MOD-002] trash → enableDelete flips footer; Delete button fires ondelete', async () => {

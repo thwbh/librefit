@@ -320,6 +320,7 @@
 	onsave={modal.save}
 	oncancel={modal.cancel}
 	onrequestdelete={modal.requestDelete}
+	oncanceldelete={modal.cancelDelete}
 	ondelete={modal.deleteEntry}
 />
 

@@ -7,6 +7,17 @@
 	interface Props {
 		entry: Intake | NewIntake;
 		class?: string;
+		/**
+		 * Compact one-row summary used in stacks/lists. Defaults to false; the
+		 * modal context renders the full form. Stack/list callers pass
+		 * `compact` to get the small card.
+		 */
+		compact?: boolean;
+		/**
+		 * Disable interaction with the full form. Used in the modal's
+		 * delete-confirm view so the same layout renders without resizing,
+		 * but inputs/buttons are inert. Ignored when `compact` is true.
+		 */
 		readonly?: boolean;
 		isEditing?: boolean;
 		onedit?: () => void;
@@ -15,6 +26,7 @@
 	let {
 		entry = $bindable(),
 		class: className = 'fieldset rounded-box',
+		compact = false,
 		readonly = false
 	}: Props = $props();
 
@@ -26,7 +38,7 @@
 	};
 </script>
 
-{#if readonly}
+{#if compact}
 	<fieldset class="fieldset rounded-box p-3 space-y-2">
 		<div class="flex items-center justify-between">
 			<h3 class="text-lg font-semibold">
@@ -49,7 +61,7 @@
 		</div>
 	</fieldset>
 {:else}
-	<div class="flex flex-col gap-1 w-full">
+	<fieldset class="flex flex-col gap-1 w-full" disabled={readonly}>
 		<span class="text-lg mt-1 font-semibold"
 			>{getFoodCategoryLongvalue(categories, entry.category)}</span
 		>
@@ -96,7 +108,7 @@
 				{entry.description?.length || 0} / 500
 			</span>
 		</div>
-	</div>
+	</fieldset>
 {/if}
 
 <style>

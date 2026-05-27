@@ -264,6 +264,15 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 	};
 
 	/**
+	 * Symmetric to `requestDelete`: leave delete-confirm and return to the
+	 * editable view. Wired to `IntakeModal.oncanceldelete` so a misclicked
+	 * trash icon doesn't force the user to Cancel the whole modal.
+	 */
+	const cancelDelete = () => {
+		enableDelete = false;
+	};
+
+	/**
 	 * Clear error message
 	 */
 	const clearError = () => {
@@ -333,6 +342,7 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 		cancel,
 		deleteEntry,
 		requestDelete,
+		cancelDelete,
 		clearError
 	};
 }
