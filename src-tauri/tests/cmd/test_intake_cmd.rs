@@ -411,3 +411,24 @@ fn time_defaults_when_unset() {
     assert_eq!(entry.time.chars().nth(2), Some(':'));
     assert_eq!(entry.time.chars().nth(5), Some(':'));
 }
+
+#[test]
+fn explicit_time_in_hms_format_accepted() {
+    scenario!("[VAL-003]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake {
+        added: "2026-01-15".to_string(),
+        amount: 500,
+        category: "b".to_string(),
+        description: None,
+        time: Some("14:30:45".to_string()),
+    };
+
+    let entry =
+        create_intake(app.state(), new_entry).expect("valid HH:MM:SS time should be accepted");
+
+    assert_eq!(entry.time, "14:30:45");
+}

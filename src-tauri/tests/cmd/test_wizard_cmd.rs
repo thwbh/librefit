@@ -793,3 +793,30 @@ fn bmi_in_hold_range_yields_standard_weight() {
         result.bmi
     );
 }
+
+/// Enum-constrained fields reach the backend as JSON strings that Tauri
+/// deserializes into the Rust enum. The allowed set is enforced at that
+/// deserialization boundary — a value in the set decodes successfully.
+#[test]
+fn enum_value_within_allowed_set_accepted() {
+    scenario!("[VAL-009]");
+
+    assert!(matches!(
+        serde_json::from_str::<CalculationSex>("\"MALE\""),
+        Ok(CalculationSex::MALE)
+    ));
+    assert!(matches!(
+        serde_json::from_str::<CalculationGoal>("\"LOSS\""),
+        Ok(CalculationGoal::LOSS)
+    ));
+}
+
+/// A value outside the allowed set is rejected at the same deserialization
+/// boundary, before any handler logic runs.
+#[test]
+fn enum_value_outside_allowed_set_rejected() {
+    scenario!("[VAL-010]");
+
+    assert!(serde_json::from_str::<CalculationSex>("\"ROBOT\"").is_err());
+    assert!(serde_json::from_str::<CalculationGoal>("\"MAINTAIN\"").is_err());
+}

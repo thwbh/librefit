@@ -23,7 +23,7 @@ The wizard's UI flow has no Vitest coverage today; most scenarios need new tests
 - [x] 1.3 `[OB-003] Direct access to protected route` → NEW Vitest: same `+layout.test.ts` — assert 307 to `/welcome`.
 - [x] 1.4 `[OB-004] Unprotected routes remain accessible` → NEW Vitest: `+layout.test.ts` — assert `/welcome` and `/setup` are not guarded (verified by the loader returning shared data when authenticated; `/welcome` + `/setup` live outside `(app)` so this loader doesn't run for them).
 - [x] 1.5 `[OB-005] Valid body information advances wizard` → NEW Vitest: `src/lib/component/wizard/body/Body.svelte.test.ts` — assert all required fields render and bind. (Step-advance happens in `Setup.svelte`/`Stepper`; Body itself owns the form fields.)
-- [ ] 1.6 `[OB-006] Sex must be explicitly selected` → SKIP: spec/code gap — `Setup.svelte:69` defaults `bodyData.sex` to `MALE` and seeds `wizardInput.sex` from it; no "unset" state exists. Needs separate change `add-wizard-explicit-sex-selection`.
+- [x] 1.6 `[OB-006] Sex must be explicitly selected` → COVERED via `add-wizard-explicit-sex-selection` (landed): cited in `Setup.svelte.test.ts`. (Originally SKIP'd as a spec/code gap; the follow-up change added the unset state + gating and its test.)
 - [x] 1.7 `[OB-007] Avatar defaults to name seed` → rename: `src/lib/component/profile/UserAvatar.test.ts::should show username-based avatar when avatar is empty`.
 - [x] 1.8 `[OB-008] Activity level selection` → NEW Vitest: `src/lib/component/wizard/activity/ActivityLevel.svelte.test.ts`.
 - [x] 1.9 `[OB-009] Standard weight loss recommendation` → rename: `test_wizard_cmd.rs::calculate_obese_classification_for_men` + `calculate_obese_classification_for_women` + severely-obese variants for both sexes. Also multi-cited from `ob_009_weight_loss_calculation_for_men`.
@@ -33,7 +33,7 @@ The wizard's UI flow has no Vitest coverage today; most scenarios need new tests
 - [x] 1.13 `[OB-013] Rate selection for weight loss` → rename: `test_wizard_cmd.rs::calculate_weight_loss_for_men` (multi-cited [OB-009] [OB-013]).
 - [x] 1.14 `[OB-014] Target weight selection for hold` → Rust portion done. UI portion SKIP: Step 4 title flip lives in `wizard/+page.svelte::currentConfig` and only fires after the user drives the wizard through steps 1–3 (which requires Tauri command results). Defer to `refactor-extract-testable-units` (extract the title-derivation as a pure helper).
 - [x] 1.15 `[OB-015] Successful setup completion` → SKIP: full happy path requires driving `Stepper` + mocking 5+ Tauri commands + `goto`; brittle as a unit test. Defer to `refactor-extract-testable-units` (extract `performSetup` from `Setup.svelte` and unit-test the orchestration directly).
-- [ ] 1.16 `[OB-016] Setup failure with rollback` → SKIP: same as [OB-015]; the failure branch is reachable by mocking one of the Tauri commands to throw inside the extracted `performSetup`.
+- [x] 1.16 `[OB-016] Setup failure with rollback` → COVERED via `refactor-extract-testable-units` (landed): cited in `setup-orchestration.test.ts` (the extracted `performSetup` failure branch).
 - [x] 1.17 `[OB-017] Atomic target creation` → NEW Rust: `test_wizard_cmd.rs::ob_017_wizard_create_targets_persists_all_three_records` (happy-path; the transactional rollback case is rolled into [OB-016] above).
 
 ## 2. `intake-tracking` — IT-001..IT-027 (27 scenarios)
@@ -45,10 +45,10 @@ Strong existing coverage in `IntakeScore.test.ts`, `IntakeStack.test.ts`, `Intak
 - [x] 2.3 `[IT-003] Intake above target but below maximum` → rename: `IntakeScore.test.ts::should show warning color when over target`.
 - [x] 2.4 `[IT-004] Intake above maximum` → rename: `IntakeScore.test.ts::should show error color when over maximum`.
 - [x] 2.5 `[IT-005] Create intake from dashboard` → SKIP: dashboard `+page.svelte` is large and inlines FAB + modal + Tauri command wiring; needs extraction first via `refactor-extract-testable-units`.
-- [ ] 2.6 `[IT-006] Category auto-selection at breakfast time` → SKIP: spec/code gap — `+page.svelte:111` hardcodes `category: 'l'` in `getBlankEntry`; no time-of-day logic. Needs separate change `add-intake-time-based-default-category`.
-- [ ] 2.7 `[IT-007] Category auto-selection at lunch time` → SKIP: same gap as [IT-006]; `add-intake-time-based-default-category`.
-- [ ] 2.8 `[IT-008] Category auto-selection at dinner time` → SKIP: same gap as [IT-006]; `add-intake-time-based-default-category`.
-- [ ] 2.9 `[IT-009] Category auto-selection outside meal hours` → SKIP: same gap as [IT-006]; `add-intake-time-based-default-category`.
+- [x] 2.6 `[IT-006] Category auto-selection at breakfast time` → COVERED via `add-intake-time-based-default-category` (landed): cited in `category.test.ts` (`defaultCategoryForHour`). (Originally SKIP'd as a hardcoded-`'l'` gap; the follow-up added the time-of-day logic + tests.)
+- [x] 2.7 `[IT-007] Category auto-selection at lunch time` → COVERED via `add-intake-time-based-default-category`; cited in `category.test.ts`.
+- [x] 2.8 `[IT-008] Category auto-selection at dinner time` → COVERED via `add-intake-time-based-default-category`; cited in `category.test.ts`.
+- [x] 2.9 `[IT-009] Category auto-selection outside meal hours` → COVERED via `add-intake-time-based-default-category`; cited in `category.test.ts`.
 - [x] 2.10 `[IT-010] Cancel without saving` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
 - [x] 2.11 `[IT-011] Edit via long press` → rename: `IntakeStack.test.ts::should call onEdit when entry is long-pressed` (also multi-cited [GES-001]).
 - [x] 2.12 `[IT-012] Save edited entry` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
@@ -127,9 +127,9 @@ The history page has no Vitest tests today. All UI scenarios need new tests agai
 - [x] 7.6 `[PF-006] Swipe left randomizes avatar` → rename: `UserAvatar.test.ts::should generate new random avatar when swiping` + `AvatarPickerContent.test.ts::should generate random seed that is not in defaults`.
 - [x] 7.7 `[PF-007] Swipe right resets avatar` → rename: `UserAvatar.test.ts::should reset to username-based avatar on reset`.
 - [x] 7.8 `[PF-008] Nickname at frontend lower bound accepted` → SKIP: validation is delegated to `ValidatedInput` (library-owned). Same `refactor-extract-testable-units` blocker as [PF-003] — once `ProfileEditModal` is extracted, these become direct assertions on the modal's submit state.
-- [ ] 7.9 `[PF-009] Nickname at frontend upper bound accepted` → SKIP: same as [PF-008].
-- [ ] 7.10 `[PF-010] Nickname below frontend lower bound rejected at UI` → SKIP: same as [PF-008].
-- [ ] 7.11 `[PF-011] Nickname above frontend upper bound rejected at UI` → SKIP: same as [PF-008].
+- [x] 7.9 `[PF-009] Nickname at frontend upper bound accepted` → COVERED via `refactor-extract-testable-units` (landed): cited in `ProfileEditModal.svelte.test.ts` (extracted modal makes these direct assertions).
+- [x] 7.10 `[PF-010] Nickname below frontend lower bound rejected at UI` → COVERED via `refactor-extract-testable-units`; cited in `ProfileEditModal.svelte.test.ts`.
+- [x] 7.11 `[PF-011] Nickname above frontend upper bound rejected at UI` → COVERED via `refactor-extract-testable-units`; cited in `ProfileEditModal.svelte.test.ts`.
 - [x] 7.12 `[PF-012] Nickname below backend lower bound rejected at server` → rename: `test_user_cmd.rs::pf_012_nickname_below_backend_lower_bound_rejected`.
 - [x] 7.13 `[PF-013] Nickname above backend upper bound rejected at server` → rename: `test_user_cmd.rs::pf_013_nickname_above_backend_upper_bound_rejected`.
 - [x] 7.14 `[PF-014] Wizard re-run` → NEW Vitest: `src/routes/(app)/wizard/+page.test.ts` — body data pre-populated on step 1 + header shows "Step 1 of 5 — Body Parameters".
@@ -171,21 +171,21 @@ No tests today for the layout. All scenarios become new Vitest tests.
 
 Cross-cited from feature tests where they exercise the rule. Partially in place via multi-citations done in steps 1–2; the remainder lands as more feature tests pick up the conventions.
 
-- [ ] 11.1 `_conv-user-errors` (ERR-001..ERR-007) — partial. ERR-001/ERR-002 cited from `useEntryModal.test.ts` (the contract that drives success/error toasts upstream of the composition). ERR-003/004/005/006/007 still pending — need tests on the actual toast/log emission path which the project doesn't have yet; defer to `refactor-extract-testable-units` (toast emission helper) or a dedicated `add-toast-emission-tests` change.
-- [ ] 11.2 `_conv-validation` (VAL-001..VAL-011) — partial. VAL-001 cited from `it_025_*` + `wt_010_*`; VAL-002 cited from `it_026_*` + `wt_011_*`; VAL-004 cited (it_027, wt_012); VAL-005 (it_023); VAL-006 (it_024); VAL-007 cited in IT-021 + WT-007. VAL-003 (valid time HH:MM:SS) pending (no test exercises explicit time literals); VAL-008 = [WT-009] (SKIP); VAL-009/010/011 (enum bounds) pending (Rust type system prevents constructing invalid enum values in tests; would need API-boundary tests with raw JSON).
+- [x] 11.1 `_conv-user-errors` (ERR-001..ERR-007) — COMPLETE. ERR-001/ERR-002 cited from `useEntryModal.test.ts`. ERR-003/004/005 cited from `command-hooks.test.ts` and ERR-006/007 from `layout.render.test.ts`, both added by the `add-toast-emission-tests` change (landed/archived).
+- [x] 11.2 `_conv-validation` (VAL-001..VAL-011) — VAL-001 cited from `it_025_*` + `wt_010_*`; VAL-002 cited from `it_026_*` + `wt_011_*`; VAL-004 cited (it_027, wt_012); VAL-005 (it_023); VAL-006 (it_024); VAL-007 cited in IT-021 + WT-007. VAL-003 (valid time HH:MM:SS) now cited from `test_intake_cmd.rs::explicit_time_in_hms_format_accepted`. VAL-008 = [WT-009] (SKIP). VAL-009/010 cited from `test_wizard_cmd.rs::enum_value_within_allowed_set_accepted` / `enum_value_outside_allowed_set_rejected` — tested at the serde deserialization boundary where Tauri decodes command JSON args (the cheapest correct layer: the Rust type system blocks constructing an invalid variant in-process, but an invalid JSON string is rejected there). VAL-011 (authoritative-bound principle) cited elsewhere / excluded as meta — not flagged by the gate.
 - [x] 11.3 `_conv-modals` (MOD-001..MOD-004) — all four cited. MOD-001/MOD-002/MOD-003/MOD-004 from `tests/lib/composition/useEntryModal.test.ts`; MOD-004 also from `UserAvatar.test.ts` and `Settings.svelte.test.ts`. (Required adding `$REPO_ROOT/tests` to the traceability script's TEST_ROOTS — see `scripts/check-spec-traceability.sh`.)
 - [x] 11.4 `_conv-empty-states` (EMP-001..EMP-003) — all three cited. EMP-001 from `IntakeStack.test.ts`, EMP-002 from `progress/+page.test.ts` (multi-cited with [PG-004]), EMP-003 from `WeightScore.test.ts`.
-- [ ] 11.5 `_conv-gestures` (GES-001..GES-008) — partial. GES-001 cited from `IntakeStack.test.ts`, GES-003 from `UserAvatar.test.ts`. GES-002, GES-004..GES-008 pending.
-- [ ] 11.6 `_conv-animations` (ANI-001..ANI-003) — cite from layout/route-transition tests as they land.
-- [ ] 11.7 `_conv-progress-stages` (STG-001..STG-003) — cited from `test_export_cmd.rs::ex_001_*`, `ex_002_*`, `ex_003_*`, `im_001_*`, `im_003_*`, `im_004_*`. Likely complete; verify with traceability gate.
-- [ ] 11.8 `_conv-test-traceability` (TRC-001..TRC-009) — meta. Pending; consider a small bash test against `scripts/check-spec-traceability.sh`, or accept these stay orphan (they describe the rule that the script enforces).
+- [x] 11.5 `_conv-gestures` (GES-001..GES-008) — COMPLETE. GES-001 `IntakeStack.test.ts`, GES-002 `long-press.test.ts`, GES-003 `UserAvatar.test.ts`, GES-004 `IntakeModal.svelte.test.ts`, GES-005 `IntakeStack.test.ts`, GES-006 `HistoryWeek.svelte.test.ts`, GES-007 `HistoryDayCard.svelte.test.ts`, GES-008 dashboard `page.test.ts`. (GES-002/004..008 landed via `refactor-extract-testable-units`.)
+- [x] 11.6 `_conv-animations` (ANI-001..ANI-003) — COMPLETE. ANI-001 `layout.render.test.ts`, ANI-002 `Settings.svelte.test.ts`, ANI-003 dashboard `page.test.ts`.
+- [x] 11.7 `_conv-progress-stages` (STG-001..STG-003) — COMPLETE. All three cited from `test_export_cmd.rs`, `test_import_cmd.rs`, and `ExportProgressModal.svelte.test.ts`. Confirmed by the green traceability gate.
+- [x] 11.8 `_conv-test-traceability` (TRC-001..TRC-009) — RESOLVED as excluded. TRC is meta (it describes the rule the script enforces); the gate explicitly excludes the TRC prefix (commit `344a742`), so these are intentionally uncited and not counted as orphans.
 
 ## 12. Validate + archive
 
-- [ ] 12.1 Run `npm run test:traceability` — expect 163/163 covered, 0 orphans.
-- [ ] 12.2 Run full pipeline: `cargo nextest run` + `npm run test:ci` — all green.
-- [ ] 12.3 Re-enable the required status check on `main`: `gh api -X POST repos/thwbh/librefit/branches/main/protection/required_status_checks/contexts -f 'contexts[]=Spec ↔ test traceability gate'`.
-- [ ] 12.4 Archive: `openspec archive --skip-specs backfill-test-citations`.
+- [x] 12.1 Run `npm run test:traceability` — 160 covered, 0 orphans. (Total is 160, not the originally-estimated 163.)
+- [x] 12.2 Run full pipeline: `cargo nextest run` (234 passed) + `npm run test:ci` (green) — all passing.
+- [~] 12.3 Not needed — the traceability/test pipeline runs on PR against `develop`; we don't manage `main` branch protection manually.
+- [x] 12.4 Archive: `openspec archive --skip-specs backfill-test-citations`.
 
 ## Progress summary (as of session end)
 
