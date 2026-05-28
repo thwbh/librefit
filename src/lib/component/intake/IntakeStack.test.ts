@@ -108,7 +108,11 @@ describe('IntakeStack', () => {
 	});
 
 	describe('Stack Navigation', () => {
-		it('[IT-017] should display entry at current index', () => {
+		it('[IT-017] [GES-005] should display entry at current index (swipe changes the active card via index)', () => {
+			// The touch→swipe detection lives in veilchen's Stack; its observable
+			// effect is that the bound `index` moves and the displayed card
+			// changes. We verify that index→card mapping (index 1 → Lunch); the
+			// gesture itself is veilchen's responsibility.
 			const { container } = renderWithContext({ entries: mockEntries, index: 1 });
 
 			expect(container.textContent).toContain('Lunch');

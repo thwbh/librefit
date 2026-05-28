@@ -94,7 +94,12 @@ describe('useEntryModal', () => {
 			expect(modal.errorMessage).toBeUndefined();
 		});
 
-		it('[ERR-001] should save new entry successfully (success callback fires, drives success toast upstream)', async () => {
+		it('[ERR-001] [AS-008] should save new entry successfully (success callback fires → route refreshes its view)', async () => {
+			// AS-008: the onCreateSuccess/onUpdateSuccess/onDeleteSuccess hooks are
+			// how routes update their displayed list after a CRUD op without a
+			// manual reload — the dashboard/history wire them to splice the new
+			// entry into the bound state. Asserting the callback fires verifies
+			// the refresh-trigger mechanism at the cheapest layer.
 			const newEntry: TestEntry = { id: 1, name: 'New Entry', value: 100 };
 			onCreateMock.mockResolvedValue(newEntry);
 

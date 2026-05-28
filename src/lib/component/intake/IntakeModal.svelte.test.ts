@@ -297,6 +297,29 @@ describe('IntakeModal', () => {
 		expect(container.querySelector('.alert-error')).toBeNull();
 	});
 
+	it('[GES-004] mode="delete" shows a read-only preview with a Delete action (swipe-right delete-confirm)', () => {
+		// Swipe-right on a history row routes to openDelete → IntakeModal
+		// mode="delete". The touch→swipe detection is veilchen's
+		// (SwipeableListItem); here we verify the resulting confirmation view:
+		// delete-confirm title, read-only form, Delete (no Save).
+		const { container } = renderModal({
+			entry: makeIntake(),
+			mode: 'delete',
+			oncancel: vi.fn(),
+			ondelete: vi.fn()
+		});
+		openDialog(container);
+
+		expect(container.textContent).toContain('Delete Intake');
+		expect(screen.getByRole('button', { name: /^Delete$/ })).toBeTruthy();
+		expect(screen.queryByRole('button', { name: /^Save$/ })).toBeNull();
+
+		// Read-only preview: category buttons are disabled.
+		const categoryButtons = container.querySelectorAll('button[aria-pressed]');
+		expect(categoryButtons.length).toBeGreaterThan(0);
+		categoryButtons.forEach((b) => expect((b as HTMLButtonElement).disabled).toBe(true));
+	});
+
 	it('create mode does not render the trash/delete affordance', () => {
 		const { container } = renderModal({
 			entry: makeNewIntake(),

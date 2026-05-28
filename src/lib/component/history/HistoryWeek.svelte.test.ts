@@ -91,7 +91,41 @@ describe('HistoryWeek', () => {
 		expect(container.textContent).toContain('avg kcal/day');
 	});
 
-	it('clicking a day pill fires onselect with the date string', async () => {
+	it('[GES-006] swiping the date selector fires onweekchange (left→next, right→previous)', () => {
+		// The actual touch→swipe detection is svelte-gestures' job; we verify our
+		// handler's direction→action mapping by dispatching the `swipe` event the
+		// action emits. (jsdom can't synthesize the underlying touch sequence.)
+		const onweekchange = vi.fn();
+		const { container } = render(HistoryWeek, {
+			props: baseProps({ onweekchange, showRightCaret: true })
+		});
+		const selector = container.querySelector('.grid') as HTMLElement;
+
+		selector.dispatchEvent(
+			new CustomEvent('swipe', { detail: { direction: 'right' }, bubbles: true })
+		);
+		expect(onweekchange).toHaveBeenLastCalledWith('previous');
+
+		selector.dispatchEvent(
+			new CustomEvent('swipe', { detail: { direction: 'left' }, bubbles: true })
+		);
+		expect(onweekchange).toHaveBeenLastCalledWith('next');
+	});
+
+	it('[GES-006] swiping left at the latest week (no future data) does not change week', () => {
+		const onweekchange = vi.fn();
+		const { container } = render(HistoryWeek, {
+			props: baseProps({ onweekchange, showRightCaret: false })
+		});
+		const selector = container.querySelector('.grid') as HTMLElement;
+
+		selector.dispatchEvent(
+			new CustomEvent('swipe', { detail: { direction: 'left' }, bubbles: true })
+		);
+		expect(onweekchange).not.toHaveBeenCalled();
+	});
+
+	it('[HI-005] clicking a day pill fires onselect with the date string (content area updates for that date)', async () => {
 		const user = userEvent.setup();
 		const onselect = vi.fn();
 		const { container } = render(HistoryWeek, { props: baseProps({ onselect }) });

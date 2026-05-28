@@ -149,6 +149,23 @@ describe('HistoryDayCard', () => {
 		expect(oncreateweight).toHaveBeenCalledTimes(1);
 	});
 
+	it('[GES-007] swiping the score/content area fires ondayswipe with the swipe event', () => {
+		// svelte-gestures owns touch→swipe detection; we verify the wiring by
+		// dispatching the `swipe` event the action emits. The route's
+		// handleDaySwipe then decides day-vs-week-boundary navigation.
+		const ondayswipe = vi.fn();
+		const { container } = renderCard(baseProps({ ondayswipe }));
+
+		// The swipe wrapper is the first child div (wraps IntakeScore).
+		const swipeArea = container.querySelector('.flex.flex-col.gap-4 > div') as HTMLElement;
+		expect(swipeArea).not.toBeNull();
+
+		swipeArea.dispatchEvent(
+			new CustomEvent('swipe', { detail: { direction: 'left' }, bubbles: true })
+		);
+		expect(ondayswipe).toHaveBeenCalledTimes(1);
+	});
+
 	it('empty intake list renders the empty-state with "No meals logged"', () => {
 		const { container } = renderCard(baseProps({ intakeEntries: [] }));
 

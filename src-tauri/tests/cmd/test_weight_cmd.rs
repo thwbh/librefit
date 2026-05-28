@@ -180,7 +180,11 @@ fn create_new_weight_entry() {
 
 #[test]
 fn weight_below_backend_lower_bound_rejected() {
-    scenario!("[WT-007]");
+    // [VAL-008]: a value that reaches the backend out of range is rejected
+    // regardless of any frontend gating. VAL-014 (schema-driven UI validation)
+    // only gatekeeps structured, to-be-persisted entries; partial/custom
+    // payloads still reach this authoritative check.
+    scenario!("[WT-007]", "[VAL-008]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
