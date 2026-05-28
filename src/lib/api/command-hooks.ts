@@ -87,9 +87,11 @@ export function createCommandHooks<T>(options: HookOptions = {}): CommandHooks<T
 			// Log for debugging
 			logError(`[Validation Error] ${fullMessage}`);
 
-			// Show toast notification
+			// Show toast notification. Validation failures are correctable user
+			// mistakes, so they surface as a warning (per _conv-user-errors ERR-004),
+			// not an error toast.
 			if (showValidationErrors) {
-				toast.error(fullMessage, errorDuration);
+				toast.warning(fullMessage, errorDuration);
 			}
 		},
 

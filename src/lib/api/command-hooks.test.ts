@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createCommandHooks, createSilentHooks, CommonHooks } from '$lib/api/command-hooks';
+import { createCommandHooks, createSilentHooks, CommonHooks } from './command-hooks';
 import { ZodError, type ZodIssue } from 'zod';
 
 // Mock dependencies
 vi.mock('@thwbh/veilchen', () => ({
 	toast: {
 		success: vi.fn(),
-		error: vi.fn()
+		error: vi.fn(),
+		warning: vi.fn()
 	}
 }));
 
@@ -34,7 +35,7 @@ describe('command-hooks', () => {
 			expect(hooks.onSuccess).toBeDefined();
 		});
 
-		it('should call toast.error on validation error', async () => {
+		it('[ERR-004] validation error surfaces as a warning toast (not an error)', async () => {
 			const { toast } = await import('@thwbh/veilchen');
 			const hooks = createCommandHooks();
 			const zodError = new ZodError([
@@ -48,10 +49,11 @@ describe('command-hooks', () => {
 
 			hooks.onValidationError?.(zodError);
 
-			expect(toast.error).toHaveBeenCalledWith('field: Expected string', 5000);
+			expect(toast.warning).toHaveBeenCalledWith('field: Expected string', 5000);
+			expect(toast.error).not.toHaveBeenCalled();
 		});
 
-		it('should include error context in validation error', async () => {
+		it('[ERR-004] validation warning toast includes the errorContext prefix', async () => {
 			const { toast } = await import('@thwbh/veilchen');
 			const hooks = createCommandHooks({ errorContext: 'Failed to save' });
 			const zodError = new ZodError([
@@ -65,7 +67,7 @@ describe('command-hooks', () => {
 
 			hooks.onValidationError?.(zodError);
 
-			expect(toast.error).toHaveBeenCalledWith('Failed to save: name: Required', 5000);
+			expect(toast.warning).toHaveBeenCalledWith('Failed to save: name: Required', 5000);
 		});
 
 		it('should call toast.error on invoke error', async () => {
@@ -119,7 +121,7 @@ describe('command-hooks', () => {
 			expect(toast.error).toHaveBeenCalledWith('Test error', 10000);
 		});
 
-		it('should not show validation errors when showValidationErrors is false', async () => {
+		it('[ERR-004] no validation toast when showValidationErrors is false (still logs)', async () => {
 			const { toast } = await import('@thwbh/veilchen');
 			const { error: logError } = await import('@tauri-apps/plugin-log');
 			const hooks = createCommandHooks({ showValidationErrors: false });
@@ -134,6 +136,7 @@ describe('command-hooks', () => {
 
 			hooks.onValidationError?.(zodError);
 
+			expect(toast.warning).not.toHaveBeenCalled();
 			expect(toast.error).not.toHaveBeenCalled();
 			expect(logError).toHaveBeenCalled(); // Still logs
 		});
@@ -150,9 +153,9 @@ describe('command-hooks', () => {
 			expect(logError).toHaveBeenCalled(); // Still logs
 		});
 
-		it('should log validation errors', async () => {
+		it('[ERR-005] logs validation errors with type tag and context label', async () => {
 			const { error: logError } = await import('@tauri-apps/plugin-log');
-			const hooks = createCommandHooks();
+			const hooks = createCommandHooks({ errorContext: 'Save failed' });
 			const zodError = new ZodError([
 				{
 					code: 'invalid_type',
@@ -164,24 +167,27 @@ describe('command-hooks', () => {
 
 			hooks.onValidationError?.(zodError);
 
-			expect(logError).toHaveBeenCalledWith('[Validation Error] field: Expected string');
+			expect(logError).toHaveBeenCalledWith(
+				'[Validation Error] Save failed: field: Expected string'
+			);
 		});
 
-		it('should log invoke errors', async () => {
+		it('[ERR-005] logs invoke errors with type tag and context label', async () => {
 			const { error: logError } = await import('@tauri-apps/plugin-log');
-			const hooks = createCommandHooks();
+			const hooks = createCommandHooks({ errorContext: 'Load failed' });
 			const error = new Error('Test error');
 
 			hooks.onInvokeError?.(error);
 
-			expect(logError).toHaveBeenCalledWith('[Invoke Error] Test error');
+			expect(logError).toHaveBeenCalledWith('[Invoke Error] Load failed: Test error');
 		});
 	});
 
 	describe('createSilentHooks', () => {
-		it('should create hooks without toast notifications', async () => {
+		it('[ERR-003] background fetch failure is logged but emits no toast', async () => {
 			const { toast } = await import('@thwbh/veilchen');
-			const hooks = createSilentHooks();
+			const { error: logError } = await import('@tauri-apps/plugin-log');
+			const hooks = createSilentHooks('Background operation');
 			const error = new Error('Test error');
 
 			hooks.onValidationError?.(
@@ -198,9 +204,11 @@ describe('command-hooks', () => {
 
 			expect(toast.success).not.toHaveBeenCalled();
 			expect(toast.error).not.toHaveBeenCalled();
+			expect(toast.warning).not.toHaveBeenCalled();
+			expect(logError).toHaveBeenCalledTimes(2);
 		});
 
-		it('should log validation errors', async () => {
+		it('[ERR-003] [ERR-005] silent validation errors logged with type tag and context', async () => {
 			const { error: logError } = await import('@tauri-apps/plugin-log');
 			const hooks = createSilentHooks('Background operation');
 			const zodError = new ZodError([
@@ -219,7 +227,7 @@ describe('command-hooks', () => {
 			);
 		});
 
-		it('should log invoke errors', async () => {
+		it('[ERR-003] [ERR-005] silent invoke errors logged with type tag and context', async () => {
 			const { error: logError } = await import('@tauri-apps/plugin-log');
 			const hooks = createSilentHooks('Background operation');
 			const error = new Error('Failed to sync');
