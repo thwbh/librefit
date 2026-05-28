@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/svelte';
+import { render, screen } from '@testing-library/svelte';
 import { createRawSnippet } from 'svelte';
 
 vi.mock('$app/state', () => ({
@@ -24,5 +24,18 @@ describe('app layout (render)', () => {
 		const { getByTestId } = render(Layout, { props: { children } });
 
 		expect(getByTestId('route-content')).toBeTruthy();
+	});
+
+	it('[AS-001] the bottom dock exposes Home/Progress/History as navigation links to their routes', () => {
+		// Tapping a dock item navigates (the click→nav+fade is veilchen +
+		// SvelteKit); what we own is the navItems config. Assert the dock
+		// renders links pointing at the correct routes. Settings is a button
+		// (onclick toggle), not a route link — covered by AS-002.
+		const children = createRawSnippet(() => ({ render: () => `<p>route</p>` }));
+		render(Layout, { props: { children } });
+
+		expect(screen.getByRole('link', { name: 'Home' }).getAttribute('href')).toBe('/');
+		expect(screen.getByRole('link', { name: 'Progress' }).getAttribute('href')).toBe('/progress');
+		expect(screen.getByRole('link', { name: 'History' }).getAttribute('href')).toBe('/history');
 	});
 });

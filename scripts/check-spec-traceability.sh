@@ -39,6 +39,14 @@ if [ -z "$spec_ids" ]; then
 	exit 2
 fi
 
+# Exclude meta-convention scenarios from the spec→test requirement.
+# `_conv-test-traceability` (TRC-*) describes the traceability rule that THIS
+# script enforces — requiring a test to "cite" the rule that governs test
+# citation is circular. These conventions are enforced by tooling/review
+# instead (see the `add-convention-lint-rules` change for lint-side checks).
+META_PREFIXES='TRC'
+spec_ids=$(echo "$spec_ids" | grep -vE "\[(${META_PREFIXES})-[0-9]{3}\]" || true)
+
 # Collect every ID referenced from test sources (test names, comments, etc.).
 test_ids=""
 for root in "${TEST_ROOTS[@]}"; do
