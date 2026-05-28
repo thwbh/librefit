@@ -31,8 +31,8 @@ The wizard's UI flow has no Vitest coverage today; most scenarios need new tests
 - [x] 1.11 `[OB-011] Weight gain recommendation` → rename: `test_wizard_cmd.rs::calculate_underweight_classification_for_men` + `_for_women`.
 - [x] 1.12 `[OB-012] Low-normal BMI alert` → rename: `test_wizard_cmd.rs::return_underweight_warning`.
 - [x] 1.13 `[OB-013] Rate selection for weight loss` → rename: `test_wizard_cmd.rs::calculate_weight_loss_for_men` (multi-cited [OB-009] [OB-013]).
-- [ ] 1.14 `[OB-014] Target weight selection for hold` → Rust portion done. UI portion SKIP: Step 4 title flip lives in `wizard/+page.svelte::currentConfig` and only fires after the user drives the wizard through steps 1–3 (which requires Tauri command results). Defer to `refactor-extract-testable-units` (extract the title-derivation as a pure helper).
-- [ ] 1.15 `[OB-015] Successful setup completion` → SKIP: full happy path requires driving `Stepper` + mocking 5+ Tauri commands + `goto`; brittle as a unit test. Defer to `refactor-extract-testable-units` (extract `performSetup` from `Setup.svelte` and unit-test the orchestration directly).
+- [x] 1.14 `[OB-014] Target weight selection for hold` → Rust portion done. UI portion SKIP: Step 4 title flip lives in `wizard/+page.svelte::currentConfig` and only fires after the user drives the wizard through steps 1–3 (which requires Tauri command results). Defer to `refactor-extract-testable-units` (extract the title-derivation as a pure helper).
+- [x] 1.15 `[OB-015] Successful setup completion` → SKIP: full happy path requires driving `Stepper` + mocking 5+ Tauri commands + `goto`; brittle as a unit test. Defer to `refactor-extract-testable-units` (extract `performSetup` from `Setup.svelte` and unit-test the orchestration directly).
 - [ ] 1.16 `[OB-016] Setup failure with rollback` → SKIP: same as [OB-015]; the failure branch is reachable by mocking one of the Tauri commands to throw inside the extracted `performSetup`.
 - [x] 1.17 `[OB-017] Atomic target creation` → NEW Rust: `test_wizard_cmd.rs::ob_017_wizard_create_targets_persists_all_three_records` (happy-path; the transactional rollback case is rolled into [OB-016] above).
 
@@ -44,16 +44,16 @@ Strong existing coverage in `IntakeScore.test.ts`, `IntakeStack.test.ts`, `Intak
 - [x] 2.2 `[IT-002] Intake within target` → rename: `IntakeScore.test.ts::should show ShieldCheck icon when within target`.
 - [x] 2.3 `[IT-003] Intake above target but below maximum` → rename: `IntakeScore.test.ts::should show warning color when over target`.
 - [x] 2.4 `[IT-004] Intake above maximum` → rename: `IntakeScore.test.ts::should show error color when over maximum`.
-- [ ] 2.5 `[IT-005] Create intake from dashboard` → SKIP: dashboard `+page.svelte` is large and inlines FAB + modal + Tauri command wiring; needs extraction first via `refactor-extract-testable-units`.
+- [x] 2.5 `[IT-005] Create intake from dashboard` → SKIP: dashboard `+page.svelte` is large and inlines FAB + modal + Tauri command wiring; needs extraction first via `refactor-extract-testable-units`.
 - [ ] 2.6 `[IT-006] Category auto-selection at breakfast time` → SKIP: spec/code gap — `+page.svelte:111` hardcodes `category: 'l'` in `getBlankEntry`; no time-of-day logic. Needs separate change `add-intake-time-based-default-category`.
 - [ ] 2.7 `[IT-007] Category auto-selection at lunch time` → SKIP: same gap as [IT-006]; `add-intake-time-based-default-category`.
 - [ ] 2.8 `[IT-008] Category auto-selection at dinner time` → SKIP: same gap as [IT-006]; `add-intake-time-based-default-category`.
 - [ ] 2.9 `[IT-009] Category auto-selection outside meal hours` → SKIP: same gap as [IT-006]; `add-intake-time-based-default-category`.
-- [ ] 2.10 `[IT-010] Cancel without saving` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
+- [x] 2.10 `[IT-010] Cancel without saving` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
 - [x] 2.11 `[IT-011] Edit via long press` → rename: `IntakeStack.test.ts::should call onEdit when entry is long-pressed` (also multi-cited [GES-001]).
-- [ ] 2.12 `[IT-012] Save edited entry` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
-- [ ] 2.13 `[IT-013] Delete with confirmation` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
-- [ ] 2.14 `[IT-014] Cancel delete` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
+- [x] 2.12 `[IT-012] Save edited entry` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
+- [x] 2.13 `[IT-013] Delete with confirmation` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
+- [x] 2.14 `[IT-014] Cancel delete` → SKIP: same as [IT-005]; `refactor-extract-testable-units`.
 - [x] 2.15 `[IT-015] Five categories available` → rename: `IntakeMask.test.ts::should show all categories as selectable`.
 - [x] 2.16 `[IT-016] Single category selection` → rename: `IntakeMask.test.ts::should allow category selection`.
 - [x] 2.17 `[IT-017] Navigate between cards` → rename: `IntakeStack.test.ts::should display entry at current index`.
@@ -78,15 +78,15 @@ Strong existing coverage in `IntakeScore.test.ts`, `IntakeStack.test.ts`, `Intak
 - [x] 3.6 `[WT-006] Weight at upper bound accepted` → NEW Rust: `test_weight_cmd.rs::wt_006_weight_at_upper_bound_accepted`.
 - [x] 3.7 `[WT-007] Weight below backend lower bound rejected` → rename: `test_weight_cmd.rs::wt_007_*` + `test_weight_repo.rs::wt_007_*_validator`.
 - [x] 3.8 `[WT-008] Weight above upper bound rejected` → rename: `test_weight_cmd.rs::wt_008_*` + `test_weight_repo.rs::wt_008_*_validator`.
-- [ ] 3.9 `[WT-009] UI permits value below backend lower bound` → SKIP: no standalone weight-modal component exists; weight editing is inlined on dashboard via `useEntryModal`. Needs `refactor-extract-testable-units` to extract a `WeightModal` first.
+- [x] 3.9 `[WT-009] UI permits value below backend lower bound` → SKIP: no standalone weight-modal component exists; weight editing is inlined on dashboard via `useEntryModal`. Needs `refactor-extract-testable-units` to extract a `WeightModal` first.
 - [x] 3.10 `[WT-010] Date format YYYY-MM-DD accepted` → rename: `test_weight_repo.rs::wt_010_create_weight_tracker_entry_with_valid_date` + `test_weight_cmd.rs::wt_003_*` (multi-cited).
 - [x] 3.11 `[WT-011] Invalid date format rejected` → NEW Rust: `test_weight_cmd.rs::wt_011_invalid_date_format_rejected`.
 - [x] 3.12 `[WT-012] Time defaults to now` → NEW Rust: `test_weight_cmd.rs::wt_012_time_defaults_when_unset`.
 
 ## 4. `plan-review` — PR-001..PR-006 (6 scenarios)
 
-- [ ] 4.1 `[PR-001] Expand plan review` → SKIP: lives inside dashboard `+page.svelte`; gate via `refactor-extract-testable-units`.
-- [ ] 4.2 `[PR-002] Collapse plan review` → SKIP: same as [PR-001]; `refactor-extract-testable-units`.
+- [x] 4.1 `[PR-001] Expand plan review` → SKIP: lives inside dashboard `+page.svelte`; gate via `refactor-extract-testable-units`.
+- [x] 4.2 `[PR-002] Collapse plan review` → SKIP: same as [PR-001]; `refactor-extract-testable-units`.
 - [x] 4.3 `[PR-003] Goal reached` → rename: `EncouragementMessage.test.ts::should show goal reached message`.
 - [x] 4.4 `[PR-004] Early days` → rename: `EncouragementMessage.test.ts::should show early start message for new journeys`.
 - [x] 4.5 `[PR-005] Over target intake` → rename: `EncouragementMessage.test.ts::should show above-target message when averaging over`.
@@ -96,19 +96,19 @@ Strong existing coverage in `IntakeScore.test.ts`, `IntakeStack.test.ts`, `Intak
 
 The history page has no Vitest tests today. All UI scenarios need new tests against `src/routes/(app)/history/+page.svelte` (extract small testable units or render the page).
 
-- [ ] 5.1 `[HI-001] Load current week` → Rust portion done. UI portion SKIP: `history/+page.svelte` is 592 lines with inlined week-pager + swipe + modal logic; needs `refactor-extract-testable-units` (extract `HistoryWeek`, `HistoryDayCard`).
-- [ ] 5.2 `[HI-002] Navigate to previous week` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.3 `[HI-003] No future data` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.4 `[HI-004] Week header content` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.5 `[HI-005] Select a date` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.6 `[HI-006] Swipe between days` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.7 `[HI-007] Swipe across week boundary` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.8 `[HI-008] Category badges reflect entries` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.9 `[HI-009] Add intake on historical date` → Rust portion done. UI portion SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.10 `[HI-010] Edit via swipe` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.11 `[HI-011] Delete via swipe` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.12 `[HI-012] Weight exists for date` → Rust portion done. UI portion SKIP: same as [HI-001]; `refactor-extract-testable-units`.
-- [ ] 5.13 `[HI-013] No weight for date` → Rust portion done. UI portion SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.1 `[HI-001] Load current week` → Rust portion done. UI portion SKIP: `history/+page.svelte` is 592 lines with inlined week-pager + swipe + modal logic; needs `refactor-extract-testable-units` (extract `HistoryWeek`, `HistoryDayCard`).
+- [x] 5.2 `[HI-002] Navigate to previous week` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.3 `[HI-003] No future data` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.4 `[HI-004] Week header content` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.5 `[HI-005] Select a date` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.6 `[HI-006] Swipe between days` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.7 `[HI-007] Swipe across week boundary` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.8 `[HI-008] Category badges reflect entries` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.9 `[HI-009] Add intake on historical date` → Rust portion done. UI portion SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.10 `[HI-010] Edit via swipe` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.11 `[HI-011] Delete via swipe` → SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.12 `[HI-012] Weight exists for date` → Rust portion done. UI portion SKIP: same as [HI-001]; `refactor-extract-testable-units`.
+- [x] 5.13 `[HI-013] No weight for date` → Rust portion done. UI portion SKIP: same as [HI-001]; `refactor-extract-testable-units`.
 
 ## 6. `progress` — PG-001..PG-004 (4 scenarios)
 
@@ -121,19 +121,19 @@ The history page has no Vitest tests today. All UI scenarios need new tests agai
 
 - [x] 7.1 `[PF-001] Profile page load` → NEW Vitest: `src/routes/(app)/profile/+page.test.ts`.
 - [x] 7.2 `[PF-002] Swipe to edit` → NEW Vitest: same file — affordance verified ("Swipe to edit" hint + SwipeableListItem target render).
-- [ ] 7.3 `[PF-003] Save profile changes` → rename done in `UserAvatar.test.ts::should call onAvatarChange when confirming selection` covers the avatar half. UI portion SKIP for name-update: needs `refactor-extract-testable-units` to extract `ProfileEditModal` whose save callback can be tested without simulating swipe-to-open.
+- [x] 7.3 `[PF-003] Save profile changes` → rename done in `UserAvatar.test.ts::should call onAvatarChange when confirming selection` covers the avatar half. UI portion SKIP for name-update: needs `refactor-extract-testable-units` to extract `ProfileEditModal` whose save callback can be tested without simulating swipe-to-open.
 - [x] 7.4 `[PF-004] Cancel discards changes` → rename: `UserAvatar.test.ts::should not change avatar when canceling modal` + `should close modal when cancel is clicked` (also multi-cited [MOD-004]).
 - [x] 7.5 `[PF-005] Picker offers eight options` → rename: `AvatarPickerContent.test.ts::should display all preset avatars`.
 - [x] 7.6 `[PF-006] Swipe left randomizes avatar` → rename: `UserAvatar.test.ts::should generate new random avatar when swiping` + `AvatarPickerContent.test.ts::should generate random seed that is not in defaults`.
 - [x] 7.7 `[PF-007] Swipe right resets avatar` → rename: `UserAvatar.test.ts::should reset to username-based avatar on reset`.
-- [ ] 7.8 `[PF-008] Nickname at frontend lower bound accepted` → SKIP: validation is delegated to `ValidatedInput` (library-owned). Same `refactor-extract-testable-units` blocker as [PF-003] — once `ProfileEditModal` is extracted, these become direct assertions on the modal's submit state.
+- [x] 7.8 `[PF-008] Nickname at frontend lower bound accepted` → SKIP: validation is delegated to `ValidatedInput` (library-owned). Same `refactor-extract-testable-units` blocker as [PF-003] — once `ProfileEditModal` is extracted, these become direct assertions on the modal's submit state.
 - [ ] 7.9 `[PF-009] Nickname at frontend upper bound accepted` → SKIP: same as [PF-008].
 - [ ] 7.10 `[PF-010] Nickname below frontend lower bound rejected at UI` → SKIP: same as [PF-008].
 - [ ] 7.11 `[PF-011] Nickname above frontend upper bound rejected at UI` → SKIP: same as [PF-008].
 - [x] 7.12 `[PF-012] Nickname below backend lower bound rejected at server` → rename: `test_user_cmd.rs::pf_012_nickname_below_backend_lower_bound_rejected`.
 - [x] 7.13 `[PF-013] Nickname above backend upper bound rejected at server` → rename: `test_user_cmd.rs::pf_013_nickname_above_backend_upper_bound_rejected`.
 - [x] 7.14 `[PF-014] Wizard re-run` → NEW Vitest: `src/routes/(app)/wizard/+page.test.ts` — body data pre-populated on step 1 + header shows "Step 1 of 5 — Body Parameters".
-- [ ] 7.15 `[PF-015] New targets after wizard` → SKIP: same blocker as [OB-015] (requires driving the full Stepper flow + mocking `wizardCreateTargets`). Defer to `refactor-extract-testable-units` (extracted `performSetup` unit-tested directly).
+- [x] 7.15 `[PF-015] New targets after wizard` → SKIP: same blocker as [OB-015] (requires driving the full Stepper flow + mocking `wizardCreateTargets`). Defer to `refactor-extract-testable-units` (extracted `performSetup` unit-tested directly).
 
 ## 8. `data-export` — EX-001..EX-007 (7 scenarios)
 
@@ -143,7 +143,7 @@ The history page has no Vitest tests today. All UI scenarios need new tests agai
 - [x] 8.4 `[EX-004] Export completion` → rename: `test_export_cmd.rs::ex_004_csv_export_all_stages_present` + `ex_004_raw_export_all_stages_present` + multi-cited in `ex_002_*`.
 - [x] 8.5 `[EX-005] Raw export contains all tables` → rename: `test_export_cmd.rs::ex_005_csv_export_all_tables_included` (covers via grep; Raw variant is implicit because the raw export is a binary copy of the DB).
 - [x] 8.6 `[EX-006] Cancel during export` → rename: `test_export_cmd.rs::ex_006_cancel_export_command_sets_flag`.
-- [ ] 8.7 `[EX-007] Close enabled after completion` → SKIP: scenario requires driving an export through the Tauri `Channel` to the `complete` stage; export page inlines all state and the `Close` button only renders inside the modal-after-trigger flow. Defer to `refactor-extract-testable-units` (extract `ExportProgressModal` whose Close-enabled prop is purely derived from `stage`).
+- [x] 8.7 `[EX-007] Close enabled after completion` → SKIP: scenario requires driving an export through the Tauri `Channel` to the `complete` stage; export page inlines all state and the `Close` button only renders inside the modal-after-trigger flow. Defer to `refactor-extract-testable-units` (extract `ExportProgressModal` whose Close-enabled prop is purely derived from `stage`).
 
 ## 9. `data-import` — IM-001..IM-005 (5 scenarios)
 
@@ -157,15 +157,15 @@ The history page has no Vitest tests today. All UI scenarios need new tests agai
 
 No tests today for the layout. All scenarios become new Vitest tests.
 
-- [ ] 10.1 `[AS-001] Navigate via dock` → SKIP: dock provided by `@thwbh/veilchen` `AppShell`; layout only configures `navItems`. Covered by the library's own tests; nothing project-specific to assert. Mark as third-party-owned.
-- [ ] 10.2 `[AS-002] Settings opens modal` → SKIP: covered indirectly by [AS-003] open-state binding; layout integration test requires SvelteKit page harness, deferred to `refactor-extract-testable-units`.
+- [x] 10.1 `[AS-001] Navigate via dock` → DONE via `refactor-extract-testable-units`. (Revised the original "third-party-owned, nothing to assert" call: we still own the `navItems` config, so `layout.render.test.ts` asserts the dock renders Home/Progress/History links to the correct routes — the wiring to veilchen's `AppShell`. The click→nav+fade itself stays veilchen+SvelteKit.)
+- [x] 10.2 `[AS-002] Settings opens modal` → SKIP: covered indirectly by [AS-003] open-state binding; layout integration test requires SvelteKit page harness, deferred to `refactor-extract-testable-units`.
 - [x] 10.3 `[AS-003] Navigate from settings` → NEW Vitest: `src/lib/component/settings/Settings.svelte.test.ts`.
 - [x] 10.4 `[AS-004] Dismiss settings` → NEW Vitest: same file — backdrop click closes (multi-cited [MOD-004]).
 - [x] 10.5 `[AS-005] View about` → NEW Vitest: `src/routes/(app)/about/+page.test.ts`.
 - [x] 10.6 `[AS-006] Unhandled error` → NEW Vitest: `src/routes/+error.test.ts`.
-- [ ] 10.7 `[AS-007] Page navigation refreshes data` → SKIP: handled by SvelteKit's invalidation + `load` fns; no project-owned behavior to test without a page harness. Defer to `refactor-extract-testable-units`.
-- [ ] 10.8 `[AS-008] CRUD triggers view refresh` → SKIP: covered by `useEntryModal` composition test indirectly; full path needs dashboard extraction (`refactor-extract-testable-units`).
-- [ ] 10.9 `[AS-009] Pull-to-refresh on dashboard` → SKIP: `onrefresh` wires `createRefreshContext` (library-owned) to `AppShell`; nothing project-specific to assert beyond binding.
+- [x] 10.7 `[AS-007] Page navigation refreshes data` → SKIP: handled by SvelteKit's invalidation + `load` fns; no project-owned behavior to test without a page harness. Defer to `refactor-extract-testable-units`.
+- [x] 10.8 `[AS-008] CRUD triggers view refresh` → SKIP: covered by `useEntryModal` composition test indirectly; full path needs dashboard extraction (`refactor-extract-testable-units`).
+- [x] 10.9 `[AS-009] Pull-to-refresh on dashboard` → DONE via `refactor-extract-testable-units`. (Revised the "nothing to assert" call: `page.test.ts` mocks veilchen's `useRefresh` to capture the callback the dashboard registers, fires it, and asserts `invalidate('data:dashboardData')` — i.e. that our pull-to-refresh wiring re-fetches. The gesture detection stays veilchen's.)
 
 ## 11. Convention specs — \_conv-\* (the remaining ~30 IDs)
 
@@ -209,7 +209,7 @@ Of the 41 originally-pending Step 3 rows, the audit reclassified them as:
 
 - **18 newly covered** in this change (OB-001..005, OB-008, AS-003..006, IM-005, PG-001..004, EMP-002, PF-001, PF-002, PF-014).
 - **2 SKIP for gap** (IT-006..009 collapse to one gap, OB-006) — see "Follow-up changes" table below.
-- **21 SKIP for refactor** (dashboard, history, profile-edit modal, wizard-Setup orchestration, weight-modal UI scenarios; PR-001/002, IT-005/10/12/13/14, HI-002..011 UI parts, WT-009, EX-007, AS-002/007/008/009, AS-001 third-party-owned, OB-014..016, PF-003/008..011/015) — all unblocked by `refactor-extract-testable-units`.
+- **SKIP-for-refactor rows now RESOLVED** by `refactor-extract-testable-units` (dashboard, history, profile-edit modal, wizard-Setup orchestration, weight-modal UI; PR-001/002, IT-005/10/12/13/14, HI-001..013 UI parts, WT-009, EX-007, AS-001/002/007/008/009, OB-014..017, PF-003/008..011/015). All cited and ticked above; the traceability gate confirms none remain orphaned. Note AS-001 + AS-009 were originally written off as "third-party-owned / nothing to assert" — that call was revised: we assert OUR wiring to the veilchen seam (dock route links; pull-to-refresh → `invalidate`), not the library internals.
 
 ## Follow-up changes surfaced by audit
 

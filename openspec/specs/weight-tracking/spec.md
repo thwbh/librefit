@@ -36,7 +36,7 @@ The system SHALL allow logging weight via a NumberStepper. The date SHALL be set
 
 ### Requirement: Weight value bounds
 
-The system SHALL accept weight values within the closed interval declared by these scenarios. The frontend stepper permits a wider lower range than the backend; the backend remains authoritative per `_conv-validation`.
+The system SHALL accept weight values within the closed interval declared by these scenarios. The frontend weight modal surfaces a validation message and disables Save while the typed value is outside the bound (per `_conv-validation` [VAL-012] / [VAL-013]); the backend remains authoritative.
 
 #### Scenario: [WT-005] Weight at backend lower bound accepted
 
@@ -58,10 +58,12 @@ The system SHALL accept weight values within the closed interval declared by the
 - **WHEN** a weight of 330.1 kg is submitted
 - **THEN** the backend returns a validation error
 
-#### Scenario: [WT-009] UI permits value below backend lower bound
+#### Scenario: [WT-009] UI prevents submission of out-of-bounds weight
 
-- **WHEN** the user sets the weight stepper to 25 kg via the UI
-- **THEN** the UI accepts the input but the backend rejects the submit with a validation error
+- **WHEN** the user types 25 kg into the weight input
+- **THEN** a validation message describing the allowed range is shown inline at the input
+- **AND** Save is disabled until the value is brought into range
+- **AND** the typed value is preserved (the input does not silently snap to a bound)
 
 ### Requirement: Weight entry temporal fields
 
