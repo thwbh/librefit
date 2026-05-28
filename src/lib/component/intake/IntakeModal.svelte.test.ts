@@ -50,7 +50,7 @@ function openDialog(container: HTMLElement) {
 }
 
 describe('IntakeModal', () => {
-	it('[MOD-001] edit mode opens with entry data pre-filled', () => {
+	it('[MOD-001] edit mode opens with entry data pre-filled', async () => {
 		const entry = makeIntake({ description: 'Existing meal' });
 		const { container } = renderModal({
 			entry,
@@ -228,6 +228,73 @@ describe('IntakeModal', () => {
 
 		expect(oncancel).toHaveBeenCalledTimes(1);
 		expect(ondelete).not.toHaveBeenCalled();
+	});
+
+	it('[VAL-012] saving a valid entry does NOT flash the AlertBox during the modal-close transition', async () => {
+		// Regression: useEntryModal nulls `currentEntry` after a successful
+		// save. The $effect on source then ran validate(undefined) → invalid,
+		// which flashed the AlertBox for one frame before the dialog closed.
+		// useFieldValidity now treats null/undefined source as "nothing to
+		// validate" — the visible alert state stays clean across the
+		// defined → undefined transition.
+		const user = userEvent.setup();
+		const props = $state({
+			entry: makeNewIntake({ amount: 500 }) as Intake | NewIntake | null | undefined,
+			mode: 'create' as const,
+			onsave: vi.fn(),
+			oncancel: vi.fn()
+		});
+		const { container } = renderModal(props);
+		openDialog(container);
+
+		// Click Save with a valid entry. attempt() flips hasAttempted=true.
+		await user.click(screen.getByRole('button', { name: /^Save$/ }));
+
+		// Route's useEntryModal would now null the entry on successful save.
+		props.entry = undefined;
+		await new Promise((r) => setTimeout(r, 0));
+
+		// No alert should be visible while entry is null (modal closing).
+		expect(container.querySelector('.alert-error')).toBeNull();
+	});
+
+	it('[VAL-012] reopening the modal with a fresh invalid entry does NOT surface a sticky alert from the previous session', async () => {
+		// Reproduces the regression observed in smoke testing: user adds an
+		// intake (Save with valid value → flips hasAttempted=true → modal
+		// closes), reopens via Add Intake, and the AlertBox flashed up with
+		// the "amount must be between 1 and 10,000" message before the user
+		// touched anything. Fix: IntakeModal calls validity.reset() on the
+		// entry absent→present transition.
+		const props = $state({
+			entry: undefined as Intake | NewIntake | null | undefined,
+			mode: 'create' as const,
+			onsave: vi.fn(),
+			oncancel: vi.fn()
+		});
+		const { container } = renderModal(props);
+
+		// First open with an invalid blank entry.
+		props.entry = makeNewIntake({ amount: 0 });
+		openDialog(container);
+
+		// User clicks Save → attempt() flips hasAttempted=true; save is gated.
+		const user = userEvent.setup();
+		await user.click(screen.getByRole('button', { name: /^Save$/ }));
+		expect(container.querySelector('.alert-error')).not.toBeNull();
+
+		// User fixes the value and successfully saves (simulated by the
+		// route's useEntryModal: currentEntry → undefined after save).
+		props.entry = undefined;
+		await new Promise((r) => setTimeout(r, 0));
+
+		// Modal reopens with a fresh blank entry (amount=0 again — invalid).
+		props.entry = makeNewIntake({ amount: 0 });
+		await new Promise((r) => setTimeout(r, 0));
+		openDialog(container);
+
+		// AlertBox should NOT be visible — the user hasn't attempted in this
+		// new session yet.
+		expect(container.querySelector('.alert-error')).toBeNull();
 	});
 
 	it('create mode does not render the trash/delete affordance', () => {

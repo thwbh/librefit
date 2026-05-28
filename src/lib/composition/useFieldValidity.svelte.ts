@@ -108,6 +108,15 @@ export interface FieldValidity {
 	 * the value changes via a non-input path (e.g. a programmatic reset).
 	 */
 	revalidate: (value: unknown) => void;
+	/**
+	 * Clear the `hasAttempted` flag so the deferred-error gate ([VAL-012])
+	 * resets to its "modal just opened" state. Modals call this on reopen so
+	 * a sticky attempt from the previous session doesn't surface an immediate
+	 * alert when the user pulls up a fresh blank entry. The live
+	 * `displayValid` / `errorMessage` values stay in sync with the current
+	 * `source` — they don't need an explicit reset.
+	 */
+	reset: () => void;
 }
 
 export function useFieldValidity(options: UseFieldValidityOptions): FieldValidity {
@@ -143,9 +152,24 @@ export function useFieldValidity(options: UseFieldValidityOptions): FieldValidit
 		return displayValid;
 	}
 
+	function reset() {
+		hasAttempted = false;
+	}
+
 	if (options.source) {
 		$effect(() => {
-			apply(options.source!());
+			const value = options.source!();
+			// Treat a null/undefined source as "nothing to validate" rather
+			// than as an invalid value. Modal consumers null their bound
+			// entry on close (useEntryModal does this after save/cancel) —
+			// surfacing an invalid-state alert during that transition flashes
+			// the AlertBox for one frame before the dialog actually closes.
+			if (value == null) {
+				displayValid = true;
+				errorMessage = undefined;
+				return;
+			}
+			apply(value);
 		});
 	}
 
@@ -164,6 +188,7 @@ export function useFieldValidity(options: UseFieldValidityOptions): FieldValidit
 		},
 		attempt,
 		handleInput,
-		revalidate
+		revalidate,
+		reset
 	};
 }

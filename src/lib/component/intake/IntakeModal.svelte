@@ -82,6 +82,21 @@
 		if (validity.displayValid) shaken = false;
 	});
 
+	// Reset deferred-validation state when the modal opens with a fresh entry
+	// (useEntryModal nulls `currentEntry` after save/cancel, then assigns a new
+	// blank entry on openCreate/openEdit/openDelete). Without this, a sticky
+	// `hasAttempted` from the previous session would make the AlertBox flash
+	// immediately on reopen if the blank entry is invalid (e.g. amount=0).
+	let lastEntryPresent = false;
+	$effect(() => {
+		const present = !!entry;
+		if (present && !lastEntryPresent) {
+			validity.reset();
+			shaken = false;
+		}
+		lastEntryPresent = present;
+	});
+
 	function handleSaveClick(event?: Event) {
 		if (!onsave) return;
 		if (validity.attempt()) {

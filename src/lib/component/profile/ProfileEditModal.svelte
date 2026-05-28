@@ -32,13 +32,17 @@
 
 	let showAvatarPicker = $state(false);
 
-	// Reset the picker to the form view whenever the modal opens (entry goes
-	// from absent → present). The picker is modal-internal state; the parent
-	// route doesn't need to know about it.
+	// Reset modal-internal state whenever the modal opens (entry goes from
+	// absent → present): the avatar picker view, and the deferred-validation
+	// hasAttempted flag (otherwise a previous "Confirm with invalid nickname"
+	// would carry an immediate alert into the next session).
 	let lastEntryPresent = false;
 	$effect(() => {
 		const present = !!entry;
-		if (present && !lastEntryPresent) showAvatarPicker = false;
+		if (present && !lastEntryPresent) {
+			showAvatarPicker = false;
+			validity.reset();
+		}
 		lastEntryPresent = present;
 	});
 

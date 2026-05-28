@@ -133,19 +133,25 @@ describe('IntakeMask', () => {
 			const { container } = renderWithContext(mockEntry, { readonly: true });
 
 			// fieldset[disabled] is the HTML-standard way to disable an entire
-			// form group. The browser propagates :disabled to every descendant
-			// form control via CSS — we just need to verify the wrapper is set.
+			// form group; the browser propagates :disabled to every descendant.
 			const fs = container.querySelector('fieldset[disabled]');
 			expect(fs).not.toBeNull();
 
-			// Directly-rendered controls (textarea, category buttons) keep their
-			// per-control disabled wiring too, so jsdom's lack of full
-			// :disabled propagation doesn't matter here.
+			// Directly-rendered controls keep per-control disabled wiring too,
+			// so jsdom's lack of full :disabled propagation doesn't matter here.
 			const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
 			expect(textarea.disabled).toBe(true);
 
 			const categoryButtons = container.querySelectorAll('button[aria-pressed]');
 			categoryButtons.forEach((b) => expect((b as HTMLButtonElement).disabled).toBe(true));
+		});
+
+		it('not-readonly editable form is a plain div (no fieldset)', () => {
+			const { container } = renderWithContext(mockEntry, { readonly: false });
+
+			const wrapper = container.querySelector('.flex.flex-col.gap-1.w-full') as HTMLElement;
+			expect(wrapper.tagName).toBe('DIV');
+			expect(container.querySelector('fieldset[disabled]')).toBeNull();
 		});
 	});
 

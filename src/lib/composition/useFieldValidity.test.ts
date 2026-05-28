@@ -108,6 +108,30 @@ describe('useFieldValidity', () => {
 		expect(validity.displayValid).toBe(false);
 	});
 
+	it('reset() clears hasAttempted so a fresh session does not surface a sticky alert', () => {
+		// Simulate: user typed invalid → clicked Save (attempt) → modal closed
+		// → modal reopens with another invalid initial value. Without reset(),
+		// showError would be true immediately even though the user hasn't
+		// engaged with the new form yet.
+		const validity = useFieldValidity({
+			validate: (value) => {
+				const raw = String(value);
+				return parseFloat(raw) > 0 ? { ok: true } : { ok: false, message: 'must be positive' };
+			}
+		});
+
+		validity.handleInput(makeInputEvent('0'));
+		validity.attempt();
+		expect(validity.showError).toBe(true);
+		expect(validity.hasAttempted).toBe(true);
+
+		validity.reset();
+		expect(validity.hasAttempted).toBe(false);
+		expect(validity.showError).toBe(false);
+		// displayValid stays in sync with the live value (still '0' → still invalid).
+		expect(validity.displayValid).toBe(false);
+	});
+
 	it('revalidate(value) lets callers re-evaluate without an event (e.g. programmatic reset)', () => {
 		const validity = useFieldValidity({
 			validate: (value) => (value === 'ok' ? { ok: true } : { ok: false, message: 'wrong' })

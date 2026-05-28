@@ -8,15 +8,12 @@
 		type WeightTracker
 	} from '$lib/api';
 	import { getDateAsStr, parseStringAsDate } from '$lib/date.js';
-	import NumberFlow from '@number-flow/svelte';
 	import { addDays, compareAsc, subDays } from 'date-fns';
-	import { CaretLeft, CaretRight } from 'phosphor-svelte';
 	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import HistoryDayCard from '$lib/component/history/HistoryDayCard.svelte';
+	import HistoryWeek from '$lib/component/history/HistoryWeek.svelte';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
-	import { getCategoriesContext } from '$lib/context';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
-	import { swipe } from 'svelte-gestures';
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import {
@@ -31,8 +28,6 @@
 	import IntakeModal from '$lib/component/intake/IntakeModal.svelte';
 
 	let { data } = $props();
-
-	const foodCategories = getCategoriesContext();
 
 	// default history is 1 week
 	let trackerHistory: TrackerHistory = $state(data.trackerHistory);
@@ -190,11 +185,6 @@
 		}
 	};
 
-	const getActiveClass = (dateStr: string) =>
-		dateStr === selectedDateStr
-			? 'bg-primary-content text-primary'
-			: 'text-primary-content/70 hover:bg-primary-content/10';
-
 	const edit = async (calories: Intake) => {
 		await vibrate(2);
 		modal.openEdit(calories);
@@ -224,20 +214,6 @@
 		delay: 150,
 		easing: cubicOut
 	});
-
-	// Swipe handler for week navigation (date selector area)
-	const handleWeekSwipe = (event: CustomEvent) => {
-		const direction = event.detail.direction;
-		if (direction === 'left') {
-			// Swipe left = go to next week (if available)
-			if (showRightCaret) {
-				scrollRight();
-			}
-		} else if (direction === 'right') {
-			// Swipe right = go to previous week
-			scrollLeft();
-		}
-	};
 
 	// Swipe handler for day navigation (content area)
 	const handleDaySwipe = (event: CustomEvent) => {
@@ -269,54 +245,15 @@
 <div class="flex flex-col overflow-x-hidden">
 	<h1 class="sr-only">History</h1>
 
-	<!-- Header -->
-	<div class="bg-primary text-primary-content px-6 pb-14 safe-top">
-		{#if selectedDateStr}
-			{@const selectedDate = parseStringAsDate(selectedDateStr)}
-			<div class="flex items-center justify-between">
-				<span class="text-3xl font-bold">{getDateAsStr(selectedDate, 'MMMM yyyy')}</span>
-				<div class="flex flex-col items-end">
-					<span class="text-2xl font-bold">
-						<NumberFlow value={trackerHistory.caloriesAverage} />
-					</span>
-					<span class="text-xs opacity-70">avg kcal/day</span>
-				</div>
-			</div>
-		{/if}
-
-		<!-- Date selector -->
-		<div
-			class="grid grid-cols-9 gap-1 mt-6"
-			use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
-			onswipe={handleWeekSwipe}
-		>
-			<button class="place-self-center opacity-70 hover:opacity-100" onclick={scrollLeft}>
-				<CaretLeft size="1.25em" />
-			</button>
-
-			{#each dates as dateStr}
-				{@const dayNumber = getDateAsStr(parseStringAsDate(dateStr), 'dd')}
-				{@const dayName = getDateAsStr(parseStringAsDate(dateStr), 'EE')}
-				<button
-					onclick={() => selectHistory(dateStr)}
-					class="rounded-field flex flex-col items-center px-2 py-1 transition-colors {getActiveClass(
-						dateStr
-					)}"
-				>
-					<span class="text-sm font-semibold">{dayNumber}</span>
-					<span class="text-[10px] font-semibold opacity-60">{dayName}</span>
-				</button>
-			{/each}
-
-			{#if showRightCaret}
-				<button class="place-self-center opacity-70 hover:opacity-100" onclick={scrollRight}>
-					<CaretRight size="1.25em" />
-				</button>
-			{:else}
-				<div></div>
-			{/if}
-		</div>
-	</div>
+	<!-- Header + week pager -->
+	<HistoryWeek
+		{dates}
+		{selectedDateStr}
+		{showRightCaret}
+		caloriesAverage={trackerHistory.caloriesAverage}
+		onselect={selectHistory}
+		onweekchange={(direction) => (direction === 'previous' ? scrollLeft() : scrollRight())}
+	/>
 
 	<!-- Content -->
 	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 flex flex-col p-4 pt-6">

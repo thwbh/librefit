@@ -61,7 +61,18 @@
 		</div>
 	</fieldset>
 {:else}
-	<fieldset class="flex flex-col gap-1 w-full" disabled={readonly}>
+	<!--
+		`<fieldset disabled>` propagates :disabled to every child form control —
+		used for the delete-confirm view. The InlineNumberWheel's first-open
+		scroll glitch is unrelated (tracked upstream: thwbh/veilchen#5) and
+		affects the editable view too, so fieldset isn't the cause; it's kept
+		here for proper :disabled semantics in the read-only delete preview.
+	-->
+	<svelte:element
+		this={readonly ? 'fieldset' : 'div'}
+		class="flex flex-col gap-1 w-full"
+		disabled={readonly || undefined}
+	>
 		<span class="text-lg mt-1 font-semibold"
 			>{getFoodCategoryLongvalue(categories, entry.category)}</span
 		>
@@ -108,7 +119,7 @@
 				{entry.description?.length || 0} / 500
 			</span>
 		</div>
-	</fieldset>
+	</svelte:element>
 {/if}
 
 <style>

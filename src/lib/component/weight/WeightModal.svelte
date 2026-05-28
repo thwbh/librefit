@@ -71,6 +71,20 @@
 		if (validity.displayValid) shaken = false;
 	});
 
+	// Reset deferred-validation state when the modal opens with a fresh entry.
+	// See IntakeModal for the rationale — `useEntryModal` nulls the entry after
+	// save/cancel and assigns a new blank one on openCreate/openEdit, and we
+	// must not carry over a sticky hasAttempted into the next session.
+	let lastEntryPresent = false;
+	$effect(() => {
+		const present = !!entry;
+		if (present && !lastEntryPresent) {
+			validity.reset();
+			shaken = false;
+		}
+		lastEntryPresent = present;
+	});
+
 	function handleSaveClick(event?: Event) {
 		if (validity.attempt()) {
 			onsave(event);
