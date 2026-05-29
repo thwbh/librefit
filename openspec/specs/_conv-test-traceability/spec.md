@@ -73,7 +73,7 @@ Tests SHALL be authored at the cheapest layer that correctly exercises the scena
 
 ### Requirement: Traceability gate
 
-The CI pipeline SHALL fail when any spec scenario lacks a test citation. The gate is implemented by `scripts/check-spec-traceability.sh` and runs on every pull request targeting the main branch. The check enforces the spec→test direction; tests without scenario references are permitted.
+The CI pipeline SHALL fail when any spec scenario lacks a test citation. The gate is implemented by `scripts/check-spec-traceability.mjs` and runs on every pull request. The check enforces the spec→test direction; tests without scenario references are permitted.
 
 #### Scenario: [TRC-006] Orphan scenario blocks merge
 

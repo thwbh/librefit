@@ -3,7 +3,7 @@
 /// Each argument is a bracketed scenario ID literal, e.g. `"[IT-025]"`. The macro prints
 /// `scenarios: [ID1] [ID2] ...` to stdout, which `cargo test` / `cargo nextest` capture
 /// per-test and surface in failure output. The bracketed form is what the traceability
-/// gate (`scripts/check-spec-traceability.sh`) greps for.
+/// gate (`scripts/check-spec-traceability.mjs`) greps for.
 ///
 /// # Example
 /// ```ignore
