@@ -7,6 +7,7 @@ use crate::helpers::{
     create_test_intake_entry, create_test_intake_target, create_test_user,
     create_test_weight_entry, create_test_weight_target, setup_test_pool,
 };
+use librefit_lib::scenario;
 use librefit_lib::service::export::{
     cancel_export, export_database_file, ExportCancellation, ExportFormat, ExportProgress,
     ExportStage,
@@ -73,7 +74,8 @@ fn test_export_raw_database_empty() {
 }
 
 #[test]
-fn test_export_raw_database_with_data() {
+fn raw_sqlite_export_with_data() {
+    scenario!("[EX-002]", "[EX-004]", "[STG-001]", "[STG-002]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -131,7 +133,8 @@ fn test_export_raw_database_with_data() {
 }
 
 #[test]
-fn test_export_raw_cancellation() {
+fn raw_export_cancellation() {
+    scenario!("[EX-003]", "[EX-006]", "[STG-003]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -252,7 +255,8 @@ fn test_export_csv_empty_database() {
 }
 
 #[test]
-fn test_export_csv_with_data() {
+fn csv_export_with_data() {
+    scenario!("[EX-001]", "[STG-001]", "[STG-002]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -301,7 +305,8 @@ fn test_export_csv_with_data() {
 }
 
 #[test]
-fn test_export_csv_cancellation() {
+fn csv_export_cancellation() {
+    scenario!("[EX-003]", "[STG-003]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -334,7 +339,8 @@ fn test_export_csv_cancellation() {
 }
 
 #[test]
-fn test_export_csv_all_tables_included() {
+fn csv_export_all_tables_included() {
+    scenario!("[EX-005]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -371,7 +377,8 @@ fn test_export_csv_all_tables_included() {
 // ============================================================================
 
 #[test]
-fn test_cancel_export_command() {
+fn cancel_export_command_sets_flag() {
+    scenario!("[EX-006]");
     let cancellation = ExportCancellation::new();
     let app = tauri::test::mock_app();
     app.manage(cancellation.clone());
@@ -420,7 +427,8 @@ fn test_format_bytes_helper() {
 // ============================================================================
 
 #[test]
-fn test_export_raw_all_stages_present() {
+fn raw_export_all_stages_present() {
+    scenario!("[EX-004]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -450,7 +458,8 @@ fn test_export_raw_all_stages_present() {
 }
 
 #[test]
-fn test_export_csv_all_stages_present() {
+fn csv_export_all_stages_present() {
+    scenario!("[EX-004]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();

@@ -13,23 +13,23 @@ import { formatZodError, formatInvokeError } from './error-formatter';
  * Options for creating command hooks
  */
 export interface HookOptions {
-  /** Custom success message. If not provided, no success toast is shown */
-  successMessage?: string;
+	/** Custom success message. If not provided, no success toast is shown */
+	successMessage?: string;
 
-  /** Custom error message prefix. Will be prepended to the actual error */
-  errorContext?: string;
+	/** Custom error message prefix. Will be prepended to the actual error */
+	errorContext?: string;
 
-  /** Duration for success toast in milliseconds (default: 3000) */
-  successDuration?: number;
+	/** Duration for success toast in milliseconds (default: 3000) */
+	successDuration?: number;
 
-  /** Duration for error toast in milliseconds (default: 5000) */
-  errorDuration?: number;
+	/** Duration for error toast in milliseconds (default: 5000) */
+	errorDuration?: number;
 
-  /** Whether to show validation errors as toasts (default: true) */
-  showValidationErrors?: boolean;
+	/** Whether to show validation errors as toasts (default: true) */
+	showValidationErrors?: boolean;
 
-  /** Whether to show invoke errors as toasts (default: true) */
-  showInvokeErrors?: boolean;
+	/** Whether to show invoke errors as toasts (default: true) */
+	showInvokeErrors?: boolean;
 }
 
 /**
@@ -37,14 +37,14 @@ export interface HookOptions {
  *
  * @example
  * ```typescript
- * import { createCalorieTrackerEntry } from '$lib/api/gen/commands';
+ * import { createIntake } from '$lib/api/gen/commands';
  * import { createCommandHooks } from '$lib/api/command-hooks';
  *
- * const result = await createCalorieTrackerEntry(
+ * const result = await createIntake(
  *   params,
  *   createCommandHooks({
  *     successMessage: 'Entry created successfully',
- *     errorContext: 'Failed to create calorie entry'
+ *     errorContext: 'Failed to create intake entry'
  *   })
  * );
  * ```
@@ -70,48 +70,50 @@ export interface HookOptions {
  * ```
  */
 export function createCommandHooks<T>(options: HookOptions = {}): CommandHooks<T> {
-  const {
-    successMessage,
-    errorContext,
-    successDuration = 3000,
-    errorDuration = 5000,
-    showValidationErrors = true,
-    showInvokeErrors = true
-  } = options;
+	const {
+		successMessage,
+		errorContext,
+		successDuration = 3000,
+		errorDuration = 5000,
+		showValidationErrors = true,
+		showInvokeErrors = true
+	} = options;
 
-  return {
-    onValidationError: (error: ZodError) => {
-      const message = formatZodError(error);
-      const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
+	return {
+		onValidationError: (error: ZodError) => {
+			const message = formatZodError(error);
+			const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
 
-      // Log for debugging
-      logError(`[Validation Error] ${fullMessage}`);
+			// Log for debugging
+			logError(`[Validation Error] ${fullMessage}`);
 
-      // Show toast notification
-      if (showValidationErrors) {
-        toast.error(fullMessage, errorDuration);
-      }
-    },
+			// Show toast notification. Validation failures are correctable user
+			// mistakes, so they surface as a warning (per _conv-user-errors ERR-004),
+			// not an error toast.
+			if (showValidationErrors) {
+				toast.warning(fullMessage, errorDuration);
+			}
+		},
 
-    onInvokeError: (error: unknown) => {
-      const message = formatInvokeError(error);
-      const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
+		onInvokeError: (error: unknown) => {
+			const message = formatInvokeError(error);
+			const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
 
-      // Log for debugging
-      logError(`[Invoke Error] ${fullMessage}`);
+			// Log for debugging
+			logError(`[Invoke Error] ${fullMessage}`);
 
-      // Show toast notification
-      if (showInvokeErrors) {
-        toast.error(fullMessage, errorDuration);
-      }
-    },
+			// Show toast notification
+			if (showInvokeErrors) {
+				toast.error(fullMessage, errorDuration);
+			}
+		},
 
-    onSuccess: successMessage
-      ? () => {
-        toast.success(successMessage, successDuration);
-      }
-      : undefined
-  };
+		onSuccess: successMessage
+			? () => {
+					toast.success(successMessage, successDuration);
+				}
+			: undefined
+	};
 }
 
 /**
@@ -119,48 +121,48 @@ export function createCommandHooks<T>(options: HookOptions = {}): CommandHooks<T
  * Useful for background operations or frequent API calls
  */
 export function createSilentHooks<T>(errorContext?: string): CommandHooks<T> {
-  return {
-    onValidationError: (error: ZodError) => {
-      const message = formatZodError(error);
-      const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
-      logError(`[Validation Error] ${fullMessage}`);
-    },
+	return {
+		onValidationError: (error: ZodError) => {
+			const message = formatZodError(error);
+			const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
+			logError(`[Validation Error] ${fullMessage}`);
+		},
 
-    onInvokeError: (error: unknown) => {
-      const message = formatInvokeError(error);
-      const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
-      logError(`[Invoke Error] ${fullMessage}`);
-    }
-  };
+		onInvokeError: (error: unknown) => {
+			const message = formatInvokeError(error);
+			const fullMessage = errorContext ? `${errorContext}: ${message}` : message;
+			logError(`[Invoke Error] ${fullMessage}`);
+		}
+	};
 }
 
 /**
  * Pre-configured hooks for common CRUD operations
  */
 export const CommonHooks = {
-  create: (entityName: string) =>
-    createCommandHooks({
-      successMessage: `${entityName} created successfully`,
-      errorContext: `Failed to create ${entityName.toLowerCase()}`
-    }),
+	create: (entityName: string) =>
+		createCommandHooks({
+			successMessage: `${entityName} created successfully`,
+			errorContext: `Failed to create ${entityName.toLowerCase()}`
+		}),
 
-  update: (entityName: string) =>
-    createCommandHooks({
-      successMessage: `${entityName} updated successfully`,
-      errorContext: `Failed to update ${entityName.toLowerCase()}`
-    }),
+	update: (entityName: string) =>
+		createCommandHooks({
+			successMessage: `${entityName} updated successfully`,
+			errorContext: `Failed to update ${entityName.toLowerCase()}`
+		}),
 
-  delete: (entityName: string) =>
-    createCommandHooks({
-      successMessage: `${entityName} deleted successfully`,
-      errorContext: `Failed to delete ${entityName.toLowerCase()}`
-    }),
+	delete: (entityName: string) =>
+		createCommandHooks({
+			successMessage: `${entityName} deleted successfully`,
+			errorContext: `Failed to delete ${entityName.toLowerCase()}`
+		}),
 
-  /** For read operations - silent by default, only shows errors */
-  read: (errorContext?: string) =>
-    createCommandHooks({
-      errorContext,
-      showValidationErrors: true,
-      showInvokeErrors: true
-    })
+	/** For read operations - silent by default, only shows errors */
+	read: (errorContext?: string) =>
+		createCommandHooks({
+			errorContext,
+			showValidationErrors: true,
+			showInvokeErrors: true
+		})
 };

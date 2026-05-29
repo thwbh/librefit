@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::user::{get_user, update_user};
 use tauri::Manager;
 
@@ -72,15 +73,22 @@ fn test_get_user_returns_created_profile() {
 }
 
 #[test]
-fn test_update_user_validation_empty_name() {
+fn nickname_below_backend_lower_bound_rejected() {
+    scenario!("[PF-012]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
 
-    let result = update_user(app.state(), "".to_string(), "avatar1".to_string());
+    // 1 char — one below the validator's min of 2.
+    let result = update_user(app.state(), "A".to_string(), "avatar1".to_string());
 
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Username cannot be empty"));
+    let err = result.unwrap_err();
+    assert!(err.contains("Validation failed"), "unexpected error: {err}");
+    assert!(
+        err.contains("name"),
+        "error should mention the name field: {err}"
+    );
 }
 
 #[test]
@@ -98,18 +106,22 @@ fn test_update_user_with_empty_avatar() {
 }
 
 #[test]
-fn test_update_user_validation_name_too_long() {
+fn nickname_above_backend_upper_bound_rejected() {
+    scenario!("[PF-013]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
 
-    let long_name = "A".repeat(51); // Over 50 character limit
+    let long_name = "A".repeat(41); // One above the validator's max of 40.
     let result = update_user(app.state(), long_name.clone(), "avatar1".to_string());
 
     assert!(result.is_err());
-    assert!(result
-        .unwrap_err()
-        .contains("Username must be less than 50 characters"));
+    let err = result.unwrap_err();
+    assert!(err.contains("Validation failed"), "unexpected error: {err}");
+    assert!(
+        err.contains("name"),
+        "error should mention the name field: {err}"
+    );
 }
 
 #[test]
@@ -122,9 +134,12 @@ fn test_update_user_validation_avatar_too_long() {
     let result = update_user(app.state(), "John Doe".to_string(), long_avatar);
 
     assert!(result.is_err());
-    assert!(result
-        .unwrap_err()
-        .contains("Avatar path must be less than 500 characters"));
+    let err = result.unwrap_err();
+    assert!(err.contains("Validation failed"), "unexpected error: {err}");
+    assert!(
+        err.contains("avatar"),
+        "error should mention the avatar field: {err}"
+    );
 }
 
 #[test]

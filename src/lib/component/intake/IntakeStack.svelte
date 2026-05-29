@@ -55,7 +55,7 @@
 					<figure class="bg-accent w-4"></figure>
 				{/snippet}
 				<LongPressContainer onlongpress={() => onlongpress(cardKey)}>
-					<IntakeMask entry={entries[cardKey]} readonly />
+					<IntakeMask entry={entries[cardKey]} compact />
 				</LongPressContainer>
 			</StackCard>
 		{/snippet}

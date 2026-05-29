@@ -1,7 +1,9 @@
 <script lang="ts">
+	import IntakeFab from '$lib/component/intake/IntakeFab.svelte';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
 	import IntakeStack from '$lib/component/intake/IntakeStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
+	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import {
 		createIntake,
 		createWeightTrackerEntry,
@@ -18,24 +20,23 @@
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
-	import { Avatar, ModalDialog, NumberStepper, useRefresh } from '@thwbh/veilchen';
+	import { Avatar, useRefresh } from '@thwbh/veilchen';
 	import { invalidate } from '$app/navigation';
-	import { Plus, Trash, CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
+	import { CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import {
 		convertDateStrToDisplayDateStr,
-		display_date_format,
 		getDateAsStr,
 		getDisplayDateAsStr,
 		parseStringAsDate
 	} from '$lib/date';
-	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
+	import IntakeModal from '$lib/component/intake/IntakeModal.svelte';
+	import { defaultCategoryForDate } from '$lib/api/category';
 	import { getAvatarFromUser } from '$lib/avatar';
 	import { differenceInDays } from 'date-fns';
 	import { slide, fly } from 'svelte/transition';
 	import NumberFlow from '@number-flow/svelte';
-	import CaloriePlanCard from '$lib/component/journey/CaloriePlanCard.svelte';
-	import EncouragementMessage from '$lib/component/journey/EncouragementMessage.svelte';
+	import PlanReviewPanel from '$lib/component/dashboard/PlanReviewPanel.svelte';
 
 	let { data } = $props();
 
@@ -107,9 +108,10 @@
 	let intakeToday: Array<number> = $derived(intake.map((tracker) => tracker.amount));
 
 	const getBlankEntry = (): NewIntake => {
+		const now = new Date();
 		return {
-			category: 'l',
-			added: getDateAsStr(new Date()),
+			category: defaultCategoryForDate(now),
+			added: getDateAsStr(now),
 			amount: 0,
 			description: ''
 		};
@@ -253,31 +255,17 @@
 		</div>
 
 		<!-- Calorie plan & encouragement below the progress bar -->
-		{#if showPlan}
-			<div transition:slide={{ duration: 300 }} class="flex flex-col gap-4 mt-4">
-				<div in:fly={{ y: 20, duration: 400, delay: 150 }}>
-					<CaloriePlanCard
-						dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
-						recommendation={weightTarget.targetWeight > weightTarget.initialWeight
-							? 'GAIN'
-							: 'LOSE'}
-						targetCalories={intakeTarget.targetCalories}
-						maximumCalories={intakeTarget.maximumCalories}
-						{averageIntake}
-					/>
-				</div>
-
-				<div in:fly={{ y: 20, duration: 400, delay: 250 }}>
-					<EncouragementMessage
-						{daysElapsed}
-						daysLeft={dayDiff}
-						{averageIntake}
-						targetCalories={intakeTarget.targetCalories}
-						{goalReached}
-					/>
-				</div>
-			</div>
-		{/if}
+		<PlanReviewPanel
+			expanded={showPlan}
+			dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
+			recommendation={weightTarget.targetWeight > weightTarget.initialWeight ? 'GAIN' : 'LOSE'}
+			targetCalories={intakeTarget.targetCalories}
+			maximumCalories={intakeTarget.maximumCalories}
+			{averageIntake}
+			{daysElapsed}
+			daysLeft={dayDiff}
+			{goalReached}
+		/>
 	</div>
 
 	<!-- Content area -->
@@ -296,106 +284,41 @@
 		</div>
 	</div>
 </div>
-<button class="fab-button btn btn-xl btn-circle btn-primary shadow-lg" onclick={modal.openCreate}>
-	<Plus size="1.5em" />
-</button>
+<IntakeFab onclick={modal.openCreate} />
 <!-- Intake creation modal -->
-<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Add Intake</span>
-		{#if modal.currentEntry}
-			<span class="text-xs opacity-70">
-				{convertDateStrToDisplayDateStr((modal.currentEntry as NewIntake).added)}
-			</span>
-		{/if}
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask bind:entry={modal.currentEntry} isEditing={true} readonly={modal.enableDelete} />
-		{/if}
-	{/snippet}
-</ModalDialog>
+<IntakeModal
+	bind:dialog={modal.createDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="create"
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
+	oncancel={modal.cancel}
+/>
 
 <!-- Intake update modal -->
-<ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Edit Intake</span>
-		<span class="flex items-center gap-2">
-			{#if modal.currentEntry}
-				<span class="text-xs opacity-70">
-					{convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
-				</span>
-			{/if}
-			<button class="btn btn-xs btn-error">
-				<Trash size="1rem" onclick={modal.requestDelete} />
-			</button>
-		</span>
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask entry={modal.currentEntry as Intake} isEditing={modal.isEditing} />
-		{/if}
-	{/snippet}
-
-	{#snippet footer()}
-		{#if modal.enableDelete}
-			<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
-		{:else}
-			<button class="btn btn-primary" onclick={modal.save}>Save</button>
-		{/if}
-		<button class="btn" onclick={modal.cancel}>Cancel</button>
-	{/snippet}
-</ModalDialog>
+<IntakeModal
+	bind:dialog={modal.editDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="edit"
+	enableDelete={modal.enableDelete}
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
+	oncancel={modal.cancel}
+	onrequestdelete={modal.requestDelete}
+	oncanceldelete={modal.cancelDelete}
+	ondelete={modal.deleteEntry}
+/>
 
 <!-- Weight modal -->
-<ModalDialog
+<WeightModal
 	bind:dialog={modalWeight.createDialog.value}
-	onconfirm={modalWeight.save}
+	bind:entry={modalWeight.currentEntry}
+	errorMessage={modalWeight.errorMessage}
+	onsave={modalWeight.save}
 	oncancel={modalWeight.cancel}
->
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
-		<span class="text-xs opacity-70">
-			{getDateAsStr(new Date(), display_date_format)}
-		</span>
-	{/snippet}
-	{#snippet content()}
-		<fieldset class="fieldset rounded-box">
-			{#if modalWeight.errorMessage}
-				<div class="alert alert-error mb-4">
-					<span>{modalWeight.errorMessage}</span>
-				</div>
-			{/if}
-			{#if modalWeight.currentEntry}
-				<NumberStepper
-					bind:value={modalWeight.currentEntry.amount}
-					label="Current Weight"
-					unit="kg"
-					min={30}
-					max={330}
-					incrementSteps={[0.5, 1, 2, 5]}
-					decrementSteps={[0.5, 1, 2, 5]}
-					initialIncrementStep={1}
-					initialDecrementStep={1}
-					showLeftWheel={false}
-				/>
-			{/if}
-		</fieldset>
-	{/snippet}
-</ModalDialog>
+/>
 
 <style>
-	.fab-button {
-		position: sticky;
-		bottom: 1rem;
-		float: right;
-		margin-right: 1rem;
-		margin-top: -4rem;
-		z-index: 39;
-	}
-
 	.journey-bar-track {
 		height: 0.25rem;
 		border-radius: 9999px;

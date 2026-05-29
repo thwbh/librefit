@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::intake::{Intake, IntakeTarget, NewIntake, NewIntakeTarget};
 
 // ============================================================================
@@ -197,7 +198,8 @@ fn test_find_last_intake_target_empty() {
 // ============================================================================
 
 #[test]
-fn test_create_intake_entry() {
+fn create_intake_entry_with_explicit_date() {
+    scenario!("[IT-025]", "[HI-009]", "[VAL-001]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -462,7 +464,8 @@ fn test_multiple_entries_same_date_same_category() {
 // ============================================================================
 
 #[test]
-fn test_intake_validation_amount_too_low() {
+fn amount_below_lower_bound_rejected_validator() {
+    scenario!("[IT-021]", "[VAL-007]");
     use validator::Validate;
 
     // Invalid: below minimum of 1
@@ -473,7 +476,8 @@ fn test_intake_validation_amount_too_low() {
 }
 
 #[test]
-fn test_intake_validation_amount_too_high() {
+fn amount_above_upper_bound_rejected_validator() {
+    scenario!("[IT-022]");
     use validator::Validate;
 
     // Invalid: above maximum of 10000
@@ -495,7 +499,8 @@ fn test_intake_validation_category_too_long() {
 }
 
 #[test]
-fn test_intake_validation_description_too_long() {
+fn description_above_max_length_rejected() {
+    scenario!("[IT-024]", "[VAL-006]");
     use validator::Validate;
 
     // Invalid: exceeds 500 characters
@@ -540,4 +545,24 @@ fn test_intake_target_validation_maximum_too_high() {
 
     let validation = target.validate();
     assert!(validation.is_err());
+}
+
+#[test]
+fn description_at_max_length_accepted() {
+    scenario!("[IT-023]", "[VAL-005]");
+    use validator::Validate;
+
+    let entry = NewIntake::new(
+        "2025-01-15".to_string(),
+        500,
+        "b".to_string(),
+        Some("a".repeat(500)),
+    );
+
+    let validation = entry.validate();
+    assert!(
+        validation.is_ok(),
+        "500-character description should be accepted: {:?}",
+        validation
+    );
 }

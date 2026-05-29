@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::intake::{create_intake, NewIntake};
 use librefit_lib::service::tracker_history::get_tracker_history;
 use librefit_lib::service::weight::{create_weight_tracker_entry, NewWeightTracker};
@@ -9,7 +10,8 @@ use tauri::Manager;
 // ============================================================================
 
 #[test]
-fn test_get_tracker_history_success() {
+fn get_tracker_history_success() {
+    scenario!("[HI-001]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

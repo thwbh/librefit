@@ -5,19 +5,28 @@ use diesel::prelude::*;
 use diesel::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use tauri::{command, State};
+use validator::Validate;
 
 // ============================================================================
 // MODELS
 // ============================================================================
 
 /// Represents a user profile. There may be only one.
-#[derive(Queryable, Selectable, Insertable, AsChangeset, Serialize, Deserialize, Debug)]
+#[derive(
+    Queryable, Selectable, Insertable, AsChangeset, Serialize, Deserialize, Debug, Validate,
+)]
 #[diesel(table_name = libre_user)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[serde(rename_all = "camelCase")]
 pub struct LibreUser {
     pub id: i32,
+    #[validate(length(max = 500, message = "Avatar path must be less than 500 characters."))]
     pub avatar: String,
+    #[validate(length(
+        min = 2,
+        max = 40,
+        message = "Nickname must be between 2 and 40 characters."
+    ))]
     pub name: String,
 }
 
@@ -73,17 +82,13 @@ pub fn update_user(
     user_name: String,
     user_avatar: String,
 ) -> Result<LibreUser, String> {
-    // Validate username (reasonable length limits)
-    if user_name.trim().is_empty() {
-        return Err("Username cannot be empty".to_string());
-    }
-    if user_name.len() > 50 {
-        return Err("Username must be less than 50 characters".to_string());
-    }
-
-    // Validate avatar (optional field, but if provided should be reasonable length)
-    if user_avatar.len() > 500 {
-        return Err("Avatar path must be less than 500 characters".to_string());
+    let candidate = LibreUser {
+        id: 1,
+        name: user_name.clone(),
+        avatar: user_avatar.clone(),
+    };
+    if let Err(validation_errors) = candidate.validate() {
+        return Err(format!("Validation failed: {:?}", validation_errors));
     }
 
     log::debug!(

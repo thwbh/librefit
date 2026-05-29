@@ -38,6 +38,7 @@ use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 pub mod db;
 pub mod i18n;
 pub mod service;
+pub mod test_support;
 pub mod util;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

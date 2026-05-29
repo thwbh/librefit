@@ -21,3 +21,23 @@ export const getFoodCategoryLongvalue = (
 export const getFoodCategoryIcon = (shortvalue: string): Component => {
 	return categoryIcons[shortvalue];
 };
+
+/**
+ * Pick the default intake category for a given local-time hour, per
+ * `intake-tracking` scenarios [IT-006..IT-009].
+ *
+ * Windows:
+ *   05:00 – 10:59 → Breakfast ('b')
+ *   11:00 – 14:59 → Lunch     ('l')
+ *   15:00 – 20:59 → Dinner    ('d')
+ *   else          → Snack     ('s')
+ */
+export const defaultCategoryForHour = (hour: number): string => {
+	if (hour >= 5 && hour <= 10) return 'b';
+	if (hour >= 11 && hour <= 14) return 'l';
+	if (hour >= 15 && hour <= 20) return 'd';
+	return 's';
+};
+
+export const defaultCategoryForDate = (date: Date): string =>
+	defaultCategoryForHour(date.getHours());

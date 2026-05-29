@@ -151,10 +151,10 @@ describe('createTargetWeightTargets', () => {
 		);
 
 		// Verify calorie target
-		expect(result.calorieTarget.targetCalories).toBe(2500 - 500);
-		expect(result.calorieTarget.maximumCalories).toBe(2500);
-		expect(result.calorieTarget.startDate).toBe('2026-01-15');
-		expect(result.calorieTarget.endDate).toBe('2026-04-15');
+		expect(result.intakeTarget.targetCalories).toBe(2500 - 500);
+		expect(result.intakeTarget.maximumCalories).toBe(2500);
+		expect(result.intakeTarget.startDate).toBe('2026-01-15');
+		expect(result.intakeTarget.endDate).toBe('2026-04-15');
 
 		// Verify weight target
 		expect(result.weightTarget.initialWeight).toBe(80);
@@ -203,9 +203,9 @@ describe('createTargetWeightTargets', () => {
 		);
 
 		// For weight gain, calories should be ADDED (positive multiplier)
-		expect(result.calorieTarget.targetCalories).toBe(3000 + 250);
-		expect(result.calorieTarget.maximumCalories).toBe(3000);
-		expect(result.calorieTarget.endDate).toBe('2026-08-15');
+		expect(result.intakeTarget.targetCalories).toBe(3000 + 250);
+		expect(result.intakeTarget.maximumCalories).toBe(3000);
+		expect(result.intakeTarget.endDate).toBe('2026-08-15');
 
 		// Verify weight target
 		expect(result.weightTarget.initialWeight).toBe(70);
@@ -251,8 +251,8 @@ describe('createTargetWeightTargets', () => {
 			selectedRate
 		);
 
-		expect(result.calorieTarget.targetCalories).toBe(2000 - 750);
-		expect(result.calorieTarget.endDate).toBe('2026-07-15');
+		expect(result.intakeTarget.targetCalories).toBe(2000 - 750);
+		expect(result.intakeTarget.endDate).toBe('2026-07-15');
 	});
 
 	test('should include today as "added" date', () => {
@@ -297,7 +297,7 @@ describe('createTargetWeightTargets', () => {
 			selectedRate
 		);
 
-		expect(result.calorieTarget.added).toBe(todayStr);
+		expect(result.intakeTarget.added).toBe(todayStr);
 		expect(result.weightTarget.added).toBe(todayStr);
 	});
 
@@ -343,7 +343,7 @@ describe('createTargetWeightTargets', () => {
 
 		// Multiplier should be -1 because targetWeight < wizardInput.weight evaluates to false
 		// But since they're equal, the logic will use -1 (the else branch)
-		expect(result.calorieTarget.targetCalories).toBe(2500 + 500);
+		expect(result.intakeTarget.targetCalories).toBe(2500 + 500);
 	});
 
 	test('should format dates correctly', () => {
@@ -379,8 +379,8 @@ describe('createTargetWeightTargets', () => {
 		);
 
 		// Verify date format (YYYY-MM-DD)
-		expect(result.calorieTarget.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-		expect(result.calorieTarget.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		expect(result.intakeTarget.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		expect(result.intakeTarget.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 		expect(result.weightTarget.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 		expect(result.weightTarget.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 	});
@@ -423,7 +423,7 @@ describe('createTargetWeightTargets', () => {
 			targetWeight,
 			250
 		);
-		expect(result250.calorieTarget.endDate).toBe('2026-10-01');
+		expect(result250.intakeTarget.endDate).toBe('2026-10-01');
 
 		// Test with 750 rate
 		const result750 = createTargetWeightTargets(
@@ -434,6 +434,6 @@ describe('createTargetWeightTargets', () => {
 			targetWeight,
 			750
 		);
-		expect(result750.calorieTarget.endDate).toBe('2026-05-15');
+		expect(result750.intakeTarget.endDate).toBe('2026-05-15');
 	});
 });

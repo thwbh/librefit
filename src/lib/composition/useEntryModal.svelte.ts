@@ -10,12 +10,12 @@
  *
  * @example
  * ```typescript
- * import { createCalorieTrackerEntry, updateCalorieTrackerEntry, deleteCalorieTrackerEntry } from '$lib/api/gen/commands';
+ * import { createIntake, updateIntake, deleteIntake } from '$lib/api/gen/commands';
  *
- * const modal = useEntryModal<CalorieTracker, NewCalorieTracker>({
- *   onCreate: (entry, hooks) => createCalorieTrackerEntry({ newEntry: entry }, hooks),
- *   onUpdate: (id, entry, hooks) => updateCalorieTrackerEntry({ trackerId: id, updatedEntry: entry }, hooks),
- *   onDelete: (id, hooks) => deleteCalorieTrackerEntry({ trackerId: id }, hooks),
+ * const modal = useEntryModal<Intake, NewIntake>({
+ *   onCreate: (entry, hooks) => createIntake({ newEntry: entry }, hooks),
+ *   onUpdate: (id, entry, hooks) => updateIntake({ trackerId: id, updatedEntry: entry }, hooks),
+ *   onDelete: (id, hooks) => deleteIntake({ trackerId: id }, hooks),
  *   getBlankEntry: () => ({ added: '2024-01-01', amount: 0, category: 'l', description: '' })
  * });
  *
@@ -26,7 +26,7 @@
  *   onconfirm={modal.save}
  *   oncancel={modal.cancel}
  * >
- *   <CalorieTrackerMask bind:entry={modal.currentEntry} isEditing={true} />
+ *   <IntakeMask bind:entry={modal.currentEntry} isEditing={true} />
  * </ModalDialog>
  * ```
  */
@@ -264,6 +264,15 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 	};
 
 	/**
+	 * Symmetric to `requestDelete`: leave delete-confirm and return to the
+	 * editable view. Wired to `IntakeModal.oncanceldelete` so a misclicked
+	 * trash icon doesn't force the user to Cancel the whole modal.
+	 */
+	const cancelDelete = () => {
+		enableDelete = false;
+	};
+
+	/**
 	 * Clear error message
 	 */
 	const clearError = () => {
@@ -333,6 +342,7 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 		cancel,
 		deleteEntry,
 		requestDelete,
+		cancelDelete,
 		clearError
 	};
 }

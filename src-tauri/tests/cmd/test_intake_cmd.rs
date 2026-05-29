@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::intake::{
     create_intake, create_intake_target, delete_intake, get_food_categories,
     get_intake_dates_in_range, get_intake_for_date_range, get_last_intake_target, update_intake,
@@ -172,7 +173,8 @@ fn test_create_intake_success() {
 }
 
 #[test]
-fn test_create_intake_validation_amount_too_low() {
+fn amount_below_lower_bound_rejected() {
+    scenario!("[IT-021]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -186,7 +188,8 @@ fn test_create_intake_validation_amount_too_low() {
 }
 
 #[test]
-fn test_create_intake_validation_amount_too_high() {
+fn amount_above_upper_bound_rejected() {
+    scenario!("[IT-022]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -340,4 +343,92 @@ fn test_get_food_categories_success() {
     // Verify some expected categories exist
     let breakfast_exists = categories.iter().any(|c| c.shortvalue == "b");
     assert!(breakfast_exists);
+}
+
+#[test]
+fn amount_at_lower_bound_accepted() {
+    scenario!("[IT-019]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 1, "b".to_string(), None);
+
+    let result = create_intake(app.state(), new_entry);
+
+    assert!(result.is_ok(), "amount=1 should be accepted: {:?}", result);
+    assert_eq!(result.unwrap().amount, 1);
+}
+
+#[test]
+fn amount_at_upper_bound_accepted() {
+    scenario!("[IT-020]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 10000, "b".to_string(), None);
+
+    let result = create_intake(app.state(), new_entry);
+
+    assert!(
+        result.is_ok(),
+        "amount=10000 should be accepted: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap().amount, 10000);
+}
+
+#[test]
+fn invalid_date_format_rejected() {
+    scenario!("[IT-026]", "[VAL-002]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    // Non-YYYY-MM-DD format (slashes instead of hyphens, day-first).
+    let new_entry = NewIntake::new("15/01/2026".to_string(), 500, "b".to_string(), None);
+
+    let result = create_intake(app.state(), new_entry);
+
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Validation failed"));
+}
+
+#[test]
+fn time_defaults_when_unset() {
+    scenario!("[IT-027]", "[VAL-004]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake::new("2026-01-15".to_string(), 500, "b".to_string(), None);
+
+    let entry = create_intake(app.state(), new_entry).unwrap();
+
+    // Time should be set (defaulted), 8 chars in HH:MM:SS form.
+    assert_eq!(entry.time.len(), 8);
+    assert_eq!(entry.time.chars().nth(2), Some(':'));
+    assert_eq!(entry.time.chars().nth(5), Some(':'));
+}
+
+#[test]
+fn explicit_time_in_hms_format_accepted() {
+    scenario!("[VAL-003]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewIntake {
+        added: "2026-01-15".to_string(),
+        amount: 500,
+        category: "b".to_string(),
+        description: None,
+        time: Some("14:30:45".to_string()),
+    };
+
+    let entry =
+        create_intake(app.state(), new_entry).expect("valid HH:MM:SS time should be accepted");
+
+    assert_eq!(entry.time, "14:30:45");
 }

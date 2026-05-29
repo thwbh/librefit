@@ -1,0 +1,65 @@
+schema: spec-driven
+
+context: |
+  LibreFit is a Tauri 2 + SvelteKit 5 + Rust + Diesel + SQLite
+  app, targeting desktop and Android. Frontend uses Tailwind v4, DaisyUI,
+  and the @thwbh/veilchen component library.
+
+  Source of truth: specs in openspec/specs/ describe all application
+  behavior and requirements. If a behavior is not in the specs, it is not
+  yet a requirement.
+
+  Spec organization:
+  - Feature specs: openspec/specs/<feature>/spec.md (e.g. intake-tracking,
+    wizard, history, weight-tracking, onboarding, ...)
+  - Cross-cutting conventions: openspec/specs/_conv-*/spec.md — these are
+    hand-written and never produced by the openspec change workflow. The
+    underscore prefix only sorts them to the top; no priority is implied
+    between conventions.
+
+  Conventions worth referencing when proposing:
+  - _conv-user-errors  — how user-facing errors and toasts are handled
+  - _conv-validation   — backend validation rules and formats
+  - _conv-modals       — modal/dialog UX
+  - _conv-empty-states — empty-data UX
+  - _conv-gestures, _conv-animations, _conv-progress-stages
+
+  Test traceability is enforced by _conv-test-traceability: every spec
+  scenario must be cited by at least one test, at the cheapest correct
+  layer (Rust integration, Vitest component, etc.). End-to-end testing
+  was evaluated and dropped — see the archived conv-e2e-tests change.
+
+  Versioning: CalVer YY.WW.MICRO (e.g. 26.05.0).
+
+rules:
+  proposal:
+    - Lead with the user-visible behavior change, not the implementation.
+    - Reference the feature spec(s) the change touches by name.
+    - Include explicit "Non-goals" when scope is ambiguous.
+  design:
+    - Capture decisions and trade-offs, not requirements. Requirements
+      belong in the spec delta.
+    - Note which convention specs constrain the implementation.
+  specs:
+    - Keep SHALL statements behavioral and short. Push concrete values
+      (ranges, lengths, formats) into scenarios. Each scenario is a
+      test case.
+    - Every `#### Scenario:` heading MUST begin with `[<PREFIX>-<NNN>]`,
+      where PREFIX is the spec's declared ID prefix and NNN is a
+      zero-padded three-digit number monotonically increasing per spec.
+      Removed scenarios leave gaps; numbers are never reused.
+    - When MODIFYING a requirement, existing scenarios keep their IDs.
+      New scenarios in the same MODIFIED block take the next free number
+      for that spec.
+  tasks:
+    - Break work into chunks small enough to commit independently.
+    - >-
+      Include a task for adding/updating tests at the cheapest correct
+      layer that covers new or changed spec scenarios. Every test MUST
+      be traceable to one or more scenario IDs, surfaced where the test
+      runner prints them on failure. For Vitest, embed the literal
+      bracketed form in `it(...)` — e.g. `it('[IT-005] ...', ...)`.
+      For Rust, call `scenario!("[XX-NNN]")` as the first line of the
+      test body (macro defined in `src-tauri/src/test_support.rs`) and
+      let the function name describe the behavior. See
+      `_conv-test-traceability` for the authoritative rule.
