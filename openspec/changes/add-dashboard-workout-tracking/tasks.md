@@ -1,27 +1,27 @@
 ## 1. Spec & registry
 
-- [ ] 1.1 Register prefixes `WO` (`workout-tracking`) and `DH` (`dashboard`) in `CLAUDE.md`'s prefix registry table.
+- [x] 1.1 Register prefixes `WO` (`workout-tracking`) and `DH` (`dashboard`) in `CLAUDE.md`'s prefix registry table.
 
 ## 2. Backend — schema & migration
 
-- [ ] 2.1 New Diesel migration adding `exercise_category`, `muscle`, and `workout_type` lookup tables (`shortvalue` PK / `longvalue`), mirroring `food_category`.
-- [ ] 2.2 Add `exercise` (`id`, `name`, `category` FK → `exercise_category`, `default_rest_seconds` NULL) and `exercise_muscle` join table (`exercise_id` FK, `muscle` FK, `role`) with composite PK.
-- [ ] 2.3 Add the workout skeleton (`workout → exercise → set`): `workout_session` (`id`, `type` FK → `workout_type`, `name?`, `started_at`, `ended_at` NULL); `workout_exercise` (`id`, `session_id` FK, `exercise_id` FK, `sequence`); `workout_set` (`id`, `workout_exercise_id` FK, `sequence`, `logged_at`, `payload_ver`, `metrics` TEXT); `workout_pause` (`id`, `session_id` FK, `paused_at`, `resumed_at` NULL).
-- [ ] 2.4 Seed `exercise_category`, `muscle`, `exercise` (with `default_rest_seconds`), `exercise_muscle` (initial library), and `workout_type` (`wl` → Weight lifting).
-- [ ] 2.5 Update Diesel `schema.rs` and add models for the new tables.
+- [x] 2.1 New Diesel migration adding `exercise_category`, `muscle`, and `workout_type` lookup tables (`shortvalue` PK / `longvalue`), mirroring `food_category`.
+- [x] 2.2 Add `exercise` (`id`, `name`, `category` FK → `exercise_category`, `default_rest_seconds` NULL) and `exercise_muscle` join table (`exercise_id` FK, `muscle` FK, `role`) with composite PK.
+- [x] 2.3 Add the workout skeleton (`workout → exercise → set`): `workout_session` (`id`, `type` FK → `workout_type`, `name?`, `started_at`, `ended_at` NULL); `workout_exercise` (`id`, `session_id` FK, `exercise_id` FK, `sequence`); `workout_set` (`id`, `workout_exercise_id` FK, `sequence`, `logged_at`, `payload_ver`, `metrics` TEXT); `workout_pause` (`id`, `session_id` FK, `paused_at`, `resumed_at` NULL).
+- [x] 2.4 Seed `exercise_category`, `muscle`, `exercise` (with `default_rest_seconds`), `exercise_muscle` (initial library), and `workout_type` (`wl` → Weight lifting).
+- [x] 2.5 Update Diesel `schema.rs` and add models for the new tables.
 
 ## 3. Backend — metric payload (compiled schema)
 
-- [ ] 3.1 Define the per-type metric struct (e.g. `LiftingSetMetrics { reps, weight_kg, … }`) as the SSOT; wire `tauri-typegen` so the same struct generates the frontend Zod validator (regenerated in CI, not committed).
-- [ ] 3.2 Validate `metrics` against the active session's type schema on write; reject invalid payloads (`[WO-019]`) per `_conv-validation`.
-- [ ] 3.3 Reads use Lenient read / migration-on-read: parse permissively, upcast by `payload_ver`, expose the strict current struct. Document the JSON1-SQL-migration path for structural blob changes.
+- [x] 3.1 Define the per-type metric struct (e.g. `LiftingSetMetrics { reps, weight_kg, … }`) as the SSOT; wire `tauri-typegen` so the same struct generates the frontend Zod validator (regenerated in CI, not committed).
+- [x] 3.2 Validate `metrics` against the active session's type schema on write; reject invalid payloads (`[WO-019]`) per `_conv-validation`.
+- [x] 3.3 Reads use Lenient read / migration-on-read: parse permissively, upcast by `payload_ver`, expose the strict current struct. Document the JSON1-SQL-migration path for structural blob changes.
 
 ## 4. Backend — repository & commands
 
-- [ ] 4.1 Repository: start session as type `wl` (refuse if one is active → `[WO-002]`); add exercise to workout + log set under it with validated metrics + `logged_at` (`[WO-003]`, `[WO-004]`); edit set; delete set; pause/resume (write `workout_pause` intervals); end session; discard session (cascade delete exercises + sets); fetch active session with exercises + sets; list library exercises with category + muscles + default rest.
-- [ ] 4.2 Stale-session auto-complete: on app open / active-session read, if no set logged and no pause/resume past the inactivity threshold, set `ended_at` to last activity and mark inactive (`[WO-020]`).
-- [ ] 4.3 Tauri commands wrapping the repository functions; register them.
-- [ ] 4.4 Rust integration tests under `src-tauri/tests/` citing `[WO-001]`, `[WO-002]`, `[WO-003]`, `[WO-004]`, `[WO-011]`, `[WO-012]`, `[WO-013]`, `[WO-014]`, `[WO-015]`, `[WO-016]`, `[WO-019]`, `[WO-020]` via the `scenario!` macro.
+- [x] 4.1 Repository: start session as type `wl` (refuse if one is active → `[WO-002]`); add exercise to workout + log set under it with validated metrics + `logged_at` (`[WO-003]`, `[WO-004]`); edit set; delete set; pause/resume (write `workout_pause` intervals); end session; discard session (cascade delete exercises + sets); fetch active session with exercises + sets; list library exercises with category + muscles + default rest.
+- [x] 4.2 Stale-session auto-complete: on app open / active-session read, if no set logged and no pause/resume past the inactivity threshold, set `ended_at` to last activity and mark inactive (`[WO-020]`).
+- [x] 4.3 Tauri commands wrapping the repository functions; register them.
+- [x] 4.4 Rust integration tests under `src-tauri/tests/` citing `[WO-001]`, `[WO-002]`, `[WO-003]`, `[WO-004]`, `[WO-011]`, `[WO-012]`, `[WO-013]`, `[WO-014]`, `[WO-015]`, `[WO-016]`, `[WO-019]`, `[WO-020]` via the `scenario!` macro.
 
 ## 5. Frontend — API bindings & live state
 

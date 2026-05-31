@@ -46,8 +46,8 @@ The current prefix registry:
 | progress        | `PG`   |     | `_conv-animations`        | `ANI`  |
 | profile         | `PF`   |     | `_conv-progress-stages`   | `STG`  |
 | data-export     | `EX`   |     | `_conv-test-traceability` | `TRC`  |
-| data-import     | `IM`   |     |                           |        |
-| app-shell       | `AS`   |     |                           |        |
+| data-import     | `IM`   |     | workout-tracking          | `WO`   |
+| app-shell       | `AS`   |     | dashboard                 | `DH`   |
 
 ## Change workflow
 

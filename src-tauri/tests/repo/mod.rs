@@ -6,3 +6,4 @@ mod test_food_category_repo;
 mod test_intake_repo;
 mod test_user_repo;
 mod test_weight_repo;
+mod test_workout_metrics;
