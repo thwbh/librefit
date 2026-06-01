@@ -83,15 +83,10 @@
 	}
 
 	function startSet() {
-		// Default to the exercise being worked on for fast consecutive sets;
-		// otherwise prompt a pick.
-		const current = store.currentExercise;
-		if (current) {
-			entryExercise = { id: current.exerciseId, name: current.name };
-			entryStep = 'log';
-		} else {
-			entryStep = 'pick';
-		}
+		// Always prompt an exercise pick. Consecutive sets of the same exercise
+		// stay in the 'log' step (no need to re-tap Start Set), so defaulting to
+		// the last exercise here only got in the way after finishing one.
+		entryStep = 'pick';
 	}
 
 	function pick(exercise: ExerciseDetail) {
