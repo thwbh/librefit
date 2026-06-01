@@ -50,6 +50,8 @@ export class WorkoutStore {
 	summary = $state<SessionSummary | null>(null);
 	/** Muscles worked in the just-finished session (for the summary visual). */
 	summaryMuscles = $state<{ muscle: string; primary: boolean }[]>([]);
+	/** Per-exercise breakdown of the just-finished session (for the summary recap). */
+	summaryExercises = $state<WorkoutExerciseView[]>([]);
 
 	#rest = $state<RestState | null>(null);
 	#restDismissed = $state(false);
@@ -180,6 +182,7 @@ export class WorkoutStore {
 		const ended = await endWorkoutSession();
 		this.summary = summarize(ended, Date.now());
 		this.summaryMuscles = await this.#workedMuscles(ended);
+		this.summaryExercises = ended.exercises;
 		this.#clear();
 	}
 
@@ -187,6 +190,7 @@ export class WorkoutStore {
 		await discardWorkoutSession();
 		this.summary = null;
 		this.summaryMuscles = [];
+		this.summaryExercises = [];
 		this.#clear();
 	}
 
@@ -194,6 +198,7 @@ export class WorkoutStore {
 	dismissSummary() {
 		this.summary = null;
 		this.summaryMuscles = [];
+		this.summaryExercises = [];
 	}
 
 	/**

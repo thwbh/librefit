@@ -2,6 +2,7 @@
 	import { ModalDialog } from '@thwbh/veilchen';
 	import { Body, type ExtendedBodyPart, type Slug } from 'svelte-body-highlighter';
 	import type { SessionSummary } from '$lib/workout/metrics';
+	import type { WorkoutExerciseView } from '$lib/api';
 
 	// Post-workout summary (WO-022), fullscreen. The body diagram highlights the
 	// muscles worked this session (primary vs secondary involvement) as the hero;
@@ -11,11 +12,13 @@
 		summary: SessionSummary;
 		/** Worked muscles in our seeded vocabulary (see the `muscle` lookup). */
 		muscles?: { muscle: string; primary: boolean }[];
+		/** Per-exercise breakdown for the at-a-glance recap. */
+		exercises?: WorkoutExerciseView[];
 		gender?: 'male' | 'female';
 		ondismiss: () => void;
 	}
 
-	let { summary, muscles = [], gender = 'male', ondismiss }: Props = $props();
+	let { summary, muscles = [], exercises = [], gender = 'male', ondismiss }: Props = $props();
 
 	let dialog = $state<HTMLDialogElement>();
 
@@ -88,6 +91,29 @@
 						<dd class="text-2xl font-bold tabular-nums">{summary.setsCompleted}</dd>
 					</div>
 				</dl>
+
+				{#if exercises.length > 0}
+					<ul class="w-full max-w-md overflow-hidden rounded-box border border-base-200">
+						{#each exercises as ex (ex.id)}
+							<li class="flex flex-col gap-1 border-b border-base-200 p-3 last:border-b-0">
+								<div class="flex items-center justify-between">
+									<span class="font-semibold">{ex.name}</span>
+									<span class="text-xs opacity-60">
+										{ex.sets.length}
+										{ex.sets.length === 1 ? 'set' : 'sets'}
+									</span>
+								</div>
+								<div class="flex flex-wrap gap-1">
+									{#each ex.sets as s (s.id)}
+										<span class="badge badge-ghost badge-sm tabular-nums">
+											{s.metrics.reps} × {s.metrics.weightKg} kg
+										</span>
+									{/each}
+								</div>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</div>
 		{/snippet}
 
