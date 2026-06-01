@@ -131,6 +131,8 @@ The system SHALL allow discarding an active session, which deletes the session a
 
 When a set is logged, the system SHALL start an in-app rest countdown derived from the set's logged-at timestamp against a rest target. The rest target SHALL resolve from the logged exercise's default rest, falling back to a global default when the exercise defines none. The countdown SHALL end when it expires or when the user dismisses it or logs the next set. The rest timer is in-app only; alerting while the app is backgrounded is out of scope.
 
+> **Note (deferred refinement — not yet a requirement).** Recommended rest is really a function of the **rep range / training intent**, not the exercise alone: the same lift wants ~3 min at a hypertrophy range (8–12 reps) but ~5 min at a strength range (5–7 reps). That intent is a property of the **workout plan** (templates / target rep ranges per exercise), which is an unimplemented future domain. The exercise's `default_rest_seconds` is therefore a static approximation that silently assumes one intent per exercise. When the plan feature lands, the rest target should resolve in this precedence: **plan/intent-derived > per-set manual override > exercise `default_rest_seconds` > global default**. Until then, the exercise default is the best available signal and remains the behavior above. (Both the plan-derived target and the per-set override are deferred; see the change's design "Deferred enhancements".)
+
 #### Scenario: [WO-017] Logging a set starts the rest countdown against the exercise's target
 
 - **WHEN** the user logs a set during an active session

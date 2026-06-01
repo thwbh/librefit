@@ -121,7 +121,6 @@ diesel::table! {
         id -> Integer,
         session_id -> Integer,
         exercise_id -> Integer,
-        sequence -> Integer,
     }
 }
 
@@ -129,7 +128,6 @@ diesel::table! {
     workout_set (id) {
         id -> Integer,
         workout_exercise_id -> Integer,
-        sequence -> Integer,
         logged_at -> Text,
         payload_ver -> Integer,
         metrics -> Text,

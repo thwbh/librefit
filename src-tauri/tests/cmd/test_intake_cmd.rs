@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use chrono::{Days, Local};
 use librefit_lib::scenario;
 use librefit_lib::service::intake::{
     create_intake, create_intake_target, delete_intake, get_food_categories,
@@ -6,6 +7,18 @@ use librefit_lib::service::intake::{
     NewIntake, NewIntakeTarget,
 };
 use tauri::Manager;
+
+/// Returns test dates relative to today to avoid "target date lies in the past" validation errors.
+/// Returns (start_date, end_date) as formatted strings.
+fn get_future_test_dates() -> (String, String) {
+    let today = Local::now().date_naive();
+    let start = today.checked_add_days(Days::new(1)).unwrap();
+    let end = today.checked_add_days(Days::new(180)).unwrap(); // 6 months in the future
+    (
+        start.format("%Y-%m-%d").to_string(),
+        end.format("%Y-%m-%d").to_string(),
+    )
+}
 
 // ============================================================================
 // INTAKE TARGET TESTS
@@ -108,19 +121,26 @@ fn test_get_last_intake_target_success() {
     let app = tauri::test::mock_app();
     app.manage(pool.clone());
 
-    // Create two targets
+    // Create two targets with future dates to avoid validation errors
+    let (start_date1, end_date1) = get_future_test_dates();
+
+    // Second target starts a few days later to ensure proper ordering
+    let today = Local::now().date_naive();
+    let start_date2 = today.checked_add_days(Days::new(5)).unwrap();
+    let end_date2 = today.checked_add_days(Days::new(185)).unwrap();
+
     let target1 = NewIntakeTarget {
-        added: "2026-01-01".to_string(),
-        start_date: "2026-01-01".to_string(),
-        end_date: "2026-06-01".to_string(),
+        added: start_date1.clone(),
+        start_date: start_date1,
+        end_date: end_date1,
         target_calories: 1800,
         maximum_calories: 2300,
     };
 
     let target2 = NewIntakeTarget {
-        added: "2026-01-15".to_string(),
-        start_date: "2026-01-15".to_string(),
-        end_date: "2026-06-15".to_string(),
+        added: start_date2.format("%Y-%m-%d").to_string(),
+        start_date: start_date2.format("%Y-%m-%d").to_string(),
+        end_date: end_date2.format("%Y-%m-%d").to_string(),
         target_calories: 2000,
         maximum_calories: 2500,
     };

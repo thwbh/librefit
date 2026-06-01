@@ -109,7 +109,6 @@ pub struct WorkoutExercise {
     pub id: i32,
     pub session_id: i32,
     pub exercise_id: i32,
-    pub sequence: i32,
 }
 
 #[derive(Insertable, Serialize, Deserialize, Debug)]
@@ -119,7 +118,6 @@ pub struct WorkoutExercise {
 pub struct NewWorkoutExercise {
     pub session_id: i32,
     pub exercise_id: i32,
-    pub sequence: i32,
 }
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
@@ -129,7 +127,6 @@ pub struct NewWorkoutExercise {
 pub struct WorkoutSet {
     pub id: i32,
     pub workout_exercise_id: i32,
-    pub sequence: i32,
     pub logged_at: String,
     pub payload_ver: i32,
     /// Raw JSON metric payload — typed/validated against the workout type's
@@ -143,7 +140,6 @@ pub struct WorkoutSet {
 #[serde(rename_all = "camelCase")]
 pub struct NewWorkoutSet {
     pub workout_exercise_id: i32,
-    pub sequence: i32,
     pub logged_at: String,
     pub payload_ver: i32,
     pub metrics: String,
@@ -232,7 +228,6 @@ pub struct ExerciseDetail {
 #[serde(rename_all = "camelCase")]
 pub struct LoggedSet {
     pub id: i32,
-    pub sequence: i32,
     pub logged_at: String,
     pub metrics: LiftingSetMetrics,
 }
@@ -243,7 +238,6 @@ pub struct WorkoutExerciseView {
     pub id: i32,
     pub exercise_id: i32,
     pub name: String,
-    pub sequence: i32,
     pub default_rest_seconds: Option<i32>,
     pub sets: Vec<LoggedSet>,
 }
@@ -317,18 +311,24 @@ impl WorkoutSession {
     }
 
     /// Cascade-delete a session and all its exercises, sets, and pauses (`[WO-016]`).
+    /// The four deletes run in one transaction so a mid-cascade failure can't leave
+    /// a half-deleted session (orphaned sets/pauses or a childless session row).
     pub fn discard(conn: &mut SqliteConnection, id: i32) -> QueryResult<usize> {
-        let ex_ids: Vec<i32> = workout_exercise::table
-            .filter(workout_exercise::session_id.eq(id))
-            .select(workout_exercise::id)
-            .load(conn)?;
-        diesel::delete(workout_set::table.filter(workout_set::workout_exercise_id.eq_any(&ex_ids)))
+        conn.transaction(|conn| {
+            let ex_ids: Vec<i32> = workout_exercise::table
+                .filter(workout_exercise::session_id.eq(id))
+                .select(workout_exercise::id)
+                .load(conn)?;
+            diesel::delete(
+                workout_set::table.filter(workout_set::workout_exercise_id.eq_any(&ex_ids)),
+            )
             .execute(conn)?;
-        diesel::delete(workout_exercise::table.filter(workout_exercise::session_id.eq(id)))
-            .execute(conn)?;
-        diesel::delete(workout_pause::table.filter(workout_pause::session_id.eq(id)))
-            .execute(conn)?;
-        diesel::delete(workout_session::table.filter(workout_session::id.eq(id))).execute(conn)
+            diesel::delete(workout_exercise::table.filter(workout_exercise::session_id.eq(id)))
+                .execute(conn)?;
+            diesel::delete(workout_pause::table.filter(workout_pause::session_id.eq(id)))
+                .execute(conn)?;
+            diesel::delete(workout_session::table.filter(workout_session::id.eq(id))).execute(conn)
+        })
     }
 
     /// Most recent activity timestamp for a session: max of set log times, pause/resume
@@ -382,7 +382,7 @@ impl WorkoutSession {
     ) -> Result<WorkoutDetail, String> {
         let wexs = workout_exercise::table
             .filter(workout_exercise::session_id.eq(session.id))
-            .order(workout_exercise::sequence.asc())
+            .order(workout_exercise::id.asc())
             .load::<WorkoutExercise>(conn)
             .map_err(handle_error)?;
 
@@ -391,7 +391,7 @@ impl WorkoutSession {
             let ex = Exercise::find(conn, we.exercise_id).map_err(handle_error)?;
             let raw_sets = workout_set::table
                 .filter(workout_set::workout_exercise_id.eq(we.id))
-                .order(workout_set::sequence.asc())
+                .order(workout_set::id.asc())
                 .load::<WorkoutSet>(conn)
                 .map_err(handle_error)?;
             let mut sets = Vec::with_capacity(raw_sets.len());
@@ -399,7 +399,6 @@ impl WorkoutSession {
                 let metrics = LiftingSetMetrics::from_stored(s.payload_ver, &s.metrics)?;
                 sets.push(LoggedSet {
                     id: s.id,
-                    sequence: s.sequence,
                     logged_at: s.logged_at,
                     metrics,
                 });
@@ -408,7 +407,6 @@ impl WorkoutSession {
                 id: we.id,
                 exercise_id: we.exercise_id,
                 name: ex.name,
-                sequence: we.sequence,
                 default_rest_seconds: ex.default_rest_seconds,
                 sets,
             });
@@ -447,7 +445,7 @@ impl WorkoutExercise {
             .optional()
     }
 
-    /// Find the exercise within the session, or append it with the next sequence.
+    /// Find the exercise within the session, or append it (id carries order).
     pub fn add_or_get(
         conn: &mut SqliteConnection,
         session_id: i32,
@@ -456,14 +454,9 @@ impl WorkoutExercise {
         if let Some(existing) = Self::find_in_session(conn, session_id, exercise_id)? {
             return Ok(existing);
         }
-        let seq: i64 = workout_exercise::table
-            .filter(workout_exercise::session_id.eq(session_id))
-            .count()
-            .get_result(conn)?;
         let new = NewWorkoutExercise {
             session_id,
             exercise_id,
-            sequence: seq as i32,
         };
         diesel::insert_into(workout_exercise::table)
             .values(&new)
@@ -473,7 +466,7 @@ impl WorkoutExercise {
 }
 
 impl WorkoutSet {
-    /// Append a set under an exercise with the next sequence.
+    /// Append a set under an exercise (ordering carried by the autoincrement id).
     pub fn log(
         conn: &mut SqliteConnection,
         workout_exercise_id: i32,
@@ -481,13 +474,8 @@ impl WorkoutSet {
         payload_ver: i32,
         logged_at: String,
     ) -> QueryResult<Self> {
-        let seq: i64 = workout_set::table
-            .filter(workout_set::workout_exercise_id.eq(workout_exercise_id))
-            .count()
-            .get_result(conn)?;
         let new = NewWorkoutSet {
             workout_exercise_id,
-            sequence: seq as i32,
             logged_at,
             payload_ver,
             metrics: metrics_json,
@@ -620,10 +608,14 @@ pub fn log_workout_set(
     }
     let mut conn = conn_from(&pool)?;
     let session = require_active(&mut conn)?;
-    let we =
-        WorkoutExercise::add_or_get(&mut conn, session.id, exercise_id).map_err(handle_error)?;
     let json = serde_json::to_string(&metrics).map_err(|e| format!("Serialize failed: {}", e))?;
-    WorkoutSet::log(&mut conn, we.id, json, WL_PAYLOAD_VER, now_ts()).map_err(handle_error)?;
+    // Adding the exercise (if new) and logging the set are one unit: a failed set
+    // insert must not strand a childless workout_exercise row.
+    conn.transaction(|conn| {
+        let we = WorkoutExercise::add_or_get(conn, session.id, exercise_id)?;
+        WorkoutSet::log(conn, we.id, json, WL_PAYLOAD_VER, now_ts())
+    })
+    .map_err(handle_error)?;
     WorkoutSession::detail(&mut conn, session)
 }
 
@@ -677,8 +669,14 @@ pub fn resume_workout_session(pool: State<DbPool>) -> Result<WorkoutDetail, Stri
 pub fn end_workout_session(pool: State<DbPool>) -> Result<WorkoutDetail, String> {
     let mut conn = conn_from(&pool)?;
     let session = require_active(&mut conn)?;
-    WorkoutPause::close_open(&mut conn, session.id, now_ts()).map_err(handle_error)?;
-    let ended = WorkoutSession::end(&mut conn, session.id, &now_ts()).map_err(handle_error)?;
+    // Closing any open pause and recording the end timestamp are one unit, so the
+    // session can't end up ended-but-with-an-open-pause (or vice versa).
+    let ended = conn
+        .transaction(|conn| {
+            WorkoutPause::close_open(conn, session.id, now_ts())?;
+            WorkoutSession::end(conn, session.id, &now_ts())
+        })
+        .map_err(handle_error)?;
     WorkoutSession::detail(&mut conn, ended)
 }
 
