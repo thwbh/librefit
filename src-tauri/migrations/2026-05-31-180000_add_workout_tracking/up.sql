@@ -30,17 +30,23 @@ CREATE TABLE muscle
     shortvalue TEXT NOT NULL PRIMARY KEY,
     longvalue  TEXT NOT NULL
 );
+-- shortvalue == svelte-body-highlighter slug: one shared muscle vocabulary
+-- across the dataset and the completion-screen heat map (no frontend mapping).
 INSERT INTO muscle (shortvalue, longvalue)
 VALUES ('chest', 'Chest'),
-       ('back', 'Back'),
-       ('shoulders', 'Shoulders'),
+       ('upper-back', 'Upper Back'),
+       ('lower-back', 'Lower Back'),
+       ('trapezius', 'Trapezius'),
+       ('deltoids', 'Shoulders'),
        ('biceps', 'Biceps'),
        ('triceps', 'Triceps'),
-       ('quads', 'Quadriceps'),
-       ('hamstrings', 'Hamstrings'),
-       ('glutes', 'Glutes'),
+       ('forearm', 'Forearm'),
+       ('quadriceps', 'Quadriceps'),
+       ('hamstring', 'Hamstrings'),
+       ('gluteal', 'Glutes'),
        ('calves', 'Calves'),
-       ('core', 'Core');
+       ('abs', 'Abs'),
+       ('obliques', 'Obliques');
 
 -- Exercise library
 CREATE TABLE exercise
@@ -73,24 +79,31 @@ CREATE TABLE exercise_muscle
 INSERT INTO exercise_muscle (exercise_id, muscle, role)
 VALUES (1, 'chest', 'primary'),
        (1, 'triceps', 'secondary'),
-       (1, 'shoulders', 'secondary'),
-       (2, 'quads', 'primary'),
-       (2, 'glutes', 'secondary'),
-       (2, 'hamstrings', 'secondary'),
-       (3, 'back', 'primary'),
-       (3, 'hamstrings', 'secondary'),
-       (3, 'glutes', 'secondary'),
-       (4, 'shoulders', 'primary'),
+       (1, 'deltoids', 'secondary'),
+       (2, 'quadriceps', 'primary'),
+       (2, 'gluteal', 'secondary'),
+       (2, 'hamstring', 'secondary'),
+       (3, 'lower-back', 'primary'),
+       (3, 'gluteal', 'secondary'),
+       (3, 'hamstring', 'secondary'),
+       (3, 'trapezius', 'secondary'),
+       (4, 'deltoids', 'primary'),
        (4, 'triceps', 'secondary'),
-       (5, 'back', 'primary'),
+       (4, 'trapezius', 'secondary'),
+       (5, 'upper-back', 'primary'),
        (5, 'biceps', 'secondary'),
-       (6, 'back', 'primary'),
+       (5, 'trapezius', 'secondary'),
+       (6, 'upper-back', 'primary'),
        (6, 'biceps', 'secondary'),
+       (6, 'forearm', 'secondary'),
        (7, 'biceps', 'primary'),
+       (7, 'forearm', 'secondary'),
        (8, 'triceps', 'primary'),
-       (9, 'quads', 'primary'),
-       (9, 'glutes', 'secondary'),
-       (10, 'core', 'primary');
+       (9, 'quadriceps', 'primary'),
+       (9, 'gluteal', 'secondary'),
+       (9, 'hamstring', 'secondary'),
+       (10, 'abs', 'primary'),
+       (10, 'obliques', 'secondary');
 
 -- Workout skeleton: session -> exercise -> set
 CREATE TABLE workout_session

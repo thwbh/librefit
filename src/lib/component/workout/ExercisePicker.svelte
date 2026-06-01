@@ -41,6 +41,9 @@
 				)
 			: []
 	);
+
+	// Muscle/category values are slugs (e.g. "upper-back"); show them human-readable.
+	const pretty = (s: string) => s.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 </script>
 
 <div class="exercise-picker flex min-h-0 flex-col gap-2">
@@ -74,7 +77,7 @@
 						<span class="flex flex-col items-start">
 							<span class="font-medium">{entry.name}</span>
 							<span class="text-xs opacity-60">
-								{entry.category} · {entry.muscles.map((m) => m.muscle).join(', ')}
+								{pretty(entry.category)} · {entry.muscles.map((m) => pretty(m.muscle)).join(', ')}
 							</span>
 						</span>
 					</button>

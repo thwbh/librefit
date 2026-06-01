@@ -30,28 +30,16 @@
 	const minutes = $derived(Math.floor(summary.activeWorkTimeMs / 60000));
 	const seconds = $derived(Math.floor((summary.activeWorkTimeMs % 60000) / 1000));
 
-	// Map our seeded muscle values → body-highlighter slugs.
-	const MUSCLE_SLUGS: Record<string, Slug[]> = {
-		chest: ['chest'],
-		back: ['upper-back', 'lower-back'],
-		shoulders: ['deltoids'],
-		biceps: ['biceps'],
-		triceps: ['triceps'],
-		quads: ['quadriceps'],
-		hamstrings: ['hamstring'],
-		glutes: ['gluteal'],
-		calves: ['calves'],
-		core: ['abs', 'obliques']
-	};
+	// `muscle` values are svelte-body-highlighter slugs (shared vocabulary), so
+	// they map straight onto body parts — no translation table needed.
 	const PRIMARY_COLOR = '#ea580c'; // accent orange — worked as a primary mover
 	const SECONDARY_COLOR = '#fdba74'; // lighter — secondary involvement
 
 	const bodyData = $derived.by<ExtendedBodyPart[]>(() => {
 		const bySlug = new Map<Slug, boolean>();
 		for (const m of muscles) {
-			for (const slug of MUSCLE_SLUGS[m.muscle] ?? []) {
-				bySlug.set(slug, (bySlug.get(slug) ?? false) || m.primary);
-			}
+			const slug = m.muscle as Slug;
+			bySlug.set(slug, (bySlug.get(slug) ?? false) || m.primary);
 		}
 		return [...bySlug].map(([slug, primary]) => ({
 			slug,
