@@ -58,4 +58,4 @@
 
 ## 10. Archive
 
-- [ ] 10.1 `openspec archive add-dashboard-workout-tracking` once merged.
+- [x] 10.1 `openspec archive add-dashboard-workout-tracking` once merged.
