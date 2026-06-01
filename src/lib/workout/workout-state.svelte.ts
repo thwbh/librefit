@@ -13,6 +13,7 @@ import {
 	discardWorkoutSession,
 	endWorkoutSession,
 	getActiveWorkout,
+	getExerciseLibrary,
 	logWorkoutSet,
 	pauseWorkoutSession,
 	resumeWorkoutSession,
@@ -47,6 +48,8 @@ export class WorkoutStore {
 	error = $state<string | null>(null);
 	now = $state(Date.now());
 	summary = $state<SessionSummary | null>(null);
+	/** Muscles worked in the just-finished session (for the summary visual). */
+	summaryMuscles = $state<{ muscle: string; primary: boolean }[]>([]);
 
 	#rest = $state<RestState | null>(null);
 	#restDismissed = $state(false);
@@ -66,6 +69,23 @@ export class WorkoutStore {
 	totalVolume = $derived(this.session ? computeTotalVolume(this.session.exercises) : 0);
 
 	setsCompleted = $derived(this.session ? computeSetsCompleted(this.session.exercises) : 0);
+
+	/**
+	 * The exercise currently being worked on: the one holding the most recent
+	 * set, falling back to the last one added. Drives the minimized dashboard
+	 * module and the "Start Set" quick-repeat default.
+	 */
+	currentExercise = $derived.by<WorkoutExerciseView | null>(() => {
+		if (!this.session || this.session.exercises.length === 0) return null;
+		let best: { ex: WorkoutExerciseView; at: number } | null = null;
+		for (const ex of this.session.exercises) {
+			for (const s of ex.sets) {
+				const at = Date.parse(s.loggedAt);
+				if (!best || at > best.at) best = { ex, at };
+			}
+		}
+		return best?.ex ?? this.session.exercises[this.session.exercises.length - 1];
+	});
 
 	restRemainingMs = $derived(
 		this.#rest && !this.#restDismissed
@@ -159,18 +179,44 @@ export class WorkoutStore {
 	async end(): Promise<void> {
 		const ended = await endWorkoutSession();
 		this.summary = summarize(ended, Date.now());
+		this.summaryMuscles = await this.#workedMuscles(ended);
 		this.#clear();
 	}
 
 	async discard(): Promise<void> {
 		await discardWorkoutSession();
 		this.summary = null;
+		this.summaryMuscles = [];
 		this.#clear();
 	}
 
 	/** Dismiss the summary, returning the dashboard to its idle layout. */
 	dismissSummary() {
 		this.summary = null;
+		this.summaryMuscles = [];
+	}
+
+	/**
+	 * Join the just-ended session's exercises with the library to list the
+	 * muscles worked (primary if any exercise targeted them as primary). The
+	 * `WorkoutDetail` doesn't carry muscles, so we look them up by exerciseId.
+	 */
+	async #workedMuscles(detail: WorkoutDetail): Promise<{ muscle: string; primary: boolean }[]> {
+		try {
+			const library = await getExerciseLibrary();
+			const byId = new Map(library.map((e) => [e.id, e]));
+			const agg = new Map<string, boolean>();
+			for (const ex of detail.exercises) {
+				const lib = byId.get(ex.exerciseId);
+				if (!lib) continue;
+				for (const m of lib.muscles) {
+					agg.set(m.muscle, (agg.get(m.muscle) ?? false) || m.role === 'primary');
+				}
+			}
+			return [...agg].map(([muscle, primary]) => ({ muscle, primary }));
+		} catch {
+			return [];
+		}
 	}
 
 	/** Prefill a new set from the exercise's previous set, if any. */

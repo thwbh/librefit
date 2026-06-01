@@ -12,7 +12,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check ./src && eslint ./src",
-		"lint:fix": "prettier --check ./src && eslint ./src --fix",
+		"lint:fix": "prettier --write --check ./src && eslint ./src --fix",
 		"lint:specs": "node scripts/check-spec-ids.mjs",
 		"lint:tests": "node scripts/check-test-layout.mjs",
 		"lint:traceability": "node scripts/check-spec-traceability.mjs",
@@ -26,7 +26,8 @@
 		"@tauri-apps/plugin-dialog": "~2.2.0",
 		"@tauri-apps/plugin-fs": "~2.2.0",
 		"@tauri-apps/plugin-haptics": "^2.3.0",
-		"@tauri-apps/plugin-opener": "^2"
+		"@tauri-apps/plugin-opener": "^2",
+		"svelte-body-highlighter": "^5.0.0"
 	},
 	"devDependencies": {
 		"@dicebear/core": "^9.2.4",
