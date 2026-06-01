@@ -1,4 +1,4 @@
-import { getContext, setContext } from 'svelte';
+import { createContext } from 'svelte';
 import type {
 	LibreUser,
 	NewIntakeTarget,
@@ -19,33 +19,19 @@ export interface WizardState {
 	intakeTarget?: NewIntakeTarget;
 }
 
-const WIZARD_CONTEXT_KEY = Symbol('wizard-state');
-
 /**
- * Set wizard state context - call this in Setup.svelte
+ * Create wizard context getter/setter pair.
+ *
+ * Uses `createContext` (Svelte 5.40+) which enables the wrapper pattern for
+ * testing: a wrapper component can call the setter during initialization and
+ * the context becomes available to child components rendered by `mount`/`render`.
  */
-export function setWizardContext(state: WizardState) {
-	setContext(WIZARD_CONTEXT_KEY, state);
-}
+export const [getWizardContext, setWizardContext] = createContext<WizardState>();
 
-/**
- * Get wizard state context - use in wizard step components
- * @throws Error if context not found
- */
-export function getWizardContext(): WizardState {
-	const state = getContext<WizardState>(WIZARD_CONTEXT_KEY);
-	if (!state) {
-		throw new Error(
-			'Wizard context not found. Make sure setWizardContext() is called in Setup.svelte.'
-		);
-	}
-	return state;
-}
-
-/**
- * Try to get wizard context without throwing
- * @returns WizardState or null if not found
- */
 export function tryGetWizardContext(): WizardState | null {
-	return getContext<WizardState | null>(WIZARD_CONTEXT_KEY) ?? null;
+	try {
+		return getWizardContext();
+	} catch {
+		return null;
+	}
 }
