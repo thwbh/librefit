@@ -29,16 +29,18 @@
 		}
 	});
 
-	const filtered = $derived.by(() => {
-		const q = query.trim().toLowerCase();
-		if (!q) return entries;
-		return entries.filter(
-			(e) =>
-				e.name.toLowerCase().includes(q) ||
-				e.category.toLowerCase().includes(q) ||
-				e.muscles.some((m) => m.muscle.toLowerCase().includes(q))
-		);
-	});
+	const q = $derived(query.trim().toLowerCase());
+	// Until the user types, show a prompt rather than dumping the whole library.
+	const filtered = $derived(
+		q
+			? entries.filter(
+					(e) =>
+						e.name.toLowerCase().includes(q) ||
+						e.category.toLowerCase().includes(q) ||
+						e.muscles.some((m) => m.muscle.toLowerCase().includes(q))
+				)
+			: []
+	);
 </script>
 
 <div class="exercise-picker flex min-h-0 flex-col gap-2">
@@ -57,6 +59,8 @@
 		<span class="loading loading-spinner"></span>
 	{:else if error}
 		<p class="text-error" role="alert">{error}</p>
+	{:else if !q}
+		<p class="p-2 text-sm opacity-60">Type to search exercises.</p>
 	{:else if filtered.length === 0}
 		<p class="p-2 text-sm opacity-60">No exercises match “{query}”.</p>
 	{:else}

@@ -13,6 +13,7 @@
 	interface Props {
 		active: boolean;
 		resting?: boolean;
+		currentExercise?: string | null;
 		activeWorkTimeMs?: number;
 		totalVolume?: number;
 		setsCompleted?: number;
@@ -28,6 +29,7 @@
 	let {
 		active,
 		resting = false,
+		currentExercise = null,
 		activeWorkTimeMs = 0,
 		totalVolume = 0,
 		setsCompleted = 0,
@@ -47,6 +49,7 @@
 			<WorkoutModule
 				{active}
 				{resting}
+				{currentExercise}
 				{activeWorkTimeMs}
 				{totalVolume}
 				{setsCompleted}

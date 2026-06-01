@@ -268,7 +268,7 @@ describe('IntakeScore', () => {
 
 	describe('Reactivity', () => {
 		it('should update when entries change', async () => {
-			let entries = [500];
+			const entries = [500];
 			const { container, component } = render(IntakeScore, {
 				props: {
 					intakeTarget: mockIntakeTarget,
