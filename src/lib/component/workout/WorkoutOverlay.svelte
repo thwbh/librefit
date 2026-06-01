@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ModalDialog } from '@thwbh/veilchen';
+	import { ModalDialog, SwipeableListItem } from '@thwbh/veilchen';
+	import { Pencil, Trash } from 'phosphor-svelte';
 	import { workoutStore, type WorkoutStore } from '$lib/workout/workout-state.svelte';
 	import type { ExerciseDetail, LiftingSetMetrics, WorkoutExerciseView } from '$lib/api';
 	import SetMask from './SetMask.svelte';
@@ -75,100 +76,136 @@
 	}
 </script>
 
-<ModalDialog bind:dialog oncancel={onminimize}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Workout</span>
-		{#if onminimize}
-			<button class="btn btn-xs" onclick={onminimize}>Minimize</button>
-		{/if}
-	{/snippet}
-
-	{#snippet content()}
-		{#if session}
-			<div class="workout-overlay flex flex-col gap-4">
-				<div class="flex justify-around rounded-box bg-base-200 p-3 text-center">
-					<div>
-						<div class="text-xs opacity-70">Time</div>
-						<div class="text-xl font-bold tabular-nums">{fmtTime(store.activeWorkTimeMs)}</div>
-					</div>
-					<div>
-						<div class="text-xs opacity-70">Volume</div>
-						<div class="text-xl font-bold tabular-nums">{store.totalVolume} kg</div>
-					</div>
-					<div>
-						<div class="text-xs opacity-70">Sets</div>
-						<div class="text-xl font-bold tabular-nums">{store.setsCompleted}</div>
-					</div>
-				</div>
-
-				{#if store.restRemainingMs > 0}
-					<RestTimer remainingMs={store.restRemainingMs} ondismiss={() => store.dismissRest()} />
-				{/if}
-
-				{#each session.exercises as ex (ex.id)}
-					{@const prefill = store.prefill(ex)}
-					<div class="rounded-box border border-base-300 p-3">
-						<h3 class="font-semibold">{ex.name}</h3>
-						<ul class="my-2 flex flex-col gap-1">
-							{#each ex.sets as set (set.id)}
-								<li class="flex items-center justify-between gap-2 text-sm">
-									{#if editingSetId === set.id}
-										<SetMask
-											reps={set.metrics.reps}
-											weightKg={set.metrics.weightKg}
-											submitLabel="Save"
-											onsubmit={(m) => saveEdit(set.id, m)}
-										/>
-									{:else}
-										<span class="tabular-nums">{set.metrics.reps} × {set.metrics.weightKg} kg</span>
-										<span class="flex gap-1">
-											<button class="btn btn-ghost btn-xs" onclick={() => (editingSetId = set.id)}>
-												Edit
-											</button>
-											<button
-												class="btn btn-ghost btn-xs text-error"
-												onclick={() => store.deleteSet(set.id)}
-											>
-												Delete
-											</button>
-										</span>
-									{/if}
-								</li>
-							{/each}
-						</ul>
-						<SetMask
-							reps={prefill?.reps ?? 8}
-							weightKg={prefill?.weightKg ?? 20}
-							onsubmit={(m) => logMore(ex, m)}
-						/>
-					</div>
-				{/each}
-
-				{#if pending}
-					<div class="rounded-box border border-primary p-3">
-						<h3 class="font-semibold">{pending.name}</h3>
-						<SetMask onsubmit={logPending} />
-					</div>
-				{/if}
-
-				{#if pickerOpen}
-					<ExercisePicker onpick={pick} />
-				{:else}
-					<button class="btn btn-block" onclick={() => (pickerOpen = true)}>Add exercise</button>
-				{/if}
-			</div>
-		{/if}
-	{/snippet}
-
-	{#snippet footer()}
-		<div class="flex w-full flex-col gap-2">
-			{#if store.paused}
-				<button class="btn btn-primary" onclick={() => store.resume()}>Resume</button>
-			{:else}
-				<button class="btn btn-ghost" onclick={() => store.pause()}>Pause</button>
+<div class="workout-modal">
+	<ModalDialog bind:dialog oncancel={onminimize}>
+		{#snippet title()}
+			<span class="modal-header border-l-4 border-accent pl-2">Workout</span>
+			{#if onminimize}
+				<button class="btn btn-xs" onclick={onminimize}>Minimize</button>
 			{/if}
-			<SlideToConfirm label="Slide to end" onconfirm={() => store.end()} />
-			<SlideToConfirm label="Slide to discard" variant="danger" onconfirm={() => store.discard()} />
-		</div>
-	{/snippet}
-</ModalDialog>
+		{/snippet}
+
+		{#snippet content()}
+			{#if session}
+				<div class="workout-overlay flex flex-col gap-4">
+					<div class="flex justify-around rounded-box bg-base-200 p-3 text-center">
+						<div>
+							<div class="text-xs opacity-70">Time</div>
+							<div class="text-xl font-bold tabular-nums">{fmtTime(store.activeWorkTimeMs)}</div>
+						</div>
+						<div>
+							<div class="text-xs opacity-70">Volume</div>
+							<div class="text-xl font-bold tabular-nums">{store.totalVolume} kg</div>
+						</div>
+						<div>
+							<div class="text-xs opacity-70">Sets</div>
+							<div class="text-xl font-bold tabular-nums">{store.setsCompleted}</div>
+						</div>
+					</div>
+
+					{#if store.restRemainingMs > 0}
+						<RestTimer remainingMs={store.restRemainingMs} ondismiss={() => store.dismissRest()} />
+					{/if}
+
+					{#each session.exercises as ex (ex.id)}
+						{@const prefill = store.prefill(ex)}
+						<div class="rounded-box border border-base-300 p-3">
+							<h3 class="font-semibold">{ex.name}</h3>
+							<div class="my-2 overflow-hidden rounded-box border border-base-200">
+								{#each ex.sets as set, i (set.id)}
+									{#if editingSetId === set.id}
+										<div class="flex flex-col gap-1 p-2 {i > 0 ? 'border-t border-base-200' : ''}">
+											<SetMask
+												reps={set.metrics.reps}
+												weightKg={set.metrics.weightKg}
+												submitLabel="Save"
+												onsubmit={(m) => saveEdit(set.id, m)}
+											/>
+											<button class="btn btn-ghost btn-xs" onclick={() => (editingSetId = null)}>
+												Cancel
+											</button>
+										</div>
+									{:else}
+										<!-- Swipe right → edit, swipe left → delete (matches the app's
+									     entry-list gesture convention, e.g. HistoryDayCard). -->
+										<SwipeableListItem
+											onleft={() => {
+												editingSetId = set.id;
+											}}
+											onright={() => store.deleteSet(set.id)}
+										>
+											{#snippet leftAction()}
+												<span><Pencil size="1.5rem" color={'var(--color-primary)'} /></span>
+											{/snippet}
+											{#snippet rightAction()}
+												<span><Trash size="1.5rem" color={'var(--color-error)'} /></span>
+											{/snippet}
+											<div
+												class="flex items-center justify-between bg-base-100 px-3 py-2 text-sm {i >
+												0
+													? 'border-t border-base-200'
+													: ''}"
+											>
+												<span class="tabular-nums"
+													>{set.metrics.reps} × {set.metrics.weightKg} kg</span
+												>
+												<span class="text-xs opacity-50">Set {i + 1}</span>
+											</div>
+										</SwipeableListItem>
+									{/if}
+								{/each}
+							</div>
+							<SetMask
+								reps={prefill?.reps ?? 8}
+								weightKg={prefill?.weightKg ?? 20}
+								onsubmit={(m) => logMore(ex, m)}
+							/>
+						</div>
+					{/each}
+
+					{#if pending}
+						<div class="rounded-box border border-primary p-3">
+							<h3 class="font-semibold">{pending.name}</h3>
+							<SetMask onsubmit={logPending} />
+						</div>
+					{/if}
+
+					{#if pickerOpen}
+						<ExercisePicker onpick={pick} />
+					{:else}
+						<button class="btn btn-block" onclick={() => (pickerOpen = true)}>Add exercise</button>
+					{/if}
+				</div>
+			{/if}
+		{/snippet}
+
+		{#snippet footer()}
+			<div class="flex w-full flex-col gap-2">
+				{#if store.paused}
+					<button class="btn btn-primary" onclick={() => store.resume()}>Resume</button>
+				{:else}
+					<button class="btn btn-ghost" onclick={() => store.pause()}>Pause</button>
+				{/if}
+				<SlideToConfirm label="Slide to end" onconfirm={() => store.end()} />
+				<SlideToConfirm
+					label="Slide to discard"
+					variant="danger"
+					onconfirm={() => store.discard()}
+				/>
+			</div>
+		{/snippet}
+	</ModalDialog>
+</div>
+
+<style>
+	/* The workout runs as a fullscreen modal (per design — "fullscreen modal
+	   overlay over the dashboard"). Scoped to this overlay so other ModalDialogs
+	   (e.g. the post-workout summary) keep their default centered sizing. */
+	.workout-modal :global(.modal-box) {
+		width: 100%;
+		max-width: 100%;
+		height: 100%;
+		max-height: 100%;
+		border-radius: 0;
+	}
+</style>
