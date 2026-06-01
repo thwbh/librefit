@@ -27,7 +27,10 @@ vi.mock('$lib/api', () => ({
 	createWeightTrackerEntry: vi.fn(),
 	deleteIntake: vi.fn(),
 	updateIntake: vi.fn(),
-	updateWeightTrackerEntry: vi.fn()
+	updateWeightTrackerEntry: vi.fn(),
+	// Called from onMount: workout session resume + body model for the muscle map.
+	getActiveWorkout: vi.fn(() => Promise.resolve(null)),
+	getBodyData: vi.fn(() => Promise.resolve({ sex: 'MALE' }))
 }));
 
 vi.mock('$lib/avatar', () => ({

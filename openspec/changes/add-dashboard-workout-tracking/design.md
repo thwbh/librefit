@@ -162,3 +162,23 @@ Derived (computed, never stored): **active work time** = `(now − started_at) �
 ## Open Questions
 
 - Seed content: what's the initial exercise/muscle/category seed list? (Resolve during implementation; not behavior-defining.)
+
+## Deferred enhancements (summary-screen brainstorm)
+
+Ideas raised while iterating on the post-workout summary. All are **out of scope for this change** — the summary ships as a read-only receipt (this-session stats, worked-muscle body map, per-exercise set recap). They cluster onto two future OpenSpec changes the architecture was already built to absorb:
+
+**Metric-payload extension** (uses the compiled `LiftingSetMetrics` → typegen seam; add fields + regen Zod, no device migration):
+
+- **RPE per set** — Rate of Perceived Exertion alongside reps/weight, giving the volume/time numbers qualitative context.
+- **Set-level annotations** — a note/tag per set (e.g. RPE, a ⚠️ "twinge/pain" marker).
+- **Session note** — a single free-text "post-workout thought" (e.g. "low sleep", "felt energized"); needs a `workout_session.note` column + command.
+
+**History surface** (depends on cross-session queries; highest-value follow-up):
+
+- **PR / volume-increase badges** — "New PR", "Volume +X%" on exercises — needs prior-session comparison (the summary is this-session only by decision).
+- **Anomaly / "review required" highlighting** — flag suspicious sets. Note: zero-reps can't occur (reps validated ≥ 1) and "massive deviation" needs a baseline, so this is history-dependent; a purely in-session outlier flag is frontend-only but low value alone.
+- **Editing finished sessions** — in-line edit/delete _from the summary_. Blocked today: the mutation commands require an **active** session (`require_active`), so editing an ended session needs backend support. Correction currently lives on the **active** screen, which already uses swipe edit/delete (`SwipeableListItem`); reuse that gesture if/when editing past sessions lands.
+
+**Recovery bridge** (new content domain, lowest priority):
+
+- **Mobility/stretch recommendations** keyed off the highlighted muscle groups — needs a routine/content library and a muscle→routine mapping.

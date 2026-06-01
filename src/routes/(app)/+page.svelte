@@ -7,6 +7,7 @@
 	import {
 		createIntake,
 		createWeightTrackerEntry,
+		getBodyData,
 		deleteIntake,
 		updateIntake,
 		updateWeightTrackerEntry,
@@ -114,6 +115,8 @@
 
 	// Workout overlay + adaptive-dashboard wiring (the `dashboard` capability).
 	let overlayOpen = $state(false);
+	// Body model for the post-workout muscle map; resolved from the profile.
+	let gender = $state<'male' | 'female'>('male');
 
 	// Fractions for the collapsed micro-progress rows shown while a workout is
 	// active (DH-003).
@@ -203,6 +206,9 @@
 		// Resume any active session (auto-completes stale ones) so the dashboard
 		// adopts the active layout on load (DH-005).
 		workoutStore.load();
+		getBodyData()
+			.then((b) => (gender = b.sex?.toUpperCase() === 'FEMALE' ? 'female' : 'male'))
+			.catch(() => {}); // no body data yet → keep the default model
 		return () => workoutStore.dispose();
 	});
 </script>
@@ -312,6 +318,7 @@
 		<DashboardLayout
 			active={workoutStore.active}
 			resting={workoutStore.resting}
+			currentExercise={workoutStore.currentExercise?.name ?? null}
 			activeWorkTimeMs={workoutStore.activeWorkTimeMs}
 			totalVolume={workoutStore.totalVolume}
 			setsCompleted={workoutStore.setsCompleted}
@@ -341,14 +348,25 @@
 </div>
 <IntakeFab onclick={modal.openCreate} />
 
-<!-- Workout overlay (active session, when not minimized) -->
-{#if workoutStore.active && overlayOpen}
-	<WorkoutOverlay store={workoutStore} onminimize={() => (overlayOpen = false)} />
+<!-- Workout overlay: kept mounted while a session is active so minimizing
+     preserves in-progress set entry; visibility is driven by `open`. -->
+{#if workoutStore.active}
+	<WorkoutOverlay
+		store={workoutStore}
+		open={overlayOpen}
+		onminimize={() => (overlayOpen = false)}
+	/>
 {/if}
 
 <!-- Post-workout summary (WO-022); dismiss reveals the idle dashboard (DH-006) -->
 {#if workoutStore.summary}
-	<WorkoutSummary summary={workoutStore.summary} ondismiss={() => workoutStore.dismissSummary()} />
+	<WorkoutSummary
+		summary={workoutStore.summary}
+		muscles={workoutStore.summaryMuscles}
+		exercises={workoutStore.summaryExercises}
+		{gender}
+		ondismiss={() => workoutStore.dismissSummary()}
+	/>
 {/if}
 
 <!-- Intake creation modal -->
