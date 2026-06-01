@@ -22,7 +22,8 @@ VALUES ('barbell', 'Barbell'),
        ('dumbbell', 'Dumbbell'),
        ('machine', 'Machine'),
        ('cable', 'Cable'),
-       ('bodyweight', 'Bodyweight');
+       ('bodyweight', 'Bodyweight'),
+       ('kettlebell', 'Kettlebell');
 
 -- Lookup: muscle (body region)
 CREATE TABLE muscle
@@ -46,7 +47,8 @@ VALUES ('chest', 'Chest'),
        ('gluteal', 'Glutes'),
        ('calves', 'Calves'),
        ('abs', 'Abs'),
-       ('obliques', 'Obliques');
+       ('obliques', 'Obliques'),
+       ('adductors', 'Adductors');
 
 -- Exercise library
 CREATE TABLE exercise
@@ -56,6 +58,10 @@ CREATE TABLE exercise
     category             TEXT    NOT NULL REFERENCES exercise_category (shortvalue),
     default_rest_seconds INTEGER
 );
+-- default_rest_seconds: static per-exercise rest approximation (NULL -> global
+-- fallback). Recommended rest really derives from rep range / training intent
+-- (a future workout-plan feature); see the rest-timer requirement note in
+-- openspec/specs/workout-tracking/spec.md for the eventual precedence.
 INSERT INTO exercise (id, name, category, default_rest_seconds)
 VALUES (1, 'Bench Press', 'barbell', 180),
        (2, 'Back Squat', 'barbell', 240),
@@ -66,7 +72,46 @@ VALUES (1, 'Bench Press', 'barbell', 180),
        (7, 'Dumbbell Curl', 'dumbbell', 90),
        (8, 'Tricep Pushdown', 'cable', 90),
        (9, 'Leg Press', 'machine', 180),
-       (10, 'Plank', 'bodyweight', 60);
+       (10, 'Plank', 'bodyweight', 60),
+       (11, 'Romanian Deadlift', 'barbell', 90),
+       (12, 'Front Squat', 'barbell', 90),
+       (13, 'Incline Bench Press', 'barbell', 60),
+       (14, 'Lateral Raise', 'dumbbell', 45),
+       (15, 'Bulgarian Split Squat', 'dumbbell', 60),
+       (16, 'Single Arm Row', 'dumbbell', 60),
+       (17, 'Hammer Curl', 'dumbbell', 45),
+       (18, 'Chest Fly', 'dumbbell', 60),
+       (19, 'Lat Pulldown', 'machine', 60),
+       (20, 'Leg Extension', 'machine', 60),
+       (21, 'Leg Curl', 'machine', 60),
+       (22, 'Chest Press', 'machine', 60),
+       (23, 'Push-up', 'bodyweight', 60),
+       (24, 'Dips', 'bodyweight', 60),
+       (25, 'Hanging Leg Raise', 'bodyweight', 45),
+       (26, 'Lunges', 'bodyweight', 60),
+       (27, 'Kettlebell Swing', 'kettlebell', 60),
+       (28, 'Sumo Deadlift', 'barbell', 180),
+       (29, 'Power Clean', 'barbell', 120),
+       (30, 'Close-Grip Bench Press', 'barbell', 180),
+       (31, 'Dumbbell Shoulder Press', 'dumbbell', 90),
+       (32, 'Dumbbell Bench Press', 'dumbbell', 120),
+       (33, 'Face Pulls', 'cable', 60),
+       (34, 'Seated Calf Raise', 'machine', 45),
+       (35, 'Hip Adductor Machine', 'machine', 60),
+       (36, 'Cable Hip Abduction', 'cable', 45),
+       (37, 'Chin-ups', 'bodyweight', 150),
+       (38, 'Pistol Squats', 'bodyweight', 60),
+       (39, 'Crunches', 'bodyweight', 45),
+       (40, 'Russian Twists', 'bodyweight', 45),
+       (41, 'Bicycle Crunches', 'bodyweight', 45),
+       (42, 'Ab Wheel Rollouts', 'bodyweight', 60),
+       (43, 'Pallof Press', 'cable', 45),
+       (44, 'Reverse Crunches', 'bodyweight', 45),
+       (45, 'Dragon Flags', 'bodyweight', 60),
+       (46, 'Dead Bug', 'bodyweight', 30),
+       (47, 'Bird Dog', 'bodyweight', 30),
+       (48, 'Cable Woodchoppers', 'cable', 45),
+       (49, 'Hanging Knee Raises', 'bodyweight', 45);
 
 -- Exercise <-> muscle (M:N) with primary/secondary role
 CREATE TABLE exercise_muscle
@@ -103,7 +148,107 @@ VALUES (1, 'chest', 'primary'),
        (9, 'gluteal', 'secondary'),
        (9, 'hamstring', 'secondary'),
        (10, 'abs', 'primary'),
-       (10, 'obliques', 'secondary');
+       (10, 'obliques', 'secondary'),
+       (11, 'hamstring', 'primary'),
+       (11, 'gluteal', 'secondary'),
+       (11, 'lower-back', 'secondary'),
+       (12, 'quadriceps', 'primary'),
+       (12, 'gluteal', 'secondary'),
+       (12, 'abs', 'secondary'),
+       (12, 'lower-back', 'secondary'),
+       (13, 'chest', 'primary'),
+       (13, 'deltoids', 'secondary'),
+       (13, 'triceps', 'secondary'),
+       (14, 'deltoids', 'primary'),
+       (14, 'upper-back', 'secondary'),
+       (15, 'quadriceps', 'primary'),
+       (15, 'hamstring', 'secondary'),
+       (15, 'gluteal', 'secondary'),
+       (15, 'abs', 'secondary'),
+       (16, 'upper-back', 'primary'),
+       (16, 'biceps', 'secondary'),
+       (16, 'deltoids', 'secondary'),
+       (17, 'biceps', 'primary'),
+       (17, 'forearm', 'secondary'),
+       (18, 'chest', 'primary'),
+       (18, 'deltoids', 'secondary'),
+       (19, 'upper-back', 'primary'),
+       (19, 'biceps', 'secondary'),
+       (19, 'deltoids', 'secondary'),
+       (20, 'quadriceps', 'primary'),
+       (21, 'hamstring', 'primary'),
+       (21, 'gluteal', 'secondary'),
+       (22, 'chest', 'primary'),
+       (22, 'deltoids', 'secondary'),
+       (22, 'triceps', 'secondary'),
+       (23, 'chest', 'primary'),
+       (23, 'deltoids', 'secondary'),
+       (23, 'triceps', 'secondary'),
+       (23, 'abs', 'secondary'),
+       (24, 'triceps', 'primary'),
+       (24, 'chest', 'secondary'),
+       (24, 'deltoids', 'secondary'),
+       (25, 'abs', 'primary'),
+       (25, 'obliques', 'secondary'),
+       (26, 'quadriceps', 'primary'),
+       (26, 'hamstring', 'secondary'),
+       (26, 'gluteal', 'secondary'),
+       (26, 'abs', 'secondary'),
+       (27, 'hamstring', 'primary'),
+       (27, 'gluteal', 'secondary'),
+       (27, 'deltoids', 'secondary'),
+       (27, 'abs', 'secondary'),
+       (28, 'hamstring', 'primary'),
+       (28, 'gluteal', 'secondary'),
+       (28, 'quadriceps', 'secondary'),
+       (28, 'lower-back', 'secondary'),
+       (29, 'quadriceps', 'secondary'),
+       (29, 'hamstring', 'secondary'),
+       (29, 'gluteal', 'secondary'),
+       (29, 'deltoids', 'secondary'),
+       (29, 'trapezius', 'secondary'),
+       (30, 'triceps', 'primary'),
+       (30, 'chest', 'secondary'),
+       (30, 'deltoids', 'secondary'),
+       (31, 'deltoids', 'primary'),
+       (31, 'triceps', 'secondary'),
+       (32, 'chest', 'primary'),
+       (32, 'triceps', 'secondary'),
+       (32, 'deltoids', 'secondary'),
+       (33, 'deltoids', 'primary'),
+       (33, 'upper-back', 'secondary'),
+       (33, 'trapezius', 'secondary'),
+       (34, 'calves', 'primary'),
+       (35, 'adductors', 'primary'),
+       (36, 'gluteal', 'primary'),
+       (37, 'upper-back', 'primary'),
+       (37, 'biceps', 'secondary'),
+       (38, 'quadriceps', 'primary'),
+       (38, 'gluteal', 'secondary'),
+       (38, 'hamstring', 'secondary'),
+       (38, 'abs', 'secondary'),
+       (39, 'abs', 'primary'),
+       (40, 'obliques', 'primary'),
+       (40, 'abs', 'secondary'),
+       (41, 'abs', 'primary'),
+       (41, 'obliques', 'secondary'),
+       (42, 'abs', 'primary'),
+       (42, 'obliques', 'secondary'),
+       (43, 'abs', 'primary'),
+       (43, 'obliques', 'secondary'),
+       (44, 'abs', 'primary'),
+       (45, 'abs', 'primary'),
+       (45, 'obliques', 'secondary'),
+       (46, 'abs', 'primary'),
+       (46, 'obliques', 'secondary'),
+       (46, 'gluteal', 'secondary'),
+       (47, 'abs', 'primary'),
+       (47, 'lower-back', 'secondary'),
+       (47, 'gluteal', 'secondary'),
+       (48, 'obliques', 'primary'),
+       (48, 'abs', 'secondary'),
+       (49, 'abs', 'primary'),
+       (49, 'obliques', 'secondary');
 
 -- Workout skeleton: session -> exercise -> set
 CREATE TABLE workout_session
@@ -115,19 +260,19 @@ CREATE TABLE workout_session
     ended_at     TEXT
 );
 
+-- Ordering of exercises within a session, and sets within an exercise, is carried
+-- by the autoincrement `id` (monotonic = insertion order); no explicit sequence column.
 CREATE TABLE workout_exercise
 (
     id          INTEGER NOT NULL PRIMARY KEY,
     session_id  INTEGER NOT NULL REFERENCES workout_session (id),
-    exercise_id INTEGER NOT NULL REFERENCES exercise (id),
-    sequence    INTEGER NOT NULL
+    exercise_id INTEGER NOT NULL REFERENCES exercise (id)
 );
 
 CREATE TABLE workout_set
 (
     id                  INTEGER NOT NULL PRIMARY KEY,
     workout_exercise_id INTEGER NOT NULL REFERENCES workout_exercise (id),
-    sequence            INTEGER NOT NULL,
     logged_at           TEXT    NOT NULL,
     payload_ver         INTEGER NOT NULL DEFAULT 1,
     metrics             TEXT    NOT NULL

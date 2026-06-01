@@ -16,11 +16,11 @@ import type { LoggedSet, WorkoutDetail, WorkoutExerciseView, WorkoutPauseView } 
 const at = (iso: string) => Date.parse(iso);
 
 function set(id: number, reps: number, weightKg: number, loggedAt: string): LoggedSet {
-	return { id, sequence: id, loggedAt, metrics: { reps, weightKg } };
+	return { id, loggedAt, metrics: { reps, weightKg } };
 }
 
 function exercise(id: number, sets: LoggedSet[], defaultRestSeconds?: number): WorkoutExerciseView {
-	return { id, exerciseId: id, name: `ex-${id}`, sequence: id, defaultRestSeconds, sets };
+	return { id, exerciseId: id, name: `ex-${id}`, defaultRestSeconds, sets };
 }
 
 function detail(
