@@ -18,7 +18,10 @@ export default defineConfig({
 	},
 	build: {
 		target: 'esnext',
-		minify: 'esbuild'
+		// vite 8 is rolldown-based and no longer bundles esbuild; 'oxc' is the
+		// native minifier. 'esbuild' here would require installing esbuild
+		// separately and trips the deprecated transformWithEsbuild path.
+		minify: 'oxc'
 	},
 	// Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
 	//
