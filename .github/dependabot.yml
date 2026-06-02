@@ -1,5 +1,10 @@
 # LibreFit Dependabot Configuration
-# Automated dependency updates and security scanning
+# Automated dependency updates and security scanning.
+#
+# Note on auto-merge: Dependabot has no auto-merge setting in this file. To
+# auto-merge (e.g. low-severity/patch updates), add a separate GitHub Actions
+# workflow that runs `gh pr merge --auto` on `dependabot/*` PRs, plus enable
+# "Allow auto-merge" + branch protection in repo settings.
 
 version: 2
 updates:
@@ -12,12 +17,15 @@ updates:
       timezone: "Europe/Vienna"
     open-pull-requests-limit: 10
     reviewers:
-      - "stefanpoindl"
+      - "thwbh"
     assignees:
-      - "stefanpoindl"
+      - "thwbh"
     labels:
-      - "dependencies"
-      - "javascript"
+      - "devops"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
     groups:
       # Group non-major updates together
       npm-minor-patch:
@@ -29,12 +37,17 @@ updates:
           - "@sveltejs/*"
           - "svelte"
           - "vite"
-          - "tauri"
-      # Critical security updates get their own PRs
+          - "@tauri-apps/*"
+      # Group security updates into their own PR set
       npm-security:
         applies-to: security-updates
-        update-types:
-          - "security"
+    ignore:
+      # Vitest UI server vulnerability does not affect our CLI-only usage.
+      - dependency-name: "vitest"
+        versions: [">=3.0.0 <4.1.0"]
+      # Cookie parsing in a transitive dep through SvelteKit; validation in place.
+      - dependency-name: "cookie"
+        versions: [">=0.0.0 <0.7.0"]
 
   # Rust dependencies (Cargo)
   - package-ecosystem: "cargo"
@@ -45,12 +58,14 @@ updates:
       timezone: "Europe/Vienna"
     open-pull-requests-limit: 10
     reviewers:
-      - "stefanpoindl"
+      - "thwbh"
     assignees:
-      - "stefanpoindl"
+      - "thwbh"
     labels:
-      - "dependencies"
-      - "rust"
+      - "devops"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
     groups:
       cargo-minor-patch:
         applies-to: version-updates
@@ -62,45 +77,18 @@ updates:
 
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
+    directory: "/"
     schedule:
       interval: "weekly"
       time: "10:00"
       timezone: "Europe/Vienna"
+    open-pull-requests-limit: 10
     reviewers:
-      - "stefanpoindl"
+      - "thwbh"
     assignees:
-      - "stefanpoindl"
+      - "thwbh"
     labels:
-      - "dependencies"
-      - "github-actions"
-
-# Custom configuration for security updates
-security-updates:
-  # Create PRs for all security updates
-  open-pull-requests-limit: 20
-  # Auto-merge low-severity security updates
-  auto-merge:
-    low-severity: true
-    # Don't auto-merge high/critical without review
-    high-severity: false
-    critical-severity: false
-
-# Ignore rules for known false positives or accepted risks
-ignore:
-  # Vitest UI vulnerability - we don't use the UI server
-  - dependency-name: "vitest"
-    versions: [">=3.0.0 <4.1.0"]
-    update-types: ["security"]
-    reason: "Vitest UI server vulnerability does not affect our CLI-only usage"
-  # Cookie parsing in transitive dependency
-  - dependency-name: "cookie"
-    versions: [">=0.0.0 <0.7.0"]
-    update-types: ["security"]
-    reason: "Transitive dependency through SvelteKit, proper validation in place"
-
-# Commit message configuration
-commit-message:
-  prefix: "chore"
-  prefix-development: "chore"
-  include-scope: true
+      - "devops"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
