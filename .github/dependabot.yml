@@ -41,6 +41,8 @@ updates:
       # Group security updates into their own PR set
       npm-security:
         applies-to: security-updates
+        patterns:
+          - "*"
     ignore:
       # Vitest UI server vulnerability does not affect our CLI-only usage.
       - dependency-name: "vitest"
@@ -74,6 +76,8 @@ updates:
           - "patch"
       cargo-security:
         applies-to: security-updates
+        patterns:
+          - "*"
 
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
