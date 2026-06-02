@@ -4,7 +4,7 @@
 	import { getCategoriesContext } from '$lib/context';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
 	import { SwipeableListItem } from '@thwbh/veilchen';
-	import { swipe } from 'svelte-gestures';
+	import { useSwipe } from 'svelte-gestures';
 	import { longpress } from '$lib/gesture/long-press';
 	import { ForkKnife, HandTap, Pencil, Trash } from 'phosphor-svelte';
 	import NumberFlow from '@number-flow/svelte';
@@ -39,8 +39,11 @@
 <div class="flex flex-col gap-4">
 	<!-- Intake score (swipeable for day nav) -->
 	<div
-		use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
-		onswipe={ondayswipe}
+		{...useSwipe(ondayswipe, () => ({
+			timeframe: 300,
+			minSwipeDistance: 60,
+			touchAction: 'pan-y'
+		}))}
 	>
 		<IntakeScore {intakeTarget} entries={intakeEntries.map((c) => c.amount)} isHistory={true} />
 	</div>
