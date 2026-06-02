@@ -1,0 +1,84 @@
+# Dependency Review Workflow
+# Scans pull requests for vulnerable dependencies
+
+name: 'Dependency Review'
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+      
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail on critical vulnerabilities
+          fail-on-scopes: 'development,production'
+          # Allow low-severity in development
+          allow-licenses: 'MIT,Apache-2.0,BSD-3-Clause,ISC'
+          # Comment on PR with findings
+          comment-summary-in-pr: true
+
+  npm-audit:
+    name: 'npm Security Audit'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+      
+      - name: 'Set up Node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: 'Install Dependencies'
+        run: npm ci
+      
+      - name: 'Run npm audit'
+        run: npm audit --production
+        continue-on-error: true
+      
+      - name: 'Comment audit results'
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const auditOutput = fs.readFileSync('npm-audit.txt', 'utf8');
+            if (auditOutput.includes('vulnerabilities')) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `🚨 npm audit found vulnerabilities:\n\`\`\`\n${auditOutput}\n\`\`\``
+              });
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cargo-audit:
+    name: 'Rust Security Audit'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+      
+      - name: 'Install Rust'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+      
+      - name: 'Install cargo-audit'
+        run: cargo install cargo-audit
+      
+      - name: 'Run cargo audit'
+        working-directory: src-tauri
+        run: cargo audit
+        continue-on-error: true

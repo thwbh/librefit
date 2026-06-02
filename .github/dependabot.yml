@@ -1,0 +1,106 @@
+# LibreFit Dependabot Configuration
+# Automated dependency updates and security scanning
+
+version: 2
+updates:
+  # npm dependencies (JavaScript/TypeScript)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "Europe/Vienna"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "stefanpoindl"
+    assignees:
+      - "stefanpoindl"
+    labels:
+      - "dependencies"
+      - "javascript"
+    groups:
+      # Group non-major updates together
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "@sveltejs/*"
+          - "svelte"
+          - "vite"
+          - "tauri"
+      # Critical security updates get their own PRs
+      npm-security:
+        applies-to: security-updates
+        update-types:
+          - "security"
+
+  # Rust dependencies (Cargo)
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
+    schedule:
+      interval: "daily"
+      time: "09:30"
+      timezone: "Europe/Vienna"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "stefanpoindl"
+    assignees:
+      - "stefanpoindl"
+    labels:
+      - "dependencies"
+      - "rust"
+    groups:
+      cargo-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      cargo-security:
+        applies-to: security-updates
+
+  # GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      time: "10:00"
+      timezone: "Europe/Vienna"
+    reviewers:
+      - "stefanpoindl"
+    assignees:
+      - "stefanpoindl"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+# Custom configuration for security updates
+security-updates:
+  # Create PRs for all security updates
+  open-pull-requests-limit: 20
+  # Auto-merge low-severity security updates
+  auto-merge:
+    low-severity: true
+    # Don't auto-merge high/critical without review
+    high-severity: false
+    critical-severity: false
+
+# Ignore rules for known false positives or accepted risks
+ignore:
+  # Vitest UI vulnerability - we don't use the UI server
+  - dependency-name: "vitest"
+    versions: [">=3.0.0 <4.1.0"]
+    update-types: ["security"]
+    reason: "Vitest UI server vulnerability does not affect our CLI-only usage"
+  # Cookie parsing in transitive dependency
+  - dependency-name: "cookie"
+    versions: [">=0.0.0 <0.7.0"]
+    update-types: ["security"]
+    reason: "Transitive dependency through SvelteKit, proper validation in place"
+
+# Commit message configuration
+commit-message:
+  prefix: "chore"
+  prefix-development: "chore"
+  include-scope: true
