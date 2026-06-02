@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import userEvent from '@testing-library/user-event';
 import IntakeMask from './IntakeMask.svelte';
 import TestWrapper from '../../../../tests/utils/TestWrapper.svelte';
@@ -17,7 +18,9 @@ function renderWithContext(entry: Intake | NewIntake, props = {}) {
 	return render(TestWrapper, {
 		props: {
 			component: IntakeMask,
-			props: { entry, ...props },
+			// Clone the entry per render: IntakeMask mutates `entry` in place (category
+			// selection), so a shared fixture would leak state across tests.
+			props: { entry: { ...entry }, ...props },
 			categories: mockCategories
 		}
 	});
@@ -89,6 +92,7 @@ describe('IntakeMask', () => {
 
 			const dinnerButton = screen.getByLabelText(/Select Dinner/i);
 			await user.click(dinnerButton);
+			await tick();
 
 			// After clicking, the button should be highlighted
 			expect(dinnerButton.className).toContain('btn-accent');

@@ -10,3 +10,4 @@ pub mod tracker_history;
 pub mod user;
 pub mod weight;
 pub mod wizard;
+pub mod workout;

@@ -12,6 +12,13 @@
 
 	let { component, props = {}, categories = [], user = null }: Props = $props();
 
+	// Forward the inner props through `$state` so nested data (e.g. an `entry`
+	// object a component mutates and binds to) is a reactive proxy — mirroring how
+	// the real callers pass `$state`-backed data via `bind:`. Without this, a
+	// component mutating a plain prop object wouldn't re-render under Svelte 5
+	// (binding_property_non_reactive).
+	let liveProps = $state(props);
+
 	// Set context if categories provided
 	if (categories.length > 0) {
 		setCategoriesContext(categories);
@@ -26,4 +33,4 @@
 	const Component = component;
 </script>
 
-<Component {...props} />
+<Component {...liveProps} />

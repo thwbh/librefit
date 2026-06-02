@@ -2,7 +2,7 @@
 	import { getDateAsStr, parseStringAsDate } from '$lib/date.js';
 	import { CaretLeft, CaretRight } from 'phosphor-svelte';
 	import NumberFlow from '@number-flow/svelte';
-	import { swipe } from 'svelte-gestures';
+	import { useSwipe } from 'svelte-gestures';
 
 	interface Props {
 		dates: string[];
@@ -52,8 +52,11 @@
 	<!-- Date selector -->
 	<div
 		class="grid grid-cols-9 gap-1 mt-6"
-		use:swipe={() => ({ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' })}
-		onswipe={handleWeekSwipe}
+		{...useSwipe(handleWeekSwipe, () => ({
+			timeframe: 300,
+			minSwipeDistance: 60,
+			touchAction: 'pan-y'
+		}))}
 	>
 		<button
 			class="place-self-center opacity-70 hover:opacity-100"

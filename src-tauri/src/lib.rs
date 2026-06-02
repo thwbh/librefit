@@ -26,6 +26,11 @@ use crate::service::weight::{
     get_last_weight_target, get_last_weight_tracker, get_weight_tracker_for_date_range,
     update_weight_tracker_entry,
 };
+use crate::service::workout::{
+    delete_workout_set, discard_workout_session, end_workout_session, get_active_workout,
+    get_exercise_library, log_workout_set, pause_workout_session, resume_workout_session,
+    start_workout_session, update_workout_set,
+};
 
 use crate::db::{connection, migrations};
 
@@ -90,7 +95,17 @@ pub fn run() {
             export_database_file,
             cancel_export,
             import_data_file,
-            cancel_import
+            cancel_import,
+            start_workout_session,
+            log_workout_set,
+            update_workout_set,
+            delete_workout_set,
+            pause_workout_session,
+            resume_workout_session,
+            end_workout_session,
+            discard_workout_session,
+            get_active_workout,
+            get_exercise_library
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

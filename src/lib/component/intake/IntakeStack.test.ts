@@ -125,7 +125,7 @@ describe('IntakeStack', () => {
 		});
 
 		it('should handle index binding', () => {
-			let index = 0;
+			const index = 0;
 			const { container } = renderWithContext({ entries: mockEntries, index });
 
 			expect(container.textContent).toContain('Breakfast');

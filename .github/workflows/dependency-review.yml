@@ -1,0 +1,90 @@
+# Dependency Review Workflow
+# Scans pull requests for vulnerable dependencies
+
+name: 'Dependency Review'
+on: [pull_request]
+
+permissions:
+  contents: read
+  pull-requests: write # needed to comment audit results on the PR
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail the check when a newly-introduced dependency has a
+          # critical-severity advisory.
+          fail-on-severity: critical
+          # Comment on PR with findings
+          comment-summary-in-pr: on-failure
+
+  npm-audit:
+    name: 'npm Security Audit'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Run npm audit'
+        id: npm-audit
+        continue-on-error: true
+        run: |
+          # Advisory only (continue-on-error): surface prod-dependency
+          # vulnerabilities as a PR comment without blocking the merge.
+          AUDIT_OUTPUT=$(npm audit --omit=dev 2>&1 || true)
+          echo "audit_output<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$AUDIT_OUTPUT" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: 'Comment audit results'
+        # Only comment when audit actually reported vulnerabilities.
+        if: always() && contains(steps.npm-audit.outputs.audit_output, 'vulnerabilities')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const auditOutput = process.env.AUDIT_OUTPUT;
+            // npm prints "found 0 vulnerabilities" when clean — skip that case.
+            if (auditOutput && !/found 0 vulnerabilities/.test(auditOutput)) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `🚨 npm audit found vulnerabilities:\n\`\`\`\n${auditOutput}\n\`\`\``
+              });
+            }
+        env:
+          AUDIT_OUTPUT: ${{ steps.npm-audit.outputs.audit_output }}
+
+  cargo-audit:
+    name: 'Rust Security Audit'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Install Rust'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 'Install cargo-audit'
+        run: cargo install cargo-audit --locked
+
+      - name: 'Run cargo audit'
+        working-directory: src-tauri
+        # Advisory only for now; flip to a hard gate by removing this line.
+        continue-on-error: true
+        run: cargo audit

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useEntryModal } from './useEntryModal.svelte';
+import { useEntryModal, type UseEntryModalOptions } from './useEntryModal.svelte';
 
 // Mock Tauri logger
 vi.mock('@tauri-apps/plugin-log', () => ({
@@ -24,24 +24,28 @@ interface TestEntry {
 }
 
 type NewTestEntry = Omit<TestEntry, 'id'>;
+type Options = UseEntryModalOptions<TestEntry, NewTestEntry>;
 
 describe('useEntryModal', () => {
-	let onCreateMock: ReturnType<typeof vi.fn>;
-	let onUpdateMock: ReturnType<typeof vi.fn>;
-	let onDeleteMock: ReturnType<typeof vi.fn>;
-	let onCreateSuccessMock: ReturnType<typeof vi.fn>;
-	let onUpdateSuccessMock: ReturnType<typeof vi.fn>;
-	let onDeleteSuccessMock: ReturnType<typeof vi.fn>;
+	// Type the mocks with their option signatures so they satisfy the typed
+	// callback fields. (vitest 4's `vi.fn()` defaults to an opaque
+	// `Mock<Procedure | Constructable>` that no longer auto-assigns to them.)
+	let onCreateMock: ReturnType<typeof vi.fn<Options['onCreate']>>;
+	let onUpdateMock: ReturnType<typeof vi.fn<Options['onUpdate']>>;
+	let onDeleteMock: ReturnType<typeof vi.fn<Options['onDelete']>>;
+	let onCreateSuccessMock: ReturnType<typeof vi.fn<NonNullable<Options['onCreateSuccess']>>>;
+	let onUpdateSuccessMock: ReturnType<typeof vi.fn<NonNullable<Options['onUpdateSuccess']>>>;
+	let onDeleteSuccessMock: ReturnType<typeof vi.fn<NonNullable<Options['onDeleteSuccess']>>>;
 
 	const blankEntry: NewTestEntry = { name: '', value: 0 };
 
 	beforeEach(() => {
-		onCreateMock = vi.fn();
-		onUpdateMock = vi.fn();
-		onDeleteMock = vi.fn();
-		onCreateSuccessMock = vi.fn();
-		onUpdateSuccessMock = vi.fn();
-		onDeleteSuccessMock = vi.fn();
+		onCreateMock = vi.fn<Options['onCreate']>();
+		onUpdateMock = vi.fn<Options['onUpdate']>();
+		onDeleteMock = vi.fn<Options['onDelete']>();
+		onCreateSuccessMock = vi.fn<NonNullable<Options['onCreateSuccess']>>();
+		onUpdateSuccessMock = vi.fn<NonNullable<Options['onUpdateSuccess']>>();
+		onDeleteSuccessMock = vi.fn<NonNullable<Options['onDeleteSuccess']>>();
 	});
 
 	describe('Initialization', () => {
