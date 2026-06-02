@@ -1,44 +1,37 @@
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import ExercisePicker from './ExercisePicker.svelte';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { getExerciseLibrary } from '$lib/api';
+import { getExerciseLibrary, type ExerciseDetail } from '$lib/api';
 
 // Mock the API
 vi.mock('$lib/api', () => ({
 	getExerciseLibrary: vi.fn()
 }));
 
-const mockLibrary = [
+// Shapes match the generated ExerciseDetail (camelCase wire format): muscles
+// carry exerciseId, rest is defaultRestSeconds.
+const m = (exerciseId: number, muscle: string, role: string) => ({ exerciseId, muscle, role });
+const mockLibrary: ExerciseDetail[] = [
 	{
 		id: 1,
 		name: 'Bench Press',
 		category: 'barbell',
-		default_rest_seconds: 180,
-		muscles: [
-			{ muscle: 'chest', role: 'primary' },
-			{ muscle: 'triceps', role: 'secondary' },
-			{ muscle: 'deltoids', role: 'secondary' }
-		]
+		defaultRestSeconds: 180,
+		muscles: [m(1, 'chest', 'primary'), m(1, 'triceps', 'secondary'), m(1, 'deltoids', 'secondary')]
 	},
 	{
 		id: 2,
 		name: 'Back Squat',
 		category: 'barbell',
-		default_rest_seconds: 240,
-		muscles: [
-			{ muscle: 'quadriceps', role: 'primary' },
-			{ muscle: 'gluteal', role: 'secondary' }
-		]
+		defaultRestSeconds: 240,
+		muscles: [m(2, 'quadriceps', 'primary'), m(2, 'gluteal', 'secondary')]
 	},
 	{
 		id: 3,
 		name: 'Lat Pulldown',
 		category: 'machine',
-		default_rest_seconds: 60,
-		muscles: [
-			{ muscle: 'upper-back', role: 'primary' },
-			{ muscle: 'biceps', role: 'secondary' }
-		]
+		defaultRestSeconds: 60,
+		muscles: [m(3, 'upper-back', 'primary'), m(3, 'biceps', 'secondary')]
 	}
 ];
 
@@ -120,9 +113,9 @@ describe('ExercisePicker', () => {
 
 		// Check for loading spinner by class
 		expect(
-			screen.getByText((content, element) => {
-				return element?.classList.contains('loading-spinner');
-			})
+			screen.getByText(
+				(_content, element) => element?.classList.contains('loading-spinner') ?? false
+			)
 		).toBeInTheDocument();
 
 		await screen.findByPlaceholderText('Search exercises');
@@ -162,8 +155,3 @@ describe('ExercisePicker', () => {
 		expect(button).toHaveTextContent('Deltoids');
 	});
 });
-
-// Helper to access mocked function
-declare module '$lib/api' {
-	export const getExerciseLibrary: typeof import('$lib/api').getExerciseLibrary;
-}

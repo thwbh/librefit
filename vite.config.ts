@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -50,7 +51,7 @@ export default defineConfig({
 			// If you want a coverage reports even if your tests are failing, include the reportOnFailure option
 			reportOnFailure: true
 		},
-		workspace: [
+		projects: [
 			{
 				extends: true,
 				plugins: [svelteTesting()],

@@ -4,8 +4,8 @@ use librefit_lib::db::schema::workout_session;
 use librefit_lib::scenario;
 use librefit_lib::service::workout::{
     delete_workout_set, discard_workout_session, end_workout_session, get_active_workout,
-    get_exercise_library, log_workout_set, start_workout_session, update_workout_set,
-    LiftingSetMetrics,
+    get_exercise_library, log_workout_set, pause_workout_session, resume_workout_session,
+    start_workout_session, update_workout_set, LiftingSetMetrics,
 };
 use tauri::Manager;
 
@@ -215,4 +215,38 @@ fn inactive_session_auto_completes() {
             .unwrap()
     };
     assert_eq!(ended_at.as_deref(), Some("2020-01-01T00:00:00.000Z"));
+}
+
+#[test]
+fn pause_and_resume_workout_session() {
+    scenario!("[WO-010]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    start_workout_session(app.state(), None).unwrap();
+    let paused = pause_workout_session(app.state()).unwrap();
+
+    assert_eq!(paused.pauses.len(), 1);
+    assert!(paused.pauses[0].resumed_at.is_none());
+
+    let resumed = resume_workout_session(app.state()).unwrap();
+    assert_eq!(resumed.pauses.len(), 1);
+    assert!(resumed.pauses[0].resumed_at.is_some());
+}
+
+#[test]
+fn exercise_find_returns_correct_exercise() {
+    scenario!("[WO-012]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let library = get_exercise_library(app.state()).unwrap();
+    let bench_press = library.iter().find(|e| e.name == "Bench Press").unwrap();
+
+    assert_eq!(bench_press.id, 1);
+    assert_eq!(bench_press.category, "barbell");
+    assert!(bench_press.default_rest_seconds.is_some());
+    assert!(!bench_press.muscles.is_empty());
 }
