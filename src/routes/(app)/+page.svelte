@@ -200,7 +200,16 @@
 	debug(`dashboardData=${JSON.stringify(dashboard)}`);
 	debug(`user profile=${JSON.stringify(userContext.user)}`);
 
-	useRefresh(() => invalidate('data:dashboardData'));
+	// Stable handler identity: useRefresh registers this via an $effect that writes
+	// it into the layout's shared refresh-context $state. A fresh closure each run
+	// makes that write a *change* every pass, which (on Svelte 5.5x) drives a
+	// render-phase write↔read loop with AppShell's `onrefresh={refresh.handler}`.
+	// Hoisting to one stable reference makes re-registration a no-op. See veilchen
+	// issue (useRefresh $effect writes shared state unguarded).
+	function refreshDashboard() {
+		invalidate('data:dashboardData');
+	}
+	useRefresh(refreshDashboard);
 
 	onMount(() => {
 		// Resume any active session (auto-completes stale ones) so the dashboard
