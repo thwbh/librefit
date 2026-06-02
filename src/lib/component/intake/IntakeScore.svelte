@@ -12,7 +12,9 @@
 
 	let { intakeTarget, entries, isHistory = false }: Props = $props();
 
-	let limit = $state(intakeTarget && intakeTarget.targetCalories ? intakeTarget.targetCalories : 0),
+	let target = $state(
+			intakeTarget && intakeTarget.targetCalories ? intakeTarget.targetCalories : 0
+		),
 		maximum = $state(
 			intakeTarget && intakeTarget.maximumCalories ? intakeTarget.maximumCalories : 0
 		),
@@ -30,12 +32,12 @@
 		}
 
 		if (intakeTarget) {
-			limit = intakeTarget.targetCalories;
+			target = intakeTarget.targetCalories;
 			maximum = intakeTarget.maximumCalories;
 		}
 
 		if (total !== undefined && maximum) {
-			ratio = total / limit;
+			ratio = total / target;
 			percentage = Math.floor(ratio * 100);
 
 			if (ratio == 0) {
@@ -56,7 +58,7 @@
 				? 'No intake tracked.'
 				: 'No intake tracked yet.'
 			: ratio <= 1
-				? `All good. ${limit - total}kcal left${isHistory ? '.' : ' for today.'}`
+				? `All good. ${target - total}kcal left${isHistory ? '.' : ' for today.'}`
 				: total <= intakeTarget.maximumCalories
 					? `Warning. ${maximum - total}kcal left for hardcap.`
 					: `Warning! ${total - maximum}kcal over hardcap!`
@@ -72,7 +74,7 @@
 
 	<div class="stat-title">{isHistory ? 'Intake' : "Today's Intake"}</div>
 	<div class="stat-value text-stat-value">
-		<NumberFlow value={total} /><span class="text-sm">/{limit}</span>
+		<NumberFlow value={total} /><span class="text-sm">/{target}</span>
 	</div>
 	<div class="stat-desc flex items-center gap-1">
 		{#if ratio <= 1}

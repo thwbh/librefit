@@ -26,7 +26,7 @@ describe('IntakeScore', () => {
 			expect(container.textContent).toContain('1000');
 		});
 
-		it('should show 0 when entries is empty', () => {
+		it('[IT-001] should show 0 when entries is empty', () => {
 			const { container } = render(IntakeScore, {
 				props: {
 					intakeTarget: mockIntakeTarget,
@@ -136,7 +136,7 @@ describe('IntakeScore', () => {
 	});
 
 	describe('Visual States', () => {
-		it('should show ShieldCheck icon when within target', () => {
+		it('[IT-002] should show ShieldCheck icon when within target', () => {
 			const { container } = render(IntakeScore, {
 				props: {
 					intakeTarget: mockIntakeTarget,
@@ -160,7 +160,7 @@ describe('IntakeScore', () => {
 			expect(container.querySelector('.stat-desc')).toBeTruthy();
 		});
 
-		it('should show warning color when over target', () => {
+		it('[IT-003] should show warning color when over target', () => {
 			const { container } = render(IntakeScore, {
 				props: {
 					intakeTarget: mockIntakeTarget,
@@ -172,7 +172,7 @@ describe('IntakeScore', () => {
 			expect(container.querySelector('.text-warning')).toBeTruthy();
 		});
 
-		it('should show error color when over maximum', () => {
+		it('[IT-004] should show error color when over maximum', () => {
 			const { container } = render(IntakeScore, {
 				props: {
 					intakeTarget: mockIntakeTarget,
@@ -268,7 +268,7 @@ describe('IntakeScore', () => {
 
 	describe('Reactivity', () => {
 		it('should update when entries change', async () => {
-			let entries = [500];
+			const entries = [500];
 			const { container, component } = render(IntakeScore, {
 				props: {
 					intakeTarget: mockIntakeTarget,

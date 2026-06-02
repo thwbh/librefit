@@ -1,5 +1,6 @@
 use crate::helpers::setup_test_pool;
 use chrono::{Days, Local};
+use librefit_lib::scenario;
 use librefit_lib::service::intake::{
     create_intake, create_intake_target, NewIntake, NewIntakeTarget,
 };
@@ -30,7 +31,8 @@ fn get_future_test_dates() -> (String, String, String, String) {
 // ============================================================================
 
 #[test]
-fn test_get_tracker_progress_success() {
+fn get_tracker_progress_success() {
+    scenario!("[PG-001]", "[PG-003]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -126,7 +128,8 @@ fn test_get_tracker_progress_no_weight_target() {
 }
 
 #[test]
-fn test_get_tracker_progress_empty_trackers() {
+fn get_tracker_progress_empty_trackers() {
+    scenario!("[PG-004]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);

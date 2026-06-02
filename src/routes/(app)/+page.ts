@@ -9,10 +9,9 @@ import type { PageLoad } from './$types';
  * This loader only fetches dashboard-specific data.
  */
 export const load: PageLoad = async ({ depends }) => {
+	depends('data:dashboardData');
 
-  depends('data:dashboardData');
-
-  return {
-    dashboardData: await dailyDashboard({ dateStr: getDateAsStr(new Date()) })
-  };
+	return {
+		dashboardData: await dailyDashboard({ dateStr: getDateAsStr(new Date()) })
+	};
 };

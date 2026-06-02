@@ -1,10 +1,13 @@
 <script lang="ts">
+	import IntakeFab from '$lib/component/intake/IntakeFab.svelte';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
 	import IntakeStack from '$lib/component/intake/IntakeStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
+	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import {
 		createIntake,
 		createWeightTrackerEntry,
+		getBodyData,
 		deleteIntake,
 		updateIntake,
 		updateWeightTrackerEntry,
@@ -18,24 +21,28 @@
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
-	import { Avatar, ModalDialog, NumberStepper, useRefresh } from '@thwbh/veilchen';
+	import { Avatar, useRefresh } from '@thwbh/veilchen';
 	import { invalidate } from '$app/navigation';
-	import { Plus, Trash, CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
+	import { CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import {
 		convertDateStrToDisplayDateStr,
-		display_date_format,
 		getDateAsStr,
 		getDisplayDateAsStr,
 		parseStringAsDate
 	} from '$lib/date';
-	import IntakeMask from '$lib/component/intake/IntakeMask.svelte';
+	import IntakeModal from '$lib/component/intake/IntakeModal.svelte';
+	import { defaultCategoryForDate } from '$lib/api/category';
 	import { getAvatarFromUser } from '$lib/avatar';
 	import { differenceInDays } from 'date-fns';
 	import { slide, fly } from 'svelte/transition';
 	import NumberFlow from '@number-flow/svelte';
-	import CaloriePlanCard from '$lib/component/journey/CaloriePlanCard.svelte';
-	import EncouragementMessage from '$lib/component/journey/EncouragementMessage.svelte';
+	import PlanReviewPanel from '$lib/component/dashboard/PlanReviewPanel.svelte';
+	import DashboardLayout from '$lib/component/dashboard/DashboardLayout.svelte';
+	import WorkoutOverlay from '$lib/component/workout/WorkoutOverlay.svelte';
+	import WorkoutSummary from '$lib/component/workout/WorkoutSummary.svelte';
+	import { workoutStore } from '$lib/workout/workout-state.svelte';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
 
@@ -106,10 +113,40 @@
 
 	let intakeToday: Array<number> = $derived(intake.map((tracker) => tracker.amount));
 
+	// Workout overlay + adaptive-dashboard wiring (the `dashboard` capability).
+	let overlayOpen = $state(false);
+	// Body model for the post-workout muscle map; resolved from the profile.
+	let gender = $state<'male' | 'female'>('male');
+
+	// Fractions for the collapsed micro-progress rows shown while a workout is
+	// active (DH-003).
+	const calorieValue = $derived(
+		intakeTarget.targetCalories > 0
+			? intakeToday.reduce((a, b) => a + b, 0) / intakeTarget.targetCalories
+			: 0
+	);
+	const weightValue = $derived(
+		weightTarget.targetWeight > 0 ? currentWeight / weightTarget.targetWeight : 0
+	);
+
+	async function startWorkout() {
+		try {
+			await workoutStore.start();
+			overlayOpen = true; // open the overlay over the optimistically-morphed dashboard
+		} catch {
+			// the store reverts its optimistic morph and exposes `error`
+		}
+	}
+
+	function openOverlay() {
+		overlayOpen = true;
+	}
+
 	const getBlankEntry = (): NewIntake => {
+		const now = new Date();
 		return {
-			category: 'l',
-			added: getDateAsStr(new Date()),
+			category: defaultCategoryForDate(now),
+			added: getDateAsStr(now),
 			amount: 0,
 			description: ''
 		};
@@ -165,22 +202,15 @@
 
 	useRefresh(() => invalidate('data:dashboardData'));
 
-	const cubicOut = 'cubic-bezier(0.33, 1, 0.68, 1)';
-
-	// FAB transitioning effect
-	const portal = (node: HTMLElement) => {
-		document.body.appendChild(node);
-		node.style.opacity = '0';
-		node.style.transition = `opacity 150ms ${cubicOut}`;
-		setTimeout(() => (node.style.opacity = '1'), 100);
-		return {
-			destroy() {
-				node.style.transition = `opacity 100ms ${cubicOut}`;
-				node.style.opacity = '0';
-				setTimeout(() => node.remove(), 100);
-			}
-		};
-	};
+	onMount(() => {
+		// Resume any active session (auto-completes stale ones) so the dashboard
+		// adopts the active layout on load (DH-005).
+		workoutStore.load();
+		getBodyData()
+			.then((b) => (gender = b.sex?.toUpperCase() === 'FEMALE' ? 'female' : 'male'))
+			.catch(() => {}); // no body data yet → keep the default model
+		return () => workoutStore.dispose();
+	});
 </script>
 
 <div class="flex flex-col overflow-x-hidden">
@@ -270,142 +300,107 @@
 		</div>
 
 		<!-- Calorie plan & encouragement below the progress bar -->
-		{#if showPlan}
-			<div transition:slide={{ duration: 300 }} class="flex flex-col gap-4 mt-4">
-				<div in:fly={{ y: 20, duration: 400, delay: 150 }}>
-					<CaloriePlanCard
-						dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
-						recommendation={weightTarget.targetWeight > weightTarget.initialWeight
-							? 'GAIN'
-							: 'LOSE'}
-						targetCalories={intakeTarget.targetCalories}
-						maximumCalories={intakeTarget.maximumCalories}
-						{averageIntake}
-					/>
-				</div>
-
-				<div in:fly={{ y: 20, duration: 400, delay: 250 }}>
-					<EncouragementMessage
-						{daysElapsed}
-						daysLeft={dayDiff}
-						{averageIntake}
-						targetCalories={intakeTarget.targetCalories}
-						{goalReached}
-					/>
-				</div>
-			</div>
-		{/if}
+		<PlanReviewPanel
+			expanded={showPlan}
+			dailyRate={Math.abs(intakeTarget.maximumCalories - intakeTarget.targetCalories)}
+			recommendation={weightTarget.targetWeight > weightTarget.initialWeight ? 'GAIN' : 'LOSE'}
+			targetCalories={intakeTarget.targetCalories}
+			maximumCalories={intakeTarget.maximumCalories}
+			{averageIntake}
+			{daysElapsed}
+			daysLeft={dayDiff}
+			{goalReached}
+		/>
 	</div>
 
-	<!-- Content area -->
+	<!-- Content area: adaptive Idle↔Active composition (the `dashboard` capability) -->
 	<div class="bg-base-100 rounded-t-3xl -mt-6 relative z-10 flex flex-col gap-6 p-4 pt-6">
-		<div class="flex flex-col items-center gap-2 w-full">
-			<IntakeScore {intakeTarget} entries={intakeToday} />
-			<IntakeStack bind:index bind:entries={intake} onEdit={modal.openEdit} class="w-full" />
-		</div>
-
-		<div class="flex flex-col items-center w-full">
-			<WeightScore
-				weightTracker={lastWeightTracker}
-				{weightTarget}
-				onupdate={modalWeight.openCreate}
-			/>
-		</div>
+		<DashboardLayout
+			active={workoutStore.active}
+			resting={workoutStore.resting}
+			currentExercise={workoutStore.currentExercise?.name ?? null}
+			activeWorkTimeMs={workoutStore.activeWorkTimeMs}
+			totalVolume={workoutStore.totalVolume}
+			setsCompleted={workoutStore.setsCompleted}
+			restRemainingMs={workoutStore.restRemainingMs}
+			{calorieValue}
+			{weightValue}
+			onStart={startWorkout}
+			onOpen={openOverlay}
+		>
+			{#snippet calorieCard()}
+				<div class="flex flex-col items-center gap-2 w-full">
+					<IntakeScore {intakeTarget} entries={intakeToday} />
+					<IntakeStack bind:index bind:entries={intake} onEdit={modal.openEdit} class="w-full" />
+				</div>
+			{/snippet}
+			{#snippet weightCard()}
+				<div class="flex flex-col items-center w-full">
+					<WeightScore
+						weightTracker={lastWeightTracker}
+						{weightTarget}
+						onupdate={modalWeight.openCreate}
+					/>
+				</div>
+			{/snippet}
+		</DashboardLayout>
 	</div>
 </div>
-<button
-	use:portal
-	class="fixed bottom-20 right-4 z-[39] btn btn-xl btn-circle btn-primary shadow-lg"
-	onclick={modal.openCreate}
->
-	<Plus size="1.5em" />
-</button>
-<!-- Intake creation modal -->
-<ModalDialog bind:dialog={modal.createDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Add Intake</span>
-		{#if modal.currentEntry}
-			<span class="text-xs opacity-70">
-				{convertDateStrToDisplayDateStr((modal.currentEntry as NewIntake).added)}
-			</span>
-		{/if}
-	{/snippet}
+<IntakeFab onclick={modal.openCreate} />
 
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask bind:entry={modal.currentEntry} isEditing={true} readonly={modal.enableDelete} />
-		{/if}
-	{/snippet}
-</ModalDialog>
+<!-- Workout overlay: kept mounted while a session is active so minimizing
+     preserves in-progress set entry; visibility is driven by `open`. -->
+{#if workoutStore.active}
+	<WorkoutOverlay
+		store={workoutStore}
+		open={overlayOpen}
+		onminimize={() => (overlayOpen = false)}
+	/>
+{/if}
+
+<!-- Post-workout summary (WO-022); dismiss reveals the idle dashboard (DH-006) -->
+{#if workoutStore.summary}
+	<WorkoutSummary
+		summary={workoutStore.summary}
+		muscles={workoutStore.summaryMuscles}
+		exercises={workoutStore.summaryExercises}
+		{gender}
+		ondismiss={() => workoutStore.dismissSummary()}
+	/>
+{/if}
+
+<!-- Intake creation modal -->
+<IntakeModal
+	bind:dialog={modal.createDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="create"
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
+	oncancel={modal.cancel}
+/>
 
 <!-- Intake update modal -->
-<ModalDialog bind:dialog={modal.editDialog.value} onconfirm={modal.save} oncancel={modal.cancel}>
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2">Edit Intake</span>
-		<span class="flex items-center gap-2">
-			{#if modal.currentEntry}
-				<span class="text-xs opacity-70">
-					{convertDateStrToDisplayDateStr((modal.currentEntry as Intake).added)}
-				</span>
-			{/if}
-			<button class="btn btn-xs btn-error">
-				<Trash size="1rem" onclick={modal.requestDelete} />
-			</button>
-		</span>
-	{/snippet}
-
-	{#snippet content()}
-		{#if modal.currentEntry}
-			<IntakeMask entry={modal.currentEntry as Intake} isEditing={modal.isEditing} />
-		{/if}
-	{/snippet}
-
-	{#snippet footer()}
-		{#if modal.enableDelete}
-			<button class="btn btn-error" onclick={modal.deleteEntry}>Delete</button>
-		{:else}
-			<button class="btn btn-primary" onclick={modal.save}>Save</button>
-		{/if}
-		<button class="btn" onclick={modal.cancel}>Cancel</button>
-	{/snippet}
-</ModalDialog>
+<IntakeModal
+	bind:dialog={modal.editDialog.value}
+	bind:entry={modal.currentEntry}
+	mode="edit"
+	enableDelete={modal.enableDelete}
+	errorMessage={modal.errorMessage}
+	onsave={modal.save}
+	oncancel={modal.cancel}
+	onrequestdelete={modal.requestDelete}
+	oncanceldelete={modal.cancelDelete}
+	ondelete={modal.deleteEntry}
+/>
 
 <!-- Weight modal -->
-<ModalDialog
+<WeightModal
 	bind:dialog={modalWeight.createDialog.value}
-	onconfirm={modalWeight.save}
+	bind:entry={modalWeight.currentEntry}
+	errorMessage={modalWeight.errorMessage}
+	onsave={modalWeight.save}
 	oncancel={modalWeight.cancel}
->
-	{#snippet title()}
-		<span class="modal-header border-l-4 border-accent pl-2"> Set Weight </span>
-		<span class="text-xs opacity-70">
-			{getDateAsStr(new Date(), display_date_format)}
-		</span>
-	{/snippet}
-	{#snippet content()}
-		<fieldset class="fieldset rounded-box">
-			{#if modalWeight.errorMessage}
-				<div class="alert alert-error mb-4">
-					<span>{modalWeight.errorMessage}</span>
-				</div>
-			{/if}
-			{#if modalWeight.currentEntry}
-				<NumberStepper
-					bind:value={modalWeight.currentEntry.amount}
-					label="Current Weight"
-					unit="kg"
-					min={30}
-					max={330}
-					incrementSteps={[0.5, 1, 2, 5]}
-					decrementSteps={[0.5, 1, 2, 5]}
-					initialIncrementStep={1}
-					initialDecrementStep={1}
-					showLeftWheel={false}
-				/>
-			{/if}
-		</fieldset>
-	{/snippet}
-</ModalDialog>
+/>
 
 <style>
 	.journey-bar-track {

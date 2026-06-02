@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::weight::{
     NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker,
 };
@@ -242,7 +243,8 @@ fn test_find_last_weight_target_empty() {
 // ============================================================================
 
 #[test]
-fn test_create_weight_tracker_entry() {
+fn create_weight_tracker_entry_with_valid_date() {
+    scenario!("[WT-010]", "[VAL-001]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -320,7 +322,8 @@ fn test_delete_weight_tracker_entry() {
 }
 
 #[test]
-fn test_find_weight_tracker_by_date() {
+fn find_weight_tracker_by_date() {
+    scenario!("[HI-012]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -345,7 +348,8 @@ fn test_find_weight_tracker_by_date() {
 }
 
 #[test]
-fn test_find_weight_tracker_by_date_no_results() {
+fn find_weight_tracker_by_date_no_results() {
+    scenario!("[HI-013]");
     let pool = setup_test_pool();
     let mut conn = pool.get().unwrap();
 
@@ -463,7 +467,8 @@ fn test_weight_precision() {
 // ============================================================================
 
 #[test]
-fn test_weight_tracker_validation_amount_too_low() {
+fn weight_below_backend_lower_bound_rejected_validator() {
+    scenario!("[WT-007]", "[VAL-007]");
     use validator::Validate;
 
     // Invalid: below minimum of 30.0
@@ -474,7 +479,8 @@ fn test_weight_tracker_validation_amount_too_low() {
 }
 
 #[test]
-fn test_weight_tracker_validation_amount_too_high() {
+fn weight_above_upper_bound_rejected_validator() {
+    scenario!("[WT-008]");
     use validator::Validate;
 
     // Invalid: above maximum of 330.0

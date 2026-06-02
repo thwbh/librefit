@@ -99,7 +99,7 @@ describe('AvatarPickerContent', () => {
 	});
 
 	describe('Randomization', () => {
-		it('should generate random seed that is not in defaults', () => {
+		it('[PF-006] should generate random seed that is not in defaults', () => {
 			const onSelectMock = vi.fn();
 
 			render(AvatarPickerContent, {
@@ -139,7 +139,7 @@ describe('AvatarPickerContent', () => {
 			expect(avatars.length).toBeGreaterThan(0);
 		});
 
-		it('should display all preset avatars', () => {
+		it('[PF-005] should display all preset avatars (8 options)', () => {
 			const { container } = render(AvatarPickerContent, {
 				props: {
 					userName: 'TestUser'

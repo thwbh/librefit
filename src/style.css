@@ -42,22 +42,34 @@
 	--noise: 1;
 }
 
-/* Safe area insets for devices with notches / rounded corners */
-html {
-	background-color: oklch(
-		98% 0.001 106.423
-	); /* --color-base-100, neutral fill behind system bars */
-}
-
+/* Safe area insets for edge-to-edge display.
+ *
+ * On Android, --safe-area-* CSS custom properties are injected from
+ * MainActivity.kt (reliable on all WebView versions). env(safe-area-inset-*)
+ * is the fallback for desktop and iOS where the native injection doesn't run. */
 body {
-	padding-left: env(safe-area-inset-left);
-	padding-right: env(safe-area-inset-right);
-	overscroll-behavior: none; /* prevent WebView overscroll bounce */
+	padding-left: var(--safe-area-left, env(safe-area-inset-left));
+	padding-right: var(--safe-area-right, env(safe-area-inset-right));
+	overscroll-behavior: none;
 }
 
 /* Page headers that extend behind the status bar */
 .safe-top {
-	padding-top: calc(env(safe-area-inset-top) + 2rem); /* safe-area + original pt-8 */
+	padding-top: calc(var(--safe-area-top, env(safe-area-inset-top)) + 2rem);
 }
 
-/* Bottom dock safe area handled by AppShell */
+/* Bottom safe area for pages outside AppShell (e.g. setup wizard) */
+.safe-bottom {
+	padding-bottom: calc(var(--safe-area-bottom, env(safe-area-inset-bottom)) + 0.5rem);
+}
+
+/* Override veilchen AppShell's scoped env() with the reliable CSS var */
+.app-shell-bottom-nav {
+	padding-bottom: var(--safe-area-bottom, env(safe-area-inset-bottom)) !important;
+}
+
+/* DaisyUI modal-bottom sits at the viewport edge — add safe area padding.
+ * .modal-box has padding: 1.5rem by default; we preserve it and add the inset. */
+.modal-bottom .modal-box {
+	padding-bottom: calc(var(--safe-area-bottom, env(safe-area-inset-bottom)) + 1.5rem);
+}

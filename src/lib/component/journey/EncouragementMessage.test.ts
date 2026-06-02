@@ -21,7 +21,7 @@ describe('EncouragementMessage Component', () => {
 		expect(container.querySelector('.text-sm')).toBeDefined();
 	});
 
-	it('should show goal reached message', () => {
+	it('[PR-003] should show goal reached message', () => {
 		const { container } = render(EncouragementMessage, {
 			props: { ...defaultProps, goalReached: true }
 		});
@@ -29,7 +29,7 @@ describe('EncouragementMessage Component', () => {
 		expect(container.textContent).toContain('You did it!');
 	});
 
-	it('should show near-end message when close to finish', () => {
+	it('[PR-006] should show near-end message when close to finish', () => {
 		const { container } = render(EncouragementMessage, {
 			props: { ...defaultProps, daysLeft: 10, daysElapsed: 100, averageIntake: 1500 }
 		});
@@ -37,7 +37,7 @@ describe('EncouragementMessage Component', () => {
 		expect(container.textContent).toContain('finish line');
 	});
 
-	it('should show early start message for new journeys', () => {
+	it('[PR-004] should show early start message for new journeys (early days)', () => {
 		const { container } = render(EncouragementMessage, {
 			props: { ...defaultProps, daysElapsed: 1, daysLeft: 120 }
 		});
@@ -61,7 +61,7 @@ describe('EncouragementMessage Component', () => {
 		expect(container.textContent).toContain('within your daily target');
 	});
 
-	it('should show above-target message when averaging over', () => {
+	it('[PR-005] should show above-target message when averaging over', () => {
 		const { container } = render(EncouragementMessage, {
 			props: { ...defaultProps, averageIntake: 2100, targetCalories: 1800 }
 		});

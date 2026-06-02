@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::weight::{
     create_weight_target, create_weight_tracker_entry, delete_weight_tracker_entry,
     get_last_weight_target, get_last_weight_tracker, get_weight_tracker_for_date_range,
@@ -161,7 +162,8 @@ fn test_create_weight_target_validation_end_before_start() {
 // ============================================================================
 
 #[test]
-fn test_create_weight_tracker_entry_success() {
+fn create_new_weight_entry() {
+    scenario!("[WT-003]", "[WT-010]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -177,7 +179,12 @@ fn test_create_weight_tracker_entry_success() {
 }
 
 #[test]
-fn test_create_weight_tracker_entry_validation_weight_too_low() {
+fn weight_below_backend_lower_bound_rejected() {
+    // [VAL-008]: a value that reaches the backend out of range is rejected
+    // regardless of any frontend gating. VAL-014 (schema-driven UI validation)
+    // only gatekeeps structured, to-be-persisted entries; partial/custom
+    // payloads still reach this authoritative check.
+    scenario!("[WT-007]", "[VAL-008]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -191,7 +198,8 @@ fn test_create_weight_tracker_entry_validation_weight_too_low() {
 }
 
 #[test]
-fn test_create_weight_tracker_entry_validation_weight_too_high() {
+fn weight_above_upper_bound_rejected() {
+    scenario!("[WT-008]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -205,7 +213,8 @@ fn test_create_weight_tracker_entry_validation_weight_too_high() {
 }
 
 #[test]
-fn test_update_weight_tracker_entry_success() {
+fn edit_existing_weight_entry() {
+    scenario!("[WT-004]");
     let pool = setup_test_pool();
     let app = tauri::test::mock_app();
     app.manage(pool);
@@ -521,4 +530,74 @@ fn test_get_last_weight_tracker_different_dates_same_day() {
     // Should return the last one by ID, even if same date
     assert_eq!(last_entry.id, created_entry2.id);
     assert_eq!(last_entry.amount, 75.2);
+}
+
+#[test]
+fn weight_at_lower_bound_accepted() {
+    scenario!("[WT-005]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026-01-15".to_string(), 30.0);
+
+    let result = create_weight_tracker_entry(app.state(), new_entry);
+
+    assert!(
+        result.is_ok(),
+        "weight=30.0 should be accepted: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap().amount, 30.0);
+}
+
+#[test]
+fn weight_at_upper_bound_accepted() {
+    scenario!("[WT-006]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026-01-15".to_string(), 330.0);
+
+    let result = create_weight_tracker_entry(app.state(), new_entry);
+
+    assert!(
+        result.is_ok(),
+        "weight=330.0 should be accepted: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap().amount, 330.0);
+}
+
+#[test]
+fn invalid_date_format_rejected() {
+    scenario!("[WT-011]", "[VAL-002]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026/01/15".to_string(), 75.5);
+
+    let result = create_weight_tracker_entry(app.state(), new_entry);
+
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Validation failed"));
+}
+
+#[test]
+fn time_defaults_when_unset() {
+    scenario!("[WT-012]", "[VAL-004]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let new_entry = NewWeightTracker::new("2026-01-15".to_string(), 75.5);
+
+    let entry = create_weight_tracker_entry(app.state(), new_entry).unwrap();
+
+    // Time should be set (defaulted), 8 chars in HH:MM:SS form.
+    assert_eq!(entry.time.len(), 8);
+    assert_eq!(entry.time.chars().nth(2), Some(':'));
+    assert_eq!(entry.time.chars().nth(5), Some(':'));
 }

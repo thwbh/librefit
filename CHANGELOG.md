@@ -5,6 +5,41 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
+## [Unreleased]
+
+## [26.23.0] - 2026-06-02
+
+### Added
+
+- Complete workout tracking system with weight-lifting support
+- Live workout overlay with real-time stats and exercise management
+- Exercise library with categorized exercises and muscle targeting
+- Workout session management (start, pause, resume, end, discard)
+- Set logging with reps and weight tracking
+- Per-exercise set recap on completion summary
+- Worked-muscle body map visualization on workout completion
+- Adaptive dashboard that morphs to show active workout
+- Searchable exercise picker with muscle group filtering
+- Slide-to-confirm gesture for workout actions
+- Rest timer with configurable durations
+
+### Changed
+
+- Dashboard layout now adapts to show active workout session
+- Upgraded Svelte to version 5.50
+- Upgraded Rust dependencies (Diesel, Validator, etc.)
+- Upgraded JavaScript dependencies (SvelteKit, Vitest, etc.)
+- Adopted svelte-body-highlighter muscle slugs as shared vocabulary
+- Improved test coverage for workout tracking functionality
+
+### Fixed
+
+- Start Set button now always opens exercise picker (no longer reuses last exercise)
+- Exercise picker properly handles search and filtering
+- Workout completion screen shows correct muscle mapping
+- Dashboard morphing animation works smoothly
+- Fixed WebView Android insets that moved the FAB over the navigation bar
+
 ## [26.07.3] - 2026-02-16
 
 ### Fixed
@@ -91,6 +126,9 @@ and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO fo
 - CalVer versioning (YY.WW.MICRO)
 - F-Droid compatible build process
 - Reproducible builds support
+
+[Unreleased]: https://github.com/thwbh/librefit/compare/26.23.0...HEAD
+[26.23.0]: https://github.com/thwbh/librefit/releases/tag/26.23.0
 
 [26.07.3] https://github.com/thwbh/librefit/releases/tag/26.07.3
 [26.07.2]: https://github.com/thwbh/librefit/releases/tag/26.07.2

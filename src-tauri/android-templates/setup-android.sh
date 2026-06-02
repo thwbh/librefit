@@ -97,16 +97,7 @@ else
     echo "   ⚠️  themes.xml template not found"
 fi
 
-# 7. Apply custom colors.xml (app color definitions)
-if [ -f "$SCRIPT_DIR/colors.xml" ]; then
-    echo "🎨 Applying custom colors.xml..."
-    cp "$SCRIPT_DIR/colors.xml" "$ANDROID_DIR/app/src/main/res/values/colors.xml"
-    echo "   ✅ colors.xml applied (includes primary color)"
-else
-    echo "   ⚠️  colors.xml template not found"
-fi
-
-# 8. Force correct NDK path and version in local.properties and build.gradle.kts
+# 7. Force correct NDK path and version in local.properties and build.gradle.kts
 if [ -n "$NDK_PATH" ]; then
     echo "🔧 Setting NDK path in local.properties..."
 

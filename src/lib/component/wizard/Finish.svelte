@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getWizardContext } from '$lib/context';
-	import CaloriePlanCard from '$lib/component/journey/CaloriePlanCard.svelte';
+	import IntakePlanCard from '$lib/component/journey/IntakePlanCard.svelte';
 	import TimelineCard from '$lib/component/journey/TimelineCard.svelte';
 	import UserProfileCard from '$lib/component/journey/UserProfileCard.svelte';
 	import WeightGoalsCard from '$lib/component/journey/WeightGoalsCard.svelte';
@@ -27,7 +27,7 @@
 		targetWeight={weightTarget!.targetWeight}
 	/>
 
-	<CaloriePlanCard
+	<IntakePlanCard
 		{recommendation}
 		dailyRate={chosenRate}
 		targetCalories={intakeTarget!.targetCalories}

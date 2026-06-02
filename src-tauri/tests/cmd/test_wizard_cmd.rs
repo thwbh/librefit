@@ -2,16 +2,24 @@ use std::collections::HashMap;
 
 use chrono::{Days, NaiveDate};
 
+use librefit_lib::scenario;
+use librefit_lib::service::intake::{IntakeTarget, NewIntakeTarget};
+use librefit_lib::service::weight::{
+    NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker,
+};
 use librefit_lib::service::wizard::{
     wizard_calculate_for_target_date, wizard_calculate_for_target_weight, wizard_calculate_tdee,
-    BmiCategory, CalculationGoal, CalculationSex, WizardInput, WizardResult, WizardTargetDateInput,
-    WizardTargetWeightInput,
+    wizard_create_targets, BmiCategory, CalculationGoal, CalculationSex, Wizard, WizardInput,
+    WizardResult, WizardTargetDateInput, WizardTargetWeightInput,
 };
+use tauri::Manager;
 use validator::Validate;
 
-/// Test integrity of the default calculation function.
+use crate::helpers::setup_test_pool;
+
 #[test]
-fn calculate_weight_loss_for_men() {
+fn weight_loss_calculation_for_men() {
+    scenario!("[OB-009]", "[OB-013]");
     let input: WizardInput = WizardInput {
         age: 30,
         weight: 90.0,
@@ -42,9 +50,9 @@ fn calculate_weight_loss_for_men() {
     assert_eq!(239, result.duration_days);
 }
 
-/// Test integrity of the default calculation function.
 #[test]
-fn calculate_weight_gain_for_women() {
+fn weight_gain_for_women_in_hold_range() {
+    scenario!("[OB-014]");
     let input = WizardInput {
         age: 25,
         weight: 52.0,
@@ -76,9 +84,9 @@ fn calculate_weight_gain_for_women() {
     assert_eq!(147, result.duration_days);
 }
 
-/// Verify expected result: Current BMI is classified as 'underweight'.
 #[test]
-fn calculate_underweight_classification_for_men() {
+fn underweight_classification_for_men() {
+    scenario!("[OB-011]");
     let input_underweight = WizardInput {
         age: 25,
         weight: 59.7,
@@ -95,9 +103,9 @@ fn calculate_underweight_classification_for_men() {
     assert_eq!(result_underweight.bmi_category, BmiCategory::Underweight);
 }
 
-/// Verify expected result: Current BMI is classified as 'obese'.
 #[test]
-fn calculate_obese_classification_for_men() {
+fn obese_classification_for_men() {
+    scenario!("[OB-009]");
     let input_obese = WizardInput {
         age: 25,
         weight: 125.0,
@@ -114,9 +122,9 @@ fn calculate_obese_classification_for_men() {
     assert_eq!(result_obese.bmi, 38.6);
 }
 
-/// Verify expected result: Current BMI is classified as 'severely obese'.
 #[test]
-fn calulcate_severely_obese_classification_for_men() {
+fn severely_obese_classification_for_men() {
+    scenario!("[OB-009]");
     let input_severely_obese = WizardInput {
         age: 45,
         weight: 150.0,
@@ -136,9 +144,9 @@ fn calulcate_severely_obese_classification_for_men() {
     assert_eq!(result_severely_obese.bmi, 46.3);
 }
 
-/// Verify expected result: Current BMI is classified as 'obese'.
 #[test]
-fn calculate_obese_classification_for_women() {
+fn obese_classification_for_women() {
+    scenario!("[OB-009]");
     let input_obese = WizardInput {
         age: 30,
         weight: 80.0,
@@ -155,9 +163,9 @@ fn calculate_obese_classification_for_women() {
     assert_eq!(result_obese.bmi, 31.2);
 }
 
-/// Verify expected result: Current BMI is classified as 'underweight'.
 #[test]
-fn calculate_underweight_classification_for_women() {
+fn underweight_classification_for_women() {
+    scenario!("[OB-011]");
     let input_underweight = WizardInput {
         age: 18,
         weight: 40.0,
@@ -174,9 +182,9 @@ fn calculate_underweight_classification_for_women() {
     assert_eq!(result_underweight.bmi, 17.8);
 }
 
-/// Verify expected result: Current BMI is classified as 'severely obese'.
 #[test]
-fn calulcate_severely_obese_classification_for_women() {
+fn severely_obese_classification_for_women() {
+    scenario!("[OB-009]");
     let input_severely_obese = WizardInput {
         age: 45,
         weight: 120.0,
@@ -472,9 +480,9 @@ fn return_severely_obese_classification() {
     assert_eq!(result.message, "wizard.classification.severely_obese");
 }
 
-/// Verify that input leads to warning for already 'underweight' classified BMI values.
 #[test]
 fn return_underweight_warning() {
+    scenario!("[OB-012]");
     let underweight_target_weight_input = WizardTargetWeightInput {
         age: 30,
         sex: CalculationSex::MALE,
@@ -720,4 +728,95 @@ fn calculate_target_weights_for_specific_weight_gain_goal() {
             *wizard_result.bmi_by_rate.get(&rate).unwrap()
         );
     });
+}
+
+#[test]
+fn wizard_create_targets_persists_all_three_records() {
+    scenario!("[OB-017]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool.clone());
+
+    let input = Wizard {
+        intake_target: NewIntakeTarget {
+            added: "2026-01-01".to_string(),
+            start_date: "2026-01-01".to_string(),
+            end_date: "2026-04-01".to_string(),
+            target_calories: 2000,
+            maximum_calories: 2500,
+        },
+        weight_target: NewWeightTarget {
+            added: "2026-01-01".to_string(),
+            start_date: "2026-01-01".to_string(),
+            end_date: "2026-04-01".to_string(),
+            initial_weight: 75.0,
+            target_weight: 70.0,
+        },
+        weight_tracker: NewWeightTracker::new("2026-01-01".to_string(), 75.0),
+    };
+
+    let result = wizard_create_targets(app.state(), input);
+    assert!(
+        result.is_ok(),
+        "happy-path create should succeed: {:?}",
+        result
+    );
+
+    // All three rows now exist.
+    let mut conn = pool.get().unwrap();
+    assert_eq!(WeightTarget::all(&mut conn).unwrap().len(), 1);
+    assert_eq!(IntakeTarget::all(&mut conn).unwrap().len(), 1);
+    assert_eq!(WeightTracker::all(&mut conn).unwrap().len(), 1);
+}
+
+/// The frontend derives the HOLD/LOSE/GAIN recommendation from
+/// `result.bmi_category`. StandardWeight maps to HOLD.
+#[test]
+fn bmi_in_hold_range_yields_standard_weight() {
+    scenario!("[OB-010]");
+    let input = WizardInput {
+        age: 30,
+        weight: 70.0, // BMI = 70 / 1.75^2 ≈ 22.86 → StandardWeight
+        height: 175.0,
+        sex: CalculationSex::MALE,
+        activity_level: 1.5,
+        weekly_difference: 0,
+        calculation_goal: CalculationGoal::LOSS,
+    };
+
+    let result = wizard_calculate_tdee(input).unwrap();
+
+    assert_eq!(BmiCategory::StandardWeight, result.bmi_category);
+    assert!(
+        result.bmi >= 20.0 && result.bmi <= 25.0,
+        "BMI {} should fall in the HOLD range 20.0..=25.0",
+        result.bmi
+    );
+}
+
+/// Enum-constrained fields reach the backend as JSON strings that Tauri
+/// deserializes into the Rust enum. The allowed set is enforced at that
+/// deserialization boundary — a value in the set decodes successfully.
+#[test]
+fn enum_value_within_allowed_set_accepted() {
+    scenario!("[VAL-009]");
+
+    assert!(matches!(
+        serde_json::from_str::<CalculationSex>("\"MALE\""),
+        Ok(CalculationSex::MALE)
+    ));
+    assert!(matches!(
+        serde_json::from_str::<CalculationGoal>("\"LOSS\""),
+        Ok(CalculationGoal::LOSS)
+    ));
+}
+
+/// A value outside the allowed set is rejected at the same deserialization
+/// boundary, before any handler logic runs.
+#[test]
+fn enum_value_outside_allowed_set_rejected() {
+    scenario!("[VAL-010]");
+
+    assert!(serde_json::from_str::<CalculationSex>("\"ROBOT\"").is_err());
+    assert!(serde_json::from_str::<CalculationGoal>("\"MAINTAIN\"").is_err());
 }

@@ -11,3 +11,4 @@ mod test_tracker_history_cmd;
 mod test_user_cmd;
 mod test_weight_cmd;
 mod test_wizard_cmd;
+mod test_workout_cmd;

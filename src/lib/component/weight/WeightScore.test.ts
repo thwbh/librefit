@@ -63,7 +63,7 @@ describe('WeightScore', () => {
 	};
 
 	describe('Weight Display', () => {
-		it('should display current weight when weightTracker provided', () => {
+		it('[WT-001] should display current weight when weightTracker provided', () => {
 			const { container } = render(WeightScore, {
 				props: {
 					weightTracker: mockWeightTracker,
@@ -75,7 +75,7 @@ describe('WeightScore', () => {
 			expect(container.textContent).toMatch(/82 kg/i);
 		});
 
-		it('should show tap to update when entry is stale', () => {
+		it('[WT-002] [EMP-003] should show tap to update when entry is stale', () => {
 			const staleEntry: WeightTracker = {
 				id: 1,
 				added: '2024-01-20',
@@ -95,7 +95,7 @@ describe('WeightScore', () => {
 	});
 
 	describe('Status Messages', () => {
-		it('should show "Last update: Today" for current day entry', () => {
+		it('[WT-001] should show "Last update: Today" for current day entry', () => {
 			render(WeightScore, {
 				props: {
 					weightTracker: mockWeightTrackerToday,

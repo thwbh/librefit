@@ -1,4 +1,5 @@
 use crate::helpers::setup_test_pool;
+use librefit_lib::scenario;
 use librefit_lib::service::import::{
     import_data_from_string, ImportFormat, ImportProgress, ImportTable,
 };
@@ -33,7 +34,8 @@ fn create_test_channel() -> (Channel<ImportProgress>, Arc<Mutex<Vec<ImportProgre
 // ============================================================================
 
 #[test]
-fn test_import_intake_csv_success() {
+fn import_intake_csv_success() {
+    scenario!("[IM-001]", "[STG-001]", "[STG-002]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -75,7 +77,8 @@ fn test_import_intake_csv_success() {
 }
 
 #[test]
-fn test_import_intake_csv_with_validation_errors() {
+fn import_intake_csv_with_validation_errors() {
+    scenario!("[IM-003]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -116,7 +119,8 @@ fn test_import_intake_csv_with_validation_errors() {
 }
 
 #[test]
-fn test_import_intake_csv_with_parse_errors() {
+fn import_intake_csv_with_parse_errors() {
+    scenario!("[IM-003]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -191,7 +195,8 @@ fn test_import_intake_csv_empty_file() {
 // ============================================================================
 
 #[test]
-fn test_import_weight_tracker_csv_success() {
+fn import_weight_tracker_csv_success() {
+    scenario!("[IM-002]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -274,7 +279,8 @@ fn test_import_weight_tracker_csv_with_validation_errors() {
 // ============================================================================
 
 #[test]
-fn test_import_cancellation() {
+fn import_cancellation() {
+    scenario!("[IM-004]", "[STG-003]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
