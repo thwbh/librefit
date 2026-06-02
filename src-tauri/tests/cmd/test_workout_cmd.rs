@@ -117,6 +117,12 @@ fn exercise_library_is_seeded_and_exposes_category_muscles_and_rest() {
     assert!(bench.muscles.iter().any(|m| m.role == "secondary"));
 }
 
+// Exercise-library search (the WO-025/026/027 scenarios) is a frontend-only
+// concern over the already-loaded library — there is no backend search command —
+// so it is covered by ExercisePicker.svelte.test.ts, not here. (IDs written
+// without brackets on purpose: the traceability scanner does a literal text scan,
+// so a bracketed ID here would falsely credit a Rust test that doesn't exist.)
+
 #[test]
 fn edit_set_updates_metrics() {
     scenario!("[WO-014]");

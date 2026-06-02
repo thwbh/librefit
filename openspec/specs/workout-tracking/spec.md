@@ -104,6 +104,32 @@ The system SHALL provide a seeded library of exercises selectable when logging a
 - **WHEN** an exercise is inspected
 - **THEN** it reports exactly one category, one or more muscles each tagged primary or secondary, and a default rest target
 
+### Requirement: Exercise library search
+
+The system SHALL provide a unified search that filters the exercise library by name, category, and muscle groups using a single search term. Before any term is entered the list is not shown (a prompt invites searching); an empty result is handled distinctly from the initial prompt.
+
+#### Scenario: [WO-025] Unified search filters by name, category, and muscles
+
+- **WHEN** the user enters a search term (e.g., "press") in the exercise search bar
+- **THEN** the exercise list filters to show exercises that match ANY of:
+  - Exercise name contains the search term (case-insensitive)
+  - Exercise category contains the search term
+  - Any primary or secondary muscle group contains the search term
+
+#### Scenario: [WO-026] Search clears to initial prompt state
+
+- **WHEN** the user clears the search bar (backspace to empty or tap clear icon)
+- **THEN** the "Type to search exercises." prompt is displayed
+- **AND** no exercises are listed (empty query state)
+
+#### Scenario: [WO-027] Empty search results state
+
+- **WHEN** a search term matches no exercises
+- **THEN** a text message "No exercises match `{search_term}`" is displayed
+- **AND** the message follows the visual style: small text (text-sm) with reduced opacity (opacity-60)
+- **AND** the message appears in the same container as search results would
+- **AND** no exercises are listed below the message
+
 ### Requirement: Correct logged sets
 
 The system SHALL allow editing a logged set's reps and weight, and deleting a logged set, during or after the session. Edits and deletions SHALL follow `_conv-modals` and `_conv-validation`, and the session's derived metrics SHALL update to reflect the change.
