@@ -7,6 +7,27 @@ and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO fo
 
 ## [Unreleased]
 
+## [26.23.3] - 2026-06-03
+
+### Fixed
+
+- Fixed indefinite dashboard loading loop caused by unguarded shared state mutation
+- Stabilized refresh handler identity to prevent render-phase write↔read loops
+
+## [26.23.2] - 2026-06-02
+
+### Fixed
+
+- Set minify from esbuild to oxc as support was dropped
+- CI stability changes
+
+## [26.23.1] - 2026-06-02
+
+### Fixed
+
+- Resolved tauri cargo/npm dependency mismatch
+- Updated .npmrc configuration
+
 ## [26.23.0] - 2026-06-02
 
 ### Added
