@@ -79,7 +79,7 @@ jobs:
           path: src/lib/api/gen/
           retention-days: 1
       - name: 'Upload Rust coverage to Codecov'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage-rust.lcov
@@ -122,7 +122,7 @@ jobs:
     - name: 'Test'
       run: npm run test:ci
     - name: 'Upload Svelte coverage to Codecov'
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage/coverage-final.json
