@@ -41,7 +41,7 @@ url = "2.5"
 
 # satisfy linker for sqlite3 required by diesel
 [dependencies.libsqlite3-sys]
-version = "0.30.0"
+version = "0.37.0"
 features = [ "bundled" ]
 
 [profile.dev]
