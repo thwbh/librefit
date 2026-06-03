@@ -11,6 +11,7 @@ updates:
   # npm dependencies (JavaScript/TypeScript)
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "deps"
     schedule:
       interval: "daily"
       time: "09:00"
@@ -54,6 +55,7 @@ updates:
   # Rust dependencies (Cargo)
   - package-ecosystem: "cargo"
     directory: "/src-tauri"
+    target-branch: "deps"
     schedule:
       interval: "daily"
       time: "09:30"
@@ -82,6 +84,7 @@ updates:
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "deps"
     schedule:
       interval: "weekly"
       time: "10:00"
