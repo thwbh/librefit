@@ -103,7 +103,7 @@ jobs:
           git push origin "${{ needs.generate-version.outputs.tag }}"
 
       - name: 'Create GitHub Release'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.generate-version.outputs.tag }}
           name: '${{ needs.generate-version.outputs.version }}'
