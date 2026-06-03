@@ -5,13 +5,16 @@
 		type NewIntake,
 		type NewWeightTracker,
 		type TrackerHistory,
-		type WeightTracker
+		type WeightTracker,
+		type WorkoutDetail
 	} from '$lib/api';
 	import { getDateAsStr, parseStringAsDate } from '$lib/date.js';
+	import { dayBoundsUtc } from '$lib/workout/history';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import HistoryDayCard from '$lib/component/history/HistoryDayCard.svelte';
 	import HistoryWeek from '$lib/component/history/HistoryWeek.svelte';
+	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import { fly } from 'svelte/transition';
@@ -20,7 +23,9 @@
 		createIntake,
 		createWeightTrackerEntry,
 		deleteIntake,
+		deleteWorkout,
 		getTrackerHistory,
+		listWorkouts,
 		updateIntake,
 		updateWeightTrackerEntry
 	} from '$lib/api/gen/commands.js';
@@ -60,6 +65,38 @@
 
 		return [...trackerHistory?.weightHistory[selectedDateStr]];
 	});
+
+	// Workouts aren't part of TrackerHistory; fetch the selected day's completed
+	// workouts on demand so the Activity section tracks day navigation ([HI-016]).
+	let dayWorkouts = $state<WorkoutDetail[]>([]);
+	let selectedWorkout = $state<WorkoutDetail | null>(null);
+
+	const todayStr = getDateAsStr(new Date());
+	let isToday = $derived(selectedDateStr === todayStr);
+
+	const loadDayWorkouts = async (dateStr: string) => {
+		const { from, to } = dayBoundsUtc(dateStr);
+		// list_workouts returns most-recent-first; history shows the day's workouts
+		// in chronological order ([HI-018]).
+		dayWorkouts = (await listWorkouts({ from, to })).sort((a, b) =>
+			a.session.startedAt.localeCompare(b.session.startedAt)
+		);
+	};
+
+	$effect(() => {
+		// Re-run whenever the selected day changes.
+		loadDayWorkouts(selectedDateStr);
+	});
+
+	const tapWorkout = (workout: WorkoutDetail) => {
+		selectedWorkout = workout;
+	};
+
+	const removeWorkout = async (workout: WorkoutDetail) => {
+		await deleteWorkout({ sessionId: workout.session.id });
+		selectedWorkout = null;
+		await loadDayWorkouts(selectedDateStr);
+	};
 
 	// Modal composition for CRUD operations
 	const modal = useEntryModal<Intake, NewIntake>({
@@ -263,12 +300,15 @@
 					{intakeTarget}
 					intakeEntries={intakeHistory}
 					weightEntries={weightHistory}
+					workoutEntries={dayWorkouts}
+					{isToday}
 					ondayswipe={handleDaySwipe}
 					oneditintake={edit}
 					ondeleteintake={remove}
 					onaddintake={modal.openCreate}
 					oneditweight={editWeight}
 					oncreateweight={createWeight}
+					ontapworkout={tapWorkout}
 				/>
 			</div>
 		{/key}
@@ -324,3 +364,12 @@
 	onsave={modalWeight.save}
 	oncancel={modalWeight.cancel}
 />
+
+<!-- Workout detail modal ([HI-019]); edit routes to the flat-CRUD editor (§2). -->
+{#if selectedWorkout}
+	<WorkoutHistoryModal
+		detail={selectedWorkout}
+		ondelete={removeWorkout}
+		onclose={() => (selectedWorkout = null)}
+	/>
+{/if}

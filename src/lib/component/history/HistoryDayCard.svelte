@@ -1,36 +1,47 @@
 <script lang="ts">
-	import type { Intake, IntakeTarget, WeightTracker } from '$lib/api';
+	import type { Intake, IntakeTarget, WeightTracker, WorkoutDetail } from '$lib/api';
 	import { getFoodCategoryIcon, getFoodCategoryLongvalue } from '$lib/api/category';
 	import { getCategoriesContext } from '$lib/context';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
+	import WorkoutSummaryCard from '$lib/component/workout/WorkoutSummaryCard.svelte';
 	import { SwipeableListItem } from '@thwbh/veilchen';
 	import { useSwipe } from 'svelte-gestures';
 	import { longpress } from '$lib/gesture/long-press';
-	import { ForkKnife, HandTap, Pencil, Trash } from 'phosphor-svelte';
+	import { Barbell, ForkKnife, HandTap, Pencil, Trash } from 'phosphor-svelte';
 	import NumberFlow from '@number-flow/svelte';
 
 	interface Props {
 		intakeTarget: IntakeTarget;
 		intakeEntries: Intake[];
 		weightEntries: WeightTracker[];
+		/** Completed workouts for the selected day (the "Activity" section). */
+		workoutEntries?: WorkoutDetail[];
+		/** True when the selected day is today — drives the workout button label. */
+		isToday?: boolean;
 		ondayswipe: (event: CustomEvent) => void;
 		oneditintake: (entry: Intake) => void;
 		ondeleteintake: (entry: Intake) => void;
 		onaddintake: () => void;
 		oneditweight: (entry: WeightTracker) => void;
 		oncreateweight: () => void;
+		ontapworkout?: (entry: WorkoutDetail) => void;
+		onaddworkout?: () => void;
 	}
 
 	let {
 		intakeTarget,
 		intakeEntries,
 		weightEntries,
+		workoutEntries = [],
+		isToday = false,
 		ondayswipe,
 		oneditintake,
 		ondeleteintake,
 		onaddintake,
 		oneditweight,
-		oncreateweight
+		oncreateweight,
+		ontapworkout,
+		onaddworkout
 	}: Props = $props();
 
 	const foodCategories = getCategoriesContext();
@@ -111,6 +122,32 @@
 	{/if}
 
 	<button class="btn btn-neutral w-full" onclick={onaddintake}>Add Intake</button>
+
+	<!-- Activity (workouts) — [HI-014], between intake and weight -->
+	<h2 class="text-xs font-bold uppercase opacity-50 px-1">Activity</h2>
+	{#if workoutEntries.length > 0}
+		<div class="flex flex-col gap-2">
+			{#each workoutEntries as workout (workout.session.id)}
+				<WorkoutSummaryCard detail={workout} ontap={ontapworkout} />
+			{/each}
+		</div>
+	{:else}
+		<div
+			class="rounded-box border-2 border-dashed border-base-300 p-8 flex flex-col items-center gap-3"
+		>
+			<Barbell size="2.5rem" class="opacity-20" />
+			<div class="text-center">
+				<p class="font-medium opacity-40">No workouts logged</p>
+				<p class="text-xs opacity-30 mt-1">
+					{isToday ? 'Start a session below' : 'Tap below to add one'}
+				</p>
+			</div>
+		</div>
+	{/if}
+
+	<button class="btn btn-neutral w-full" onclick={onaddworkout}>
+		{isToday ? 'Start Workout' : 'Add Workout'}
+	</button>
 
 	<!-- Weight (display creation option conditionally) -->
 	<div class="bg-base-100 rounded-box shadow overflow-hidden">

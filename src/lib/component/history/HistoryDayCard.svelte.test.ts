@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import type { Intake, IntakeTarget, WeightTracker } from '$lib/api';
+import type { Intake, IntakeTarget, WeightTracker, WorkoutDetail } from '$lib/api';
 import HistoryDayCard from './HistoryDayCard.svelte';
 import TestWrapper from '../../../../tests/utils/TestWrapper.svelte';
 
@@ -43,6 +43,28 @@ function makeWeight(overrides: Partial<WeightTracker> = {}): WeightTracker {
 		amount: 70.5,
 		...overrides
 	} as WeightTracker;
+}
+
+function makeWorkout(id: number, name: string): WorkoutDetail {
+	return {
+		session: {
+			id,
+			workoutType: 'wl',
+			name,
+			startedAt: '2026-05-20T10:00:00.000Z',
+			endedAt: '2026-05-20T10:30:00.000Z'
+		},
+		exercises: [
+			{
+				id,
+				exerciseId: 1,
+				name: 'Bench Press',
+				defaultRestSeconds: 90,
+				sets: [{ id, loggedAt: '2026-05-20T10:05:00.000Z', metrics: { reps: 10, weightKg: 80 } }]
+			}
+		],
+		pauses: []
+	} as WorkoutDetail;
 }
 
 function renderCard(props: Record<string, unknown>) {
@@ -170,5 +192,41 @@ describe('HistoryDayCard', () => {
 		const { container } = renderCard(baseProps({ intakeEntries: [] }));
 
 		expect(container.textContent).toContain('No meals logged');
+	});
+
+	it('[HI-014] renders an "Activity" section header', () => {
+		renderCard(baseProps());
+		expect(screen.getByRole('heading', { name: 'Activity' })).toBeInTheDocument();
+	});
+
+	it('[HI-015] empty activity section shows "No workouts logged"', () => {
+		const { container } = renderCard(baseProps({ workoutEntries: [] }));
+		expect(container.textContent).toContain('No workouts logged');
+	});
+
+	it('[HI-018] renders one summary card per workout, hiding the empty state', () => {
+		renderCard(
+			baseProps({ workoutEntries: [makeWorkout(1, 'Push Day'), makeWorkout(2, 'Pull Day')] })
+		);
+		expect(screen.getByText('Push Day')).toBeInTheDocument();
+		expect(screen.getByText('Pull Day')).toBeInTheDocument();
+		expect(screen.queryByText('No workouts logged')).toBeNull();
+	});
+
+	it('[HI-019] tapping a workout card fires ontapworkout', async () => {
+		const user = userEvent.setup();
+		const ontapworkout = vi.fn();
+		renderCard(baseProps({ workoutEntries: [makeWorkout(1, 'Push Day')], ontapworkout }));
+		await user.click(screen.getByText('Push Day'));
+		expect(ontapworkout).toHaveBeenCalledTimes(1);
+	});
+
+	it('[HI-023] workout button label is contextual: "Add Workout" past, "Start Workout" today', () => {
+		const past = renderCard(baseProps({ isToday: false }));
+		expect(past.getByRole('button', { name: 'Add Workout' })).toBeInTheDocument();
+		past.unmount();
+
+		const today = renderCard(baseProps({ isToday: true }));
+		expect(today.getByRole('button', { name: 'Start Workout' })).toBeInTheDocument();
 	});
 });

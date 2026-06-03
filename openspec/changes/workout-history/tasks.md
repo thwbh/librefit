@@ -1,11 +1,11 @@
 ## 1. Backend: workout history commands
 
-- [ ] 1.1 Add `list_workouts` (completed sessions with detail) for a date / date range
-- [ ] 1.2 Add `delete_workout` for a completed session
-- [ ] 1.3 Support editing a completed (non-active) session's sets/metrics (reuse `log_workout_set` / `update_workout_set` / `delete_workout_set` or add a thin command)
-- [ ] 1.4 Add `create_workout_for_date` for adding a past workout (completed session stamped to a past date, no active state)
-- [ ] 1.5 Register new commands in `lib.rs`; regenerate `$lib/api` bindings
-- [ ] 1.6 Write Rust integration tests for the new commands (list/edit/delete/add-past), citing the scenarios they back
+- [x] 1.1 Add `list_workouts` (completed sessions with detail) for a date / date range
+- [x] 1.2 Add `delete_workout` for a completed session
+- [x] 1.3 Support editing a completed (non-active) session's sets/metrics (reuse `log_workout_set` / `update_workout_set` / `delete_workout_set` or add a thin command)
+- [x] 1.4 Add `create_workout_for_date` for adding a past workout (completed session stamped to a past date, no active state)
+- [x] 1.5 Register new commands in `lib.rs`; regenerate `$lib/api` bindings
+- [x] 1.6 Write Rust integration tests for the new commands (list/edit/delete/add-past), citing the scenarios they back
 
 ## 2. Workout modal: flat-CRUD mode
 
@@ -16,13 +16,13 @@
 
 ## 3. History page integration
 
-- [ ] 3.1 Create `WorkoutSummaryCard` (start time, active work time, total volume)
-- [ ] 3.2 Add the "Activity" section to the day detail, between intake and weight, with empty state [HI-014][HI-015]
-- [ ] 3.3 Fetch and render the selected day's workouts; update on day navigation [HI-016]
-- [ ] 3.4 Render single and multiple cards chronologically [HI-017][HI-018]
-- [ ] 3.5 Tap card → detail modal; wire edit (flat CRUD) and delete [HI-019][HI-020][HI-021]
-- [ ] 3.6 Add-on-past-date with contextual button label [HI-022][HI-023]
-- [ ] 3.7 Write Vitest tests for [HI-014]–[HI-023]
+- [x] 3.1 Create `WorkoutSummaryCard` (start time, active work time, total volume)
+- [x] 3.2 Add the "Activity" section to the day detail, between intake and weight, with empty state [HI-014][HI-015]
+- [x] 3.3 Fetch and render the selected day's workouts; update on day navigation [HI-016]
+- [x] 3.4 Render single and multiple cards chronologically [HI-017][HI-018]
+- [~] 3.5 Tap card → detail modal; wire edit (flat CRUD) and delete [HI-019][HI-020][HI-021] — view + delete done ([HI-019]/[HI-021]); edit ([HI-020]) needs §2
+- [~] 3.6 Add-on-past-date with contextual button label [HI-022][HI-023] — label done ([HI-023]); add flow ([HI-022]) needs §2
+- [~] 3.7 Write Vitest tests for [HI-014]–[HI-023] — done for HI-014/015/016/017/018/019/023; HI-020/022 land with §2
 
 ## 4. Dashboard integration
 
