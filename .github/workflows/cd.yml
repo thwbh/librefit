@@ -64,7 +64,7 @@ jobs:
           cat src-tauri/tauri.conf.json | grep version
 
       - name: 'Upload updated files'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: version-files
           path: |
