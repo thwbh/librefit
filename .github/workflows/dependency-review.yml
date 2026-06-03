@@ -54,7 +54,7 @@ jobs:
       - name: 'Comment audit results'
         # Only comment when audit actually reported vulnerabilities.
         if: always() && contains(steps.npm-audit.outputs.audit_output, 'vulnerabilities')
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const auditOutput = process.env.AUDIT_OUTPUT;
