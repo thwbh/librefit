@@ -64,8 +64,8 @@ describe('workout card derivations', () => {
 	});
 });
 
-describe('workedMuscles (card silhouette data)', () => {
-	it('[HI-017] aggregates session muscles, primary winning over secondary', () => {
+describe('workedMuscles (detail/editor muscle-map data)', () => {
+	it('[HI-019] aggregates session muscles, primary winning over secondary', () => {
 		const d = detail({}, [
 			{ id: 1, exerciseId: 1, name: 'Bench Press', defaultRestSeconds: 180, sets: [] },
 			{ id: 2, exerciseId: 2, name: 'Back Squat', defaultRestSeconds: 240, sets: [] }
@@ -106,7 +106,7 @@ describe('workedMuscles (card silhouette data)', () => {
 		expect(bySlug.quadriceps).toBe(true);
 	});
 
-	it('[HI-017] unknown exercises contribute nothing', () => {
+	it('[HI-019] unknown exercises contribute nothing', () => {
 		const d = detail({}, [
 			{ id: 9, exerciseId: 99, name: 'Mystery', defaultRestSeconds: 60, sets: [] }
 		] as never);

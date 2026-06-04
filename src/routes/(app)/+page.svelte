@@ -8,16 +8,21 @@
 		createIntake,
 		createWeightTrackerEntry,
 		getBodyData,
+		getExerciseLibrary,
 		deleteIntake,
+		deleteWorkout,
+		listWorkouts,
 		updateIntake,
 		updateWeightTrackerEntry,
 		type Dashboard,
+		type ExerciseDetail,
 		type Intake,
 		type IntakeTarget,
 		type NewIntake,
 		type NewWeightTracker,
 		type WeightTarget,
-		type WeightTracker
+		type WeightTracker,
+		type WorkoutDetail
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
@@ -41,6 +46,11 @@
 	import DashboardLayout from '$lib/component/dashboard/DashboardLayout.svelte';
 	import WorkoutOverlay from '$lib/component/workout/WorkoutOverlay.svelte';
 	import WorkoutSummary from '$lib/component/workout/WorkoutSummary.svelte';
+	import DashboardWorkoutSurface from '$lib/component/dashboard/DashboardWorkoutSurface.svelte';
+	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
+	import WorkoutDeleteDialog from '$lib/component/workout/WorkoutDeleteDialog.svelte';
+	import WorkoutEditModal from '$lib/component/workout/WorkoutEditModal.svelte';
+	import { dayBoundsUtc, workedMuscles, type WorkedMuscle } from '$lib/workout/history';
 	import { workoutStore } from '$lib/workout/workout-state.svelte';
 	import { onMount } from 'svelte';
 
@@ -142,6 +152,71 @@
 		overlayOpen = true;
 	}
 
+	// Today's completed workouts in the idle workout surface (DH-011..018). Cards
+	// replace the Start Workout module when any exist; while a session is active the
+	// active morph takes priority and these are hidden (DH-016, owned by the layout).
+	let todayWorkouts = $state<WorkoutDetail[]>([]);
+	let workoutsLoading = $state(true);
+	let workoutsError = $state<string | null>(null);
+	let selectedWorkout = $state<WorkoutDetail | null>(null);
+	let workoutEditor = $state<WorkoutDetail | null>(null);
+	let exerciseLibrary = $state<ExerciseDetail[]>([]);
+
+	const libraryById = $derived(new Map(exerciseLibrary.map((e) => [e.id, e])));
+	const workoutMuscles = $derived(
+		new Map<number, WorkedMuscle[]>(
+			todayWorkouts.map((w) => [w.session.id, workedMuscles(w, libraryById)])
+		)
+	);
+	// Render the cards surface while loading, on error, or when workouts exist; only
+	// fall back to the Start Workout module once we know today has none (DH-012/017).
+	const showWorkoutCards = $derived(
+		workoutsLoading || workoutsError !== null || todayWorkouts.length > 0
+	);
+
+	async function loadTodayWorkouts() {
+		workoutsLoading = true;
+		workoutsError = null;
+		try {
+			const { from, to } = dayBoundsUtc(getDateAsStr(new Date()));
+			// Most recent first (DH-002).
+			todayWorkouts = (await listWorkouts({ from, to })).sort((a, b) =>
+				b.session.startedAt.localeCompare(a.session.startedAt)
+			);
+		} catch (e) {
+			workoutsError = String(e);
+		} finally {
+			workoutsLoading = false;
+		}
+	}
+
+	const tapWorkout = (workout: WorkoutDetail) => (selectedWorkout = workout);
+
+	// Delete via swipe-right → confirmation dialog (GES-004 / MOD-002).
+	let workoutToDelete = $state<WorkoutDetail | null>(null);
+	const requestDeleteWorkout = (workout: WorkoutDetail) => (workoutToDelete = workout);
+	const confirmDeleteWorkout = async () => {
+		if (!workoutToDelete) return;
+		await deleteWorkout({ sessionId: workoutToDelete.session.id });
+		workoutToDelete = null;
+		await loadTodayWorkouts();
+	};
+
+	// Edit via swipe-left / long-press ([DH-014]).
+	const editWorkout = (workout: WorkoutDetail) => (workoutEditor = workout);
+
+	const closeEditor = async () => {
+		workoutEditor = null;
+		await loadTodayWorkouts();
+	};
+
+	// Dismissing the post-workout summary returns to idle; refresh so the just-ended
+	// workout appears as a card without a manual reload (DH-015).
+	const dismissSummary = async () => {
+		workoutStore.dismissSummary();
+		await loadTodayWorkouts();
+	};
+
 	const getBlankEntry = (): NewIntake => {
 		const now = new Date();
 		return {
@@ -219,6 +294,11 @@
 		getBodyData()
 			.then((b) => (gender = b.sex?.toUpperCase() === 'FEMALE' ? 'female' : 'male'))
 			.catch(() => {}); // no body data yet → keep the default model
+		// Today's completed workouts + the library for the card silhouettes.
+		loadTodayWorkouts();
+		getExerciseLibrary()
+			.then((l) => (exerciseLibrary = l))
+			.catch(() => {});
 		return () => workoutStore.dispose();
 	});
 </script>
@@ -335,9 +415,21 @@
 			restRemainingMs={workoutStore.restRemainingMs}
 			{calorieValue}
 			{weightValue}
+			{showWorkoutCards}
 			onStart={startWorkout}
 			onOpen={openOverlay}
 		>
+			{#snippet workoutCards()}
+				<DashboardWorkoutSurface
+					workouts={todayWorkouts}
+					loading={workoutsLoading}
+					error={workoutsError}
+					ontap={tapWorkout}
+					onedit={editWorkout}
+					ondelete={requestDeleteWorkout}
+					onretry={loadTodayWorkouts}
+				/>
+			{/snippet}
 			{#snippet calorieCard()}
 				<div class="flex flex-col items-center gap-2 w-full">
 					<IntakeScore {intakeTarget} entries={intakeToday} />
@@ -375,7 +467,37 @@
 		muscles={workoutStore.summaryMuscles}
 		exercises={workoutStore.summaryExercises}
 		{gender}
-		ondismiss={() => workoutStore.dismissSummary()}
+		ondismiss={dismissSummary}
+	/>
+{/if}
+
+<!-- Today's workout detail ([DH-013]); edit routes to the flat-CRUD editor. -->
+{#if selectedWorkout}
+	<WorkoutHistoryModal
+		detail={selectedWorkout}
+		muscles={workoutMuscles.get(selectedWorkout.session.id) ?? []}
+		{gender}
+		onclose={() => (selectedWorkout = null)}
+	/>
+{/if}
+
+<!-- Delete confirmation (GES-004 / MOD-002). -->
+{#if workoutToDelete}
+	<WorkoutDeleteDialog
+		detail={workoutToDelete}
+		onconfirm={confirmDeleteWorkout}
+		oncancel={() => (workoutToDelete = null)}
+	/>
+{/if}
+
+<!-- Edit a completed workout from the dashboard ([DH-014]). -->
+{#if workoutEditor}
+	<WorkoutEditModal
+		mode="edit"
+		detail={workoutEditor}
+		{gender}
+		onsaved={loadTodayWorkouts}
+		onclose={closeEditor}
 	/>
 {/if}
 

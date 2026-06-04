@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Intake, IntakeTarget, WeightTracker, WorkoutDetail } from '$lib/api';
-	import type { WorkedMuscle } from '$lib/workout/history';
 	import { getFoodCategoryIcon, getFoodCategoryLongvalue } from '$lib/api/category';
 	import { getCategoriesContext } from '$lib/context';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
@@ -17,8 +16,6 @@
 		weightEntries: WeightTracker[];
 		/** Completed workouts for the selected day (the "Activity" section). */
 		workoutEntries?: WorkoutDetail[];
-		/** Worked muscles per workout (session id → muscles) for the card silhouette. */
-		workoutMuscles?: Map<number, WorkedMuscle[]>;
 		/** True when the selected day is today — drives the workout button label. */
 		isToday?: boolean;
 		ondayswipe: (event: CustomEvent) => void;
@@ -28,6 +25,8 @@
 		oneditweight: (entry: WeightTracker) => void;
 		oncreateweight: () => void;
 		ontapworkout?: (entry: WorkoutDetail) => void;
+		oneditworkout?: (entry: WorkoutDetail) => void;
+		ondeleteworkout?: (entry: WorkoutDetail) => void;
 		onaddworkout?: () => void;
 	}
 
@@ -36,7 +35,6 @@
 		intakeEntries,
 		weightEntries,
 		workoutEntries = [],
-		workoutMuscles,
 		isToday = false,
 		ondayswipe,
 		oneditintake,
@@ -45,6 +43,8 @@
 		oneditweight,
 		oncreateweight,
 		ontapworkout,
+		oneditworkout,
+		ondeleteworkout,
 		onaddworkout
 	}: Props = $props();
 
@@ -134,8 +134,9 @@
 			{#each workoutEntries as workout (workout.session.id)}
 				<WorkoutSummaryCard
 					detail={workout}
-					muscles={workoutMuscles?.get(workout.session.id) ?? []}
 					ontap={ontapworkout}
+					onedit={oneditworkout}
+					ondelete={ondeleteworkout}
 				/>
 			{/each}
 		</div>

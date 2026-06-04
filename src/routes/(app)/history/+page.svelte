@@ -16,6 +16,7 @@
 	import HistoryDayCard from '$lib/component/history/HistoryDayCard.svelte';
 	import HistoryWeek from '$lib/component/history/HistoryWeek.svelte';
 	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
+	import WorkoutDeleteDialog from '$lib/component/workout/WorkoutDeleteDialog.svelte';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import { fly } from 'svelte/transition';
@@ -25,6 +26,7 @@
 		createWeightTrackerEntry,
 		deleteIntake,
 		deleteWorkout,
+		getBodyData,
 		getExerciseLibrary,
 		getTrackerHistory,
 		listWorkouts,
@@ -82,6 +84,13 @@
 	$effect(() => {
 		if (library.length === 0) getExerciseLibrary().then((l) => (library = l));
 	});
+	// Body model for the muscle silhouettes; resolved from the profile.
+	let gender = $state<'male' | 'female'>('male');
+	$effect(() => {
+		getBodyData()
+			.then((b) => (gender = b.sex?.toUpperCase() === 'FEMALE' ? 'female' : 'male'))
+			.catch(() => {});
+	});
 	let libraryById = $derived(new Map(library.map((e) => [e.id, e])));
 	let workoutMuscles = $derived(
 		new Map<number, WorkedMuscle[]>(
@@ -110,9 +119,16 @@
 		selectedWorkout = workout;
 	};
 
-	const removeWorkout = async (workout: WorkoutDetail) => {
-		await deleteWorkout({ sessionId: workout.session.id });
-		selectedWorkout = null;
+	// Delete via swipe-right → confirmation dialog ([HI-021], `_conv-gestures` GES-004).
+	let workoutToDelete = $state<WorkoutDetail | null>(null);
+	const requestDeleteWorkout = async (workout: WorkoutDetail) => {
+		await vibrate(2);
+		workoutToDelete = workout;
+	};
+	const confirmDeleteWorkout = async () => {
+		if (!workoutToDelete) return;
+		await deleteWorkout({ sessionId: workoutToDelete.session.id });
+		workoutToDelete = null;
 		await loadDayWorkouts(selectedDateStr);
 	};
 
@@ -134,8 +150,9 @@
 		}
 	};
 
-	const editWorkout = (workout: WorkoutDetail) => {
-		selectedWorkout = null;
+	// Edit via swipe-left / long-press ([HI-020]).
+	const editWorkout = async (workout: WorkoutDetail) => {
+		await vibrate(2);
 		editor = { mode: 'edit', detail: workout };
 	};
 
@@ -347,7 +364,6 @@
 					intakeEntries={intakeHistory}
 					weightEntries={weightHistory}
 					workoutEntries={dayWorkouts}
-					{workoutMuscles}
 					{isToday}
 					ondayswipe={handleDaySwipe}
 					oneditintake={edit}
@@ -356,6 +372,8 @@
 					oneditweight={editWeight}
 					oncreateweight={createWeight}
 					ontapworkout={tapWorkout}
+					oneditworkout={editWorkout}
+					ondeleteworkout={requestDeleteWorkout}
 					onaddworkout={addOrStartWorkout}
 				/>
 			</div>
@@ -413,13 +431,22 @@
 	oncancel={modalWeight.cancel}
 />
 
-<!-- Workout detail modal ([HI-019]); edit routes to the flat-CRUD editor. -->
+<!-- Workout detail modal — view only ([HI-019]); edit/delete are card-swipe gestures. -->
 {#if selectedWorkout}
 	<WorkoutHistoryModal
 		detail={selectedWorkout}
-		onedit={editWorkout}
-		ondelete={removeWorkout}
+		muscles={workoutMuscles.get(selectedWorkout.session.id) ?? []}
+		{gender}
 		onclose={() => (selectedWorkout = null)}
+	/>
+{/if}
+
+<!-- Delete confirmation ([HI-021], GES-004 / MOD-002). -->
+{#if workoutToDelete}
+	<WorkoutDeleteDialog
+		detail={workoutToDelete}
+		onconfirm={confirmDeleteWorkout}
+		oncancel={() => (workoutToDelete = null)}
 	/>
 {/if}
 
@@ -429,6 +456,7 @@
 		mode={editor.mode}
 		dateStr={selectedDateStr}
 		detail={editor.detail}
+		{gender}
 		onsaved={() => loadDayWorkouts(selectedDateStr)}
 		onclose={closeEditor}
 	/>

@@ -83,7 +83,7 @@ describe('WorkoutEditModal', () => {
 		);
 	});
 
-	it('[HI-020] edit mode: editing a set calls updateWorkoutSet with the set id', async () => {
+	it('[HI-020] [DH-014] edit mode: editing a set calls updateWorkoutSet with the set id', async () => {
 		const detail = session(5, [
 			exerciseView(10, 1, 'Bench Press', [
 				{ id: 50, loggedAt: '2026-06-01T12:00:00.000Z', metrics: { reps: 10, weightKg: 80 } }

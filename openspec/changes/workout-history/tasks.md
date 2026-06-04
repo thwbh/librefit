@@ -26,12 +26,12 @@
 
 ## 4. Dashboard integration
 
-- [ ] 4.1 Show today's completed workout cards in the idle workout surface; hide Start Workout when present [DH-001][DH-011][DH-012]
-- [ ] 4.2 Reuse card interactions: tap → modal, edit updates in place [DH-013][DH-014]
-- [ ] 4.3 Reflect newly completed/edited workouts without manual refresh (shared store invalidation) [DH-015]
-- [ ] 4.4 Hide completed cards while a session is active (defer to the active-workout morph) [DH-016]
-- [ ] 4.5 Loading and error/retry states [DH-017][DH-018]
-- [ ] 4.6 Write Vitest tests for [DH-011]–[DH-018]
+- [x] 4.1 Show today's completed workout cards in the idle workout surface; hide Start Workout when present [DH-001][DH-011][DH-012]
+- [x] 4.2 Reuse card interactions: tap → modal, edit updates in place [DH-013][DH-014]
+- [x] 4.3 Reflect newly completed/edited workouts without manual refresh (refetch on summary dismiss + after edits) [DH-015]
+- [x] 4.4 Hide completed cards while a session is active (defer to the active-workout morph) [DH-016]
+- [x] 4.5 Loading and error/retry states via `DashboardWorkoutSurface` [DH-017][DH-018]
+- [x] 4.6 Write Vitest tests for [DH-011]–[DH-018]
 
 ## 5. Progress page: Body/Workout segments
 

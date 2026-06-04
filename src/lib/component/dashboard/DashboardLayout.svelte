@@ -22,6 +22,10 @@
 		weightValue: number;
 		calorieCard: Snippet;
 		weightCard: Snippet;
+		/** When true, the idle workout surface renders `workoutCards` instead of the
+		 *  Start Workout module (today's completed workouts exist / are loading). */
+		showWorkoutCards?: boolean;
+		workoutCards?: Snippet;
 		onStart: () => void;
 		onOpen: () => void;
 	}
@@ -38,6 +42,8 @@
 		weightValue,
 		calorieCard,
 		weightCard,
+		showWorkoutCards = false,
+		workoutCards,
 		onStart,
 		onOpen
 	}: Props = $props();
@@ -69,7 +75,12 @@
 	</CollapsibleCard>
 
 	{#if !active}
-		<div transition:fade>
+		<div transition:fade class="flex flex-col gap-3">
+			{#if showWorkoutCards && workoutCards}
+				{@render workoutCards()}
+			{/if}
+			<!-- Start Workout stays available even with completed workouts, so a second
+			     session can be started (DH-011). -->
 			<WorkoutModule {active} onstart={onStart} onopen={onOpen} />
 		</div>
 	{/if}
