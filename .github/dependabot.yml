@@ -39,6 +39,17 @@ updates:
           - "svelte"
           - "vite"
           - "@tauri-apps/*"
+      # Group major framework updates together
+      npm-major-frameworks:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "@sveltejs/*"
+          - "svelte"
+          - "vite"
+          - "@tauri-apps/*"
       # Group security updates into their own PR set
       npm-security:
         applies-to: security-updates
@@ -99,3 +110,9 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      github-actions-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
