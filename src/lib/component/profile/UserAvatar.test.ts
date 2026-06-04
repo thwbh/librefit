@@ -184,7 +184,7 @@ describe('UserAvatar', () => {
 				}
 			});
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 
@@ -214,7 +214,7 @@ describe('UserAvatar', () => {
 
 			const initialAvatar = userData.avatar;
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 
@@ -241,7 +241,7 @@ describe('UserAvatar', () => {
 				}
 			});
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 
@@ -276,7 +276,7 @@ describe('UserAvatar', () => {
 				}
 			});
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 
@@ -300,7 +300,7 @@ describe('UserAvatar', () => {
 				}
 			});
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 
@@ -415,7 +415,7 @@ describe('UserAvatar', () => {
 			// Initially hasOpenedPicker should be false
 			expect(component).toBeTruthy();
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 
@@ -436,7 +436,7 @@ describe('UserAvatar', () => {
 				}
 			});
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 
@@ -446,7 +446,7 @@ describe('UserAvatar', () => {
 				});
 
 				// Modal should show the current avatar
-				const modalAvatars = container.querySelectorAll('dialog img[alt="avatar"]');
+				const modalAvatars = container.querySelectorAll('dialog img[alt^="Avatar"]');
 				expect(modalAvatars.length).toBeGreaterThan(0);
 			}
 		});
@@ -462,7 +462,7 @@ describe('UserAvatar', () => {
 				}
 			});
 
-			const avatar = container.querySelector('img[alt="avatar"]');
+			const avatar = container.querySelector('img[alt^="Avatar"]');
 			if (avatar) {
 				await user.click(avatar);
 

@@ -19,7 +19,7 @@ jobs:
       tag: ${{ steps.version.outputs.TAG }}
       version_code: ${{ steps.version.outputs.VERSION_CODE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch all history for tags
 
@@ -44,7 +44,7 @@ jobs:
     needs: generate-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 'Update package.json'
         run: |
@@ -64,7 +64,7 @@ jobs:
           cat src-tauri/tauri.conf.json | grep version
 
       - name: 'Upload updated files'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: version-files
           path: |
@@ -77,13 +77,13 @@ jobs:
     needs: [generate-version, update-version-files]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: 'Download version files'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: version-files
 
@@ -103,7 +103,7 @@ jobs:
           git push origin "${{ needs.generate-version.outputs.tag }}"
 
       - name: 'Create GitHub Release'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.generate-version.outputs.tag }}
           name: '${{ needs.generate-version.outputs.version }}'
