@@ -10,7 +10,14 @@
 import { addDays, format } from 'date-fns';
 import { parseStringAsDate, display_time_format } from '$lib/date';
 import { computeSetsCompleted, computeTotalVolume, summarize } from '$lib/workout/metrics';
-import type { WorkoutDetail } from '$lib/api';
+import type { ExerciseDetail, WorkoutDetail } from '$lib/api';
+
+/** A muscle worked in a session, with whether any exercise hit it as a primary mover. */
+export interface WorkedMuscle {
+	/** Seeded `muscle.shortvalue`, which is also a svelte-body-highlighter slug. */
+	muscle: string;
+	primary: boolean;
+}
 
 export interface DayBounds {
 	/** Inclusive lower bound (RFC3339 UTC). */
@@ -55,4 +62,25 @@ export function workoutSets(detail: WorkoutDetail): number {
  */
 export function workoutActiveMinutes(detail: WorkoutDetail): number {
 	return Math.floor(summarize(detail, Date.now()).activeWorkTimeMs / 60000);
+}
+
+/**
+ * The muscles a session trained, aggregated from its exercises via the library
+ * (`WorkoutDetail` doesn't carry muscles). A muscle is `primary` if any exercise
+ * in the session targeted it as a primary mover. Mirrors the post-workout
+ * summary's worked-muscle logic so the card and the summary tint the same groups.
+ */
+export function workedMuscles(
+	detail: WorkoutDetail,
+	libraryById: Map<number, ExerciseDetail>
+): WorkedMuscle[] {
+	const agg = new Map<string, boolean>();
+	for (const ex of detail.exercises) {
+		const lib = libraryById.get(ex.exerciseId);
+		if (!lib) continue;
+		for (const m of lib.muscles) {
+			agg.set(m.muscle, (agg.get(m.muscle) ?? false) || m.role === 'primary');
+		}
+	}
+	return [...agg].map(([muscle, primary]) => ({ muscle, primary }));
 }

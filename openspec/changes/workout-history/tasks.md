@@ -9,20 +9,20 @@
 
 ## 2. Workout modal: flat-CRUD mode
 
-- [ ] 2.1 Add a mode parameter to the workout modal: live (timers, pause/resume, slide-to-confirm) vs flat CRUD (no timers/live controls)
-- [ ] 2.2 Flat-CRUD add/edit/delete of exercises and sets against a completed session
-- [ ] 2.3 Wire "Start Workout" → live, "Add Workout" / "Edit Workout" → flat CRUD
-- [ ] 2.4 Write Vitest tests for the two modes
+- [x] 2.1 Flat-CRUD surface as a dedicated `WorkoutEditModal` (live path stays the dashboard overlay) — see design Decision 5
+- [x] 2.2 Flat-CRUD add/edit/delete of exercises and sets against a completed session (composes `ExercisePicker` + `SetMask`; lazy `create_workout_for_date`)
+- [x] 2.3 Wire "Start Workout" → live (`workoutStore.start()` + nav), "Add Workout" / "Edit Workout" → flat CRUD
+- [x] 2.4 Write Vitest tests for the flat-CRUD flows (add + edit + delete)
 
 ## 3. History page integration
 
-- [x] 3.1 Create `WorkoutSummaryCard` (start time, active work time, total volume)
+- [x] 3.1 Create `WorkoutSummaryCard` (start time, active work time, total volume, muscle-silhouette anchor)
 - [x] 3.2 Add the "Activity" section to the day detail, between intake and weight, with empty state [HI-014][HI-015]
 - [x] 3.3 Fetch and render the selected day's workouts; update on day navigation [HI-016]
 - [x] 3.4 Render single and multiple cards chronologically [HI-017][HI-018]
-- [~] 3.5 Tap card → detail modal; wire edit (flat CRUD) and delete [HI-019][HI-020][HI-021] — view + delete done ([HI-019]/[HI-021]); edit ([HI-020]) needs §2
-- [~] 3.6 Add-on-past-date with contextual button label [HI-022][HI-023] — label done ([HI-023]); add flow ([HI-022]) needs §2
-- [~] 3.7 Write Vitest tests for [HI-014]–[HI-023] — done for HI-014/015/016/017/018/019/023; HI-020/022 land with §2
+- [x] 3.5 Tap card → detail modal; wire edit (flat CRUD) and delete [HI-019][HI-020][HI-021]
+- [x] 3.6 Add-on-past-date with contextual button label [HI-022][HI-023]
+- [x] 3.7 Write Vitest tests for [HI-014]–[HI-023]
 
 ## 4. Dashboard integration
 

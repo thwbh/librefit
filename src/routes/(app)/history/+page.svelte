@@ -6,10 +6,11 @@
 		type NewWeightTracker,
 		type TrackerHistory,
 		type WeightTracker,
-		type WorkoutDetail
+		type WorkoutDetail,
+		type ExerciseDetail
 	} from '$lib/api';
 	import { getDateAsStr, parseStringAsDate } from '$lib/date.js';
-	import { dayBoundsUtc } from '$lib/workout/history';
+	import { dayBoundsUtc, workedMuscles, type WorkedMuscle } from '$lib/workout/history';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import HistoryDayCard from '$lib/component/history/HistoryDayCard.svelte';
@@ -24,6 +25,7 @@
 		createWeightTrackerEntry,
 		deleteIntake,
 		deleteWorkout,
+		getExerciseLibrary,
 		getTrackerHistory,
 		listWorkouts,
 		updateIntake,
@@ -31,6 +33,9 @@
 	} from '$lib/api/gen/commands.js';
 	import { debug } from '@tauri-apps/plugin-log';
 	import IntakeModal from '$lib/component/intake/IntakeModal.svelte';
+	import WorkoutEditModal from '$lib/component/workout/WorkoutEditModal.svelte';
+	import { workoutStore } from '$lib/workout/workout-state.svelte';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -71,6 +76,19 @@
 	let dayWorkouts = $state<WorkoutDetail[]>([]);
 	let selectedWorkout = $state<WorkoutDetail | null>(null);
 
+	// The exercise library (loaded once) lets us derive each workout's worked
+	// muscles for the card silhouette ([HI-017]); WorkoutDetail doesn't carry them.
+	let library = $state<ExerciseDetail[]>([]);
+	$effect(() => {
+		if (library.length === 0) getExerciseLibrary().then((l) => (library = l));
+	});
+	let libraryById = $derived(new Map(library.map((e) => [e.id, e])));
+	let workoutMuscles = $derived(
+		new Map<number, WorkedMuscle[]>(
+			dayWorkouts.map((w) => [w.session.id, workedMuscles(w, libraryById)])
+		)
+	);
+
 	const todayStr = getDateAsStr(new Date());
 	let isToday = $derived(selectedDateStr === todayStr);
 
@@ -95,6 +113,34 @@
 	const removeWorkout = async (workout: WorkoutDetail) => {
 		await deleteWorkout({ sessionId: workout.session.id });
 		selectedWorkout = null;
+		await loadDayWorkouts(selectedDateStr);
+	};
+
+	// Flat-CRUD editor: add a past workout / edit a completed one ([HI-020], [HI-022]).
+	let editor = $state<{ mode: 'create' | 'edit'; detail: WorkoutDetail | null } | null>(null);
+
+	// Today → start a live session ([HI-023]); past → open the flat-CRUD editor.
+	const addOrStartWorkout = async () => {
+		await vibrate(2);
+		if (isToday) {
+			try {
+				await workoutStore.start();
+				await goto('/');
+			} catch (e) {
+				debug(`start workout from history failed: ${e}`);
+			}
+		} else {
+			editor = { mode: 'create', detail: null };
+		}
+	};
+
+	const editWorkout = (workout: WorkoutDetail) => {
+		selectedWorkout = null;
+		editor = { mode: 'edit', detail: workout };
+	};
+
+	const closeEditor = async () => {
+		editor = null;
 		await loadDayWorkouts(selectedDateStr);
 	};
 
@@ -301,6 +347,7 @@
 					intakeEntries={intakeHistory}
 					weightEntries={weightHistory}
 					workoutEntries={dayWorkouts}
+					{workoutMuscles}
 					{isToday}
 					ondayswipe={handleDaySwipe}
 					oneditintake={edit}
@@ -309,6 +356,7 @@
 					oneditweight={editWeight}
 					oncreateweight={createWeight}
 					ontapworkout={tapWorkout}
+					onaddworkout={addOrStartWorkout}
 				/>
 			</div>
 		{/key}
@@ -365,11 +413,23 @@
 	oncancel={modalWeight.cancel}
 />
 
-<!-- Workout detail modal ([HI-019]); edit routes to the flat-CRUD editor (§2). -->
+<!-- Workout detail modal ([HI-019]); edit routes to the flat-CRUD editor. -->
 {#if selectedWorkout}
 	<WorkoutHistoryModal
 		detail={selectedWorkout}
+		onedit={editWorkout}
 		ondelete={removeWorkout}
 		onclose={() => (selectedWorkout = null)}
+	/>
+{/if}
+
+<!-- Flat-CRUD editor: add a past workout ([HI-022]) / edit a completed one ([HI-020]). -->
+{#if editor}
+	<WorkoutEditModal
+		mode={editor.mode}
+		dateStr={selectedDateStr}
+		detail={editor.detail}
+		onsaved={() => loadDayWorkouts(selectedDateStr)}
+		onclose={closeEditor}
 	/>
 {/if}

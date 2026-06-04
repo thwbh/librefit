@@ -23,7 +23,7 @@ Workout tracking shipped in 26.23 but exposes no history: the only retrieval com
 
 ### 1. History page integration
 
-Add a workout "Activity" section to the day detail, between the intake list and the weight section, using the same card pattern as intake entries. A `WorkoutSummaryCard` shows start time, **active work time**, and total volume (no decorative heatmap — a per-session heatmap conveys nothing). Tapping opens a modal with full detail and edit/delete. The button is contextual: current date → "Start Workout" (live); historical date → "Add Workout" (flat CRUD). Editing a completed workout happens in place — it is **not** resumed (see Decision 5).
+Add a workout "Activity" section to the day detail, between the intake list and the weight section, using the same card pattern as intake entries. A `WorkoutSummaryCard` shows start time, **active work time**, and total volume, with a small **muscle silhouette** (front body view) as the leading anchor that tints the muscles the session trained (primary/secondary). We rejected a per-session _heatmap_ (intensity-over-time conveys nothing for one session) but a muscle silhouette is meaningful — it's the same worked-muscle visual the post-workout summary uses, just compact. It needs the session's muscles, which `WorkoutDetail` doesn't carry, so the history page does a one-time `getExerciseLibrary` lookup (`exerciseId → muscles`) and passes the aggregated worked-muscles to each card. Tapping opens a modal with full detail and edit/delete. The button is contextual: current date → "Start Workout" (live); historical date → "Add Workout" (flat CRUD). Editing a completed workout happens in place — it is **not** resumed (see Decision 5).
 
 ### 2. Dashboard integration
 
@@ -44,10 +44,10 @@ When no workouts fall in range, an empty state replaces both (parallel to the Bo
 
 ### 5. Editing vs resuming; the modal's two modes
 
-Completed workouts are **editable, never resumable.** The session model allows one active session at a time (`WorkoutSession::active` returns an `Option`); reopening an ended session would conflict with that and with the dashboard morph. The existing workout modal therefore gains a **mode parameter**:
+Completed workouts are **editable, never resumable.** The session model allows one active session at a time (`WorkoutSession::active` returns an `Option`); reopening an ended session would conflict with that and with the dashboard morph. Two distinct surfaces handle the two intents:
 
-- **Live** ("Start Workout", current date) — rest timers, pause/resume, slide-to-confirm end. The session is active.
-- **Flat CRUD** ("Add Workout" / "Edit Workout", any past session) — add/edit/delete exercises and sets with no timers or live controls, writing a completed session directly. This reuses the backend's "edit a set during _or after_ the session" support (WO-014/015).
+- **Live** ("Start Workout", current date) — the existing `WorkoutOverlay` on the dashboard: rest timers, pause/resume, slide-to-confirm end, active session. The history "Start Workout" button starts a session via `workoutStore.start()` and navigates to the dashboard.
+- **Flat CRUD** ("Add Workout" / "Edit Workout", any past session) — a dedicated `WorkoutEditModal` that composes the existing `ExercisePicker` + `SetMask`: add/edit/delete exercises and sets with no timers or live controls, writing a completed session directly. It reuses the backend's "edit a set during _or after_ the session" support (WO-014/015) and creates the session lazily (`create_workout_for_date`) on the first set, so an abandoned editor persists nothing. (A separate component rather than a runtime flag on the live overlay — the overlay is tightly coupled to the active-session store, so a flat editor stays simpler and decoupled.)
 
 ## Risks / Trade-offs
 

@@ -21,12 +21,12 @@ The history page SHALL display a workout activity section for the selected day, 
 
 ### Requirement: Workout summary cards in history
 
-For each workout logged on the selected day, the activity section SHALL display a summary card showing the workout's start time, active work time, and total volume. (For weight lifting, active work time — wall-clock minus paused intervals — is the duration shown, consistent with the live session and post-workout summary.) Multiple workouts on the same day SHALL be shown as separate cards in chronological order.
+For each workout logged on the selected day, the activity section SHALL display a summary card showing the workout's start time, active work time, and total volume, with a small muscle silhouette (front body view) as the card's leading anchor that tints the muscle groups the session trained — primary vs secondary involvement. (For weight lifting, active work time — wall-clock minus paused intervals — is the duration shown, consistent with the live session and post-workout summary.) Multiple workouts on the same day SHALL be shown as separate cards in chronological order.
 
 #### Scenario: [HI-017] Single workout card content
 
 - **WHEN** the selected day has one logged workout
-- **THEN** a summary card shows its start time, active work time, and total volume
+- **THEN** a summary card shows its start time, active work time, total volume, and a muscle silhouette tinting the muscles the session trained
 
 #### Scenario: [HI-018] Multiple workouts shown chronologically
 
