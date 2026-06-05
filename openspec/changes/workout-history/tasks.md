@@ -35,12 +35,12 @@
 
 ## 5. Progress page: Body/Workout segments
 
-- [ ] 5.1 Add the Body/Workout segmented control; Body default hosting existing charts unchanged [PG-005]
-- [ ] 5.2 Segment switching updates view + URL hash [PG-006]
-- [ ] 5.3 Lazy-load workout data on first Workout selection [PG-007]
-- [ ] 5.4 Persist selection in `localStorage` across navigation and restarts [PG-008]
-- [ ] 5.5 Selectable range governing the segment, default 30 days [PG-009]
-- [ ] 5.6 Write Vitest tests for [PG-005]–[PG-009]
+- [x] 5.1 Add the Body/Workout segmented control (veilchen `ButtonGroup`); Body default hosting existing charts unchanged [PG-005]
+- [x] 5.2 Segment switching updates view + URL hash [PG-006]
+- [x] 5.3 Lazy-load workout data on first Workout selection [PG-007]
+- [x] 5.4 Persist selection in `localStorage` across navigation and restarts [PG-008]
+- [x] 5.5 Selectable range governing the segment, default 30 days [PG-009]
+- [x] 5.6 Write Vitest tests for [PG-005]–[PG-009]
 
 ## 6. Muscle coverage map and workout overview
 
@@ -48,9 +48,9 @@
 - [ ] 6.2 `MuscleMap` colored by strongest role per muscle over the range (not targeted / secondary / primary) [PG-010]
 - [ ] 6.3 Muscle group tap → name + role [PG-011]
 - [ ] 6.4 Frontend coverage aggregation over `list_workouts` results
-- [ ] 6.5 Workout overview list reusing `WorkoutSummaryCard` and detail modal [PG-012][PG-013]
-- [ ] 6.6 Workout-segment empty state [PG-014]
-- [ ] 6.7 Write Vitest tests for [PG-010]–[PG-014]
+- [x] 6.5 Workout overview list reusing `WorkoutSummaryCard` and detail modal [PG-012][PG-013]
+- [x] 6.6 Workout-segment empty state [PG-014]
+- [~] 6.7 Write Vitest tests for [PG-010]–[PG-014] — done for PG-012/013/014; PG-010/011 land with the muscle map
 
 ## 7. Finalization
 
