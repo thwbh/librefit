@@ -7,7 +7,7 @@ name: 'Dependabot lockfile sync'
 # lockfile back onto the Dependabot branch.
 on:
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "deps" ]
 
 permissions:
   contents: write
