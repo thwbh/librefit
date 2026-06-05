@@ -1,0 +1,55 @@
+name: 'Dependabot lockfile sync'
+
+# Dependabot's npm resolver frequently produces a package-lock.json that is out
+# of sync with package.json (especially on grouped updates), which makes the
+# `npm ci` step in the Test workflow fail. This workflow reproduces the manual
+# fix — delete node_modules + lockfile, reinstall — and pushes the regenerated
+# lockfile back onto the Dependabot branch.
+on:
+  pull_request:
+    branches: [ "main", "develop" ]
+
+permissions:
+  contents: write
+
+jobs:
+  sync-lockfile:
+    name: 'Regenerate package-lock.json'
+    runs-on: ubuntu-latest
+    # Only Dependabot npm PRs. Cargo / github-actions branches are skipped.
+    if: ${{ github.actor == 'dependabot[bot]' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          # A PAT (stored as a *Dependabot* secret) is required for the push to
+          # re-trigger the Test workflow; pushes made with GITHUB_TOKEN do not
+          # start new workflow runs. Falls back to GITHUB_TOKEN if unset (the
+          # lockfile still gets fixed, but you must re-run CI manually).
+          token: ${{ secrets.DEPENDABOT_LOCKFILE_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: 'Install Node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: 'Regenerate lockfile'
+        run: |
+          rm -f package-lock.json
+          # --package-lock-only regenerates the lockfile without building
+          # node_modules (fast). --ignore-scripts skips the husky `prepare`
+          # hook, which is irrelevant in CI and would otherwise fail outside a
+          # working git hook setup.
+          npm install --package-lock-only --ignore-scripts
+
+      - name: 'Commit & push if lockfile changed'
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json already in sync — nothing to do."
+            exit 0
+          fi
+          git config user.name "dependabot[bot]"
+          git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore(deps): sync package-lock.json"
+          git push
