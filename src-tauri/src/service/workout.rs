@@ -302,6 +302,66 @@ impl WorkoutSession {
             .get_result(conn)
     }
 
+    /// Insert an already-completed session stamped to a past date (retrospective
+    /// logging, `[HI-022]`). `ended_at` is set so it never reads as active and the
+    /// stale auto-completer ignores it; with no live timing, `ended_at == started_at`.
+    pub fn create_completed(
+        conn: &mut SqliteConnection,
+        workout_type: &str,
+        name: Option<String>,
+        started_at: String,
+    ) -> QueryResult<Self> {
+        let new = NewWorkoutSession {
+            workout_type: workout_type.to_string(),
+            name,
+            ended_at: Some(started_at.clone()),
+            started_at,
+        };
+        diesel::insert_into(workout_session::table)
+            .values(&new)
+            .returning(Self::as_returning())
+            .get_result(conn)
+    }
+
+    /// Find a session by id.
+    pub fn find(conn: &mut SqliteConnection, id: i32) -> QueryResult<Self> {
+        workout_session::table
+            .filter(workout_session::id.eq(id))
+            .first(conn)
+    }
+
+    /// Resolve the session that owns a given set (`set -> exercise -> session`). Used
+    /// by the set-mutation commands so they work on completed sessions too, not just
+    /// the active one.
+    pub fn for_set(conn: &mut SqliteConnection, set_id: i32) -> QueryResult<Self> {
+        let we_id: i32 = workout_set::table
+            .filter(workout_set::id.eq(set_id))
+            .select(workout_set::workout_exercise_id)
+            .first(conn)?;
+        let session_id: i32 = workout_exercise::table
+            .filter(workout_exercise::id.eq(we_id))
+            .select(workout_exercise::session_id)
+            .first(conn)?;
+        Self::find(conn, session_id)
+    }
+
+    /// Completed sessions (`ended_at IS NOT NULL`) whose start falls in `[from, to)`,
+    /// most recent first. Bounds are RFC3339 UTC strings (sortable lexicographically),
+    /// so a single day is just a one-day window. Powers history, dashboard, and the
+    /// progress Workout segment.
+    pub fn completed_in_range(
+        conn: &mut SqliteConnection,
+        from: &str,
+        to: &str,
+    ) -> QueryResult<Vec<Self>> {
+        workout_session::table
+            .filter(workout_session::ended_at.is_not_null())
+            .filter(workout_session::started_at.ge(from))
+            .filter(workout_session::started_at.lt(to))
+            .order(workout_session::started_at.desc())
+            .load(conn)
+    }
+
     /// Record the end timestamp.
     pub fn end(conn: &mut SqliteConnection, id: i32, ended_at: &str) -> QueryResult<Self> {
         diesel::update(workout_session::table.filter(workout_session::id.eq(id)))
@@ -619,7 +679,9 @@ pub fn log_workout_set(
     WorkoutSession::detail(&mut conn, session)
 }
 
-/// Edit a logged set's metrics (`[WO-014]`).
+/// Edit a logged set's metrics (`[WO-014]`). The owning session is resolved from the
+/// set, so this works on completed sessions too (history flat-CRUD edit), not only the
+/// active one.
 #[command]
 pub fn update_workout_set(
     pool: State<DbPool>,
@@ -630,18 +692,90 @@ pub fn update_workout_set(
         return Err(format!("Validation failed: {:?}", e));
     }
     let mut conn = conn_from(&pool)?;
-    let session = require_active(&mut conn)?;
     let json = serde_json::to_string(&metrics).map_err(|e| format!("Serialize failed: {}", e))?;
     WorkoutSet::update_metrics(&mut conn, set_id, json).map_err(handle_error)?;
+    let session = WorkoutSession::for_set(&mut conn, set_id).map_err(handle_error)?;
     WorkoutSession::detail(&mut conn, session)
 }
 
-/// Delete a logged set (`[WO-015]`).
+/// Delete a logged set (`[WO-015]`). Resolves the owning session from the set first so
+/// it works on completed sessions too.
 #[command]
 pub fn delete_workout_set(pool: State<DbPool>, set_id: i32) -> Result<WorkoutDetail, String> {
     let mut conn = conn_from(&pool)?;
-    let session = require_active(&mut conn)?;
+    let session = WorkoutSession::for_set(&mut conn, set_id).map_err(handle_error)?;
     WorkoutSet::delete(&mut conn, set_id).map_err(handle_error)?;
+    WorkoutSession::detail(&mut conn, session)
+}
+
+/// Add a set to a specific session (active or completed). Powers history/flat-CRUD where
+/// there is no active session; `logged_at` is anchored to the session's start so the
+/// set lands on the workout's date. Validates metrics before persisting (`[HI-020]`,
+/// `[HI-022]`).
+#[command]
+pub fn add_workout_set(
+    pool: State<DbPool>,
+    session_id: i32,
+    exercise_id: i32,
+    metrics: LiftingSetMetrics,
+) -> Result<WorkoutDetail, String> {
+    if let Err(e) = metrics.validate() {
+        return Err(format!("Validation failed: {:?}", e));
+    }
+    let mut conn = conn_from(&pool)?;
+    let session = WorkoutSession::find(&mut conn, session_id).map_err(handle_error)?;
+    let json = serde_json::to_string(&metrics).map_err(|e| format!("Serialize failed: {}", e))?;
+    let logged_at = session.started_at.clone();
+    conn.transaction(|conn| {
+        let we = WorkoutExercise::add_or_get(conn, session.id, exercise_id)?;
+        WorkoutSet::log(conn, we.id, json, WL_PAYLOAD_VER, logged_at)
+    })
+    .map_err(handle_error)?;
+    WorkoutSession::detail(&mut conn, session)
+}
+
+/// List completed workouts whose start falls in `[from, to)` (RFC3339 UTC bounds), each
+/// with full detail, most recent first (`[HI-014]`–`[HI-018]`, `[DH-011]`, `[PG-012]`).
+#[command]
+pub fn list_workouts(
+    pool: State<DbPool>,
+    from: String,
+    to: String,
+) -> Result<Vec<WorkoutDetail>, String> {
+    let mut conn = conn_from(&pool)?;
+    let sessions =
+        WorkoutSession::completed_in_range(&mut conn, &from, &to).map_err(handle_error)?;
+    sessions
+        .into_iter()
+        .map(|s| WorkoutSession::detail(&mut conn, s))
+        .collect()
+}
+
+/// Delete a completed workout and all its data (`[HI-021]`). Refuses the active session —
+/// that path is `discard_workout_session`.
+#[command]
+pub fn delete_workout(pool: State<DbPool>, session_id: i32) -> Result<(), String> {
+    let mut conn = conn_from(&pool)?;
+    let session = WorkoutSession::find(&mut conn, session_id).map_err(handle_error)?;
+    if session.ended_at.is_none() {
+        return Err("Cannot delete an active session; discard it instead".to_string());
+    }
+    WorkoutSession::discard(&mut conn, session_id).map_err(handle_error)?;
+    Ok(())
+}
+
+/// Create a completed workout stamped to a past date (`[HI-022]`). Returns its detail so
+/// the caller can immediately add sets via `add_workout_set`. `started_at` is RFC3339.
+#[command]
+pub fn create_workout_for_date(
+    pool: State<DbPool>,
+    started_at: String,
+    name: Option<String>,
+) -> Result<WorkoutDetail, String> {
+    parse_ts(&started_at)?;
+    let mut conn = conn_from(&pool)?;
+    let session = WorkoutSession::create_completed(&mut conn, "wl", name, started_at)
+        .map_err(handle_error)?;
     WorkoutSession::detail(&mut conn, session)
 }
 

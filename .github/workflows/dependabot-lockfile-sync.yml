@@ -1,0 +1,56 @@
+name: Dependabot lockfile sync
+on: pull_request
+
+# Grouped Dependabot npm PRs (targeting the `deps` branch) sometimes land with a
+# package.json that no longer matches package-lock.json — typically after a
+# rebase/regroup. CI's `npm ci` is strict and fails hard on that drift. This job
+# regenerates the lockfile from package.json and pushes the fix back onto the PR
+# branch so the rest of CI can pass.
+#
+# The push uses DEPENDABOT_LOCKFILE_PAT (not GITHUB_TOKEN) so the resulting
+# commit re-triggers CI — letting required checks (and auto-merge) run against
+# the corrected lockfile. The job only pushes when the lockfile actually
+# changes, so it does not recurse.
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: lockfile-sync-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          # Check out the PR branch itself (not the merge ref) so we can push to it.
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.DEPENDABOT_LOCKFILE_PAT }}
+
+      - name: Install Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.x'
+
+      # Rewrite package-lock.json to match package.json without installing
+      # node_modules. A no-op when they are already in sync. --ignore-scripts
+      # skips the `prepare` lifecycle (husky), which isn't installed here.
+      - name: Regenerate lockfile
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Commit lockfile if it changed
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json already in sync — nothing to do."
+            exit 0
+          fi
+          git config user.name 'dependabot[bot]'
+          git config user.email '49699333+dependabot[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'chore(deps): sync package-lock.json'
+          git push origin HEAD:${{ github.head_ref }}

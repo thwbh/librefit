@@ -10,30 +10,37 @@
 		reps?: number;
 		weightKg?: number;
 		submitLabel?: string;
-		onsubmit: (metrics: LiftingSetMetrics) => void | Promise<void>;
+		/** Hide the built-in submit button when the parent drives submission. */
+		showSubmit?: boolean;
+		/** Optional when `showSubmit` is false (the parent submits the bound values). */
+		onsubmit?: (metrics: LiftingSetMetrics) => void | Promise<void>;
 	}
 
-	let { reps = 8, weightKg = 20, submitLabel = 'Log set', onsubmit }: Props = $props();
+	let {
+		reps = $bindable(8),
+		weightKg = $bindable(20),
+		submitLabel = 'Log set',
+		showSubmit = true,
+		onsubmit
+	}: Props = $props();
 
-	let repsValue = $state(reps);
-	let weightValue = $state(weightKg);
 	let error = $state<string | null>(null);
 
 	async function submit() {
-		const metrics: LiftingSetMetrics = { reps: repsValue, weightKg: weightValue };
+		const metrics: LiftingSetMetrics = { reps, weightKg };
 		const v = validateLiftingSet(metrics);
 		if (v) {
 			error = v;
 			return;
 		}
 		error = null;
-		await onsubmit(metrics);
+		await onsubmit?.(metrics);
 	}
 </script>
 
 <div class="set-mask flex flex-col gap-2">
 	<NumberStepper
-		bind:value={repsValue}
+		bind:value={reps}
 		label="Reps"
 		required
 		min={1}
@@ -45,7 +52,7 @@
 		showLeftWheel={false}
 	/>
 	<NumberStepper
-		bind:value={weightValue}
+		bind:value={weightKg}
 		label="Weight"
 		unit="kg"
 		required
@@ -60,5 +67,7 @@
 	{#if error}
 		<p class="text-sm text-error" role="alert">{error}</p>
 	{/if}
-	<button class="btn btn-primary" onclick={submit}>{submitLabel}</button>
+	{#if showSubmit}
+		<button class="btn btn-primary" onclick={submit}>{submitLabel}</button>
+	{/if}
 </div>

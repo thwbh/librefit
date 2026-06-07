@@ -8,7 +8,12 @@ pub fn localize_validation_errors(validation_errors: &ValidationErrors) -> Valid
         .into_iter()
         .for_each(|(field, field_errors)| {
             field_errors.iter().for_each(|field_error| {
-                localized_validation_errors.add(field, localize_validation_error(field_error))
+                // Convert Cow<'static, str> to &'static str for validator 0.20
+                let field_str: &'static str = match &field {
+                    std::borrow::Cow::Borrowed(s) => s,
+                    std::borrow::Cow::Owned(s) => Box::leak(s.clone().into_boxed_str()),
+                };
+                localized_validation_errors.add(field_str, localize_validation_error(field_error))
             })
         });
 

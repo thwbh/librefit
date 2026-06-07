@@ -11,6 +11,7 @@ updates:
   # npm dependencies (JavaScript/TypeScript)
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "deps"
     schedule:
       interval: "daily"
       time: "09:00"
@@ -38,6 +39,17 @@ updates:
           - "svelte"
           - "vite"
           - "@tauri-apps/*"
+      # Group major framework updates together
+      npm-major-frameworks:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "@sveltejs/*"
+          - "svelte"
+          - "vite"
+          - "@tauri-apps/*"
       # Group security updates into their own PR set
       npm-security:
         applies-to: security-updates
@@ -54,6 +66,7 @@ updates:
   # Rust dependencies (Cargo)
   - package-ecosystem: "cargo"
     directory: "/src-tauri"
+    target-branch: "deps"
     schedule:
       interval: "daily"
       time: "09:30"
@@ -82,6 +95,7 @@ updates:
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "deps"
     schedule:
       interval: "weekly"
       time: "10:00"
@@ -96,3 +110,9 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      github-actions-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"

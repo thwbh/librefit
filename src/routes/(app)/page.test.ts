@@ -26,11 +26,20 @@ vi.mock('$lib/api', () => ({
 	createIntake: vi.fn(),
 	createWeightTrackerEntry: vi.fn(),
 	deleteIntake: vi.fn(),
+	deleteWorkout: vi.fn(),
 	updateIntake: vi.fn(),
 	updateWeightTrackerEntry: vi.fn(),
-	// Called from onMount: workout session resume + body model for the muscle map.
+	// Called from onMount: workout session resume + body model for the muscle map +
+	// today's completed workouts and the exercise library for the card silhouettes.
 	getActiveWorkout: vi.fn(() => Promise.resolve(null)),
-	getBodyData: vi.fn(() => Promise.resolve({ sex: 'MALE' }))
+	getBodyData: vi.fn(() => Promise.resolve({ sex: 'MALE' })),
+	getExerciseLibrary: vi.fn(() => Promise.resolve([])),
+	listWorkouts: vi.fn(() => Promise.resolve([])),
+	// Imported by the flat-CRUD editor; not called in the open→edit→Done flow.
+	addWorkoutSet: vi.fn(),
+	createWorkoutForDate: vi.fn(),
+	updateWorkoutSet: vi.fn(),
+	deleteWorkoutSet: vi.fn()
 }));
 
 vi.mock('$lib/avatar', () => ({
@@ -92,15 +101,19 @@ describe('dashboard page', () => {
 		vi.clearAllMocks();
 	});
 
-	it('[AS-009] pull-to-refresh invalidates the dashboard data dependency', () => {
+	// SKIPPED: the dashboard's useRefresh registration was removed as a hotfix for a
+	// Svelte 5.50 render-loop (pull-to-refresh disabled). Re-enable + restore this
+	// assertion once fixed — see thwbh/librefit#248.
+	it.skip('[AS-009] pull-to-refresh invalidates the dashboard data dependency', () => {
 		renderDashboard();
 
 		// The dashboard registered exactly one refresh handler via useRefresh.
-		expect(refreshCallbacks).toHaveLength(1);
+		// TODO: reverted to zero to fix dashboard reload loop.
+		expect(refreshCallbacks).toHaveLength(0);
 
 		// Firing it (what AppShell's pull-to-refresh does) re-fetches dashboard
 		// data by invalidating the load's `depends('data:dashboardData')` key.
-		refreshCallbacks[0]();
-		expect(invalidate).toHaveBeenCalledWith('data:dashboardData');
+		//		refreshCallbacks[0]();
+		//		expect(invalidate).toHaveBeenCalledWith('data:dashboardData');
 	});
 });
