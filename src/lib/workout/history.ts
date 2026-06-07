@@ -84,3 +84,22 @@ export function workedMuscles(
 	}
 	return [...agg].map(([muscle, primary]) => ({ muscle, primary }));
 }
+
+/**
+ * Strongest role per muscle aggregated across a range of sessions (the progress
+ * Workout segment, [PG-010]). A muscle is `primary` if any session in the range
+ * trained it as a primary mover, otherwise `secondary`; untrained muscles are
+ * absent from the result.
+ */
+export function rangeMuscleCoverage(
+	workouts: WorkoutDetail[],
+	libraryById: Map<number, ExerciseDetail>
+): WorkedMuscle[] {
+	const agg = new Map<string, boolean>();
+	for (const w of workouts) {
+		for (const m of workedMuscles(w, libraryById)) {
+			agg.set(m.muscle, (agg.get(m.muscle) ?? false) || m.primary);
+		}
+	}
+	return [...agg].map(([muscle, primary]) => ({ muscle, primary }));
+}

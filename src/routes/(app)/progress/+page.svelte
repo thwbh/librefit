@@ -11,9 +11,10 @@
 		type ExerciseDetail,
 		type WorkoutDetail
 	} from '$lib/api';
-	import { workedMuscles, type WorkedMuscle } from '$lib/workout/history';
+	import { rangeMuscleCoverage, workedMuscles, type WorkedMuscle } from '$lib/workout/history';
 	import WorkoutSummaryCard from '$lib/component/workout/WorkoutSummaryCard.svelte';
 	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
+	import MuscleMap from '$lib/component/workout/MuscleMap.svelte';
 	import { browser } from '$app/environment';
 
 	let { data } = $props();
@@ -104,6 +105,8 @@
 			workouts.map((w) => [w.session.id, workedMuscles(w, libraryById)])
 		)
 	);
+	// Aggregated coverage over the whole range for the muscle map (PG-010).
+	const muscleCoverage = $derived(rangeMuscleCoverage(workouts, libraryById));
 	const rangeEntries = [
 		{ key: 30, value: '30 days' },
 		{ key: 90, value: '90 days' }
@@ -421,6 +424,10 @@
 					<p class="text-sm opacity-60 text-center">Log a workout to see it here.</p>
 				</div>
 			{:else}
+				<!-- Muscle coverage map over the range (PG-010), then the workout list. -->
+				<div class="bg-base-100 rounded-box p-4 shadow">
+					<MuscleMap muscles={muscleCoverage} {gender} />
+				</div>
 				<div class="flex flex-col gap-2">
 					{#each workouts as workout (workout.session.id)}
 						<WorkoutSummaryCard detail={workout} ontap={(d) => (selectedWorkout = d)} />

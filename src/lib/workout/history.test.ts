@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	dayBoundsUtc,
+	rangeMuscleCoverage,
 	workedMuscles,
 	workoutActiveMinutes,
 	workoutSets,
@@ -111,5 +112,44 @@ describe('workedMuscles (detail/editor muscle-map data)', () => {
 			{ id: 9, exerciseId: 99, name: 'Mystery', defaultRestSeconds: 60, sets: [] }
 		] as never);
 		expect(workedMuscles(d, new Map())).toEqual([]);
+	});
+});
+
+describe('rangeMuscleCoverage (progress muscle map)', () => {
+	const library = new Map<number, ExerciseDetail>([
+		[
+			1,
+			{
+				id: 1,
+				name: 'Bench Press',
+				category: 'barbell',
+				defaultRestSeconds: 180,
+				muscles: [
+					{ exerciseId: 1, muscle: 'chest', role: 'primary' },
+					{ exerciseId: 1, muscle: 'triceps', role: 'secondary' }
+				]
+			}
+		],
+		[
+			2,
+			{
+				id: 2,
+				name: 'Tricep Pushdown',
+				category: 'cable',
+				defaultRestSeconds: 90,
+				muscles: [{ exerciseId: 2, muscle: 'triceps', role: 'primary' }]
+			}
+		]
+	]);
+
+	const session = (id: number, exerciseId: number): WorkoutDetail =>
+		detail({ id }, [{ id, exerciseId, name: 'x', defaultRestSeconds: 90, sets: [] }] as never);
+
+	it('[PG-010] aggregates strongest role per muscle across the range', () => {
+		// Bench (chest primary, triceps secondary) + Pushdown (triceps primary).
+		const coverage = rangeMuscleCoverage([session(1, 1), session(2, 2)], library);
+		const bySlug = Object.fromEntries(coverage.map((m) => [m.muscle, m.primary]));
+		expect(bySlug.chest).toBe(true);
+		expect(bySlug.triceps).toBe(true); // primary in Pushdown wins over secondary in Bench
 	});
 });

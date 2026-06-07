@@ -44,13 +44,13 @@
 
 ## 6. Muscle coverage map and workout overview
 
-- [ ] 6.1 Front/back body SVG asset with regions keyed to seeded `muscle` shortvalues
-- [ ] 6.2 `MuscleMap` colored by strongest role per muscle over the range (not targeted / secondary / primary) [PG-010]
-- [ ] 6.3 Muscle group tap → name + role [PG-011]
-- [ ] 6.4 Frontend coverage aggregation over `list_workouts` results
+- [x] 6.1 Front/back body via `svelte-body-highlighter` (slugs already match seeded `muscle` shortvalues — no custom asset)
+- [x] 6.2 `MuscleMap` colored by strongest role per muscle over the range (not targeted / secondary / primary) [PG-010]
+- [x] 6.3 Muscle group tap → name + role [PG-011]
+- [x] 6.4 Frontend coverage aggregation over `list_workouts` results (`rangeMuscleCoverage`)
 - [x] 6.5 Workout overview list reusing `WorkoutSummaryCard` and detail modal [PG-012][PG-013]
 - [x] 6.6 Workout-segment empty state [PG-014]
-- [~] 6.7 Write Vitest tests for [PG-010]–[PG-014] — done for PG-012/013/014; PG-010/011 land with the muscle map
+- [x] 6.7 Write Vitest tests for [PG-010]–[PG-014]
 
 ## 7. Finalization
 
