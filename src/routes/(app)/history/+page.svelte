@@ -5,13 +5,18 @@
 		type NewIntake,
 		type NewWeightTracker,
 		type TrackerHistory,
-		type WeightTracker
+		type WeightTracker,
+		type WorkoutDetail,
+		type ExerciseDetail
 	} from '$lib/api';
 	import { getDateAsStr, parseStringAsDate } from '$lib/date.js';
+	import { dayBoundsUtc, workedMuscles, type WorkedMuscle } from '$lib/workout/history';
 	import { addDays, compareAsc, subDays } from 'date-fns';
 	import WeightModal from '$lib/component/weight/WeightModal.svelte';
 	import HistoryDayCard from '$lib/component/history/HistoryDayCard.svelte';
 	import HistoryWeek from '$lib/component/history/HistoryWeek.svelte';
+	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
+	import WorkoutDeleteDialog from '$lib/component/workout/WorkoutDeleteDialog.svelte';
 	import { vibrate } from '@tauri-apps/plugin-haptics';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
 	import { fly } from 'svelte/transition';
@@ -20,12 +25,19 @@
 		createIntake,
 		createWeightTrackerEntry,
 		deleteIntake,
+		deleteWorkout,
+		getBodyData,
+		getExerciseLibrary,
 		getTrackerHistory,
+		listWorkouts,
 		updateIntake,
 		updateWeightTrackerEntry
 	} from '$lib/api/gen/commands.js';
 	import { debug } from '@tauri-apps/plugin-log';
 	import IntakeModal from '$lib/component/intake/IntakeModal.svelte';
+	import WorkoutEditModal from '$lib/component/workout/WorkoutEditModal.svelte';
+	import { workoutStore } from '$lib/workout/workout-state.svelte';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -60,6 +72,94 @@
 
 		return [...trackerHistory?.weightHistory[selectedDateStr]];
 	});
+
+	// Workouts aren't part of TrackerHistory; fetch the selected day's completed
+	// workouts on demand so the Activity section tracks day navigation ([HI-016]).
+	let dayWorkouts = $state<WorkoutDetail[]>([]);
+	let selectedWorkout = $state<WorkoutDetail | null>(null);
+
+	// The exercise library (loaded once) lets us derive each workout's worked
+	// muscles for the card silhouette ([HI-017]); WorkoutDetail doesn't carry them.
+	let library = $state<ExerciseDetail[]>([]);
+	$effect(() => {
+		if (library.length === 0) getExerciseLibrary().then((l) => (library = l));
+	});
+	// Body model for the muscle silhouettes; resolved from the profile.
+	let gender = $state<'male' | 'female'>('male');
+	$effect(() => {
+		getBodyData()
+			.then((b) => (gender = b.sex?.toUpperCase() === 'FEMALE' ? 'female' : 'male'))
+			.catch(() => {});
+	});
+	let libraryById = $derived(new Map(library.map((e) => [e.id, e])));
+	let workoutMuscles = $derived(
+		new Map<number, WorkedMuscle[]>(
+			dayWorkouts.map((w) => [w.session.id, workedMuscles(w, libraryById)])
+		)
+	);
+
+	const todayStr = getDateAsStr(new Date());
+	let isToday = $derived(selectedDateStr === todayStr);
+
+	const loadDayWorkouts = async (dateStr: string) => {
+		const { from, to } = dayBoundsUtc(dateStr);
+		// list_workouts returns most-recent-first; history shows the day's workouts
+		// in chronological order ([HI-018]).
+		dayWorkouts = (await listWorkouts({ from, to })).sort((a, b) =>
+			a.session.startedAt.localeCompare(b.session.startedAt)
+		);
+	};
+
+	$effect(() => {
+		// Re-run whenever the selected day changes.
+		loadDayWorkouts(selectedDateStr);
+	});
+
+	const tapWorkout = (workout: WorkoutDetail) => {
+		selectedWorkout = workout;
+	};
+
+	// Delete via swipe-right → confirmation dialog ([HI-021], `_conv-gestures` GES-004).
+	let workoutToDelete = $state<WorkoutDetail | null>(null);
+	const requestDeleteWorkout = async (workout: WorkoutDetail) => {
+		await vibrate(2);
+		workoutToDelete = workout;
+	};
+	const confirmDeleteWorkout = async () => {
+		if (!workoutToDelete) return;
+		await deleteWorkout({ sessionId: workoutToDelete.session.id });
+		workoutToDelete = null;
+		await loadDayWorkouts(selectedDateStr);
+	};
+
+	// Flat-CRUD editor: add a past workout / edit a completed one ([HI-020], [HI-022]).
+	let editor = $state<{ mode: 'create' | 'edit'; detail: WorkoutDetail | null } | null>(null);
+
+	// Today → start a live session ([HI-023]); past → open the flat-CRUD editor.
+	const addOrStartWorkout = async () => {
+		await vibrate(2);
+		if (isToday) {
+			try {
+				await workoutStore.start();
+				await goto('/');
+			} catch (e) {
+				debug(`start workout from history failed: ${e}`);
+			}
+		} else {
+			editor = { mode: 'create', detail: null };
+		}
+	};
+
+	// Edit via swipe-left / long-press ([HI-020]).
+	const editWorkout = async (workout: WorkoutDetail) => {
+		await vibrate(2);
+		editor = { mode: 'edit', detail: workout };
+	};
+
+	const closeEditor = async () => {
+		editor = null;
+		await loadDayWorkouts(selectedDateStr);
+	};
 
 	// Modal composition for CRUD operations
 	const modal = useEntryModal<Intake, NewIntake>({
@@ -263,12 +363,18 @@
 					{intakeTarget}
 					intakeEntries={intakeHistory}
 					weightEntries={weightHistory}
+					workoutEntries={dayWorkouts}
+					{isToday}
 					ondayswipe={handleDaySwipe}
 					oneditintake={edit}
 					ondeleteintake={remove}
 					onaddintake={modal.openCreate}
 					oneditweight={editWeight}
 					oncreateweight={createWeight}
+					ontapworkout={tapWorkout}
+					oneditworkout={editWorkout}
+					ondeleteworkout={requestDeleteWorkout}
+					onaddworkout={addOrStartWorkout}
 				/>
 			</div>
 		{/key}
@@ -324,3 +430,34 @@
 	onsave={modalWeight.save}
 	oncancel={modalWeight.cancel}
 />
+
+<!-- Workout detail modal — view only ([HI-019]); edit/delete are card-swipe gestures. -->
+{#if selectedWorkout}
+	<WorkoutHistoryModal
+		detail={selectedWorkout}
+		muscles={workoutMuscles.get(selectedWorkout.session.id) ?? []}
+		{gender}
+		onclose={() => (selectedWorkout = null)}
+	/>
+{/if}
+
+<!-- Delete confirmation ([HI-021], GES-004 / MOD-002). -->
+{#if workoutToDelete}
+	<WorkoutDeleteDialog
+		detail={workoutToDelete}
+		onconfirm={confirmDeleteWorkout}
+		oncancel={() => (workoutToDelete = null)}
+	/>
+{/if}
+
+<!-- Flat-CRUD editor: add a past workout ([HI-022]) / edit a completed one ([HI-020]). -->
+{#if editor}
+	<WorkoutEditModal
+		mode={editor.mode}
+		dateStr={selectedDateStr}
+		detail={editor.detail}
+		{gender}
+		onsaved={() => loadDayWorkouts(selectedDateStr)}
+		onclose={closeEditor}
+	/>
+{/if}
