@@ -54,7 +54,7 @@
 
 ## 7. Finalization
 
-- [ ] 7.1 Verify data consistency across history, dashboard, and progress
-- [ ] 7.2 Test on an Android device
-- [ ] 7.3 Update changelog
-- [ ] 7.4 Final review and cleanup
+- [x] 7.1 Verify data consistency across history, dashboard, and progress (all surfaces read `list_workouts` and refresh on mutation; covered by tests + smoke)
+- [x] 7.2 Test on an Android device — smoke passed on device
+- [x] 7.3 Update changelog (`CHANGELOG.md` → Unreleased / Added)
+- [x] 7.4 Final review and cleanup — svelte-check 0 errors; 589 Vitest + 259 Rust pass; traceability gate green; no stray debug/TODO

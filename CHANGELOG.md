@@ -7,6 +7,12 @@ and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO fo
 
 ## [Unreleased]
 
+### Added
+
+- Workout history on the History page: a per-day "Activity" section listing each workout; tap a card for full detail with a front/back muscle map, swipe to edit or delete, and add workouts for past dates.
+- Today's completed workouts now appear on the dashboard, with Start Workout still available to begin another session.
+- Progress page gains a Body / Workout toggle: the Workout view shows a muscle coverage map and your workouts over a selectable range (30 or 90 days), and remembers the selected tab.
+
 ## [26.23.3] - 2026-06-03
 
 ### Fixed
