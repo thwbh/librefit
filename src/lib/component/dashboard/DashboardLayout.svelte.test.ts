@@ -79,4 +79,32 @@ describe('DashboardLayout', () => {
 		expect(container.querySelector('[data-visual="focus"]')).not.toBeNull();
 		expect(container.querySelector('[data-visual="recovery"]')).toBeNull();
 	});
+
+	it('[DH-011] idle with completed workouts shows the cards surface above Start Workout', () => {
+		const { container } = renderLayout({
+			active: false,
+			showWorkoutCards: true,
+			workoutCards: card('today-workout')
+		});
+		const text = container.textContent ?? '';
+		// Cards appear, and the Start Workout module remains so another can be started.
+		expect(text).toContain('today-workout');
+		expect(text).toContain('Start Workout');
+		expect(text.indexOf('today-workout')).toBeLessThan(text.indexOf('Start Workout'));
+	});
+
+	it('[DH-012] idle with no completed workouts shows the Start Workout module', () => {
+		const { container } = renderLayout({ active: false, showWorkoutCards: false });
+		expect(container.textContent ?? '').toContain('Start Workout');
+	});
+
+	it('[DH-016] active session hides the completed-workout cards', () => {
+		const { container } = renderLayout({
+			active: true,
+			showWorkoutCards: true,
+			workoutCards: card('today-workout')
+		});
+		// The idle workout surface (and its cards) is not rendered while active.
+		expect(container.textContent ?? '').not.toContain('today-workout');
+	});
 });

@@ -5,7 +5,13 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
-## [Unreleased]
+## [26.23.4] - 2026-06-07
+
+### Added
+
+- Workout history on the History page: a per-day "Activity" section listing each workout; tap a card for full detail with a front/back muscle map, swipe to edit or delete, and add workouts for past dates.
+- Today's completed workouts now appear on the dashboard, with Start Workout still available to begin another session.
+- Progress page gains a Body / Workout toggle: the Workout view shows a muscle coverage map and your workouts over a selectable range (30 or 90 days), and remembers the selected tab.
 
 ## [26.23.3] - 2026-06-03
 

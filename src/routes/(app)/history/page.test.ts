@@ -9,12 +9,16 @@ vi.mock('$lib/api/gen/commands.js', () => ({
 	createIntake: vi.fn(),
 	createWeightTrackerEntry: vi.fn(),
 	deleteIntake: vi.fn(),
+	deleteWorkout: vi.fn(),
+	getBodyData: vi.fn().mockResolvedValue({ sex: 'MALE' }),
+	getExerciseLibrary: vi.fn().mockResolvedValue([]),
 	getTrackerHistory: vi.fn().mockResolvedValue({
 		intakeHistory: { '2026-05-11': [], '2026-05-17': [] },
 		weightHistory: { '2026-05-11': [], '2026-05-17': [] },
 		dateLastStr: '2026-05-30',
 		caloriesAverage: 1700
 	}),
+	listWorkouts: vi.fn().mockResolvedValue([]),
 	updateIntake: vi.fn(),
 	updateWeightTrackerEntry: vi.fn()
 }));
