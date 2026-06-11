@@ -30,7 +30,7 @@
 		"svelte-body-highlighter": "^5.0.0"
 	},
 	"devDependencies": {
-		"@dicebear/core": "^9.2.4",
+		"@dicebear/core": "^10.2.0",
 		"@dicebear/lorelei": "^9.2.4",
 		"@number-flow/svelte": "^0.4.0",
 		"@sveltejs/adapter-static": "^3.0.8",
