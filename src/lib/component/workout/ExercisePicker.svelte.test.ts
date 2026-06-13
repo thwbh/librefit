@@ -1,15 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import ExercisePicker from './ExercisePicker.svelte';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { getExerciseLibrary, type ExerciseDetail } from '$lib/api';
+import { getExerciseLibrary, quickAddExercise, type ExerciseDetail } from '$lib/api';
 
 // Mock the API
 vi.mock('$lib/api', () => ({
-	getExerciseLibrary: vi.fn()
+	getExerciseLibrary: vi.fn(),
+	quickAddExercise: vi.fn()
 }));
 
 // Shapes match the generated ExerciseDetail (camelCase wire format): muscles
-// carry exerciseId, rest is defaultRestSeconds.
+// carry exerciseId, rest is defaultRestSeconds. Seeded rows are seeded+verified.
 const m = (exerciseId: number, muscle: string, role: string) => ({ exerciseId, muscle, role });
 const mockLibrary: ExerciseDetail[] = [
 	{
@@ -17,21 +18,41 @@ const mockLibrary: ExerciseDetail[] = [
 		name: 'Bench Press',
 		category: 'barbell',
 		defaultRestSeconds: 180,
-		muscles: [m(1, 'chest', 'primary'), m(1, 'triceps', 'secondary'), m(1, 'deltoids', 'secondary')]
+		muscles: [
+			m(1, 'chest', 'primary'),
+			m(1, 'triceps', 'secondary'),
+			m(1, 'deltoids', 'secondary')
+		],
+		seeded: true,
+		verified: true
 	},
 	{
 		id: 2,
 		name: 'Back Squat',
 		category: 'barbell',
 		defaultRestSeconds: 240,
-		muscles: [m(2, 'quadriceps', 'primary'), m(2, 'gluteal', 'secondary')]
+		muscles: [m(2, 'quadriceps', 'primary'), m(2, 'gluteal', 'secondary')],
+		seeded: true,
+		verified: true
 	},
 	{
 		id: 3,
 		name: 'Lat Pulldown',
 		category: 'machine',
 		defaultRestSeconds: 60,
-		muscles: [m(3, 'upper-back', 'primary'), m(3, 'biceps', 'secondary')]
+		muscles: [m(3, 'upper-back', 'primary'), m(3, 'biceps', 'secondary')],
+		seeded: true,
+		verified: true
+	},
+	// A user-created, fully-verified exercise.
+	{
+		id: 50,
+		name: 'Atlas Press',
+		category: 'barbell',
+		defaultRestSeconds: 90,
+		muscles: [m(50, 'deltoids', 'primary')],
+		seeded: false,
+		verified: true
 	}
 ];
 
@@ -140,6 +161,44 @@ describe('ExercisePicker', () => {
 		await fireEvent.click(benchPress);
 
 		expect(onpick).toHaveBeenCalledWith(mockLibrary[0]);
+	});
+
+	it('[WO-033] marks user-created exercises distinctly from seeded ones', async () => {
+		render(ExercisePicker, { props: { onpick: vi.fn() } });
+
+		const input = screen.getByPlaceholderText('Search exercises');
+		// "press" matches seeded "Bench Press" and user "Atlas Press".
+		await fireEvent.input(input, { target: { value: 'press' } });
+
+		const userBtn = screen.getByText('Atlas Press').closest('button');
+		const seededBtn = screen.getByText('Bench Press').closest('button');
+		expect(userBtn?.querySelector('[data-testid="custom-badge"]')).toBeTruthy();
+		expect(seededBtn?.querySelector('[data-testid="custom-badge"]')).toBeFalsy();
+	});
+
+	it('[WO-036] quick-add creates a name-only exercise and selects it in place', async () => {
+		const created: ExerciseDetail = {
+			id: 51,
+			name: 'Sandbag Carry',
+			category: 'uncategorized',
+			defaultRestSeconds: undefined,
+			muscles: [],
+			seeded: false,
+			verified: false
+		};
+		vi.mocked(quickAddExercise).mockResolvedValue(created);
+		const onpick = vi.fn();
+		render(ExercisePicker, { props: { onpick } });
+
+		const input = screen.getByPlaceholderText('Search exercises');
+		await fireEvent.input(input, { target: { value: 'Sandbag Carry' } });
+
+		// No match -> a quick-add affordance offers to create it.
+		const quickAdd = await screen.findByTestId('quick-add');
+		await fireEvent.click(quickAdd);
+
+		expect(quickAddExercise).toHaveBeenCalledWith({ name: 'Sandbag Carry' });
+		expect(onpick).toHaveBeenCalledWith(created);
 	});
 
 	it('displays exercise details including category and muscles', async () => {

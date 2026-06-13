@@ -62,6 +62,13 @@ pub struct Exercise {
     pub name: String,
     pub category: String,
     pub default_rest_seconds: Option<i32>,
+    /// Stable natural key for seeded rows; `None` for user-created rows.
+    /// Doubles as the seeded/user discriminator (seeded == `slug.is_some()`).
+    pub slug: Option<String>,
+    /// User "Ghost" rows start `false`; promoted once categorised. Seeded == `true`.
+    pub verified: bool,
+    /// Set when a user row is created; drives the avatar graceful-decay window.
+    pub created_at: Option<String>,
 }
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
@@ -222,6 +229,12 @@ pub struct ExerciseDetail {
     pub category: String,
     pub default_rest_seconds: Option<i32>,
     pub muscles: Vec<ExerciseMuscle>,
+    /// `true` for seeded (read-only) exercises, `false` for user-created ones (`[WO-033]`).
+    pub seeded: bool,
+    /// `false` while a user exercise is an unverified "Ghost" (`[WO-034]`).
+    pub verified: bool,
+    /// Creation timestamp for user rows (graceful-decay input); `None` for seeded.
+    pub created_at: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -596,30 +609,402 @@ impl WorkoutPause {
     }
 }
 
+/// Sentinel category for name-only "Ghost" exercises (see migration + design note).
+const UNCATEGORIZED: &str = "uncategorized";
+
+/// Validated input for creating/editing a user exercise via the full add/edit screen.
+#[derive(Serialize, Deserialize, Validate, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ExerciseInput {
+    #[validate(length(min = 1, max = 80, message = "Name must be 1–80 characters"))]
+    pub name: String,
+    #[validate(length(min = 1, message = "A category is required"))]
+    pub category: String,
+    pub default_rest_seconds: Option<i32>,
+    #[validate(length(min = 1, message = "Select at least one muscle"))]
+    pub muscles: Vec<MuscleInput>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct MuscleInput {
+    pub muscle: String,
+    pub role: String,
+}
+
+/// A tag applied in bulk to unverified exercises (`[WO-041]`). Flat struct (not a
+/// tagged enum) so it round-trips cleanly through the generated TS/Zod binding:
+/// `kind` is `"category"` or `"muscle"`; `value` is the category/muscle shortvalue;
+/// `role` (`primary`/`secondary`) applies only to a muscle tag.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchTag {
+    pub kind: String,
+    pub value: String,
+    pub role: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchTagInput {
+    pub exercise_ids: Vec<i32>,
+    pub tag: BatchTag,
+}
+
+/// Per-exercise snapshot captured before a batch tag, enough to revert it (`[WO-042]`).
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchTagUndoItem {
+    pub exercise_id: i32,
+    pub prev_category: String,
+    pub prev_verified: bool,
+    /// `true` if a muscle row was newly inserted (so undo deletes it).
+    pub muscle_added: Option<MuscleInput>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchTagResult {
+    pub items: Vec<BatchTagUndoItem>,
+}
+
+/// Summary backing the dashboard avatar indicator (`[DH-019]`–`[DH-021]`).
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UnverifiedSummary {
+    pub count: i64,
+    /// Oldest unverified `created_at`; the dashboard derives the decay state from it.
+    pub oldest_created_at: Option<String>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = exercise)]
+struct NewExerciseRow<'a> {
+    name: &'a str,
+    category: &'a str,
+    default_rest_seconds: Option<i32>,
+    slug: Option<String>,
+    verified: bool,
+    created_at: Option<String>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = exercise_muscle)]
+struct NewExerciseMuscle<'a> {
+    exercise_id: i32,
+    muscle: &'a str,
+    role: &'a str,
+}
+
 impl Exercise {
     pub fn find(conn: &mut SqliteConnection, id: i32) -> QueryResult<Exercise> {
         exercise::table.filter(exercise::id.eq(id)).first(conn)
     }
 
-    /// The seeded exercise library with each exercise's muscles (`[WO-012]`, `[WO-013]`).
+    /// Single guarded mutation choke-point (`[WO-028]`): every exercise write goes
+    /// through here, which refuses seeded (slug-bearing) rows. Seeded immutability
+    /// is structural — not a per-command `WHERE` check that can be forgotten.
+    fn ensure_user(conn: &mut SqliteConnection, id: i32) -> Result<Exercise, String> {
+        let ex = Self::find(conn, id).map_err(handle_error)?;
+        if ex.slug.is_some() {
+            return Err("Seeded exercises can't be edited or deleted".to_string());
+        }
+        Ok(ex)
+    }
+
+    /// Recompute and persist `verified`: a user exercise is verified once it has a
+    /// real category (not the `uncategorized` sentinel) and at least one muscle.
+    fn recompute_verified(conn: &mut SqliteConnection, id: i32) -> QueryResult<()> {
+        let category: String = exercise::table
+            .filter(exercise::id.eq(id))
+            .select(exercise::category)
+            .first(conn)?;
+        let muscle_count: i64 = exercise_muscle::table
+            .filter(exercise_muscle::exercise_id.eq(id))
+            .count()
+            .get_result(conn)?;
+        let verified = category != UNCATEGORIZED && muscle_count > 0;
+        diesel::update(exercise::table.filter(exercise::id.eq(id)))
+            .set(exercise::verified.eq(verified))
+            .execute(conn)?;
+        Ok(())
+    }
+
+    fn detail_of(conn: &mut SqliteConnection, e: Exercise) -> QueryResult<ExerciseDetail> {
+        let muscles = exercise_muscle::table
+            .filter(exercise_muscle::exercise_id.eq(e.id))
+            .load::<ExerciseMuscle>(conn)?;
+        Ok(ExerciseDetail {
+            id: e.id,
+            name: e.name,
+            category: e.category,
+            default_rest_seconds: e.default_rest_seconds,
+            muscles,
+            seeded: e.slug.is_some(),
+            verified: e.verified,
+            created_at: e.created_at,
+        })
+    }
+
+    /// The full exercise library (seeded + user-created) with each exercise's
+    /// muscles, marked seeded/verified (`[WO-012]`, `[WO-013]`, `[WO-033]`).
     pub fn library(conn: &mut SqliteConnection) -> QueryResult<Vec<ExerciseDetail>> {
         let exercises = exercise::table
             .order(exercise::name.asc())
             .load::<Exercise>(conn)?;
-        let mut out = Vec::with_capacity(exercises.len());
-        for e in exercises {
-            let muscles = exercise_muscle::table
-                .filter(exercise_muscle::exercise_id.eq(e.id))
-                .load::<ExerciseMuscle>(conn)?;
-            out.push(ExerciseDetail {
-                id: e.id,
-                name: e.name,
-                category: e.category,
-                default_rest_seconds: e.default_rest_seconds,
-                muscles,
-            });
+        exercises
+            .into_iter()
+            .map(|e| Self::detail_of(conn, e))
+            .collect()
+    }
+
+    /// Create a fully-specified user exercise (verified) with its muscles (`[WO-029]`).
+    pub fn create_full(
+        conn: &mut SqliteConnection,
+        input: &ExerciseInput,
+    ) -> Result<ExerciseDetail, String> {
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            let id = diesel::insert_into(exercise::table)
+                .values(NewExerciseRow {
+                    name: input.name.trim(),
+                    category: &input.category,
+                    default_rest_seconds: input.default_rest_seconds,
+                    slug: None,
+                    verified: false,
+                    created_at: Some(now_ts()),
+                })
+                .returning(exercise::id)
+                .get_result::<i32>(conn)?;
+            Self::write_muscles(conn, id, &input.muscles)?;
+            Self::recompute_verified(conn, id)?;
+            let row = Self::find(conn, id)?;
+            Self::detail_of(conn, row)
+        })
+        .map_err(handle_error)
+    }
+
+    /// Create a name-only "Ghost" (unverified, parked under `uncategorized`) (`[WO-034]`).
+    pub fn create_ghost(conn: &mut SqliteConnection, name: &str) -> Result<ExerciseDetail, String> {
+        let name = name.trim();
+        if name.is_empty() {
+            return Err("Name is required".to_string());
         }
-        Ok(out)
+        let id = diesel::insert_into(exercise::table)
+            .values(NewExerciseRow {
+                name,
+                category: UNCATEGORIZED,
+                default_rest_seconds: None,
+                slug: None,
+                verified: false,
+                created_at: Some(now_ts()),
+            })
+            .returning(exercise::id)
+            .get_result::<i32>(conn)
+            .map_err(handle_error)?;
+        let row = Self::find(conn, id).map_err(handle_error)?;
+        Self::detail_of(conn, row).map_err(handle_error)
+    }
+
+    /// Edit a user exercise; re-derives `verified` (`[WO-030]`, `[WO-035]`). Guarded.
+    pub fn update_user(
+        conn: &mut SqliteConnection,
+        id: i32,
+        input: &ExerciseInput,
+    ) -> Result<ExerciseDetail, String> {
+        Self::ensure_user(conn, id)?;
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            diesel::update(exercise::table.filter(exercise::id.eq(id)))
+                .set((
+                    exercise::name.eq(input.name.trim()),
+                    exercise::category.eq(&input.category),
+                    exercise::default_rest_seconds.eq(input.default_rest_seconds),
+                ))
+                .execute(conn)?;
+            diesel::delete(exercise_muscle::table.filter(exercise_muscle::exercise_id.eq(id)))
+                .execute(conn)?;
+            Self::write_muscles(conn, id, &input.muscles)?;
+            Self::recompute_verified(conn, id)?;
+            let row = Self::find(conn, id)?;
+            Self::detail_of(conn, row)
+        })
+        .map_err(handle_error)
+    }
+
+    /// Delete a user exercise; refuses seeded rows and rows referenced by a logged
+    /// set (`[WO-031]`, `[WO-032]`).
+    pub fn delete_user(conn: &mut SqliteConnection, id: i32) -> Result<(), String> {
+        Self::ensure_user(conn, id)?;
+        if Self::referenced_by_set(conn, id).map_err(handle_error)? {
+            return Err(
+                "This exercise is used in a logged workout and can't be deleted".to_string(),
+            );
+        }
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            diesel::delete(exercise_muscle::table.filter(exercise_muscle::exercise_id.eq(id)))
+                .execute(conn)?;
+            diesel::delete(exercise::table.filter(exercise::id.eq(id))).execute(conn)?;
+            Ok(())
+        })
+        .map_err(handle_error)
+    }
+
+    /// True if any logged set exists under this exercise (via workout_exercise).
+    fn referenced_by_set(conn: &mut SqliteConnection, id: i32) -> QueryResult<bool> {
+        let we_ids: Vec<i32> = workout_exercise::table
+            .filter(workout_exercise::exercise_id.eq(id))
+            .select(workout_exercise::id)
+            .load(conn)?;
+        if we_ids.is_empty() {
+            return Ok(false);
+        }
+        let n: i64 = workout_set::table
+            .filter(workout_set::workout_exercise_id.eq_any(&we_ids))
+            .count()
+            .get_result(conn)?;
+        Ok(n > 0)
+    }
+
+    fn write_muscles(
+        conn: &mut SqliteConnection,
+        exercise_id: i32,
+        muscles: &[MuscleInput],
+    ) -> QueryResult<()> {
+        for m in muscles {
+            diesel::insert_into(exercise_muscle::table)
+                .values(NewExerciseMuscle {
+                    exercise_id,
+                    muscle: &m.muscle,
+                    role: &m.role,
+                })
+                .execute(conn)?;
+        }
+        Ok(())
+    }
+
+    /// Unverified user exercises, oldest first (`[WO-043]` workspace list).
+    pub fn unverified(conn: &mut SqliteConnection) -> QueryResult<Vec<ExerciseDetail>> {
+        let rows = exercise::table
+            .filter(exercise::slug.is_null())
+            .filter(exercise::verified.eq(false))
+            .order(exercise::created_at.asc())
+            .load::<Exercise>(conn)?;
+        rows.into_iter().map(|e| Self::detail_of(conn, e)).collect()
+    }
+
+    /// Count + oldest timestamp for the avatar indicator (`[DH-019]`–`[DH-021]`).
+    pub fn unverified_summary(conn: &mut SqliteConnection) -> QueryResult<UnverifiedSummary> {
+        let base = exercise::table
+            .filter(exercise::slug.is_null())
+            .filter(exercise::verified.eq(false));
+        let count: i64 = base.clone().count().get_result(conn)?;
+        let oldest_created_at: Option<String> = base
+            .select(exercise::created_at)
+            .order(exercise::created_at.asc())
+            .first::<Option<String>>(conn)
+            .optional()?
+            .flatten();
+        Ok(UnverifiedSummary {
+            count,
+            oldest_created_at,
+        })
+    }
+
+    /// Apply one tag to many unverified exercises in a transaction, re-deriving
+    /// `verified`, returning an undo snapshot (`[WO-041]`). Seeded rows are refused.
+    pub fn batch_tag(
+        conn: &mut SqliteConnection,
+        input: &BatchTagInput,
+    ) -> Result<BatchTagResult, String> {
+        for &id in &input.exercise_ids {
+            Self::ensure_user(conn, id)?;
+        }
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            let mut items = Vec::with_capacity(input.exercise_ids.len());
+            for &id in &input.exercise_ids {
+                let ex = Self::find(conn, id)?;
+                let mut undo = BatchTagUndoItem {
+                    exercise_id: id,
+                    prev_category: ex.category.clone(),
+                    prev_verified: ex.verified,
+                    muscle_added: None,
+                };
+                match input.tag.kind.as_str() {
+                    "category" => {
+                        diesel::update(exercise::table.filter(exercise::id.eq(id)))
+                            .set(exercise::category.eq(&input.tag.value))
+                            .execute(conn)?;
+                    }
+                    "muscle" => {
+                        let role = input.tag.role.as_deref().unwrap_or("primary");
+                        let exists: i64 = exercise_muscle::table
+                            .filter(exercise_muscle::exercise_id.eq(id))
+                            .filter(exercise_muscle::muscle.eq(&input.tag.value))
+                            .count()
+                            .get_result(conn)?;
+                        if exists == 0 {
+                            diesel::insert_into(exercise_muscle::table)
+                                .values(NewExerciseMuscle {
+                                    exercise_id: id,
+                                    muscle: &input.tag.value,
+                                    role,
+                                })
+                                .execute(conn)?;
+                            undo.muscle_added = Some(MuscleInput {
+                                muscle: input.tag.value.clone(),
+                                role: role.to_string(),
+                            });
+                        }
+                    }
+                    other => {
+                        return Err(diesel::result::Error::QueryBuilderError(
+                            format!("Unknown batch tag kind '{}'", other).into(),
+                        ));
+                    }
+                }
+                Self::recompute_verified(conn, id)?;
+                items.push(undo);
+            }
+            Ok(BatchTagResult { items })
+        })
+        .map_err(handle_error)
+    }
+
+    /// Revert a previous batch tag from its snapshot (`[WO-042]`).
+    pub fn undo_batch_tag(
+        conn: &mut SqliteConnection,
+        result: &BatchTagResult,
+    ) -> Result<(), String> {
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            for item in &result.items {
+                if let Some(m) = &item.muscle_added {
+                    diesel::delete(
+                        exercise_muscle::table
+                            .filter(exercise_muscle::exercise_id.eq(item.exercise_id))
+                            .filter(exercise_muscle::muscle.eq(&m.muscle)),
+                    )
+                    .execute(conn)?;
+                }
+                diesel::update(exercise::table.filter(exercise::id.eq(item.exercise_id)))
+                    .set((
+                        exercise::category.eq(&item.prev_category),
+                        exercise::verified.eq(item.prev_verified),
+                    ))
+                    .execute(conn)?;
+            }
+            Ok(())
+        })
+        .map_err(handle_error)
+    }
+
+    pub fn categories(conn: &mut SqliteConnection) -> QueryResult<Vec<ExerciseCategory>> {
+        exercise_category::table
+            .filter(exercise_category::shortvalue.ne(UNCATEGORIZED))
+            .order(exercise_category::longvalue.asc())
+            .load(conn)
+    }
+
+    pub fn muscles(conn: &mut SqliteConnection) -> QueryResult<Vec<Muscle>> {
+        muscle::table.order(muscle::longvalue.asc()).load(conn)
     }
 }
 
@@ -834,9 +1219,105 @@ pub fn get_active_workout(pool: State<DbPool>) -> Result<Option<WorkoutDetail>, 
     }
 }
 
-/// The seeded exercise library (`[WO-012]`, `[WO-013]`).
+/// The exercise library — seeded + user-created (`[WO-012]`, `[WO-013]`, `[WO-033]`).
 #[command]
 pub fn get_exercise_library(pool: State<DbPool>) -> Result<Vec<ExerciseDetail>, String> {
     let mut conn = conn_from(&pool)?;
     Exercise::library(&mut conn).map_err(handle_error)
+}
+
+/// Surface the first human-readable message from a validation failure (`_conv-user-errors`).
+fn first_validation_message(e: validator::ValidationErrors) -> String {
+    e.field_errors()
+        .values()
+        .flat_map(|errs| errs.iter())
+        .find_map(|err| err.message.as_ref().map(|m| m.to_string()))
+        .unwrap_or_else(|| "Please check the highlighted fields".to_string())
+}
+
+/// Create a fully-specified user exercise (`[WO-029]`).
+#[command]
+pub fn create_exercise(
+    pool: State<DbPool>,
+    input: ExerciseInput,
+) -> Result<ExerciseDetail, String> {
+    input.validate().map_err(first_validation_message)?;
+    let mut conn = conn_from(&pool)?;
+    Exercise::create_full(&mut conn, &input)
+}
+
+/// Mid-workout quick-add: create a name-only unverified exercise and return it so the
+/// caller can select it in place (`[WO-034]`, `[WO-036]`).
+#[command]
+pub fn quick_add_exercise(pool: State<DbPool>, name: String) -> Result<ExerciseDetail, String> {
+    let mut conn = conn_from(&pool)?;
+    Exercise::create_ghost(&mut conn, &name)
+}
+
+/// Edit a user exercise; promotes to verified once complete (`[WO-030]`, `[WO-035]`).
+#[command]
+pub fn update_exercise(
+    pool: State<DbPool>,
+    id: i32,
+    input: ExerciseInput,
+) -> Result<ExerciseDetail, String> {
+    input.validate().map_err(first_validation_message)?;
+    let mut conn = conn_from(&pool)?;
+    Exercise::update_user(&mut conn, id, &input)
+}
+
+/// Delete a user exercise; guarded against seeded rows and logged-set references
+/// (`[WO-028]`, `[WO-031]`, `[WO-032]`).
+#[command]
+pub fn delete_exercise(pool: State<DbPool>, id: i32) -> Result<(), String> {
+    let mut conn = conn_from(&pool)?;
+    Exercise::delete_user(&mut conn, id)
+}
+
+/// Unverified user exercises for the quick-fix workspace (`[WO-043]`).
+#[command]
+pub fn list_unverified_exercises(pool: State<DbPool>) -> Result<Vec<ExerciseDetail>, String> {
+    let mut conn = conn_from(&pool)?;
+    Exercise::unverified(&mut conn).map_err(handle_error)
+}
+
+/// Count + oldest timestamp backing the dashboard avatar indicator (`[DH-019]`–`[DH-021]`).
+#[command]
+pub fn unverified_exercise_summary(pool: State<DbPool>) -> Result<UnverifiedSummary, String> {
+    let mut conn = conn_from(&pool)?;
+    Exercise::unverified_summary(&mut conn).map_err(handle_error)
+}
+
+/// Apply one category/muscle tag to many unverified exercises at once (`[WO-041]`).
+#[command]
+pub fn batch_tag_exercises(
+    pool: State<DbPool>,
+    input: BatchTagInput,
+) -> Result<BatchTagResult, String> {
+    if input.exercise_ids.is_empty() {
+        return Err("Select at least one exercise".to_string());
+    }
+    let mut conn = conn_from(&pool)?;
+    Exercise::batch_tag(&mut conn, &input)
+}
+
+/// Revert a previous batch tag (Undo) (`[WO-042]`).
+#[command]
+pub fn undo_batch_tag(pool: State<DbPool>, result: BatchTagResult) -> Result<(), String> {
+    let mut conn = conn_from(&pool)?;
+    Exercise::undo_batch_tag(&mut conn, &result)
+}
+
+/// Exercise categories for the add/edit form (excludes the `uncategorized` sentinel).
+#[command]
+pub fn list_exercise_categories(pool: State<DbPool>) -> Result<Vec<ExerciseCategory>, String> {
+    let mut conn = conn_from(&pool)?;
+    Exercise::categories(&mut conn).map_err(handle_error)
+}
+
+/// Muscle vocabulary for the add/edit form.
+#[command]
+pub fn list_muscles(pool: State<DbPool>) -> Result<Vec<Muscle>, String> {
+    let mut conn = conn_from(&pool)?;
+    Exercise::muscles(&mut conn).map_err(handle_error)
 }

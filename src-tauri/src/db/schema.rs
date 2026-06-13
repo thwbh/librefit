@@ -95,6 +95,9 @@ diesel::table! {
         name -> Text,
         category -> Text,
         default_rest_seconds -> Nullable<Integer>,
+        slug -> Nullable<Text>,
+        verified -> Bool,
+        created_at -> Nullable<Text>,
     }
 }
 
