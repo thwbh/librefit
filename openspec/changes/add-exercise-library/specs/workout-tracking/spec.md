@@ -79,12 +79,12 @@ The system SHALL provide a quick-fix workspace listing the user's unverified exe
 
 #### Scenario: [WO-041] Apply a tag to multiple selected exercises at once
 
-- **WHEN** the user selects several unverified exercises in the quick-fix workspace and taps a category or muscle tag
+- **WHEN** the user selects several unverified exercises in the quick-fix workspace, chooses a category or muscle tag, and confirms the application
 - **THEN** that tag is applied to every selected exercise and they leave the unverified list once their required metadata is complete
 
 #### Scenario: [WO-042] Undo a batch tag application
 
-- **WHEN** the user taps Undo on the snackbar shown after a batch tag application
+- **WHEN** the user taps the Undo affordance shown after a batch tag application
 - **THEN** the tag application is reverted and the affected exercises return to their prior state
 
 #### Scenario: [WO-043] Nothing-to-verify empty state

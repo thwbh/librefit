@@ -25,20 +25,21 @@
 ## 5. Frontend — exercises
 
 - [x] 5.1 Quick-add in the in-session exercise picker: name-only, selects in place, session stays active, no metadata form [WO-036]
-- [ ] 5.2 Exercise add/edit screen (name, category, muscles primary/secondary, default rest) per `_conv-modals` / `_conv-validation` [WO-029, WO-030]
+- [x] 5.2 Exercise add/edit screen (name, category, muscles primary/secondary, default rest) per `_conv-modals` / `_conv-validation` [WO-029, WO-030] (`ExerciseFormModal.svelte`; promotes Ghosts via the verified flip [WO-035]; in-modal `AlertBox` feedback so messages don't render behind the dialog)
 - [x] 5.3 Picker/search marker distinguishing user vs seeded exercises [WO-033]; seeded edit/delete disabled in UI [WO-028]
-- [ ] 5.4 Delete flow with referenced-exercise error per `_conv-user-errors` [WO-031, WO-032]
+- [x] 5.4 Delete flow with referenced-exercise error per `_conv-user-errors` [WO-031, WO-032] (guarded delete in `ExerciseFormModal.svelte` edit mode)
+- [x] 5.5 Dedicated library-management screen `routes/(app)/exercises` (linked from Settings): browse/edit/delete all user exercises (seeded excluded, read-only) [WO-028, WO-030, WO-031] — the entry point for verified user exercises, which the quick-fix (unverified-only) doesn't reach
 
 ## 6. Frontend — maintenance
 
-- [ ] 6.1 Avatar indicator on the dashboard with count [DH-019] and graceful-decay states [DH-020]; clears when none [DH-021]
-- [ ] 6.2 Quick-action entry from the indicator into the quick-fix workspace [DH-022]
-- [ ] 6.3 Batch-tagging workspace: multi-select + contextual tag bar [WO-041], Undo snackbar per `_conv-user-errors` [WO-042], empty state per `_conv-empty-states` [WO-043]
+- [x] 6.1 Avatar indicator on the dashboard with count [DH-019] and graceful-decay states [DH-020]; clears when none [DH-021] (`AvatarMaintenanceIndicator.svelte`, 48h one-step decay window)
+- [x] 6.2 Quick-action entry from the indicator into the quick-fix workspace [DH-022]
+- [x] 6.3 Batch-tagging workspace: multi-select + contextual tag bar with staged tag + explicit Apply [WO-041], in-modal Undo per `_conv-user-errors` [WO-042], empty state per `_conv-empty-states` [WO-043] (`ExerciseQuickFix.svelte`; feedback via in-modal `AlertBox`, not a layout snackbar — it would render behind the dialog)
 
 ## 7. Tests (traceability — every scenario cited)
 
 - [x] 7.1 Rust integration tests for exercise create/edit/delete/guards and verification flips, each citing its WO id via `scenario!` [WO-028–WO-032, WO-034, WO-035; WO-012/013/033 data] (`tests/cmd/test_exercise_cmd.rs`, all green)
 - [x] 7.2 Rust integration tests for unverified count and batch-tag/undo [WO-041, WO-042; DH-019/021 data] (green)
-- [~] 7.3 Vitest component tests: quick-add [WO-036] + picker marker [WO-033] done; add/edit screen, batch-tagging UI, empty state [WO-043] remain
-- [ ] 7.4 Vitest tests for the dashboard avatar indicator and quick-fix entry [DH-019..DH-022]
-- [ ] 7.5 Run the traceability lint to confirm every new WO/DH scenario is cited
+- [x] 7.3 Vitest component tests: quick-add [WO-036] + picker marker [WO-033]; add/edit screen [WO-029, WO-030, WO-035], delete guard [WO-031, WO-032], batch-tagging UI [WO-041, WO-042], empty state [WO-043]
+- [x] 7.4 Vitest tests for the dashboard avatar indicator and quick-fix entry [DH-019..DH-022] (`AvatarMaintenanceIndicator.svelte.test.ts`)
+- [x] 7.5 Run the traceability lint to confirm every new WO/DH scenario is cited (`npm run lint:traceability` green: 227/227 covered)

@@ -12,6 +12,7 @@
 		deleteIntake,
 		deleteWorkout,
 		listWorkouts,
+		unverifiedExerciseSummary,
 		updateIntake,
 		updateWeightTrackerEntry,
 		type Dashboard,
@@ -20,13 +21,14 @@
 		type IntakeTarget,
 		type NewIntake,
 		type NewWeightTracker,
+		type UnverifiedSummary,
 		type WeightTarget,
 		type WeightTracker,
 		type WorkoutDetail
 	} from '$lib/api';
 	import { getUserContext } from '$lib/context';
 	import { debug } from '@tauri-apps/plugin-log';
-	import { Avatar, useRefresh } from '@thwbh/veilchen';
+	import { useRefresh } from '@thwbh/veilchen';
 	import { invalidate } from '$app/navigation';
 	import { CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
@@ -47,6 +49,8 @@
 	import WorkoutOverlay from '$lib/component/workout/WorkoutOverlay.svelte';
 	import WorkoutSummary from '$lib/component/workout/WorkoutSummary.svelte';
 	import DashboardWorkoutSurface from '$lib/component/dashboard/DashboardWorkoutSurface.svelte';
+	import AvatarMaintenanceIndicator from '$lib/component/dashboard/AvatarMaintenanceIndicator.svelte';
+	import ExerciseQuickFix from '$lib/component/workout/ExerciseQuickFix.svelte';
 	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
 	import WorkoutDeleteDialog from '$lib/component/workout/WorkoutDeleteDialog.svelte';
 	import WorkoutEditModal from '$lib/component/workout/WorkoutEditModal.svelte';
@@ -115,6 +119,20 @@
 	const avatarSrc = $derived(
 		userContext.user ? getAvatarFromUser(userContext.user.name, userContext.user.avatar) : ''
 	);
+
+	// Unverified-exercise maintenance indicator on the avatar (DH-019..DH-022). The
+	// count + age come from `workout-tracking`; the dashboard owns its placement and
+	// the entry into the batch-tagging quick-fix.
+	let unverifiedSummary = $state<UnverifiedSummary | null>(null);
+	let quickFixOpen = $state(false);
+
+	async function refreshUnverified() {
+		try {
+			unverifiedSummary = await unverifiedExerciseSummary();
+		} catch {
+			// Background fetch — stay silent (ERR-003) and keep the last-known state.
+		}
+	}
 
 	// Display date
 	const displayDate = getDisplayDateAsStr(new Date());
@@ -299,6 +317,7 @@
 		getExerciseLibrary()
 			.then((l) => (exerciseLibrary = l))
 			.catch(() => {});
+		refreshUnverified();
 		return () => workoutStore.dispose();
 	});
 </script>
@@ -314,9 +333,11 @@
 				<span class="text-sm opacity-70">{displayDate}</span>
 			</div>
 
-			{#if avatarSrc}
-				<Avatar size="lg" src={avatarSrc} />
-			{/if}
+			<AvatarMaintenanceIndicator
+				{avatarSrc}
+				summary={unverifiedSummary}
+				onopen={() => (quickFixOpen = true)}
+			/>
 		</div>
 
 		<!-- Progress bar -->
@@ -449,6 +470,11 @@
 	</div>
 </div>
 <IntakeFab onclick={modal.openCreate} />
+
+<!-- Batch-tagging quick-fix, entered from the avatar maintenance indicator (DH-022). -->
+{#if quickFixOpen}
+	<ExerciseQuickFix onclose={() => (quickFixOpen = false)} onchanged={refreshUnverified} />
+{/if}
 
 <!-- Workout overlay: kept mounted while a session is active so minimizing
      preserves in-progress set entry; visibility is driven by `open`. -->

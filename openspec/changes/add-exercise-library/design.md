@@ -48,7 +48,7 @@ The interaction model is the product of an exploration session (see `ensemble-br
 
 ### Batch-tagging applies one tag to a multi-selection, with Undo
 
-- **Decision:** The quick-fix exposes multi-select + a tag application command that sets a category or adds a muscle to all selected rows in one transaction; the result is reversible via an Undo snackbar (`_conv-user-errors`). An exercise leaves the unverified set once its required metadata is complete.
+- **Decision:** The quick-fix exposes multi-select + a tag application command that sets a category or adds a muscle to all selected rows in one transaction; the result is reversible via an Undo affordance (`_conv-user-errors`). An exercise leaves the unverified set once its required metadata is complete. _Implementation note:_ the tag is **staged** and only committed on an explicit Apply (the same footer-driven flow as the post-workout editor), so the selection never changes under the user mid-tap; and because the workspace is a modal, its feedback (the Undo affordance and any error) renders **in-modal** via `AlertBox` — a layout-level toast/snackbar would sit behind the dialog backdrop.
 - **Rationale:** This is the mechanic the user approved; it bulk-resolves the common case (a pile of same-muscle Ghosts) without a per-row form and bounds the blast radius of a mistake to one Undo.
 - **Alternatives considered:** Swipe-to-mass-tag and one-at-a-time cards (both rejected in exploration — accidental mass-mislabeling and per-item tedium respectively).
 
