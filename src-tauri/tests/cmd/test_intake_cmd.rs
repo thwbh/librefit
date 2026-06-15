@@ -1,4 +1,4 @@
-use crate::helpers::setup_test_pool;
+use crate::helpers::{create_future_test_dates, setup_test_pool};
 use chrono::{Days, Local};
 use librefit_lib::scenario;
 use librefit_lib::service::intake::{
@@ -7,18 +7,6 @@ use librefit_lib::service::intake::{
     NewIntake, NewIntakeTarget,
 };
 use tauri::Manager;
-
-/// Returns test dates relative to today to avoid "target date lies in the past" validation errors.
-/// Returns (start_date, end_date) as formatted strings.
-fn get_future_test_dates() -> (String, String) {
-    let today = Local::now().date_naive();
-    let start = today.checked_add_days(Days::new(1)).unwrap();
-    let end = today.checked_add_days(Days::new(180)).unwrap(); // 6 months in the future
-    (
-        start.format("%Y-%m-%d").to_string(),
-        end.format("%Y-%m-%d").to_string(),
-    )
-}
 
 // ============================================================================
 // INTAKE TARGET TESTS
@@ -30,10 +18,12 @@ fn test_create_intake_target_success() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
+    let future_dates = create_future_test_dates();
+
     let new_target = NewIntakeTarget {
         added: "2026-01-15".to_string(),
-        start_date: "2026-01-15".to_string(),
-        end_date: "2026-06-15".to_string(),
+        start_date: future_dates.0,
+        end_date: future_dates.1,
         target_calories: 2000,
         maximum_calories: 2500,
     };
@@ -122,7 +112,7 @@ fn test_get_last_intake_target_success() {
     app.manage(pool.clone());
 
     // Create two targets with future dates to avoid validation errors
-    let (start_date1, end_date1) = get_future_test_dates();
+    let (start_date1, end_date1) = create_future_test_dates();
 
     // Second target starts a few days later to ensure proper ordering
     let today = Local::now().date_naive();
