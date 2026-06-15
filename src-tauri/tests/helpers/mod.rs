@@ -1,3 +1,4 @@
+use chrono::{Days, Local, NaiveDate};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::sqlite::SqliteConnection;
 use librefit_lib::db::migrations;
@@ -86,4 +87,17 @@ pub fn create_test_weight_entry(pool: &TestPool, added: &str, amount: f32) -> We
     let mut conn = pool.get().expect("Failed to get connection");
     let new_entry = NewWeightTracker::new(added.to_string(), amount);
     WeightTracker::create(&mut conn, &new_entry).expect("Failed to create weight entry")
+}
+
+/// Creates test dates that lie ahead to avoid time-dependent validation errors
+/// Returns (start_date, end_date) as formatted strings.
+pub fn create_future_test_dates() -> (String, String) {
+    let today: NaiveDate = Local::now().date_naive();
+    let start = today.checked_add_days(Days::new(1)).unwrap();
+    let end = today.checked_add_days(Days::new(180)).unwrap(); // 6 months in the future
+
+    (
+        start.format("%Y-%m-%d").to_string(),
+        end.format("%Y-%m-%d").to_string(),
+    )
 }
