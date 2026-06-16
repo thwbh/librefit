@@ -9,7 +9,8 @@ DROP INDEX IF EXISTS idx_exercise_slug;
 
 DELETE FROM exercise WHERE slug IS NULL;
 
-ALTER TABLE exercise DROP COLUMN created_at;
+ALTER TABLE exercise DROP COLUMN time;
+ALTER TABLE exercise DROP COLUMN added;
 ALTER TABLE exercise DROP COLUMN verified;
 ALTER TABLE exercise DROP COLUMN slug;
 

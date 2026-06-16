@@ -1,20 +1,20 @@
 ## 1. Data model & migrations
 
-- [x] 1.1 Migration hardening `exercise`: add `slug TEXT UNIQUE`, `verified BOOLEAN NOT NULL DEFAULT 0`, `created_at TEXT`; backfill seeded rows with a stable `slug` and `verified = 1`. (Category stays NOT NULL with an `'uncategorized'` sentinel — see design note; pure ALTER ADD avoids an unsafe FK-parent rebuild.)
-- [x] 1.2 Update Diesel `schema.rs`; `exercise` exposes `slug` + `verified` + `created_at`
+- [x] 1.1 Migration hardening `exercise`: add `slug TEXT UNIQUE`, `verified BOOLEAN NOT NULL DEFAULT 0`, and an `added` (date) + `time` creation stamp (split two-column local date/time, matching intake/weight_tracker); backfill seeded rows with a stable `slug` and `verified = 1`. (Category stays NOT NULL with an `'uncategorized'` sentinel — see design note; pure ALTER ADD avoids an unsafe FK-parent rebuild.)
+- [x] 1.2 Update Diesel `schema.rs`; `exercise` exposes `slug` + `verified` + `added` + `time`
 
 ## 2. Backend — exercises
 
 - [x] 2.1 Single guarded exercise-mutation choke-point in the repository (`Exercise::ensure_user`): refuses writes to slug-bearing (seeded) rows [WO-028]
 - [x] 2.2 Command to create a user exercise with full metadata: `slug = NULL`, verified once complete [WO-029]
-- [x] 2.3 Command to create a name-only exercise: `slug = NULL`, `verified = 0`, `created_at` set [WO-034]
+- [x] 2.3 Command to create a name-only exercise: `slug = NULL`, `verified = 0`, `added`/`time` set [WO-034]
 - [x] 2.4 Edit user exercise command; flip `verified = 1` when category + muscles are present [WO-030, WO-035]
 - [x] 2.5 Delete user exercise command; refuse when referenced by a logged set per `_conv-user-errors` [WO-031, WO-032]
 - [x] 2.6 Library query returns seeded + user rows, tags source (`slug IS NULL` → `seeded`), and exposes `verified` [WO-012, WO-013, WO-033]
 
 ## 3. Backend — maintenance
 
-- [x] 3.1 Unverified-exercise count + listing (with `created_at`) commands for the avatar indicator [DH-019, DH-021]
+- [x] 3.1 Unverified-exercise count + listing (with `added`/`time`) commands for the avatar indicator [DH-019, DH-021]
 - [x] 3.2 Batch-tag command: apply one category/muscle to a set of exercise ids in one transaction; flip `verified` when complete [WO-041]
 - [x] 3.3 Undo support for batch-tag (revert the last application) [WO-042]
 

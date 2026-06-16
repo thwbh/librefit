@@ -37,7 +37,8 @@ const ghost = (id: number, name: string): ExerciseDetail => ({
 	muscles: [],
 	seeded: false,
 	verified: false,
-	createdAt: '2026-06-13T08:00:00.000Z'
+	added: '2026-06-13',
+	time: '08:00:00'
 });
 
 beforeEach(() => {

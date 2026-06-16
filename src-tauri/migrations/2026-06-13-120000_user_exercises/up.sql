@@ -11,7 +11,10 @@
 --   * verified   — user "Ghost" rows start 0; promoted to 1 once category +
 --                  muscles are supplied. Seeded rows are always 1. This flag —
 --                  not the category — is the source of truth for completeness.
---   * created_at — for the dashboard avatar's graceful-decay window.
+--   * added / time — local creation date + time, split across two columns using
+--                  the same field names as intake/weight_tracker (this app is
+--                  local, single-user, single-device — no timezone offset to
+--                  keep). Feeds the dashboard avatar's graceful-decay window.
 --
 -- `category` stays NOT NULL (relaxing it would force rebuilding this FK-parent
 -- table inside a transaction, which SQLite can't do safely with foreign_keys
@@ -24,7 +27,8 @@ VALUES ('uncategorized', 'Uncategorized');
 
 ALTER TABLE exercise ADD COLUMN slug TEXT;
 ALTER TABLE exercise ADD COLUMN verified BOOLEAN NOT NULL DEFAULT 0;
-ALTER TABLE exercise ADD COLUMN created_at TEXT;
+ALTER TABLE exercise ADD COLUMN added TEXT;
+ALTER TABLE exercise ADD COLUMN time TEXT;
 
 -- Backfill seeded rows: stable slug from the (unique) name, mark verified.
 -- Names contain only spaces and hyphens, so lower + space->hyphen is clean and

@@ -23,7 +23,7 @@ _None._ This extends existing capabilities rather than introducing a new domain.
 
 ## Impact
 
-- **Backend (Rust/Diesel):** a migration hardening the single `exercise` table — a `slug` natural key (non-null for seeded rows, the stable reference used by seeded content), a `verified` flag, and `created_at`; no `user_id` (single local user). Seeded immutability is enforced at a single repository choke-point. New repository functions and Tauri commands for exercise create/edit/delete, listing seeded vs user, unverified count, and batch-tag application.
+- **Backend (Rust/Diesel):** a migration hardening the single `exercise` table — a `slug` natural key (non-null for seeded rows, the stable reference used by seeded content), a `verified` flag, and an `added`/`time` creation stamp (split local date/time, per the intake/weight_tracker convention); no `user_id` (single local user). Seeded immutability is enforced at a single repository choke-point. New repository functions and Tauri commands for exercise create/edit/delete, listing seeded vs user, unverified count, and batch-tag application.
 - **API bindings (TS):** new commands surfaced through the generated `$lib/api` bindings.
 - **Frontend (SvelteKit 5):** "+" in the in-session exercise picker; exercise add/edit screen; avatar indicator and batch-tagging quick-fix workspace on the dashboard.
 - **Conventions:** `_conv-modals` (add/edit), `_conv-validation` + `_conv-user-errors` (validation, Undo snackbar), `_conv-gestures` (any swipe affordance), `_conv-empty-states` (empty library / nothing-to-verify states), `_conv-test-traceability` (every new scenario cited by a test).

@@ -234,7 +234,8 @@ fn unverified_summary_counts_and_clears() {
     let g = quick_add_exercise(app.state(), "Ghost D".to_string()).unwrap();
     let summary = unverified_exercise_summary(app.state()).unwrap();
     assert_eq!(summary.count, 1);
-    assert!(summary.oldest_created_at.is_some());
+    assert!(summary.oldest_added.is_some());
+    assert!(summary.oldest_time.is_some());
 
     update_exercise(app.state(), g.id, full_input("Ghost D", "cable")).unwrap();
     assert_eq!(unverified_exercise_summary(app.state()).unwrap().count, 0);

@@ -8,8 +8,11 @@ import {
 	getDaytimeFoodCategory,
 	getDaytimeGreeting,
 	getDisplayDateAsStr,
-	parseStringAsDate
+	parseStringAsDate,
+	parseStringAsDateTime
 } from './date';
+
+/* Do not forget that the JS Date month starts with zero. */
 
 describe('getDateAsStr function', () => {
 	it('should return date string in default format', () => {
@@ -76,5 +79,29 @@ describe('getDaytimeFoodCategory function', () => {
 		expect(getDaytimeFoodCategory(new Date(2022, 7, 1, 9))).toBe('b');
 		expect(getDaytimeFoodCategory(new Date(2022, 7, 1, 14))).toBe('l');
 		expect(getDaytimeFoodCategory(new Date(2022, 7, 1, 20))).toBe('d');
+	});
+});
+
+describe('parseStringAsDateTime function', () => {
+	it('should parse datetime string in default format', () => {
+		const dateString = '2022-08-01';
+		const timeString = '08:30:00';
+
+		expect(parseStringAsDateTime(dateString, timeString)).toEqual(new Date(2022, 7, 1, 8, 30, 0));
+	});
+
+	it('should parse datetime string in provided format', () => {
+		const dateString = '01.08.2022';
+		const timeString = '08:30';
+
+		expect(parseStringAsDateTime(dateString, timeString, 'dd.MM.yyyy HH:mm')).toEqual(
+			new Date(2022, 7, 1, 8, 30, 0)
+		);
+	});
+
+	it('should fail to parse invalid datetime string', () => {
+		const result = parseStringAsDateTime('invalid-date', 'invalid-time');
+
+		expect(isNaN(result.getTime())).toBe(true);
 	});
 });

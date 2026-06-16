@@ -67,8 +67,11 @@ pub struct Exercise {
     pub slug: Option<String>,
     /// User "Ghost" rows start `false`; promoted once categorised. Seeded == `true`.
     pub verified: bool,
-    /// Set when a user row is created; drives the avatar graceful-decay window.
-    pub created_at: Option<String>,
+    /// Local creation date + time (split, no offset — same `added`/`time` field
+    /// names as intake/weight_tracker), set when a user row is created; drives the
+    /// avatar graceful-decay window.
+    pub added: Option<String>,
+    pub time: Option<String>,
 }
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
@@ -233,8 +236,9 @@ pub struct ExerciseDetail {
     pub seeded: bool,
     /// `false` while a user exercise is an unverified "Ghost" (`[WO-034]`).
     pub verified: bool,
-    /// Creation timestamp for user rows (graceful-decay input); `None` for seeded.
-    pub created_at: Option<String>,
+    /// Local creation date + time for user rows (graceful-decay input); `None` for seeded.
+    pub added: Option<String>,
+    pub time: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -277,6 +281,19 @@ pub struct WorkoutDetail {
 
 fn now_ts() -> String {
     chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+}
+
+/// Backend-set local creation date (`added`, `YYYY-MM-DD`) and time (`time`,
+/// `HH:MM:SS`) for a user exercise, mirroring the intake/weight_tracker
+/// `default_time` convention: the stamp is set by the backend, never the client.
+/// Split across two columns with no timezone offset — the app is local,
+/// single-user, single-device.
+fn default_date() -> Option<String> {
+    Some(chrono::Local::now().format("%Y-%m-%d").to_string())
+}
+
+fn default_time() -> Option<String> {
+    Some(chrono::Local::now().format("%H:%M:%S").to_string())
 }
 
 fn parse_ts(s: &str) -> Result<chrono::DateTime<chrono::FixedOffset>, String> {
@@ -673,8 +690,10 @@ pub struct BatchTagResult {
 #[serde(rename_all = "camelCase")]
 pub struct UnverifiedSummary {
     pub count: i64,
-    /// Oldest unverified `created_at`; the dashboard derives the decay state from it.
-    pub oldest_created_at: Option<String>,
+    /// `added` date + `time` of the oldest unverified exercise; the dashboard derives
+    /// the decay state from it.
+    pub oldest_added: Option<String>,
+    pub oldest_time: Option<String>,
 }
 
 #[derive(Insertable)]
@@ -685,7 +704,8 @@ struct NewExerciseRow<'a> {
     default_rest_seconds: Option<i32>,
     slug: Option<String>,
     verified: bool,
-    created_at: Option<String>,
+    added: Option<String>,
+    time: Option<String>,
 }
 
 #[derive(Insertable)]
@@ -742,7 +762,8 @@ impl Exercise {
             muscles,
             seeded: e.slug.is_some(),
             verified: e.verified,
-            created_at: e.created_at,
+            added: e.added,
+            time: e.time,
         })
     }
 
@@ -771,7 +792,8 @@ impl Exercise {
                     default_rest_seconds: input.default_rest_seconds,
                     slug: None,
                     verified: false,
-                    created_at: Some(now_ts()),
+                    added: default_date(),
+                    time: default_time(),
                 })
                 .returning(exercise::id)
                 .get_result::<i32>(conn)?;
@@ -796,7 +818,8 @@ impl Exercise {
                 default_rest_seconds: None,
                 slug: None,
                 verified: false,
-                created_at: Some(now_ts()),
+                added: default_date(),
+                time: default_time(),
             })
             .returning(exercise::id)
             .get_result::<i32>(conn)
@@ -886,7 +909,7 @@ impl Exercise {
         let rows = exercise::table
             .filter(exercise::slug.is_null())
             .filter(exercise::verified.eq(false))
-            .order(exercise::created_at.asc())
+            .order((exercise::added.asc(), exercise::time.asc()))
             .load::<Exercise>(conn)?;
         rows.into_iter().map(|e| Self::detail_of(conn, e)).collect()
     }
@@ -897,15 +920,16 @@ impl Exercise {
             .filter(exercise::slug.is_null())
             .filter(exercise::verified.eq(false));
         let count: i64 = base.clone().count().get_result(conn)?;
-        let oldest_created_at: Option<String> = base
-            .select(exercise::created_at)
-            .order(exercise::created_at.asc())
-            .first::<Option<String>>(conn)
-            .optional()?
-            .flatten();
+        let oldest: Option<(Option<String>, Option<String>)> = base
+            .select((exercise::added, exercise::time))
+            .order((exercise::added.asc(), exercise::time.asc()))
+            .first::<(Option<String>, Option<String>)>(conn)
+            .optional()?;
+        let (oldest_added, oldest_time) = oldest.unwrap_or((None, None));
         Ok(UnverifiedSummary {
             count,
-            oldest_created_at,
+            oldest_added,
+            oldest_time,
         })
     }
 

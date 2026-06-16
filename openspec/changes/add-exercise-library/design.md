@@ -26,7 +26,7 @@ The interaction model is the product of an exploration session (see `ensemble-br
 
 - **Decision:** Keep a single `exercise` table rather than splitting seeded and user rows. Harden it:
   - Add `slug TEXT UNIQUE` — **non-null for seeded rows, null for user-created rows**. Seeded rows are exactly those with a slug; this single column is both the seeded/user discriminator and the stable reference key.
-  - Add `verified BOOLEAN NOT NULL DEFAULT 0` (seeded rows seeded as `1`) and `created_at TEXT` (for graceful decay). `verified` — **not** the category — is the source of truth for completeness.
+  - Add `verified BOOLEAN NOT NULL DEFAULT 0` (seeded rows seeded as `1`) and a creation stamp **split into `added` (date) + `time` columns** (for graceful decay), reusing the intake/weight_tracker field convention — the app is local, single-user, single-device, so there is no timezone offset worth persisting. `verified` — **not** the category — is the source of truth for completeness.
   - **No `user_id`** — single local user.
   - **Category stays `NOT NULL`; a name-only "Ghost" is parked under a seeded `'uncategorized'` category** until verified. _Implementation note:_ the original plan was to make `category` nullable, but relaxing a column constraint forces a full rebuild of this FK-parent table, and SQLite cannot do that safely inside Diesel's per-migration transaction with `foreign_keys = ON` (it can't toggle `foreign_keys`, and `defer_foreign_keys` does not cover `DROP TABLE` of a referenced parent). The sentinel category keeps the migration to pure `ALTER ADD COLUMN` (no rebuild, FK children untouched) while `verified = 0` carries the "incomplete" meaning.
   - All seeded content shipped via migration (future seeded exercises, seeded templates) references exercises by **`slug`, never by raw id**, so a user row claiming an autoincrement id can never collide with a seeded reference.
@@ -40,11 +40,11 @@ The interaction model is the product of an exploration session (see `ensemble-br
 - **Rationale:** The dashboard indicator and quick-fix need a cheap, indexable count of unverified rows; deriving "completeness" on every read is costlier and ambiguous (what counts as complete can evolve). The flip rule lives in one backend place so "verified" has a single owner.
 - **Alternatives considered:** Pure derivation from null category/muscles (rejected — recomputed on every list and couples "verified" to a fixed completeness rule).
 
-### Graceful decay is a presentation rule over `created_at`, not stored state
+### Graceful decay is a presentation rule over the `added`/`time` stamp, not stored state
 
 - **Decision:** The avatar indicator computes prominent-vs-decayed from the age of the oldest/newest unverified exercise (a recency window); no decay state is persisted.
-- **Rationale:** Decay is purely visual and time-derived; persisting it would need a timer/migration for no behavioral gain. The backend exposes the unverified rows with their `created_at`; the dashboard renders the state.
-- **Alternatives considered:** A stored "staleness" enum updated by a job (rejected — no background scheduler in scope, and it duplicates information already in `created_at`).
+- **Rationale:** Decay is purely visual and time-derived; persisting it would need a timer/migration for no behavioral gain. The backend exposes the unverified rows (and the summary's oldest) with their `added`/`time` stamp; the dashboard reconstructs a local datetime and renders the state.
+- **Alternatives considered:** A stored "staleness" enum updated by a job (rejected — no background scheduler in scope, and it duplicates information already in the `added`/`time` stamp).
 
 ### Batch-tagging applies one tag to a multi-selection, with Undo
 
@@ -62,7 +62,7 @@ The interaction model is the product of an exploration session (see `ensemble-br
 
 ## Migration Plan
 
-1. New Diesel migration rebuilding `exercise` (SQLite can't relax `NOT NULL` in place): add `slug TEXT UNIQUE`, `verified BOOLEAN NOT NULL DEFAULT 0`, `created_at TEXT`, make `category` nullable; backfill seeded rows with a stable `slug` and `verified = 1`.
+1. New Diesel migration hardening `exercise` (pure `ALTER ADD COLUMN`, no rebuild): add `slug TEXT UNIQUE`, `verified BOOLEAN NOT NULL DEFAULT 0`, and an `added` (date) + `time` creation stamp; backfill seeded rows with a stable `slug` and `verified = 1`. (`category` stays NOT NULL with an `'uncategorized'` sentinel — see the table decision.)
 2. Regenerate Diesel `schema.rs`; add the repository (incl. the single guarded exercise-mutation choke-point) + command layers; regenerate TS bindings.
 3. Build frontend surfaces behind the existing workout flows; no existing route is removed.
 4. **Rollback:** the feature is additive at the app layer (new columns default to seeded-equivalent values, new tables unused by existing code), so reverting the frontend leaves the schema harmless.

@@ -97,7 +97,8 @@ diesel::table! {
         default_rest_seconds -> Nullable<Integer>,
         slug -> Nullable<Text>,
         verified -> Bool,
-        created_at -> Nullable<Text>,
+        added -> Nullable<Text>,
+        time -> Nullable<Text>,
     }
 }
 

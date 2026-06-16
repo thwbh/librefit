@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Avatar } from '@thwbh/veilchen';
 	import type { UnverifiedSummary } from '$lib/api';
+	import { parseStringAsDateTime } from '$lib/date';
+	import { differenceInHours } from 'date-fns';
 
 	// Maintenance indicator hosted on the dashboard avatar (DH-019..DH-022). Surfaces
 	// the count of unverified exercises (owned by `workout-tracking`) and applies
@@ -21,10 +23,11 @@
 
 	const count = $derived(summary?.count ?? 0);
 	const decayed = $derived.by(() => {
-		const oldest = summary?.oldestCreatedAt;
-		if (!oldest) return false;
-		const ageHours = (Date.now() - new Date(oldest).getTime()) / 3_600_000;
-		return ageHours > DECAY_HOURS;
+		if (!summary || !summary.oldestAdded || !summary.oldestTime) return false;
+
+		const dateTimeAdded = parseStringAsDateTime(summary.oldestAdded!, summary.oldestTime!);
+
+		return differenceInHours(Date.now(), dateTimeAdded) > DECAY_HOURS;
 	});
 	const label = $derived(`${count} exercise${count === 1 ? '' : 's'} to tidy up`);
 </script>
