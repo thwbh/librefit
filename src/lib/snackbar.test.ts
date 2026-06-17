@@ -10,7 +10,7 @@ import { undoSnackbar, UNDO_SNACKBAR_DURATION } from './snackbar';
 describe('undoSnackbar', () => {
 	beforeEach(() => add.mockReset());
 
-	it('[WO-042] enqueues a snackbar wiring the Undo action to the callback', () => {
+	it('[WO-042] [UND-001] [UND-002] [UND-003] enqueues a snackbar wiring the Undo action to the callback', () => {
 		const onUndo = vi.fn();
 		undoSnackbar('Tagged 3 exercises.', onUndo);
 

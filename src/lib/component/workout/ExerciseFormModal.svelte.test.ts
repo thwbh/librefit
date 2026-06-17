@@ -144,7 +144,7 @@ describe('ExerciseFormModal', () => {
 		expect(vi.mocked(undoSnackbar).mock.calls[0][0]).toContain('Atlas Press');
 	});
 
-	it('[WO-031] Undo on a delete recreates the exercise from its own data', async () => {
+	it('[WO-048] [UND-002] Undo on a delete recreates the exercise from its own data', async () => {
 		vi.mocked(deleteExercise).mockResolvedValue(undefined);
 		const recreated = detail({ id: 99 });
 		vi.mocked(createExercise).mockResolvedValue(recreated);
@@ -172,7 +172,7 @@ describe('ExerciseFormModal', () => {
 		expect(onsaved).toHaveBeenCalledWith(recreated);
 	});
 
-	it('[WO-031] startInDelete opens straight into the delete-confirm view', async () => {
+	it('[WO-046] startInDelete opens straight into the delete-confirm view (swipe-right delete)', async () => {
 		render(ExerciseFormModal, {
 			props: {
 				mode: 'edit',

@@ -59,14 +59,14 @@ afterEach(() => {
 });
 
 describe('Exercises management page', () => {
-	it('[WO-028] lists only user-created exercises, excluding read-only seeded ones', async () => {
+	it('[WO-028] [WO-044] lists only user-created exercises, excluding read-only seeded ones', async () => {
 		render(ExercisesPage);
 
 		expect(await screen.findByText('Atlas Press')).toBeInTheDocument();
 		expect(screen.queryByText('Bench Press')).not.toBeInTheDocument();
 	});
 
-	it('[WO-030] long-press on a row opens the edit screen pre-filled', async () => {
+	it('[WO-030] [WO-046] long-press on a row opens the edit screen pre-filled', async () => {
 		render(ExercisesPage);
 
 		// Edit gesture: long-press (mirrors swipe-left) — `_conv-gestures`.
@@ -77,7 +77,7 @@ describe('Exercises management page', () => {
 		expect(await screen.findByTestId('exercise-name')).toHaveValue('Atlas Press');
 	});
 
-	it('[WO-031] opens a blank add screen from the Add action', async () => {
+	it('[WO-045] opens a blank add screen from the Add action', async () => {
 		render(ExercisesPage);
 		await screen.findByText('Atlas Press');
 
@@ -87,7 +87,7 @@ describe('Exercises management page', () => {
 		expect(screen.getByTestId('exercise-name')).toHaveValue('');
 	});
 
-	it('[WO-030] filters the list by the search query', async () => {
+	it('[WO-047] filters the list by the search query', async () => {
 		render(ExercisesPage);
 		await screen.findByText('Atlas Press');
 

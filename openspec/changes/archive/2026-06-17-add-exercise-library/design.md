@@ -46,11 +46,22 @@ The interaction model is the product of an exploration session (see `ensemble-br
 - **Rationale:** Decay is purely visual and time-derived; persisting it would need a timer/migration for no behavioral gain. The backend exposes the unverified rows (and the summary's oldest) with their `added`/`time` stamp; the dashboard reconstructs a local datetime and renders the state.
 - **Alternatives considered:** A stored "staleness" enum updated by a job (rejected — no background scheduler in scope, and it duplicates information already in the `added`/`time` stamp).
 
-### Batch-tagging applies one tag to a multi-selection, with Undo
+### Batch-tagging applies a multi-tag set to a multi-selection, committed on confirm, with grace-period Undo
 
-- **Decision:** The quick-fix exposes multi-select + a tag application command that sets a category or adds a muscle to all selected rows in one transaction; the result is reversible via an Undo affordance (`_conv-user-errors`). An exercise leaves the unverified set once its required metadata is complete. _Implementation note:_ the tag is **staged** and only committed on an explicit Apply (the same footer-driven flow as the post-workout editor), so the selection never changes under the user mid-tap; and because the workspace is a modal, its feedback (the Undo affordance and any error) renders **in-modal** via `AlertBox` — a layout-level toast/snackbar would sit behind the dialog backdrop.
-- **Rationale:** This is the mechanic the user approved; it bulk-resolves the common case (a pile of same-muscle Ghosts) without a per-row form and bounds the blast radius of a mistake to one Undo.
-- **Alternatives considered:** Swipe-to-mass-tag and one-at-a-time cards (both rejected in exploration — accidental mass-mislabeling and per-item tedium respectively).
+- **Decision:** The quick-fix is **edit-only** (no create). It exposes multi-select + a shared category-chips/muscle-cycle picker (`ExerciseTagPicker`) for staging **a category and/or one or more muscle roles**; confirming (the footer **Done**) applies the whole staged set to every selected row in one transaction (`tags: BatchTag[]`). The result is reversible via a **post-close grace-period Undo snackbar** (`_conv-undo`). An exercise leaves the unverified set once its required metadata is complete. _Implementation note:_ feedback moved **out of the modal** — Done applies and closes, then a layout `SnackbarContainer` shows the Undo; an in-modal affordance is no longer needed because the dialog is gone. The original single-tag, explicit-"Apply", in-modal-`AlertBox`-Undo design was superseded during build.
+- **Rationale:** Staging multiple tags resolves the common case (a pile of same-muscle Ghosts that also share a category) in one pass; committing on Done keeps the selection stable under the user's tap; the grace-period snackbar bounds the blast radius of a mistake to one Undo without a blocking confirmation.
+- **Alternatives considered:** Single tag per apply (rejected — forced repeated round-trips for the common multi-muscle case); in-modal Undo (rejected once apply moved to close — a snackbar behind the backdrop is invisible); swipe-to-mass-tag and one-at-a-time cards (both rejected in exploration — accidental mass-mislabeling and per-item tedium respectively).
+
+### Reversible delete and batch-tag share a grace-period Undo convention (`_conv-undo`)
+
+- **Decision:** Deleting an unreferenced user exercise and applying a batch tag both surface a **non-blocking Undo snackbar** for a bounded grace period, after the originating modal closes. This pattern was lifted into a new hand-written convention, `_conv-undo` (prefix `UND`), so other features can reuse it. Delete-undo **recreates** the exercise from its captured data (name/category/muscles/rest) — a faithful restore, though it lands a new row id (acceptable: only unreferenced exercises are deletable, so nothing is orphaned).
+- **Rationale:** The destructive/bulk actions here are exactly the case a grace period serves better than a modal confirm; centralising the affordance keeps wording, placement (above the nav dock), and timing consistent.
+- **Alternatives considered:** Per-action modal confirms (rejected — heavier for a reversible action); a true soft-delete/restore with stable ids (deferred — needs a tombstone column for no user-visible gain here).
+
+### A dedicated library-management screen, distinct from the in-session picker
+
+- **Decision:** A Settings-reached `/exercises` screen lists all user-created exercises (seeded excluded), with a `SearchBar`, a floating add (the `IntakeFab` pattern), and `_conv-gestures` rows (swipe-left/long-press edit, swipe-right delete → the delete-confirm view via `startInDelete`). Its search **lists the full library by default**; the in-session picker keeps its **prompt-until-typed** behavior. The "Exercise library search" requirement is scoped to the picker accordingly.
+- **Rationale:** Session selection and library maintenance are different use-cases — mid-workout you want a fast type-to-find; maintaining the library you want to browse everything. Sharing one "prompt-until-typed" rule across both was the WO-026 conflict the spec review caught.
 
 ## Risks / Trade-offs
 
@@ -69,4 +80,4 @@ The interaction model is the product of an exploration session (see `ensemble-br
 
 ## Open Questions
 
-- Recency window for graceful decay (e.g. 48h) and whether "decayed" is one step or a gradient — to settle when building the indicator; spec leaves it as a scenario-level value.
+- ~~Recency window for graceful decay (e.g. 48h) and whether "decayed" is one step or a gradient~~ — **Resolved:** a single decay step at a **48h** window; the indicator reconstructs the local datetime from the oldest unverified exercise's `added`/`time` and compares against `differenceInHours`. Spec keeps it as a scenario-level value (DH-020).
