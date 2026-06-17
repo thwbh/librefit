@@ -64,16 +64,12 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/cargo-tauri
-            ~/.cargo/bin/tauri-typegen
-          key: ${{ runner.os }}-tauri-cli-2.9.5-typegen-0.3.2
+          key: ${{ runner.os }}-tauri-cli-2.9.5
 
-      - name: Install Tauri CLI and typegen
+      - name: Install Tauri CLI
         run: |
           if ! command -v cargo-tauri &> /dev/null; then
             cargo install tauri-cli --version "=2.9.5" --locked
-          fi
-          if ! command -v tauri-typegen &> /dev/null; then
-            cargo install tauri-typegen --version "=0.3.2" --locked
           fi
 
       - name: Determine release strategy
@@ -117,38 +113,26 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > /tmp/upload-keystore.jks
 
-      - name: Initialize Tauri Android
-        working-directory: src-tauri
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-        run: cargo tauri android init
-
-      - name: Generate Android icons
-        working-directory: src-tauri
-        run: cargo tauri icon icons/icon.png
-
-      - name: Apply Android templates and configuration
-        working-directory: src-tauri
-        env:
-          KEYSTORE_FILE: /tmp/upload-keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          NDK_PATH: ${{ steps.setup-ndk.outputs.ndk-path }}
-          NDK_VERSION: ${{ steps.setup-ndk.outputs.ndk-full-version }}
-        run: |
-          chmod +x ./android-templates/setup-android.sh
-          ./android-templates/setup-android.sh
-
-      - name: Invoke tauri-typegen
-        working-directory: src-tauri
-        run: cargo tauri-typegen generate
+      # gen/android is committed (Gradle skeleton + signing-aware build.gradle.kts),
+      # so there is no `cargo tauri android init` and no template-application script.
+      # The Rust .so, tauri.properties, assets/tauri.conf.json etc. are regenerated
+      # by the build itself; release signing reads the env vars set on the build step.
+      # Launcher icons are committed under gen/android too — run `cargo tauri icon
+      # icons/icon.png` locally and commit when the source icon changes.
+      - name: Configure NDK path
+        # local.properties is gitignored (per-runner NDK path), so write it fresh.
+        working-directory: src-tauri/gen/android
+        run: echo "ndk.dir=${{ steps.setup-ndk.outputs.ndk-path }}" > local.properties
 
       - name: Build Universal APK
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_VERSION: ${{ steps.setup-ndk.outputs.ndk-full-version }}
+          KEYSTORE_FILE: /tmp/upload-keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: cargo tauri android build --apk true
 
       - name: Rename APK with version

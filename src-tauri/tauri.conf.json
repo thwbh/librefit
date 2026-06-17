@@ -15,7 +15,7 @@
 		]
 	},
 	"build": {
-		"beforeBuildCommand": "cargo tauri-typegen generate && npm run build",
+		"beforeBuildCommand": "cargo run --manifest-path src-tauri/Cargo.toml -p xtask -- generate && npm run build",
 		"beforeDevCommand": "npm run dev",
 		"devUrl": "http://localhost:1420",
 		"frontendDist": "../build"
