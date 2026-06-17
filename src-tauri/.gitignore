@@ -5,4 +5,8 @@
 
 
 node_modules/
-gen/
+# Track the committed Android project skeleton (gen/android); its nested
+# .gitignores still exclude build artifacts + Tauri-regenerated files. Other
+# gen/ subdirs (schemas, apple) stay ignored.
+gen/*
+!gen/android
