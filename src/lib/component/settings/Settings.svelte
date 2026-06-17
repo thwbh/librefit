@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { IdentificationCard, TreeStructure, Upload, MagicWand, Info } from 'phosphor-svelte';
+	import {
+		IdentificationCard,
+		TreeStructure,
+		Upload,
+		MagicWand,
+		Info,
+		Barbell
+	} from 'phosphor-svelte';
 
 	interface Props {
 		open?: boolean;
@@ -12,6 +19,7 @@
 
 	const items = [
 		{ href: '/profile', label: 'Profile', icon: IdentificationCard },
+		{ href: '/exercises', label: 'Exercises', icon: Barbell },
 		{ href: '/export', label: 'Export', icon: TreeStructure },
 		{ href: '/import', label: 'Import', icon: Upload },
 		{ href: '/wizard', label: 'Wizard', icon: MagicWand },
