@@ -64,16 +64,12 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/cargo-tauri
-            ~/.cargo/bin/tauri-typegen
-          key: ${{ runner.os }}-tauri-cli-2.9.5-typegen-0.3.2
+          key: ${{ runner.os }}-tauri-cli-2.9.5
 
-      - name: Install Tauri CLI and typegen
+      - name: Install Tauri CLI
         run: |
           if ! command -v cargo-tauri &> /dev/null; then
             cargo install tauri-cli --version "=2.9.5" --locked
-          fi
-          if ! command -v tauri-typegen &> /dev/null; then
-            cargo install tauri-typegen --version "=0.3.2" --locked
           fi
 
       - name: Determine release strategy
@@ -140,10 +136,6 @@ jobs:
         run: |
           chmod +x ./android-templates/setup-android.sh
           ./android-templates/setup-android.sh
-
-      - name: Invoke tauri-typegen
-        working-directory: src-tauri
-        run: cargo tauri-typegen generate
 
       - name: Build Universal APK
         env:
