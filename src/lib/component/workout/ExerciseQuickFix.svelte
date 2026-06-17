@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { AlertBox, AlertType, AlertVariant, ModalDialog, EmptyState } from '@thwbh/veilchen';
-	import { Pencil, Plus, Sparkle } from 'phosphor-svelte';
+	import { Pencil, Sparkle } from 'phosphor-svelte';
 	import ExerciseFormModal from './ExerciseFormModal.svelte';
+	import ExerciseTagPicker from './ExerciseTagPicker.svelte';
 	import {
 		listUnverifiedExercises,
 		batchTagExercises,
@@ -16,16 +17,15 @@
 		type Muscle
 	} from '$lib/api';
 	import { formatError } from '$lib/api/error-formatter';
+	import { undoSnackbar } from '$lib/snackbar';
 
-	// Batch-tagging quick-fix workspace (WO-041, WO-042, WO-043). Lists the user's
-	// unverified "Ghost" exercises; the user multi-selects, *stages* one category or
-	// muscle tag, then commits it to the whole selection with an explicit Apply — so
-	// nothing changes under the user's feet (the same deliberate footer-driven flow as
-	// the post-workout editor). The result is reversible via an in-modal Undo, and all
-	// feedback renders *inside* the modal (a layout toast/snackbar would sit behind the
-	// dialog backdrop). Doubles as the library-maintenance surface: a row's full
-	// edit/delete opens the add/edit screen (WO-030..032), and a blank exercise can be
-	// created here (WO-029). Entered from the dashboard avatar indicator (DH-022).
+	// Batch-tagging tidy-up workspace (WO-041, WO-042, WO-043). Lists the user's
+	// unverified "Ghost" exercises; the user multi-selects, then stages a category
+	// and/or several muscle roles via the shared picker. Tapping Done commits the whole
+	// staged set to the selection in one call and closes — surfacing a bottom snackbar
+	// with Undo (WO-042) once the dialog is gone (a snackbar would otherwise sit behind
+	// the backdrop). Edit-only: a row's pencil opens the full edit/delete screen
+	// (WO-030..032). Entered from the dashboard avatar indicator (DH-022).
 	interface Props {
 		onclose: () => void;
 		/** Called after any change so the dashboard can refresh its indicator count. */
@@ -48,20 +48,14 @@
 	let categories = $state<ExerciseCategory[]>([]);
 	let muscles = $state<Muscle[]>([]);
 
-	// Selection + the staged (not-yet-applied) tag.
+	// Selection + the staged (not-yet-applied) tags.
 	let selected = $state<Set<number>>(new Set());
-	let muscleValue = $state('');
-	let muscleRole = $state<'primary' | 'secondary'>('primary');
-	let stagedTag = $state<BatchTag | null>(null);
+	let category = $state('');
+	let roles = $state<Record<string, 'primary' | 'secondary'>>({});
 	let applying = $state(false);
 
-	// Outcome of the last apply, kept for Undo + the in-modal confirmation.
-	let lastResult = $state<BatchTagResult | null>(null);
-	let feedback = $state<string | null>(null);
-
-	// Single-exercise full edit / create.
+	// Single-exercise full edit (the pencil); no create here — this is tidy-up only.
 	let editing = $state<ExerciseDetail | null>(null);
-	let creating = $state(false);
 
 	async function load() {
 		loading = true;
@@ -88,15 +82,14 @@
 
 	const pretty = (s: string) => s.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 	const selectedCount = $derived(selected.size);
-	const stagedLabel = $derived.by(() => {
-		if (!stagedTag) return null;
-		if (stagedTag.kind === 'category')
-			return (
-				categories.find((c) => c.shortvalue === stagedTag!.value)?.longvalue ?? stagedTag.value
-			);
-		const m =
-			muscles.find((mm) => mm.shortvalue === stagedTag!.value)?.longvalue ?? stagedTag.value;
-		return `${m} (${stagedTag.role === 'secondary' ? '2°' : '1°'})`;
+	// The staged category + muscle roles flattened into the batch contract.
+	const stagedTags = $derived.by<BatchTag[]>(() => {
+		const tags: BatchTag[] = [];
+		if (category) tags.push({ kind: 'category', value: category });
+		for (const [muscle, role] of Object.entries(roles)) {
+			tags.push({ kind: 'muscle', value: muscle, role });
+		}
+		return tags;
 	});
 
 	function toggle(id: number) {
@@ -106,41 +99,26 @@
 		selected = next;
 	}
 
-	// Staging is a local choice; nothing hits the backend until Apply.
-	function stageCategory(shortvalue: string) {
-		muscleValue = '';
-		stagedTag =
-			stagedTag?.kind === 'category' && stagedTag.value === shortvalue
-				? null
-				: { kind: 'category', value: shortvalue };
-	}
+	const hooks = () => createCommandHooks({ showInvokeErrors: false, showValidationErrors: false });
 
-	function stageMuscle() {
-		stagedTag = muscleValue
-			? { kind: 'muscle', value: muscleValue, role: muscleRole }
-			: stagedTag?.kind === 'muscle'
-				? null
-				: stagedTag;
-	}
-
-	async function applyStaged() {
-		if (!stagedTag || applying || selected.size === 0) return;
+	// Done applies the staged tags to the selection, then closes and offers an Undo
+	// via the post-close snackbar. With nothing staged it just closes.
+	async function done() {
+		if (applying) return;
+		if (selectedCount === 0 || stagedTags.length === 0) {
+			onclose();
+			return;
+		}
 		const exerciseIds = [...selected];
-		const tag = stagedTag;
+		const tags = stagedTags;
 		error = null;
 		applying = true;
 		try {
-			const result = await batchTagExercises(
-				{ input: { exerciseIds, tag } },
-				createCommandHooks({ showInvokeErrors: false, showValidationErrors: false })
-			);
-			lastResult = result;
-			feedback = `Tagged ${result.items.length} exercise${result.items.length === 1 ? '' : 's'}.`;
-			selected = new Set();
-			stagedTag = null;
-			muscleValue = '';
-			await load();
+			const result = await batchTagExercises({ input: { exerciseIds, tags } }, hooks());
 			onchanged?.();
+			onclose();
+			const n = result.items.length;
+			undoSnackbar(`Tagged ${n} exercise${n === 1 ? '' : 's'}.`, () => revert(result));
 		} catch (e) {
 			error = formatError(e);
 		} finally {
@@ -148,30 +126,17 @@
 		}
 	}
 
-	async function undo() {
-		if (!lastResult || applying) return;
-		const result = lastResult;
-		error = null;
-		applying = true;
+	async function revert(result: BatchTagResult) {
 		try {
-			await undoBatchTag(
-				{ result },
-				createCommandHooks({ showInvokeErrors: false, showValidationErrors: false })
-			);
-			feedback = null;
-			lastResult = null;
-			await load();
+			await undoBatchTag({ result }, hooks());
 			onchanged?.();
-		} catch (e) {
-			error = formatError(e);
-		} finally {
-			applying = false;
+		} catch {
+			// Best-effort undo; the originating modal is already gone (ERR-003).
 		}
 	}
 
 	function onFormSaved() {
 		editing = null;
-		creating = false;
 		load();
 		onchanged?.();
 	}
@@ -191,12 +156,6 @@
 
 		{#snippet content()}
 			<div class="flex flex-col gap-3">
-				{#if feedback}
-					<AlertBox type={AlertType.Success} variant={AlertVariant.Box}>
-						<span class="flex-1">{feedback}</span>
-						<button class="btn btn-sm btn-ghost" onclick={undo} data-testid="undo-tag">Undo</button>
-					</AlertBox>
-				{/if}
 				{#if error}
 					<AlertBox type={AlertType.Error} variant={AlertVariant.Box}>{error}</AlertBox>
 				{/if}
@@ -217,7 +176,7 @@
 					</div>
 				{:else}
 					<p class="text-sm opacity-60">
-						Select exercises, choose a category or muscle, then tap Apply.
+						Select exercises, choose a category and muscles, then tap Done.
 					</p>
 					<ul class="flex flex-col gap-1" data-testid="unverified-list">
 						{#each entries as entry (entry.id)}
@@ -257,61 +216,14 @@
 					</ul>
 
 					{#if selectedCount > 0}
-						<!-- Contextual tag bar (WO-041): stage one tag for the whole selection;
-						     it's committed only when the footer Apply is tapped. -->
+						<!-- Contextual tag bar (WO-041): stage a category and/or muscles for the
+						     whole selection; committed only when the footer Done is tapped. -->
 						<div
 							class="sticky bottom-0 flex flex-col gap-2 rounded-box bg-base-200 p-3"
 							data-testid="tag-bar"
 						>
-							<span class="text-sm font-medium">
-								Tag {selectedCount} selected
-								{#if stagedLabel}· <span class="text-primary">{stagedLabel}</span>{/if}
-							</span>
-							<div class="flex flex-wrap gap-1">
-								{#each categories as c (c.shortvalue)}
-									{#if c.shortvalue !== UNCATEGORIZED}
-										<button
-											class="btn btn-xs {stagedTag?.kind === 'category' &&
-											stagedTag.value === c.shortvalue
-												? 'btn-primary'
-												: 'btn-outline'}"
-											onclick={() => stageCategory(c.shortvalue)}
-											data-testid="tag-category"
-										>
-											{c.longvalue}
-										</button>
-									{/if}
-								{/each}
-							</div>
-							<div class="flex items-center gap-2">
-								<select
-									class="select select-bordered select-sm flex-1"
-									bind:value={muscleValue}
-									onchange={stageMuscle}
-									aria-label="Muscle to add"
-								>
-									<option value="">Add a muscle…</option>
-									{#each muscles as m (m.shortvalue)}
-										<option value={m.shortvalue}>{m.longvalue}</option>
-									{/each}
-								</select>
-								<div class="join">
-									<button
-										class="btn btn-xs join-item {muscleRole === 'primary' ? 'btn-primary' : ''}"
-										onclick={() => {
-											muscleRole = 'primary';
-											stageMuscle();
-										}}>1°</button
-									>
-									<button
-										class="btn btn-xs join-item {muscleRole === 'secondary' ? 'btn-primary' : ''}"
-										onclick={() => {
-											muscleRole = 'secondary';
-											stageMuscle();
-										}}>2°</button
-									>
-								</div>
-							</div>
+							<span class="text-sm font-medium">Tag {selectedCount} selected</span>
+							<ExerciseTagPicker {categories} {muscles} bind:category bind:roles />
 						</div>
 					{/if}
 				{/if}
@@ -319,28 +231,19 @@
 		{/snippet}
 
 		{#snippet footer()}
-			<button class="btn btn-ghost" onclick={() => (creating = true)} data-testid="add-exercise">
-				<Plus size="1.25rem" /> Add
+			<button class="btn btn-ghost" onclick={onclose} data-testid="quick-fix-cancel">Cancel</button>
+			<button
+				class="btn btn-primary"
+				disabled={applying}
+				onclick={done}
+				data-testid="quick-fix-done"
+			>
+				Done
 			</button>
-			{#if selectedCount > 0 && stagedTag}
-				<button
-					class="btn btn-primary"
-					disabled={applying}
-					onclick={applyStaged}
-					data-testid="apply-tag"
-				>
-					Apply
-				</button>
-			{:else}
-				<button class="btn btn-primary" onclick={onclose}>Done</button>
-			{/if}
 		{/snippet}
 	</ModalDialog>
 </div>
 
-{#if creating}
-	<ExerciseFormModal mode="create" onsaved={onFormSaved} onclose={() => (creating = false)} />
-{/if}
 {#if editing}
 	<ExerciseFormModal
 		mode="edit"

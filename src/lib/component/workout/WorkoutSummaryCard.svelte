@@ -27,6 +27,21 @@
 
 	const swipeable = $derived(!!onedit && !!ondelete);
 
+	// SwipeableListItem suppresses the synthesized touch click but not a real mouse
+	// click, so on desktop a swipe would fire both the edit/delete action and this
+	// card's tap (opening the view modal behind it). Treat a click that lands far from
+	// where the pointer went down as a drag, not a tap.
+	let downX = 0;
+	let downY = 0;
+	function trackDown(e: PointerEvent) {
+		downX = e.clientX;
+		downY = e.clientY;
+	}
+	function handleTap(e: MouseEvent) {
+		if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) return;
+		ontap?.(detail);
+	}
+
 	const title = $derived(workoutTitle(detail));
 	const startTime = $derived(workoutStartTime(detail));
 	const minutes = $derived(workoutActiveMinutes(detail));
@@ -38,7 +53,8 @@
 	<button
 		type="button"
 		class="w-full text-left bg-base-100 rounded-box shadow flex items-center gap-3 px-4 py-3"
-		onclick={() => ontap?.(detail)}
+		onpointerdown={trackDown}
+		onclick={handleTap}
 		use:longpress
 		onlongpress={() => onedit?.(detail)}
 	>

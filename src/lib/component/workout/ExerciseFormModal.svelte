@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { AlertBox, AlertType, AlertVariant, ModalDialog } from '@thwbh/veilchen';
+	import { AlertBox, AlertType, AlertVariant, ModalDialog, ValidatedInput } from '@thwbh/veilchen';
 	import { Trash } from 'phosphor-svelte';
+	import ExerciseTagPicker from './ExerciseTagPicker.svelte';
 	import {
 		createExercise,
 		updateExercise,
@@ -15,23 +16,28 @@
 		type Muscle
 	} from '$lib/api';
 	import { formatError } from '$lib/api/error-formatter';
+	import { undoSnackbar } from '$lib/snackbar';
 
 	// Full add/edit screen for a user exercise (WO-029, WO-030, WO-035) per
 	// `_conv-modals` / `_conv-validation`. The path that supplies complete metadata:
 	// supplying a real category + at least one muscle promotes an unverified Ghost to
 	// verified (the backend recomputes `verified`). Seeded exercises never reach here
-	// — the picker disables their edit/delete (WO-028). Delete (WO-031/WO-032) lives
-	// in edit mode and surfaces the referenced-exercise guard per `_conv-user-errors`.
+	// — the picker disables their edit/delete (WO-028). Delete (WO-031/WO-032) follows
+	// the cross-app trash-toggle pattern: a header trash flips the footer Save into a
+	// red Delete (mirrors IntakeModal), and the referenced-exercise guard surfaces
+	// in-modal per `_conv-user-errors`.
 	interface Props {
 		mode: 'create' | 'edit';
 		/** edit: the user exercise being edited (may be an unverified Ghost). */
 		detail?: ExerciseDetail | null;
+		/** Open straight into the delete-confirm view (edit mode), e.g. a swipe-right. */
+		startInDelete?: boolean;
 		onsaved: (detail: ExerciseDetail) => void;
 		ondeleted?: (id: number) => void;
 		onclose: () => void;
 	}
 
-	let { mode, detail = null, onsaved, ondeleted, onclose }: Props = $props();
+	let { mode, detail = null, startInDelete = false, onsaved, ondeleted, onclose }: Props = $props();
 
 	let dialog = $state<HTMLDialogElement>();
 	$effect(() => {
@@ -39,7 +45,7 @@
 	});
 
 	// The `uncategorized` sentinel parks Ghosts; it's never a real, selectable
-	// category, so it's filtered out of the picker (a full save must verify).
+	// category, so a full save must pick a real one to verify.
 	const UNCATEGORIZED = 'uncategorized';
 
 	let categories = $state<ExerciseCategory[]>([]);
@@ -51,7 +57,8 @@
 	let category = $state(
 		untrack(() => (detail && detail.category !== UNCATEGORIZED ? detail.category : ''))
 	);
-	let restSeconds = $state<number | null>(untrack(() => detail?.defaultRestSeconds ?? null));
+	// `ValidatedInput` binds `string | number`; '' represents "no rest set".
+	let restInput = $state<string | number>(untrack(() => detail?.defaultRestSeconds ?? ''));
 	// shortvalue -> role for selected muscles; absence = not targeted.
 	let roles = $state<Record<string, 'primary' | 'secondary'>>(
 		untrack(() =>
@@ -66,33 +73,27 @@
 
 	let error = $state<string | null>(null);
 	let busy = $state(false);
-	let confirmingDelete = $state(false);
+	let confirmingDelete = $state(untrack(() => mode === 'edit' && startInDelete));
 
 	$effect(() => {
 		if (categories.length === 0) listExerciseCategories().then((c) => (categories = c));
 		if (muscles.length === 0) listMuscles().then((m) => (muscles = m));
 	});
 
-	const heading = $derived(mode === 'create' ? 'Add Exercise' : 'Edit Exercise');
+	// The modal renders as a delete-confirm view once the header trash is toggled on;
+	// the title and the footer's primary button follow that view (like IntakeModal).
+	const isDeleteView = $derived(mode === 'edit' && confirmingDelete);
+	const heading = $derived(
+		isDeleteView ? 'Delete Exercise' : mode === 'create' ? 'Add Exercise' : 'Edit Exercise'
+	);
 	const selectedCount = $derived(Object.keys(roles).length);
-	const pretty = (s: string) => s.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
-
-	// Cycle a muscle Off → Primary → Secondary → Off.
-	function cycleMuscle(shortvalue: string) {
-		const cur = roles[shortvalue];
-		if (cur === undefined) roles = { ...roles, [shortvalue]: 'primary' };
-		else if (cur === 'primary') roles = { ...roles, [shortvalue]: 'secondary' };
-		else {
-			const { [shortvalue]: _removed, ...rest } = roles;
-			roles = rest;
-		}
-	}
 
 	function buildInput(): ExerciseInput {
+		const rest = restInput === '' ? undefined : Number(restInput);
 		return {
 			name: name.trim(),
 			category,
-			defaultRestSeconds: restSeconds ?? undefined,
+			defaultRestSeconds: Number.isFinite(rest) ? rest : undefined,
 			muscles: Object.entries(roles).map(([muscle, role]) => ({ muscle, role }))
 		};
 	}
@@ -130,14 +131,38 @@
 		}
 	}
 
+	// Acts as a toggle: enter delete-confirm if editing, exit back if already in it.
+	function toggleDelete() {
+		error = null;
+		confirmingDelete = !confirmingDelete;
+	}
+
+	// The exercise's own data, so an undo can recreate it faithfully (a ghost stays a
+	// ghost). Only unreferenced exercises are deletable (WO-032), so the recreated row
+	// carries no orphaned set references — just a new id.
+	function detailToInput(d: ExerciseDetail): ExerciseInput {
+		return {
+			name: d.name,
+			category: d.category,
+			defaultRestSeconds: d.defaultRestSeconds ?? undefined,
+			muscles: d.muscles.map((m) => ({ muscle: m.muscle, role: m.role }))
+		};
+	}
+
 	async function confirmDelete() {
 		if (busy || !detail) return;
 		error = null;
 		busy = true;
+		const removed = detail;
 		try {
-			await deleteExercise({ id: detail.id }, okHooks('Exercise deleted'));
-			ondeleted?.(detail.id);
+			// Silent hooks: the post-close Undo snackbar replaces the success toast.
+			await deleteExercise(
+				{ id: removed.id },
+				createCommandHooks({ showInvokeErrors: false, showValidationErrors: false })
+			);
+			ondeleted?.(removed.id);
 			onclose();
+			undoSnackbar(`Deleted “${removed.name}”.`, () => restoreDeleted(removed));
 		} catch (e) {
 			// The backend refuses when a logged set references it (WO-032); surface that
 			// in-modal per `_conv-user-errors`, leaving the exercise and its refs intact.
@@ -147,127 +172,92 @@
 			busy = false;
 		}
 	}
+
+	async function restoreDeleted(removed: ExerciseDetail) {
+		try {
+			const recreated = await createExercise(
+				{ input: detailToInput(removed) },
+				createCommandHooks({ showInvokeErrors: false, showValidationErrors: false })
+			);
+			// Reuse the saved path so the parent list/indicator picks the exercise back up.
+			onsaved(recreated);
+		} catch {
+			// Best-effort restore; the originating modal is already gone (ERR-003).
+		}
+	}
 </script>
 
 <div class="exercise-form-modal">
 	<ModalDialog bind:dialog oncancel={onclose}>
 		{#snippet title()}
-			<span class="border-l-4 border-accent pl-2">{heading}</span>
+			<span class="modal-header border-l-4 border-accent pl-2">{heading}</span>
+			{#if mode === 'edit'}
+				<button
+					class="btn btn-xs btn-error"
+					aria-label="Delete exercise"
+					aria-pressed={isDeleteView}
+					disabled={busy}
+					onclick={toggleDelete}
+					data-testid="delete-exercise"
+				>
+					<Trash size="1rem" />
+				</button>
+			{/if}
 		{/snippet}
 
 		{#snippet content()}
-			<div class="flex flex-col gap-4">
-				<label class="floating-label">
-					<span>Name</span>
-					<input
-						class="input input-bordered w-full"
+			<div class="flex flex-col gap-3">
+				{#if isDeleteView}
+					<p class="text-sm" data-testid="delete-confirm-text">
+						Delete “{detail?.name}”? This can't be undone.
+					</p>
+				{:else}
+					<ValidatedInput
+						label="Name"
+						type="text"
 						placeholder="e.g. Bulgarian Split Squat"
-						maxlength="80"
+						maxlength={80}
+						required
 						bind:value={name}
 						data-testid="exercise-name"
-					/>
-				</label>
-
-				<label class="floating-label">
-					<span>Category</span>
-					<select
-						class="select select-bordered w-full"
-						bind:value={category}
-						data-testid="exercise-category"
 					>
-						<option value="" disabled>Select a category</option>
-						{#each categories as c (c.shortvalue)}
-							{#if c.shortvalue !== UNCATEGORIZED}
-								<option value={c.shortvalue}>{c.longvalue}</option>
-							{/if}
-						{/each}
-					</select>
-				</label>
+						A name is required (up to 80 characters).
+					</ValidatedInput>
 
-				<div class="flex flex-col gap-1">
-					<span class="text-sm font-medium">Muscles</span>
-					<p class="text-xs opacity-60">
-						Tap to cycle off → primary → secondary. Selected: {selectedCount}
-					</p>
-					<ul class="flex max-h-56 flex-col gap-1 overflow-y-auto" data-testid="muscle-list">
-						{#each muscles as muscle (muscle.shortvalue)}
-							{@const role = roles[muscle.shortvalue]}
-							<li>
-								<button
-									type="button"
-									class="btn btn-sm btn-block justify-between {role ? 'btn-primary' : 'btn-ghost'}"
-									aria-pressed={role !== undefined}
-									onclick={() => cycleMuscle(muscle.shortvalue)}
-								>
-									<span>{muscle.longvalue}</span>
-									{#if role}
-										<span class="badge badge-sm" data-testid="muscle-role">
-											{role === 'primary' ? '1° Primary' : '2° Secondary'}
-										</span>
-									{/if}
-								</button>
-							</li>
-						{/each}
-					</ul>
-				</div>
+					<ExerciseTagPicker {categories} {muscles} bind:category bind:roles />
 
-				<label class="floating-label">
-					<span>Default rest (seconds, optional)</span>
-					<input
+					<ValidatedInput
+						label="Default rest (seconds, optional)"
 						type="number"
-						min="0"
-						class="input input-bordered w-full"
+						min={0}
 						placeholder="e.g. 90"
-						bind:value={restSeconds}
+						bind:value={restInput}
 						data-testid="exercise-rest"
 					/>
-				</label>
+				{/if}
 
 				{#if error}
 					<AlertBox type={AlertType.Error} variant={AlertVariant.Box}>{error}</AlertBox>
-				{/if}
-
-				{#if mode === 'edit'}
-					{#if confirmingDelete}
-						<div class="rounded-box border border-error/40 bg-error/10 p-3">
-							<p class="mb-2 text-sm">Delete “{detail?.name}”? This can't be undone.</p>
-							<div class="flex justify-end gap-2">
-								<button
-									class="btn btn-ghost btn-sm"
-									disabled={busy}
-									onclick={() => (confirmingDelete = false)}
-								>
-									Keep
-								</button>
-								<button
-									class="btn btn-error btn-sm"
-									disabled={busy}
-									onclick={confirmDelete}
-									data-testid="confirm-delete"
-								>
-									Delete
-								</button>
-							</div>
-						</div>
-					{:else}
-						<button
-							class="btn btn-ghost btn-sm self-start text-error"
-							disabled={busy}
-							onclick={() => (confirmingDelete = true)}
-							data-testid="delete-exercise"
-						>
-							<Trash size="1rem" /> Delete exercise
-						</button>
-					{/if}
 				{/if}
 			</div>
 		{/snippet}
 
 		{#snippet footer()}
 			<button class="btn btn-ghost" disabled={busy} onclick={onclose}>Cancel</button>
-			<button class="btn btn-primary" disabled={busy} onclick={save} data-testid="save-exercise">
-				{mode === 'create' ? 'Create' : 'Save'}
-			</button>
+			{#if isDeleteView}
+				<button
+					class="btn btn-error"
+					disabled={busy}
+					onclick={confirmDelete}
+					data-testid="confirm-delete"
+				>
+					Delete
+				</button>
+			{:else}
+				<button class="btn btn-primary" disabled={busy} onclick={save} data-testid="save-exercise">
+					{mode === 'create' ? 'Create' : 'Save'}
+				</button>
+			{/if}
 		{/snippet}
 	</ModalDialog>
 </div>

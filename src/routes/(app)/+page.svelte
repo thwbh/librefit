@@ -229,10 +229,12 @@
 	};
 
 	// Dismissing the post-workout summary returns to idle; refresh so the just-ended
-	// workout appears as a card without a manual reload (DH-015).
+	// workout appears as a card without a manual reload (DH-015), and re-pull the
+	// unverified summary so any exercises quick-added mid-workout surface the avatar
+	// maintenance badge straight away (DH-019).
 	const dismissSummary = async () => {
 		workoutStore.dismissSummary();
-		await loadTodayWorkouts();
+		await Promise.all([loadTodayWorkouts(), refreshUnverified()]);
 	};
 
 	const getBlankEntry = (): NewIntake => {

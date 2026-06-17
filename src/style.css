@@ -73,3 +73,10 @@ body {
 .modal-bottom .modal-box {
 	padding-bottom: calc(var(--safe-area-bottom, env(safe-area-inset-bottom)) + 1.5rem);
 }
+
+/* Toast/snackbar containers default to a ~1rem bottom offset, which collides with the
+ * AppShell bottom navigation dock. Lift them above it (same 5rem clearance the FAB
+ * uses) plus the safe-area inset so they never overflow the nav bar. */
+.toast-above-dock {
+	bottom: calc(5rem + var(--safe-area-bottom, env(safe-area-inset-bottom))) !important;
+}

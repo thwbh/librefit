@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import ExercisesPage from './+page.svelte';
 import {
 	getExerciseLibrary,
@@ -52,6 +52,12 @@ beforeEach(() => {
 	vi.mocked(listMuscles).mockResolvedValue([{ longvalue: 'Deltoids', shortvalue: 'deltoids' }]);
 });
 
+// The Add FAB is portaled to <body> and removed on a short delay, so it can outlive
+// a test's unmount; drop any leftovers to keep renders isolated.
+afterEach(() => {
+	document.querySelectorAll('[data-testid="add-exercise"]').forEach((n) => n.remove());
+});
+
 describe('Exercises management page', () => {
 	it('[WO-028] lists only user-created exercises, excluding read-only seeded ones', async () => {
 		render(ExercisesPage);
@@ -60,10 +66,12 @@ describe('Exercises management page', () => {
 		expect(screen.queryByText('Bench Press')).not.toBeInTheDocument();
 	});
 
-	it('[WO-030] opens the edit screen pre-filled for a user exercise', async () => {
+	it('[WO-030] long-press on a row opens the edit screen pre-filled', async () => {
 		render(ExercisesPage);
 
-		await fireEvent.click(await screen.findByLabelText('Edit Atlas Press'));
+		// Edit gesture: long-press (mirrors swipe-left) — `_conv-gestures`.
+		const row = await screen.findByTestId('exercise-row');
+		row.dispatchEvent(new CustomEvent('longpress'));
 
 		// The add/edit modal opens with the exercise's current name (MOD-001).
 		expect(await screen.findByTestId('exercise-name')).toHaveValue('Atlas Press');
@@ -77,5 +85,18 @@ describe('Exercises management page', () => {
 
 		expect(await screen.findByText('Add Exercise')).toBeInTheDocument();
 		expect(screen.getByTestId('exercise-name')).toHaveValue('');
+	});
+
+	it('[WO-030] filters the list by the search query', async () => {
+		render(ExercisesPage);
+		await screen.findByText('Atlas Press');
+
+		const search = screen.getByLabelText('Search exercises');
+		await fireEvent.input(search, { target: { value: 'zzz' } });
+		expect(screen.getByTestId('exercise-no-match')).toBeInTheDocument();
+		expect(screen.queryByText('Atlas Press')).not.toBeInTheDocument();
+
+		await fireEvent.input(search, { target: { value: 'atlas' } });
+		expect(await screen.findByText('Atlas Press')).toBeInTheDocument();
 	});
 });

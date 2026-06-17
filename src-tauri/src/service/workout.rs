@@ -665,7 +665,9 @@ pub struct BatchTag {
 #[serde(rename_all = "camelCase")]
 pub struct BatchTagInput {
     pub exercise_ids: Vec<i32>,
-    pub tag: BatchTag,
+    /// One or more tags (a category and/or several muscle roles) applied together to
+    /// every selected exercise (`[WO-041]`).
+    pub tags: Vec<BatchTag>,
 }
 
 /// Per-exercise snapshot captured before a batch tag, enough to revert it (`[WO-042]`).
@@ -675,8 +677,8 @@ pub struct BatchTagUndoItem {
     pub exercise_id: i32,
     pub prev_category: String,
     pub prev_verified: bool,
-    /// `true` if a muscle row was newly inserted (so undo deletes it).
-    pub muscle_added: Option<MuscleInput>,
+    /// Muscle rows newly inserted by this apply (so undo deletes exactly them).
+    pub muscles_added: Vec<MuscleInput>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -933,8 +935,9 @@ impl Exercise {
         })
     }
 
-    /// Apply one tag to many unverified exercises in a transaction, re-deriving
-    /// `verified`, returning an undo snapshot (`[WO-041]`). Seeded rows are refused.
+    /// Apply one or more tags (a category and/or several muscle roles) to many
+    /// unverified exercises in a single transaction, re-deriving `verified` and
+    /// returning an undo snapshot (`[WO-041]`). Seeded rows are refused.
     pub fn batch_tag(
         conn: &mut SqliteConnection,
         input: &BatchTagInput,
@@ -950,39 +953,41 @@ impl Exercise {
                     exercise_id: id,
                     prev_category: ex.category.clone(),
                     prev_verified: ex.verified,
-                    muscle_added: None,
+                    muscles_added: Vec::new(),
                 };
-                match input.tag.kind.as_str() {
-                    "category" => {
-                        diesel::update(exercise::table.filter(exercise::id.eq(id)))
-                            .set(exercise::category.eq(&input.tag.value))
-                            .execute(conn)?;
-                    }
-                    "muscle" => {
-                        let role = input.tag.role.as_deref().unwrap_or("primary");
-                        let exists: i64 = exercise_muscle::table
-                            .filter(exercise_muscle::exercise_id.eq(id))
-                            .filter(exercise_muscle::muscle.eq(&input.tag.value))
-                            .count()
-                            .get_result(conn)?;
-                        if exists == 0 {
-                            diesel::insert_into(exercise_muscle::table)
-                                .values(NewExerciseMuscle {
-                                    exercise_id: id,
-                                    muscle: &input.tag.value,
-                                    role,
-                                })
+                for tag in &input.tags {
+                    match tag.kind.as_str() {
+                        "category" => {
+                            diesel::update(exercise::table.filter(exercise::id.eq(id)))
+                                .set(exercise::category.eq(&tag.value))
                                 .execute(conn)?;
-                            undo.muscle_added = Some(MuscleInput {
-                                muscle: input.tag.value.clone(),
-                                role: role.to_string(),
-                            });
                         }
-                    }
-                    other => {
-                        return Err(diesel::result::Error::QueryBuilderError(
-                            format!("Unknown batch tag kind '{}'", other).into(),
-                        ));
+                        "muscle" => {
+                            let role = tag.role.as_deref().unwrap_or("primary");
+                            let exists: i64 = exercise_muscle::table
+                                .filter(exercise_muscle::exercise_id.eq(id))
+                                .filter(exercise_muscle::muscle.eq(&tag.value))
+                                .count()
+                                .get_result(conn)?;
+                            if exists == 0 {
+                                diesel::insert_into(exercise_muscle::table)
+                                    .values(NewExerciseMuscle {
+                                        exercise_id: id,
+                                        muscle: &tag.value,
+                                        role,
+                                    })
+                                    .execute(conn)?;
+                                undo.muscles_added.push(MuscleInput {
+                                    muscle: tag.value.clone(),
+                                    role: role.to_string(),
+                                });
+                            }
+                        }
+                        other => {
+                            return Err(diesel::result::Error::QueryBuilderError(
+                                format!("Unknown batch tag kind '{}'", other).into(),
+                            ));
+                        }
                     }
                 }
                 Self::recompute_verified(conn, id)?;
@@ -1000,7 +1005,7 @@ impl Exercise {
     ) -> Result<(), String> {
         conn.transaction::<_, diesel::result::Error, _>(|conn| {
             for item in &result.items {
-                if let Some(m) = &item.muscle_added {
+                for m in &item.muscles_added {
                     diesel::delete(
                         exercise_muscle::table
                             .filter(exercise_muscle::exercise_id.eq(item.exercise_id))

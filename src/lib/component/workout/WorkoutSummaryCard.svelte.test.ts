@@ -33,6 +33,16 @@ describe('WorkoutSummaryCard', () => {
 		expect(ontap).toHaveBeenCalledOnce();
 	});
 
+	it('[DH-013] a click that lands far from pointer-down (a swipe) does not fire ontap', async () => {
+		const ontap = vi.fn();
+		render(WorkoutSummaryCard, { props: { detail: detail(), ontap } });
+		const button = screen.getByText('Push Day').closest('button')!;
+		// Pointer down at the start, click released after a horizontal drag.
+		await fireEvent.pointerDown(button, { clientX: 10, clientY: 10 });
+		await fireEvent.click(button, { clientX: 90, clientY: 12 });
+		expect(ontap).not.toHaveBeenCalled();
+	});
+
 	it('[HI-020] long-press fires onedit (the swipe-left/long-press edit gesture)', () => {
 		const onedit = vi.fn();
 		const ondelete = vi.fn();

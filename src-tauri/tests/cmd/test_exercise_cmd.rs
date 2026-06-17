@@ -162,32 +162,47 @@ fn batch_tag_category_and_muscle_promotes_when_complete() {
         app.state(),
         BatchTagInput {
             exercise_ids: vec![a.id, b.id],
-            tag: BatchTag {
+            tags: vec![BatchTag {
                 kind: "category".into(),
                 value: "dumbbell".into(),
                 role: None,
-            },
+            }],
         },
     )
     .unwrap();
     assert_eq!(unverified_exercise_summary(app.state()).unwrap().count, 2);
 
-    // Adding a muscle completes them -> verified, off the unverified list.
+    // A single apply carrying several muscle tags completes them -> verified, off
+    // the unverified list, with every muscle recorded.
     batch_tag_exercises(
         app.state(),
         BatchTagInput {
             exercise_ids: vec![a.id, b.id],
-            tag: BatchTag {
-                kind: "muscle".into(),
-                value: "biceps".into(),
-                role: Some("primary".into()),
-            },
+            tags: vec![
+                BatchTag {
+                    kind: "muscle".into(),
+                    value: "biceps".into(),
+                    role: Some("primary".into()),
+                },
+                BatchTag {
+                    kind: "muscle".into(),
+                    value: "chest".into(),
+                    role: Some("secondary".into()),
+                },
+            ],
         },
     )
     .unwrap();
 
     assert_eq!(unverified_exercise_summary(app.state()).unwrap().count, 0);
     assert!(list_unverified_exercises(app.state()).unwrap().is_empty());
+    let lib = get_exercise_library(app.state()).unwrap();
+    let tagged = lib.iter().find(|e| e.id == a.id).unwrap();
+    assert_eq!(
+        tagged.muscles.len(),
+        2,
+        "both muscle tags should be applied"
+    );
 }
 
 #[test]
@@ -202,11 +217,11 @@ fn undo_batch_tag_reverts_state() {
         app.state(),
         BatchTagInput {
             exercise_ids: vec![g.id],
-            tag: BatchTag {
+            tags: vec![BatchTag {
                 kind: "muscle".into(),
                 value: "chest".into(),
                 role: Some("primary".into()),
-            },
+            }],
         },
     )
     .unwrap();

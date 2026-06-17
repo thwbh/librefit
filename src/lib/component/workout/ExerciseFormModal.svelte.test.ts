@@ -9,6 +9,7 @@ import {
 	listMuscles,
 	type ExerciseDetail
 } from '$lib/api';
+import { undoSnackbar } from '$lib/snackbar';
 
 // Full add/edit screen (WO-029, WO-030, WO-035) + guarded delete (WO-031, WO-032).
 // Persistence commands are stubbed; the command hooks are passthroughs so a rejected
@@ -22,6 +23,7 @@ vi.mock('$lib/api', () => ({
 	createCommandHooks: vi.fn(() => ({})),
 	CommonHooks: { create: vi.fn(() => ({})), update: vi.fn(() => ({})) }
 }));
+vi.mock('$lib/snackbar', () => ({ undoSnackbar: vi.fn() }));
 
 const categories = [
 	{ longvalue: 'Barbell', shortvalue: 'barbell' },
@@ -60,11 +62,8 @@ describe('ExerciseFormModal', () => {
 		await fireEvent.input(screen.getByTestId('exercise-name'), {
 			target: { value: 'Bulgarian Split Squat' }
 		});
-		// Category options render once listExerciseCategories resolves.
-		await screen.findByRole('option', { name: 'Barbell' });
-		await fireEvent.change(screen.getByTestId('exercise-category'), {
-			target: { value: 'barbell' }
-		});
+		// Category chips render once listExerciseCategories resolves; tap to select.
+		await fireEvent.click(await screen.findByRole('button', { name: 'Barbell' }));
 		// Cycle a muscle Off → Primary.
 		await fireEvent.click(await screen.findByText('Chest'));
 		await fireEvent.input(screen.getByTestId('exercise-rest'), { target: { value: '90' } });
@@ -84,7 +83,7 @@ describe('ExerciseFormModal', () => {
 
 	it('[WO-029] blocks submit until name, category, and a muscle are supplied', async () => {
 		render(ExerciseFormModal, { props: { mode: 'create', onsaved: vi.fn(), onclose: vi.fn() } });
-		await screen.findByRole('option', { name: 'Barbell' });
+		await screen.findByRole('button', { name: 'Barbell' });
 
 		await fireEvent.click(screen.getByTestId('save-exercise'));
 		expect(await screen.findByRole('alert')).toHaveTextContent('A name is required.');
@@ -108,10 +107,7 @@ describe('ExerciseFormModal', () => {
 
 		// Name pre-filled (MOD-001); the sentinel category is not pre-selected.
 		expect(screen.getByTestId('exercise-name')).toHaveValue('Sandbag Carry');
-		await screen.findByRole('option', { name: 'Machine' });
-		await fireEvent.change(screen.getByTestId('exercise-category'), {
-			target: { value: 'machine' }
-		});
+		await fireEvent.click(await screen.findByRole('button', { name: 'Machine' }));
 		await fireEvent.click(await screen.findByText('Chest'));
 		await fireEvent.click(screen.getByTestId('save-exercise'));
 
@@ -143,6 +139,54 @@ describe('ExerciseFormModal', () => {
 		expect(vi.mocked(deleteExercise).mock.calls[0][0]).toEqual({ id: 50 });
 		expect(ondeleted).toHaveBeenCalledWith(50);
 		expect(onclose).toHaveBeenCalled();
+		// A post-close Undo snackbar replaces the success toast.
+		await waitFor(() => expect(undoSnackbar).toHaveBeenCalled());
+		expect(vi.mocked(undoSnackbar).mock.calls[0][0]).toContain('Atlas Press');
+	});
+
+	it('[WO-031] Undo on a delete recreates the exercise from its own data', async () => {
+		vi.mocked(deleteExercise).mockResolvedValue(undefined);
+		const recreated = detail({ id: 99 });
+		vi.mocked(createExercise).mockResolvedValue(recreated);
+		const onsaved = vi.fn();
+		render(ExerciseFormModal, {
+			props: { mode: 'edit', detail: detail(), onsaved, ondeleted: vi.fn(), onclose: vi.fn() }
+		});
+
+		await fireEvent.click(screen.getByTestId('delete-exercise'));
+		await fireEvent.click(screen.getByTestId('confirm-delete'));
+		await waitFor(() => expect(undoSnackbar).toHaveBeenCalled());
+
+		// Invoke the snackbar's Undo: it recreates with the deleted exercise's data.
+		const onUndo = vi.mocked(undoSnackbar).mock.calls[0][1];
+		onUndo();
+		await waitFor(() => expect(createExercise).toHaveBeenCalled());
+		expect(vi.mocked(createExercise).mock.calls[0][0]).toEqual({
+			input: {
+				name: 'Atlas Press',
+				category: 'barbell',
+				defaultRestSeconds: 90,
+				muscles: [{ muscle: 'chest', role: 'primary' }]
+			}
+		});
+		expect(onsaved).toHaveBeenCalledWith(recreated);
+	});
+
+	it('[WO-031] startInDelete opens straight into the delete-confirm view', async () => {
+		render(ExerciseFormModal, {
+			props: {
+				mode: 'edit',
+				detail: detail(),
+				startInDelete: true,
+				onsaved: vi.fn(),
+				onclose: vi.fn()
+			}
+		});
+
+		// No edit fields — the confirm view is shown immediately with the Delete button.
+		expect(await screen.findByTestId('delete-confirm-text')).toBeInTheDocument();
+		expect(screen.getByTestId('confirm-delete')).toBeInTheDocument();
+		expect(screen.queryByTestId('exercise-name')).not.toBeInTheDocument();
 	});
 
 	it('[WO-032] keeps a referenced exercise when delete is refused', async () => {
