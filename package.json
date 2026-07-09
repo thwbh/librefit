@@ -51,7 +51,7 @@
 		"@vitest/coverage-v8": "^4.1.10",
 		"autoprefixer": "^10.5.2",
 		"chart.js": "^4.4.2",
-		"daisyui": "^5.6.15",
+		"daisyui": "^5.6.16",
 		"date-fns": "^4.4.0",
 		"dayjs": "^1.11.10",
 		"eslint": "^10.6.0",
