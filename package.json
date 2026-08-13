@@ -41,7 +41,7 @@
 		"@tauri-apps/cli": "^2.11.4",
 		"@tauri-apps/plugin-log": "2.9.0",
 		"@testing-library/dom": "^10.2.0",
-		"@testing-library/jest-dom": "^7.0.0",
+		"@testing-library/jest-dom": "^7.0.1",
 		"@testing-library/svelte": "^5.4.2",
 		"@testing-library/user-event": "^14.6.3",
 		"@thwbh/veilchen": "^0.3.3",
