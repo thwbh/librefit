@@ -75,7 +75,7 @@
 		"vite": "^8.2.2",
 		"vite-tsconfig-paths": "^6.1.1",
 		"vitest": "^4.1.8",
-		"zod": "^4.1.5"
+		"zod": "^4.5.2"
 	},
 	"lint-staged": {
 		"*.{js,ts,svelte,css,md,json}": "prettier --write"
