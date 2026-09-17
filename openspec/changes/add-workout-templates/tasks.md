@@ -1,8 +1,8 @@
 ## 1. Data model & migrations
 
-- [ ] 1.1 Migration creating `workout_template` (`id, name, description NULL, is_predefined BOOLEAN, created_at`) + `template_exercise` (ordered: `sequence`, `target_reps NULL`, `target_weight_kg NULL`, `notes NULL`, plain `exercise_id` FK); no `user_id`
-- [ ] 1.2 Seed migration for predefined templates (`is_predefined = TRUE`), resolving exercises **by slug**
-- [ ] 1.3 Regenerate Diesel `schema.rs`; confirm the template tables and joinables are present
+- [x] 1.1 Migration creating `workout_template` (`id, name, description NULL, is_predefined BOOLEAN, created_at`) + `template_exercise` (ordered: `sequence`, `target_reps NULL` rep-range text, `target_weight_kg NULL`, `notes NULL`, plain `exercise_id` FK); no `user_id`. (Replaced a stale/broken pre-existing `2026-06-03` draft; created via diesel CLI, timestamped after `user_exercises` so slug exists.)
+- [x] 1.2 Seed migration for predefined templates (`is_predefined = TRUE`) — Push/Pull/Leg Day, resolving exercises **by slug**
+- [x] 1.3 Regenerate Diesel `schema.rs`; confirm the template tables and joinables are present
 
 ## 2. Backend
 
