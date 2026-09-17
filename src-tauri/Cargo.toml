@@ -21,7 +21,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.0.5", features = [] }
-tauri-typegen = { workspace = true }
+# build.rs shares the typegen invocation with the xtask bin via xtask::generate().
+xtask = { path = "xtask" }
 
 [dependencies]
 serde_json = "1.0.137"
