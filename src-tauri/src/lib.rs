@@ -27,12 +27,14 @@ use crate::service::weight::{
     update_weight_tracker_entry,
 };
 use crate::service::workout::{
-    add_workout_set, batch_tag_exercises, create_exercise, create_workout_for_date,
-    delete_exercise, delete_workout, delete_workout_set, discard_workout_session,
-    end_workout_session, get_active_workout, get_exercise_library, list_exercise_categories,
-    list_muscles, list_unverified_exercises, list_workouts, log_workout_set, pause_workout_session,
-    quick_add_exercise, resume_workout_session, start_workout_session, undo_batch_tag,
-    unverified_exercise_summary, update_exercise, update_workout_set,
+    add_workout_set, batch_tag_exercises, clone_workout_template, create_exercise,
+    create_workout_for_date, create_workout_template, delete_exercise, delete_workout,
+    delete_workout_set, delete_workout_template, discard_workout_session, end_workout_session,
+    get_active_workout, get_exercise_library, list_exercise_categories, list_muscles,
+    list_unverified_exercises, list_workout_templates, list_workouts, log_workout_set,
+    pause_workout_session, quick_add_exercise, resume_workout_session, start_workout_from_template,
+    start_workout_session, swap_template_exercise, undo_batch_tag, unverified_exercise_summary,
+    update_exercise, update_workout_set, update_workout_template,
 };
 
 use crate::db::{connection, migrations};
@@ -122,7 +124,14 @@ pub fn run() {
             batch_tag_exercises,
             undo_batch_tag,
             list_exercise_categories,
-            list_muscles
+            list_muscles,
+            list_workout_templates,
+            create_workout_template,
+            update_workout_template,
+            delete_workout_template,
+            clone_workout_template,
+            swap_template_exercise,
+            start_workout_from_template
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
