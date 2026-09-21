@@ -4463,9 +4463,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-typegen"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e761d97bf6c90f13894383493485008d0c51f67ff7b12c0f95dc34b8a9e6e73"
+checksum = "fed9e2aa6d8cff2bccffb454f608b9e208f62ec2a5fec4491205de08587d0beb"
 dependencies = [
  "chrono",
  "clap",
@@ -4476,7 +4476,7 @@ dependencies = [
  "serde",
  "serde-rename-rule",
  "serde_json",
- "syn 2.0.117",
+ "syn 3.0.2",
  "tera",
  "thiserror 2.0.18",
  "walkdir",
