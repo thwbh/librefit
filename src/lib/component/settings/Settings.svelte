@@ -6,7 +6,8 @@
 		Upload,
 		MagicWand,
 		Info,
-		Barbell
+		Barbell,
+		ClipboardText
 	} from 'phosphor-svelte';
 
 	interface Props {
@@ -20,6 +21,7 @@
 	const items = [
 		{ href: '/profile', label: 'Profile', icon: IdentificationCard },
 		{ href: '/exercises', label: 'Exercises', icon: Barbell },
+		{ href: '/templates', label: 'Templates', icon: ClipboardText },
 		{ href: '/export', label: 'Export', icon: TreeStructure },
 		{ href: '/import', label: 'Import', icon: Upload },
 		{ href: '/wizard', label: 'Wizard', icon: MagicWand },

@@ -24,6 +24,8 @@ vi.mock('$lib/api', () => ({
 	CommonHooks: { create: vi.fn(() => ({})), update: vi.fn(() => ({})) }
 }));
 vi.mock('$lib/snackbar', () => ({ undoSnackbar: vi.fn() }));
+// reportError (used in catch blocks) logs via tauri-plugin-log; stub it in jsdom.
+vi.mock('@tauri-apps/plugin-log', () => ({ error: vi.fn() }));
 
 const categories = [
 	{ longvalue: 'Barbell', shortvalue: 'barbell' },

@@ -8,8 +8,8 @@
 
 use crate::db::connection::{DbPool, PooledConnection};
 use crate::db::schema::{
-    exercise, exercise_category, exercise_muscle, muscle, workout_exercise, workout_pause,
-    workout_session, workout_set, workout_type,
+    exercise, exercise_category, exercise_muscle, muscle, template_exercise, workout_exercise,
+    workout_pause, workout_session, workout_set, workout_template, workout_type,
 };
 use crate::util::error_handler::handle_error;
 use diesel::prelude::*;
@@ -174,6 +174,59 @@ pub struct NewWorkoutPause {
     pub session_id: i32,
     pub paused_at: String,
     pub resumed_at: Option<String>,
+}
+
+// ============================================================================
+// WORKOUT TEMPLATES: reusable routines (workout_template -> template_exercise)
+// ============================================================================
+
+#[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
+#[diesel(table_name = workout_template)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+#[serde(rename_all = "camelCase")]
+pub struct WorkoutTemplate {
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    /// Seeded routines (`true`) are read-only; clone one to customise it (`[WO-038]`).
+    pub is_predefined: bool,
+    pub created_at: String,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = workout_template)]
+struct NewWorkoutTemplate {
+    name: String,
+    description: Option<String>,
+    is_predefined: bool,
+    created_at: String,
+}
+
+#[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
+#[diesel(table_name = template_exercise)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+#[serde(rename_all = "camelCase")]
+pub struct TemplateExercise {
+    pub id: i32,
+    pub template_id: i32,
+    pub exercise_id: i32,
+    /// Dense ordering within the template (0-based), rebuilt on mutation (`[WO-039]`).
+    pub sequence: i32,
+    /// Rep range as free text (e.g. "8-12"); optional.
+    pub target_reps: Option<String>,
+    pub target_weight_kg: Option<f32>,
+    pub notes: Option<String>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = template_exercise)]
+struct NewTemplateExercise {
+    template_id: i32,
+    exercise_id: i32,
+    sequence: i32,
+    target_reps: Option<String>,
+    target_weight_kg: Option<f32>,
+    notes: Option<String>,
 }
 
 // ============================================================================
@@ -698,6 +751,48 @@ pub struct UnverifiedSummary {
     pub oldest_time: Option<String>,
 }
 
+/// One exercise entry in a template create/edit payload (order = array position).
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TemplateExerciseInput {
+    pub exercise_id: i32,
+    pub target_reps: Option<String>,
+    pub target_weight_kg: Option<f32>,
+    pub notes: Option<String>,
+}
+
+/// Validated input for creating/editing a template (`[WO-037]`).
+#[derive(Serialize, Deserialize, Validate, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TemplateInput {
+    #[validate(length(min = 1, max = 80, message = "Name must be 1–80 characters"))]
+    pub name: String,
+    pub description: Option<String>,
+    #[validate(length(min = 1, message = "Add at least one exercise"))]
+    pub exercises: Vec<TemplateExerciseInput>,
+}
+
+/// A template exercise with its resolved exercise name, for display.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TemplateExerciseView {
+    pub id: i32,
+    pub exercise_id: i32,
+    pub name: String,
+    pub sequence: i32,
+    pub target_reps: Option<String>,
+    pub target_weight_kg: Option<f32>,
+    pub notes: Option<String>,
+}
+
+/// Full detail of a template with its ordered exercises.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TemplateDetail {
+    pub template: WorkoutTemplate,
+    pub exercises: Vec<TemplateExerciseView>,
+}
+
 #[derive(Insertable)]
 #[diesel(table_name = exercise)]
 struct NewExerciseRow<'a> {
@@ -855,13 +950,19 @@ impl Exercise {
         .map_err(handle_error)
     }
 
-    /// Delete a user exercise; refuses seeded rows and rows referenced by a logged
-    /// set (`[WO-031]`, `[WO-032]`).
+    /// Delete a user exercise; refuses seeded rows, rows referenced by a logged set
+    /// (`[WO-031]`, `[WO-032]`), and rows referenced by a workout template (so a
+    /// template can't be silently broken).
     pub fn delete_user(conn: &mut SqliteConnection, id: i32) -> Result<(), String> {
         Self::ensure_user(conn, id)?;
         if Self::referenced_by_set(conn, id).map_err(handle_error)? {
             return Err(
                 "This exercise is used in a logged workout and can't be deleted".to_string(),
+            );
+        }
+        if Self::referenced_by_template(conn, id).map_err(handle_error)? {
+            return Err(
+                "This exercise is used in a workout template and can't be deleted".to_string(),
             );
         }
         conn.transaction::<_, diesel::result::Error, _>(|conn| {
@@ -884,6 +985,15 @@ impl Exercise {
         }
         let n: i64 = workout_set::table
             .filter(workout_set::workout_exercise_id.eq_any(&we_ids))
+            .count()
+            .get_result(conn)?;
+        Ok(n > 0)
+    }
+
+    /// True if any workout template references this exercise (`[WO-032]` extension).
+    fn referenced_by_template(conn: &mut SqliteConnection, id: i32) -> QueryResult<bool> {
+        let n: i64 = template_exercise::table
+            .filter(template_exercise::exercise_id.eq(id))
             .count()
             .get_result(conn)?;
         Ok(n > 0)
@@ -1034,6 +1144,251 @@ impl Exercise {
 
     pub fn muscles(conn: &mut SqliteConnection) -> QueryResult<Vec<Muscle>> {
         muscle::table.order(muscle::longvalue.asc()).load(conn)
+    }
+}
+
+impl WorkoutTemplate {
+    pub fn find(conn: &mut SqliteConnection, id: i32) -> QueryResult<Self> {
+        workout_template::table
+            .filter(workout_template::id.eq(id))
+            .first(conn)
+    }
+
+    /// Guard for edit/delete/swap: predefined templates are immutable — clone first.
+    fn ensure_editable(conn: &mut SqliteConnection, id: i32) -> Result<Self, String> {
+        let t = Self::find(conn, id).map_err(handle_error)?;
+        if t.is_predefined {
+            return Err(
+                "Predefined templates can't be edited; clone one to customise it".to_string(),
+            );
+        }
+        Ok(t)
+    }
+
+    /// Rewrite `template_exercise.sequence` to a dense 0-based ordering following the
+    /// current order, so swaps/edits can't leave gaps (`[WO-039]`).
+    fn resequence(conn: &mut SqliteConnection, template_id: i32) -> QueryResult<()> {
+        let ids: Vec<i32> = template_exercise::table
+            .filter(template_exercise::template_id.eq(template_id))
+            .order((
+                template_exercise::sequence.asc(),
+                template_exercise::id.asc(),
+            ))
+            .select(template_exercise::id)
+            .load(conn)?;
+        for (i, id) in ids.iter().enumerate() {
+            diesel::update(template_exercise::table.filter(template_exercise::id.eq(id)))
+                .set(template_exercise::sequence.eq(i as i32))
+                .execute(conn)?;
+        }
+        Ok(())
+    }
+
+    /// Insert the template's exercises with dense sequence in array order.
+    fn write_exercises(
+        conn: &mut SqliteConnection,
+        template_id: i32,
+        exercises: &[TemplateExerciseInput],
+    ) -> QueryResult<()> {
+        for (i, e) in exercises.iter().enumerate() {
+            diesel::insert_into(template_exercise::table)
+                .values(NewTemplateExercise {
+                    template_id,
+                    exercise_id: e.exercise_id,
+                    sequence: i as i32,
+                    target_reps: e.target_reps.clone(),
+                    target_weight_kg: e.target_weight_kg,
+                    notes: e.notes.clone(),
+                })
+                .execute(conn)?;
+        }
+        Ok(())
+    }
+
+    /// Normalize an optional text field: trim, treat empty as `None`.
+    fn clean(s: &Option<String>) -> Option<String> {
+        s.as_ref()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty())
+    }
+
+    /// Build a template's detail view, resolving each exercise's name, ordered.
+    pub fn detail(
+        conn: &mut SqliteConnection,
+        template: WorkoutTemplate,
+    ) -> QueryResult<TemplateDetail> {
+        let rows = template_exercise::table
+            .filter(template_exercise::template_id.eq(template.id))
+            .order((
+                template_exercise::sequence.asc(),
+                template_exercise::id.asc(),
+            ))
+            .load::<TemplateExercise>(conn)?;
+        let mut exercises = Vec::with_capacity(rows.len());
+        for r in rows {
+            let ex = Exercise::find(conn, r.exercise_id)?;
+            exercises.push(TemplateExerciseView {
+                id: r.id,
+                exercise_id: r.exercise_id,
+                name: ex.name,
+                sequence: r.sequence,
+                target_reps: r.target_reps,
+                target_weight_kg: r.target_weight_kg,
+                notes: r.notes,
+            });
+        }
+        Ok(TemplateDetail {
+            template,
+            exercises,
+        })
+    }
+
+    /// All templates (predefined first, then by name) with their exercises.
+    pub fn list(conn: &mut SqliteConnection) -> QueryResult<Vec<TemplateDetail>> {
+        let templates = workout_template::table
+            .order((
+                workout_template::is_predefined.desc(),
+                workout_template::name.asc(),
+            ))
+            .load::<WorkoutTemplate>(conn)?;
+        templates
+            .into_iter()
+            .map(|t| Self::detail(conn, t))
+            .collect()
+    }
+
+    /// Create a user template with its ordered exercises (`[WO-037]`).
+    pub fn create(
+        conn: &mut SqliteConnection,
+        input: &TemplateInput,
+    ) -> Result<TemplateDetail, String> {
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            let id = diesel::insert_into(workout_template::table)
+                .values(NewWorkoutTemplate {
+                    name: input.name.trim().to_string(),
+                    description: Self::clean(&input.description),
+                    is_predefined: false,
+                    created_at: now_ts(),
+                })
+                .returning(workout_template::id)
+                .get_result::<i32>(conn)?;
+            Self::write_exercises(conn, id, &input.exercises)?;
+            let t = Self::find(conn, id)?;
+            Self::detail(conn, t)
+        })
+        .map_err(handle_error)
+    }
+
+    /// Edit a user template; replaces its exercise list. Guarded against predefined.
+    pub fn update(
+        conn: &mut SqliteConnection,
+        id: i32,
+        input: &TemplateInput,
+    ) -> Result<TemplateDetail, String> {
+        Self::ensure_editable(conn, id)?;
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            diesel::update(workout_template::table.filter(workout_template::id.eq(id)))
+                .set((
+                    workout_template::name.eq(input.name.trim()),
+                    workout_template::description.eq(Self::clean(&input.description)),
+                ))
+                .execute(conn)?;
+            diesel::delete(template_exercise::table.filter(template_exercise::template_id.eq(id)))
+                .execute(conn)?;
+            Self::write_exercises(conn, id, &input.exercises)?;
+            let t = Self::find(conn, id)?;
+            Self::detail(conn, t)
+        })
+        .map_err(handle_error)
+    }
+
+    /// Delete a user template and its exercises. Guarded against predefined.
+    pub fn delete(conn: &mut SqliteConnection, id: i32) -> Result<(), String> {
+        Self::ensure_editable(conn, id)?;
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            diesel::delete(template_exercise::table.filter(template_exercise::template_id.eq(id)))
+                .execute(conn)?;
+            diesel::delete(workout_template::table.filter(workout_template::id.eq(id)))
+                .execute(conn)?;
+            Ok(())
+        })
+        .map_err(handle_error)
+    }
+
+    /// Deep-copy a template into an independent, editable copy (`is_predefined = 0`);
+    /// the source is untouched (`[WO-038]`).
+    pub fn clone_to_copy(conn: &mut SqliteConnection, id: i32) -> Result<TemplateDetail, String> {
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            let src = Self::find(conn, id)?;
+            let new_id = diesel::insert_into(workout_template::table)
+                .values(NewWorkoutTemplate {
+                    name: format!("{} (copy)", src.name),
+                    description: src.description.clone(),
+                    is_predefined: false,
+                    created_at: now_ts(),
+                })
+                .returning(workout_template::id)
+                .get_result::<i32>(conn)?;
+            let rows = template_exercise::table
+                .filter(template_exercise::template_id.eq(id))
+                .order((
+                    template_exercise::sequence.asc(),
+                    template_exercise::id.asc(),
+                ))
+                .load::<TemplateExercise>(conn)?;
+            for (i, r) in rows.iter().enumerate() {
+                diesel::insert_into(template_exercise::table)
+                    .values(NewTemplateExercise {
+                        template_id: new_id,
+                        exercise_id: r.exercise_id,
+                        sequence: i as i32,
+                        target_reps: r.target_reps.clone(),
+                        target_weight_kg: r.target_weight_kg,
+                        notes: r.notes.clone(),
+                    })
+                    .execute(conn)?;
+            }
+            let t = Self::find(conn, new_id)?;
+            Self::detail(conn, t)
+        })
+        .map_err(handle_error)
+    }
+
+    /// Swap a template entry's exercise for another, preserving its position; the dense
+    /// sequence is rebuilt in the same transaction (`[WO-039]`). Guarded against predefined.
+    pub fn swap_exercise(
+        conn: &mut SqliteConnection,
+        template_exercise_id: i32,
+        new_exercise_id: i32,
+    ) -> Result<TemplateDetail, String> {
+        let te: TemplateExercise = template_exercise::table
+            .filter(template_exercise::id.eq(template_exercise_id))
+            .first(conn)
+            .map_err(handle_error)?;
+        Self::ensure_editable(conn, te.template_id)?;
+        conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            diesel::update(
+                template_exercise::table.filter(template_exercise::id.eq(template_exercise_id)),
+            )
+            .set(template_exercise::exercise_id.eq(new_exercise_id))
+            .execute(conn)?;
+            Self::resequence(conn, te.template_id)?;
+            let t = Self::find(conn, te.template_id)?;
+            Self::detail(conn, t)
+        })
+        .map_err(handle_error)
+    }
+
+    /// This template's exercise ids in order — used to prefill a session (`[WO-040]`).
+    pub fn ordered_exercise_ids(conn: &mut SqliteConnection, id: i32) -> QueryResult<Vec<i32>> {
+        template_exercise::table
+            .filter(template_exercise::template_id.eq(id))
+            .order((
+                template_exercise::sequence.asc(),
+                template_exercise::id.asc(),
+            ))
+            .select(template_exercise::exercise_id)
+            .load(conn)
     }
 }
 
@@ -1349,4 +1704,97 @@ pub fn list_exercise_categories(pool: State<DbPool>) -> Result<Vec<ExerciseCateg
 pub fn list_muscles(pool: State<DbPool>) -> Result<Vec<Muscle>, String> {
     let mut conn = conn_from(&pool)?;
     Exercise::muscles(&mut conn).map_err(handle_error)
+}
+
+// ---------------------------------------------------------------------------
+// Workout templates
+// ---------------------------------------------------------------------------
+
+/// All templates (predefined + user-created) with their ordered exercises.
+#[command]
+pub fn list_workout_templates(pool: State<DbPool>) -> Result<Vec<TemplateDetail>, String> {
+    let mut conn = conn_from(&pool)?;
+    WorkoutTemplate::list(&mut conn).map_err(handle_error)
+}
+
+/// Build a template from scratch (`[WO-037]`).
+#[command]
+pub fn create_workout_template(
+    pool: State<DbPool>,
+    input: TemplateInput,
+) -> Result<TemplateDetail, String> {
+    input.validate().map_err(first_validation_message)?;
+    let mut conn = conn_from(&pool)?;
+    WorkoutTemplate::create(&mut conn, &input)
+}
+
+/// Edit a user template (`[WO-037]`). Refuses predefined templates.
+#[command]
+pub fn update_workout_template(
+    pool: State<DbPool>,
+    id: i32,
+    input: TemplateInput,
+) -> Result<TemplateDetail, String> {
+    input.validate().map_err(first_validation_message)?;
+    let mut conn = conn_from(&pool)?;
+    WorkoutTemplate::update(&mut conn, id, &input)
+}
+
+/// Delete a user template. Refuses predefined templates.
+#[command]
+pub fn delete_workout_template(pool: State<DbPool>, id: i32) -> Result<(), String> {
+    let mut conn = conn_from(&pool)?;
+    WorkoutTemplate::delete(&mut conn, id)
+}
+
+/// Clone a template into an independent, editable copy (`[WO-038]`).
+#[command]
+pub fn clone_workout_template(pool: State<DbPool>, id: i32) -> Result<TemplateDetail, String> {
+    let mut conn = conn_from(&pool)?;
+    WorkoutTemplate::clone_to_copy(&mut conn, id)
+}
+
+/// Swap a template entry for another library exercise, preserving position (`[WO-039]`).
+#[command]
+pub fn swap_template_exercise(
+    pool: State<DbPool>,
+    template_exercise_id: i32,
+    exercise_id: i32,
+) -> Result<TemplateDetail, String> {
+    let mut conn = conn_from(&pool)?;
+    WorkoutTemplate::swap_exercise(&mut conn, template_exercise_id, exercise_id)
+}
+
+/// Start a session prefilled with a template's exercises in order (`[WO-040]`).
+/// Subject to the single-active-session rule (`[WO-002]`).
+#[command]
+pub fn start_workout_from_template(
+    pool: State<DbPool>,
+    template_id: i32,
+    name: Option<String>,
+) -> Result<WorkoutDetail, String> {
+    let mut conn = conn_from(&pool)?;
+    if WorkoutSession::active(&mut conn)
+        .map_err(handle_error)?
+        .is_some()
+    {
+        return Err("A workout session is already active".to_string());
+    }
+    // Fail early if the template doesn't exist; default the session name to the
+    // template's so the overlay/summary read as e.g. "Push Day" rather than generic.
+    let template = WorkoutTemplate::find(&mut conn, template_id).map_err(handle_error)?;
+    let session_name = name.or(Some(template.name));
+    let exercise_ids =
+        WorkoutTemplate::ordered_exercise_ids(&mut conn, template_id).map_err(handle_error)?;
+    // Starting the session and prefilling its exercises are one unit.
+    let session = conn
+        .transaction::<_, diesel::result::Error, _>(|conn| {
+            let session = WorkoutSession::start(conn, "wl", session_name)?;
+            for ex_id in &exercise_ids {
+                WorkoutExercise::add_or_get(conn, session.id, *ex_id)?;
+            }
+            Ok(session)
+        })
+        .map_err(handle_error)?;
+    WorkoutSession::detail(&mut conn, session)
 }

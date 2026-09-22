@@ -8,6 +8,7 @@ mod test_export_cmd;
 mod test_import_cmd;
 mod test_intake_cmd;
 mod test_progress_cmd;
+mod test_template_cmd;
 mod test_tracker_history_cmd;
 mod test_user_cmd;
 mod test_weight_cmd;

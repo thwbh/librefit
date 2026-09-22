@@ -15,7 +15,7 @@
 		type ExerciseInput,
 		type Muscle
 	} from '$lib/api';
-	import { formatError } from '$lib/api/error-formatter';
+	import { reportError } from '$lib/api/report-error';
 	import { undoSnackbar } from '$lib/snackbar';
 
 	// Full add/edit screen for a user exercise (WO-029, WO-030, WO-035) per
@@ -125,7 +125,7 @@
 			onsaved(result);
 			onclose();
 		} catch (e) {
-			error = formatError(e);
+			error = reportError(e);
 		} finally {
 			busy = false;
 		}
@@ -166,7 +166,7 @@
 		} catch (e) {
 			// The backend refuses when a logged set references it (WO-032); surface that
 			// in-modal per `_conv-user-errors`, leaving the exercise and its refs intact.
-			error = formatError(e);
+			error = reportError(e);
 			confirmingDelete = false;
 		} finally {
 			busy = false;
