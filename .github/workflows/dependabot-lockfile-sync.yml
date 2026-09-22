@@ -26,14 +26,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR head
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Check out the PR branch itself (not the merge ref) so we can push to it.
           ref: ${{ github.head_ref }}
           token: ${{ secrets.DEPENDABOT_LOCKFILE_PAT }}
 
       - name: Install Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '22.x'
 

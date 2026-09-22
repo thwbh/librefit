@@ -11,9 +11,9 @@ jobs:
     name: 'Convention & traceability gate'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: 'Install Node'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '22.x'
           cache: 'npm'
@@ -21,7 +21,7 @@ jobs:
       # jobs (svelte-test) can restore it instead of re-running npm ci.
       - name: 'Cache node_modules'
         id: node-modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: ${{ runner.os }}-node22-modules-${{ hashFiles('package-lock.json') }}
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: 'Install Tauri dependencies'
@@ -97,14 +97,14 @@ jobs:
       pull-requests: write
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: 'Download TypeScript bindings'
       uses: actions/download-artifact@v8
       with:
         name: typescript-bindings
         path: src/lib/api/gen/
     - name: 'Install Node'
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
         node-version: '22.x'
         cache: 'npm'
@@ -112,7 +112,7 @@ jobs:
     # back to npm ci only on a cache miss.
     - name: 'Cache node_modules'
       id: node-modules
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: node_modules
         key: ${{ runner.os }}-node22-modules-${{ hashFiles('package-lock.json') }}
