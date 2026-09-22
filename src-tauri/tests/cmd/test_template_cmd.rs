@@ -141,6 +141,11 @@ fn start_from_template_prefills_exercises_in_order() {
 
     assert!(session.session.ended_at.is_none(), "session is active");
     assert_eq!(
+        session.session.name.as_deref(),
+        Some("Push Day"),
+        "session defaults to the template's name"
+    );
+    assert_eq!(
         session
             .exercises
             .iter()

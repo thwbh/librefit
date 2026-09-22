@@ -1780,14 +1780,16 @@ pub fn start_workout_from_template(
     {
         return Err("A workout session is already active".to_string());
     }
-    // Fail early if the template doesn't exist.
-    WorkoutTemplate::find(&mut conn, template_id).map_err(handle_error)?;
+    // Fail early if the template doesn't exist; default the session name to the
+    // template's so the overlay/summary read as e.g. "Push Day" rather than generic.
+    let template = WorkoutTemplate::find(&mut conn, template_id).map_err(handle_error)?;
+    let session_name = name.or(Some(template.name));
     let exercise_ids =
         WorkoutTemplate::ordered_exercise_ids(&mut conn, template_id).map_err(handle_error)?;
     // Starting the session and prefilling its exercises are one unit.
     let session = conn
         .transaction::<_, diesel::result::Error, _>(|conn| {
-            let session = WorkoutSession::start(conn, "wl", name)?;
+            let session = WorkoutSession::start(conn, "wl", session_name)?;
             for ex_id in &exercise_ids {
                 WorkoutExercise::add_or_get(conn, session.id, *ex_id)?;
             }

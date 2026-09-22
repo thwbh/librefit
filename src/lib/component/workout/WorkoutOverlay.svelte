@@ -43,18 +43,15 @@
 	});
 	const entryPrefill = $derived(entrySessionEx ? store.prefill(entrySessionEx) : null);
 
-	// Pinned-header context: the exercise being worked on + the set number in
-	// progress (the set about to be logged), so the active set stays visible even
-	// as completed work scrolls below. The stats card stays pinned in the header.
+	// Pinned-header context: while logging, the exercise being worked on + the set
+	// number in progress, so the active set stays visible as completed work scrolls
+	// below. When idle, the workout's own name (the template name for a session started
+	// from one) rather than an arbitrary exercise.
 	const headerName = $derived(
-		entryStep === 'log' && entryExercise
-			? entryExercise.name
-			: (store.currentExercise?.name ?? null)
+		entryStep === 'log' && entryExercise ? entryExercise.name : (session?.session.name ?? 'Workout')
 	);
 	const headerSet = $derived(
-		entryStep === 'log' && entryExercise
-			? (entrySessionEx?.sets.length ?? 0) + 1
-			: (store.currentExercise?.sets.length ?? 0)
+		entryStep === 'log' && entryExercise ? (entrySessionEx?.sets.length ?? 0) + 1 : 0
 	);
 
 	// Drive the native <dialog> from `open` + session presence.
@@ -91,6 +88,13 @@
 
 	function pick(exercise: ExerciseDetail) {
 		entryExercise = { id: exercise.id, name: exercise.name };
+		entryStep = 'log';
+	}
+
+	// Log directly against an exercise already in the session (a template-prefilled one,
+	// or one with sets) — skips the library pick and opens the entry form for it.
+	function logFor(ex: { exerciseId: number; name: string }) {
+		entryExercise = { id: ex.exerciseId, name: ex.name };
 		entryStep = 'log';
 	}
 
@@ -191,53 +195,70 @@
 						<RestTimer remainingMs={store.restRemainingMs} ondismiss={() => store.dismissRest()} />
 					{/if}
 
-					<!-- Completed exercises: read-only swipeable summaries (pushed down) -->
+					<!-- Session exercises (template-prefilled or worked): each is loggable via
+					     "Add set"; logged sets list below as swipeable summaries. -->
 					{#each session.exercises as ex (ex.id)}
-						<div class="rounded-box border border-base-300 p-3">
-							<h3 class="font-semibold">{ex.name}</h3>
-							<div class="my-2 overflow-hidden rounded-box border border-base-200">
-								{#each ex.sets as set, i (set.id)}
-									{#if editingSetId === set.id}
-										<div class="flex flex-col gap-1 p-2 {i > 0 ? 'border-t border-base-200' : ''}">
-											<SetMask
-												reps={set.metrics.reps}
-												weightKg={set.metrics.weightKg}
-												submitLabel="Save"
-												onsubmit={(m) => saveEdit(set.id, m)}
-											/>
-											<button class="btn btn-ghost btn-xs" onclick={() => (editingSetId = null)}>
-												Cancel
-											</button>
-										</div>
-									{:else}
-										<!-- Swipe right → edit, swipe left → delete (app gesture convention). -->
-										<SwipeableListItem
-											onleft={() => {
-												editingSetId = set.id;
-											}}
-											onright={() => store.deleteSet(set.id)}
-										>
-											{#snippet leftAction()}
-												<span><Pencil size="1.5rem" color={'var(--color-primary)'} /></span>
-											{/snippet}
-											{#snippet rightAction()}
-												<span><Trash size="1.5rem" color={'var(--color-error)'} /></span>
-											{/snippet}
-											<div
-												class="flex items-center justify-between bg-base-100 px-3 py-2 text-sm {i >
-												0
-													? 'border-t border-base-200'
-													: ''}"
-											>
-												<span class="tabular-nums"
-													>{set.metrics.reps} × {set.metrics.weightKg} kg</span
-												>
-												<span class="text-xs opacity-50">Set {i + 1}</span>
-											</div>
-										</SwipeableListItem>
-									{/if}
-								{/each}
+						<div class="rounded-box border border-base-300 p-3" data-testid="session-exercise">
+							<div class="flex items-center justify-between gap-2">
+								<h3 class="font-semibold">{ex.name}</h3>
+								<button
+									class="btn btn-ghost btn-xs"
+									onclick={() => logFor(ex)}
+									aria-label={`Add set to ${ex.name}`}
+									data-testid="add-set-for-exercise"
+								>
+									<Plus size="1rem" /> Add set
+								</button>
 							</div>
+							{#if ex.sets.length === 0}
+								<p class="mt-1 text-xs opacity-50">No sets yet</p>
+							{:else}
+								<div class="my-2 overflow-hidden rounded-box border border-base-200">
+									{#each ex.sets as set, i (set.id)}
+										{#if editingSetId === set.id}
+											<div
+												class="flex flex-col gap-1 p-2 {i > 0 ? 'border-t border-base-200' : ''}"
+											>
+												<SetMask
+													reps={set.metrics.reps}
+													weightKg={set.metrics.weightKg}
+													submitLabel="Save"
+													onsubmit={(m) => saveEdit(set.id, m)}
+												/>
+												<button class="btn btn-ghost btn-xs" onclick={() => (editingSetId = null)}>
+													Cancel
+												</button>
+											</div>
+										{:else}
+											<!-- Swipe right → edit, swipe left → delete (app gesture convention). -->
+											<SwipeableListItem
+												onleft={() => {
+													editingSetId = set.id;
+												}}
+												onright={() => store.deleteSet(set.id)}
+											>
+												{#snippet leftAction()}
+													<span><Pencil size="1.5rem" color={'var(--color-primary)'} /></span>
+												{/snippet}
+												{#snippet rightAction()}
+													<span><Trash size="1.5rem" color={'var(--color-error)'} /></span>
+												{/snippet}
+												<div
+													class="flex items-center justify-between bg-base-100 px-3 py-2 text-sm {i >
+													0
+														? 'border-t border-base-200'
+														: ''}"
+												>
+													<span class="tabular-nums"
+														>{set.metrics.reps} × {set.metrics.weightKg} kg</span
+													>
+													<span class="text-xs opacity-50">Set {i + 1}</span>
+												</div>
+											</SwipeableListItem>
+										{/if}
+									{/each}
+								</div>
+							{/if}
 						</div>
 					{/each}
 				</div>
