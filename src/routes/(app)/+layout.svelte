@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { AppShell, ToastContainer, createRefreshContext } from '@thwbh/veilchen';
+	import {
+		AppShell,
+		ToastContainer,
+		SnackbarContainer,
+		createRefreshContext
+	} from '@thwbh/veilchen';
 	import type { BottomNavItem } from '@thwbh/veilchen';
 	import Settings from '$lib/component/settings/Settings.svelte';
 	import { fade } from 'svelte/transition';
@@ -63,7 +68,8 @@
 	);
 </script>
 
-<ToastContainer position="top" align="center" />
+<ToastContainer position="bottom" align="center" class="toast-above-dock" />
+<SnackbarContainer position="bottom" align="center" class="toast-above-dock" />
 
 <AppShell items={navItems} {activeId} onrefresh={refresh.handler} refreshing={refresh.isRefreshing}>
 	{#key page.url.pathname}

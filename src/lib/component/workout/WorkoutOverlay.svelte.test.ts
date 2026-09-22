@@ -24,12 +24,12 @@ import { WorkoutStore } from '$lib/workout/workout-state.svelte';
 
 type Detail = Awaited<ReturnType<typeof api.getActiveWorkout>>;
 
-function sessionWith(exercises: unknown[] = [], pauses: unknown[] = []): Detail {
+function sessionWith(exercises: unknown[] = [], pauses: unknown[] = [], name?: string): Detail {
 	return {
 		session: {
 			id: 1,
 			workoutType: 'wl',
-			name: undefined,
+			name,
 			startedAt: new Date().toISOString(),
 			endedAt: undefined
 		},
@@ -63,7 +63,21 @@ describe('WorkoutOverlay', () => {
 		store.dispose();
 	});
 
-	it('renders pinned header context: current exercise + set number', async () => {
+	it('idle header shows the workout/template name, not an exercise', async () => {
+		const store = await activeStore(
+			sessionWith(
+				[{ id: 1, exerciseId: 1, name: 'Back Squat', defaultRestSeconds: 180, sets: [] }],
+				[],
+				'Push Day'
+			)
+		);
+		const { container } = render(WorkoutOverlay, { props: { store } });
+		const header = container.querySelector('.modal-header') as HTMLElement;
+		expect(within(header).getByText('Push Day')).toBeInTheDocument();
+		store.dispose();
+	});
+
+	it('while logging, the header shows the exercise + the next set number', async () => {
 		const store = await activeStore(
 			sessionWith([
 				{
@@ -76,11 +90,59 @@ describe('WorkoutOverlay', () => {
 			])
 		);
 		const { container } = render(WorkoutOverlay, { props: { store } });
-		// The name appears both in the pinned header and as the completed-exercise
-		// heading; assert the header copy specifically.
+		// Enter the log flow for that exercise via its Add set control.
+		await fireEvent.click(screen.getByTestId('add-set-for-exercise'));
+
 		const header = container.querySelector('.modal-header') as HTMLElement;
 		expect(within(header).getByText('Back Squat')).toBeInTheDocument();
-		expect(within(header).getByText('Set 1')).toBeInTheDocument(); // most-recent set number
+		expect(within(header).getByText('Set 2')).toBeInTheDocument(); // the set about to be logged
+		store.dispose();
+	});
+
+	it('a template-prefilled exercise (no sets) is loggable via Add set', async () => {
+		const store = await activeStore(
+			sessionWith([
+				{ id: 1, exerciseId: 2, name: 'Bench Press', defaultRestSeconds: 180, sets: [] }
+			])
+		);
+		render(WorkoutOverlay, { props: { store } });
+
+		// Prefilled box reads as empty but offers Add set.
+		expect(screen.getByText('No sets yet')).toBeInTheDocument();
+		await fireEvent.click(screen.getByTestId('add-set-for-exercise'));
+
+		// The entry form opens for that exercise (SetMask + Done).
+		expect(screen.getByRole('button', { name: 'Log set' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+		store.dispose();
+	});
+
+	it('[WO-003] logging via Add set records against that exercise', async () => {
+		(api.logWorkoutSet as ReturnType<typeof vi.fn>).mockResolvedValue(
+			sessionWith([
+				{
+					id: 1,
+					exerciseId: 2,
+					name: 'Bench Press',
+					defaultRestSeconds: 180,
+					sets: [{ id: 9, loggedAt: new Date().toISOString(), metrics: { reps: 8, weightKg: 20 } }]
+				}
+			])
+		);
+		const store = await activeStore(
+			sessionWith([
+				{ id: 1, exerciseId: 2, name: 'Bench Press', defaultRestSeconds: 180, sets: [] }
+			])
+		);
+		render(WorkoutOverlay, { props: { store } });
+
+		await fireEvent.click(screen.getByTestId('add-set-for-exercise'));
+		await fireEvent.click(screen.getByRole('button', { name: 'Log set' }));
+
+		expect(api.logWorkoutSet).toHaveBeenCalledWith({
+			exerciseId: 2,
+			metrics: { reps: 8, weightKg: 20 }
+		});
 		store.dispose();
 	});
 

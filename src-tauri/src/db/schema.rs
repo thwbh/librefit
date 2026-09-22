@@ -12,6 +12,34 @@ diesel::table! {
 }
 
 diesel::table! {
+    exercise (id) {
+        id -> Integer,
+        name -> Text,
+        category -> Text,
+        default_rest_seconds -> Nullable<Integer>,
+        slug -> Nullable<Text>,
+        verified -> Bool,
+        added -> Nullable<Text>,
+        time -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    exercise_category (shortvalue) {
+        shortvalue -> Text,
+        longvalue -> Text,
+    }
+}
+
+diesel::table! {
+    exercise_muscle (exercise_id, muscle) {
+        exercise_id -> Integer,
+        muscle -> Text,
+        role -> Text,
+    }
+}
+
+diesel::table! {
     food_category (shortvalue) {
         longvalue -> Text,
         shortvalue -> Text,
@@ -49,6 +77,25 @@ diesel::table! {
 }
 
 diesel::table! {
+    muscle (shortvalue) {
+        shortvalue -> Text,
+        longvalue -> Text,
+    }
+}
+
+diesel::table! {
+    template_exercise (id) {
+        id -> Integer,
+        template_id -> Integer,
+        exercise_id -> Integer,
+        sequence -> Integer,
+        target_reps -> Nullable<Text>,
+        target_weight_kg -> Nullable<Float>,
+        notes -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
     weight_target (id) {
         id -> Integer,
         added -> Text,
@@ -69,40 +116,19 @@ diesel::table! {
 }
 
 diesel::table! {
-    workout_type (shortvalue) {
-        longvalue -> Text,
-        shortvalue -> Text,
-    }
-}
-
-diesel::table! {
-    exercise_category (shortvalue) {
-        longvalue -> Text,
-        shortvalue -> Text,
-    }
-}
-
-diesel::table! {
-    muscle (shortvalue) {
-        longvalue -> Text,
-        shortvalue -> Text,
-    }
-}
-
-diesel::table! {
-    exercise (id) {
+    workout_exercise (id) {
         id -> Integer,
-        name -> Text,
-        category -> Text,
-        default_rest_seconds -> Nullable<Integer>,
+        session_id -> Integer,
+        exercise_id -> Integer,
     }
 }
 
 diesel::table! {
-    exercise_muscle (exercise_id, muscle) {
-        exercise_id -> Integer,
-        muscle -> Text,
-        role -> Text,
+    workout_pause (id) {
+        id -> Integer,
+        session_id -> Integer,
+        paused_at -> Text,
+        resumed_at -> Nullable<Text>,
     }
 }
 
@@ -117,14 +143,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    workout_exercise (id) {
-        id -> Integer,
-        session_id -> Integer,
-        exercise_id -> Integer,
-    }
-}
-
-diesel::table! {
     workout_set (id) {
         id -> Integer,
         workout_exercise_id -> Integer,
@@ -135,22 +153,32 @@ diesel::table! {
 }
 
 diesel::table! {
-    workout_pause (id) {
+    workout_template (id) {
         id -> Integer,
-        session_id -> Integer,
-        paused_at -> Text,
-        resumed_at -> Nullable<Text>,
+        name -> Text,
+        description -> Nullable<Text>,
+        is_predefined -> Bool,
+        created_at -> Text,
+    }
+}
+
+diesel::table! {
+    workout_type (shortvalue) {
+        shortvalue -> Text,
+        longvalue -> Text,
     }
 }
 
 diesel::joinable!(exercise -> exercise_category (category));
 diesel::joinable!(exercise_muscle -> exercise (exercise_id));
 diesel::joinable!(exercise_muscle -> muscle (muscle));
-diesel::joinable!(workout_session -> workout_type (workout_type));
-diesel::joinable!(workout_exercise -> workout_session (session_id));
+diesel::joinable!(template_exercise -> exercise (exercise_id));
+diesel::joinable!(template_exercise -> workout_template (template_id));
 diesel::joinable!(workout_exercise -> exercise (exercise_id));
-diesel::joinable!(workout_set -> workout_exercise (workout_exercise_id));
+diesel::joinable!(workout_exercise -> workout_session (session_id));
 diesel::joinable!(workout_pause -> workout_session (session_id));
+diesel::joinable!(workout_session -> workout_type (workout_type));
+diesel::joinable!(workout_set -> workout_exercise (workout_exercise_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     body_data,
@@ -162,11 +190,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     intake_target,
     libre_user,
     muscle,
+    template_exercise,
     weight_target,
     weight_tracker,
     workout_exercise,
     workout_pause,
     workout_session,
     workout_set,
+    workout_template,
     workout_type,
 );

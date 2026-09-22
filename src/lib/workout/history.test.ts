@@ -79,6 +79,8 @@ describe('workedMuscles (detail/editor muscle-map data)', () => {
 					name: 'Bench Press',
 					category: 'barbell',
 					defaultRestSeconds: 180,
+					seeded: true,
+					verified: true,
 					muscles: [
 						{ exerciseId: 1, muscle: 'chest', role: 'primary' },
 						{ exerciseId: 1, muscle: 'triceps', role: 'secondary' }
@@ -92,6 +94,8 @@ describe('workedMuscles (detail/editor muscle-map data)', () => {
 					name: 'Back Squat',
 					category: 'barbell',
 					defaultRestSeconds: 240,
+					seeded: true,
+					verified: true,
 					muscles: [
 						{ exerciseId: 2, muscle: 'quadriceps', role: 'primary' },
 						{ exerciseId: 2, muscle: 'chest', role: 'secondary' } // contrived: chest also secondary here
@@ -124,6 +128,8 @@ describe('rangeMuscleCoverage (progress muscle map)', () => {
 				name: 'Bench Press',
 				category: 'barbell',
 				defaultRestSeconds: 180,
+				seeded: true,
+				verified: true,
 				muscles: [
 					{ exerciseId: 1, muscle: 'chest', role: 'primary' },
 					{ exerciseId: 1, muscle: 'triceps', role: 'secondary' }
@@ -137,6 +143,8 @@ describe('rangeMuscleCoverage (progress muscle map)', () => {
 				name: 'Tricep Pushdown',
 				category: 'cable',
 				defaultRestSeconds: 90,
+				seeded: true,
+				verified: true,
 				muscles: [{ exerciseId: 2, muscle: 'triceps', role: 'primary' }]
 			}
 		]

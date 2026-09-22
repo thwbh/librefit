@@ -28,6 +28,8 @@ const mockLibrary: ExerciseDetail[] = [
 		name: 'Bench Press',
 		category: 'barbell',
 		defaultRestSeconds: 180,
+		seeded: true,
+		verified: true,
 		muscles: [{ exerciseId: 1, muscle: 'chest', role: 'primary' }]
 	}
 ];
