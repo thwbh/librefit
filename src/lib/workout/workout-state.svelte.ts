@@ -18,6 +18,7 @@ import {
 	pauseWorkoutSession,
 	resumeWorkoutSession,
 	startWorkoutSession,
+	startWorkoutFromTemplate,
 	updateWorkoutSet,
 	type LiftingSetMetrics,
 	type WorkoutDetail,
@@ -147,6 +148,21 @@ export class WorkoutStore {
 		this.#startTimer();
 		try {
 			this.#reconcile(await startWorkoutSession({ name }));
+		} catch (e) {
+			this.#reconcile(null); // revert on commit failure
+			this.error = String(e);
+			throw e;
+		}
+	}
+
+	/** Start a session prefilled from a template's exercises in order (WO-040). */
+	async startFromTemplate(templateId: number, name?: string): Promise<void> {
+		this.error = null;
+		this.summary = null;
+		this.optimisticActive = true; // begin the morph immediately
+		this.#startTimer();
+		try {
+			this.#reconcile(await startWorkoutFromTemplate({ templateId, name }));
 		} catch (e) {
 			this.#reconcile(null); // revert on commit failure
 			this.error = String(e);

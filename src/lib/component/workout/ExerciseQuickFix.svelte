@@ -16,7 +16,7 @@
 		type ExerciseDetail,
 		type Muscle
 	} from '$lib/api';
-	import { formatError } from '$lib/api/error-formatter';
+	import { reportError } from '$lib/api/report-error';
 	import { undoSnackbar } from '$lib/snackbar';
 
 	// Batch-tagging tidy-up workspace (WO-041, WO-042, WO-043). Lists the user's
@@ -65,7 +65,7 @@
 			// Drop any selections that are no longer unverified.
 			selected = new Set([...selected].filter((id) => entries.some((e) => e.id === id)));
 		} catch (e) {
-			error = formatError(e);
+			error = reportError(e);
 		} finally {
 			loading = false;
 		}
@@ -120,7 +120,7 @@
 			const n = result.items.length;
 			undoSnackbar(`Tagged ${n} exercise${n === 1 ? '' : 's'}.`, () => revert(result));
 		} catch (e) {
-			error = formatError(e);
+			error = reportError(e);
 		} finally {
 			applying = false;
 		}

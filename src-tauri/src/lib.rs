@@ -59,6 +59,11 @@ pub fn run() {
             tauri_plugin_log::Builder::default()
                 .level(log::LevelFilter::Debug)
                 .with_colors(ColoredLevelConfig::default())
+                // Stdout so logs (incl. frontend logs via tauri-plugin-log) surface in
+                // the terminal in dev and prod; LogDir keeps a rotating file copy.
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Stdout,
+                ))
                 .target(tauri_plugin_log::Target::new(
                     tauri_plugin_log::TargetKind::LogDir {
                         file_name: Some("app.log".to_string()),

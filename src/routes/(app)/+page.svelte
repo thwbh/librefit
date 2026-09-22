@@ -54,6 +54,7 @@
 	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
 	import WorkoutDeleteDialog from '$lib/component/workout/WorkoutDeleteDialog.svelte';
 	import WorkoutEditModal from '$lib/component/workout/WorkoutEditModal.svelte';
+	import StartWorkoutSheet from '$lib/component/workout/StartWorkoutSheet.svelte';
 	import { dayBoundsUtc, workedMuscles, type WorkedMuscle } from '$lib/workout/history';
 	import { workoutStore } from '$lib/workout/workout-state.svelte';
 	import { onMount } from 'svelte';
@@ -157,10 +158,24 @@
 		weightTarget.targetWeight > 0 ? currentWeight / weightTarget.targetWeight : 0
 	);
 
+	// Tapping Start Workout opens a chooser: empty session or start from a template.
+	let startSheetOpen = $state(false);
+
 	async function startWorkout() {
+		startSheetOpen = false;
 		try {
 			await workoutStore.start();
 			overlayOpen = true; // open the overlay over the optimistically-morphed dashboard
+		} catch {
+			// the store reverts its optimistic morph and exposes `error`
+		}
+	}
+
+	async function startFromTemplate(templateId: number) {
+		startSheetOpen = false;
+		try {
+			await workoutStore.startFromTemplate(templateId);
+			overlayOpen = true;
 		} catch {
 			// the store reverts its optimistic morph and exposes `error`
 		}
@@ -439,7 +454,7 @@
 			{calorieValue}
 			{weightValue}
 			{showWorkoutCards}
-			onStart={startWorkout}
+			onStart={() => (startSheetOpen = true)}
 			onOpen={openOverlay}
 		>
 			{#snippet workoutCards()}
@@ -476,6 +491,15 @@
 <!-- Batch-tagging quick-fix, entered from the avatar maintenance indicator (DH-022). -->
 {#if quickFixOpen}
 	<ExerciseQuickFix onclose={() => (quickFixOpen = false)} onchanged={refreshUnverified} />
+{/if}
+
+<!-- Start Workout chooser: empty session or start from a template (WO-040). -->
+{#if startSheetOpen}
+	<StartWorkoutSheet
+		onempty={startWorkout}
+		ontemplate={startFromTemplate}
+		onclose={() => (startSheetOpen = false)}
+	/>
 {/if}
 
 <!-- Workout overlay: kept mounted while a session is active so minimizing

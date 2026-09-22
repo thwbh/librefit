@@ -14,17 +14,17 @@
 
 ## 3. API bindings
 
-- [ ] 3.1 Surface template commands through generated `$lib/api` bindings; verify regenerated types compile
+- [x] 3.1 Surface template commands through generated `$lib/api` bindings; verify regenerated types compile (64 commands; `TemplateDetail`/`TemplateInput`/`WorkoutTemplate` + 7 commands generated; `npm run check` 0 errors)
 
 ## 4. Frontend
 
-- [ ] 4.1 Template list + builder (from scratch) per `_conv-modals` / `_conv-validation`; empty state per `_conv-empty-states` [WO-037]
-- [ ] 4.2 Clone-a-predefined action [WO-038]
-- [ ] 4.3 Bottom-sheet exercise replacement per `_conv-modals` [WO-039]
-- [ ] 4.4 Start-from-template selection in the Start Workout flow [WO-040]
+- [x] 4.1 Template list + builder (from scratch) per `_conv-modals` / `_conv-validation`; empty state per `_conv-empty-states` [WO-037] (`/templates` route + `TemplateFormModal`; Settings link added)
+- [x] 4.2 Clone-a-predefined action [WO-038] (Clone button on predefined rows → opens the editable copy)
+- [x] 4.3 Bottom-sheet exercise replacement per `_conv-modals` [WO-039] (per-row swap via the `ExercisePicker` bottom sheet, preserves position)
+- [x] 4.4 Start-from-template selection in the Start Workout flow [WO-040] (`StartWorkoutSheet` chooser on dashboard Start; `workoutStore.startFromTemplate`)
 
 ## 5. Tests (traceability — every scenario cited)
 
 - [x] 5.1 Rust integration tests for build/clone/swap/start-from + delete-guard, each citing its WO id via `scenario!` [WO-037..WO-040, WO-032] (`tests/cmd/test_template_cmd.rs`, 5 tests green)
-- [ ] 5.2 Vitest component tests for the builder, clone action, bottom-sheet replacement, and start-from-template selection [WO-037..WO-040]
-- [ ] 5.3 Run the traceability lint to confirm every new WO scenario is cited
+- [x] 5.2 Vitest component tests for the builder [WO-037], bottom-sheet swap [WO-039], clone action [WO-038], and start-from-template selection [WO-040] (`TemplateFormModal`, `StartWorkoutSheet`, `/templates` route — 6 tests green)
+- [x] 5.3 Run the traceability lint to confirm every new WO scenario is cited
