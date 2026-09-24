@@ -19,3 +19,4 @@ src-tauri/gen/android/keystore.properties
 src/lib/api/gen/
 src/lib/api/gen/*
 
+src-tauri/res/*.bak*
