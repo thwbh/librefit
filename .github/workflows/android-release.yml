@@ -65,7 +65,7 @@ jobs:
           path: |
             ~/.cargo/bin/cargo-tauri
             ~/.cargo/bin/tauri-typegen
-          key: ${{ runner.os }}-tauri-cli-2.9.5-typegen-0.3.2
+          key: ${{ runner.os }}-tauri-cli-2.9.5-typegen-0.5.1
 
       - name: Install Tauri CLI and typegen
         run: |
@@ -73,7 +73,7 @@ jobs:
             cargo install tauri-cli --version "=2.9.5" --locked
           fi
           if ! command -v tauri-typegen &> /dev/null; then
-            cargo install tauri-typegen --version "=0.3.2" --locked
+            cargo install tauri-typegen --version "=0.5.1" --locked
           fi
 
       - name: Determine release strategy
