@@ -15,7 +15,7 @@ jobs:
       - name: 'Install Node'
         uses: actions/setup-node@v7
         with:
-          node-version: '22.x'
+          node-version-file: '.nvmrc'
           cache: 'npm'
       # Populate a node_modules cache keyed on the lockfile so downstream node
       # jobs (svelte-test) can restore it instead of re-running npm ci.
@@ -106,7 +106,7 @@ jobs:
     - name: 'Install Node'
       uses: actions/setup-node@v7
       with:
-        node-version: '22.x'
+        node-version-file: '.nvmrc'
         cache: 'npm'
     # Restore the node_modules the lint job built (same lockfile key). Falls
     # back to npm ci only on a cache miss.
