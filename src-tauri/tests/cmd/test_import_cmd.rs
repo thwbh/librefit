@@ -1,10 +1,10 @@
-use crate::helpers::setup_test_pool;
+use crate::helpers::{create_future_test_dates, setup_test_pool};
 use librefit_lib::scenario;
 use librefit_lib::service::import::{
-    import_data_from_string, ImportFormat, ImportProgress, ImportTable,
+    import_data_from_string, ImportCancellation, ImportFormat, ImportProgress,
 };
-use librefit_lib::service::intake::Intake;
-use librefit_lib::service::weight::WeightTracker;
+use librefit_lib::service::intake::{FoodCategory, Intake, IntakeTarget};
+use librefit_lib::service::weight::{WeightTarget, WeightTracker};
 use std::sync::{Arc, Mutex};
 use tauri::ipc::{Channel, InvokeResponseBody};
 use tauri::Manager;
@@ -29,248 +29,221 @@ fn create_test_channel() -> (Channel<ImportProgress>, Arc<Mutex<Vec<ImportProgre
     (channel, progress_list)
 }
 
+/// A backup document exercising every supported table. Targets use future dates so they pass
+/// the "end date in the future" validation. The intake entry carries extra `id`/`time` fields
+/// to prove they are ignored on import.
+fn sample_document() -> String {
+    let (start, end) = create_future_test_dates();
+    format!(
+        r#"{{
+            "schemaVersion": 1,
+            "intake": [
+                {{ "id": 99, "added": "2026-01-15", "amount": 500, "category": "b", "description": "Breakfast", "time": "08:00:00" }},
+                {{ "added": "2026-01-16", "amount": 700, "category": "l", "description": null }},
+                {{ "added": "2026-01-17", "amount": 600, "category": "d", "description": null }}
+            ],
+            "weightTracker": [
+                {{ "added": "2026-01-15", "amount": 75.5 }},
+                {{ "added": "2026-01-16", "amount": 75.2 }}
+            ],
+            "intakeTarget": [
+                {{ "added": "{start}", "startDate": "{start}", "endDate": "{end}", "targetCalories": 2000, "maximumCalories": 2500 }}
+            ],
+            "weightTarget": [
+                {{ "added": "{start}", "startDate": "{start}", "endDate": "{end}", "initialWeight": 80.0, "targetWeight": 75.0 }}
+            ],
+            "foodCategory": [
+                {{ "shortvalue": "zzz", "longvalue": "Bogus category" }}
+            ]
+        }}"#
+    )
+}
+
 // ============================================================================
-// INTAKE IMPORT TESTS
+// WHOLE-DOCUMENT IMPORT TESTS
 // ============================================================================
 
 #[test]
-fn import_intake_csv_success() {
-    scenario!("[IM-001]", "[STG-001]", "[STG-002]");
+fn import_json_restores_all_tables() {
+    scenario!("[IM-006]", "[STG-001]", "[STG-002]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
         app.manage(pool.clone());
-        app.manage(librefit_lib::service::import::ImportCancellation::new());
-
-        let csv_data = "added,amount,category,description\n\
-                        2026-01-15,500,b,Breakfast\n\
-                        2026-01-16,700,l,Lunch\n\
-                        2026-01-17,600,d,Dinner\n";
+        app.manage(ImportCancellation::new());
 
         let (channel, progress_list) = create_test_channel();
 
         let result = import_data_from_string(
             app.state(),
-            app.state::<librefit_lib::service::import::ImportCancellation>()
-                .inner()
-                .clone(),
-            csv_data.to_string(),
-            ImportFormat::Csv,
-            ImportTable::Intake,
+            app.state::<ImportCancellation>().inner().clone(),
+            sample_document(),
+            ImportFormat::Json,
             channel,
         )
         .await;
 
         assert!(result.is_ok());
         let import_result = result.unwrap();
-        assert_eq!(import_result.imported_count, 3);
+        assert_eq!(import_result.intake, 3);
+        assert_eq!(import_result.weight_tracker, 2);
+        assert_eq!(import_result.intake_target, 1);
+        assert_eq!(import_result.weight_target, 1);
+        assert_eq!(import_result.failed, 0);
 
-        // Verify progress updates were sent
-        let progress = progress_list.lock().unwrap();
-        assert!(progress.len() > 0, "Should have received progress updates");
+        // Progress updates were sent
+        assert!(
+            progress_list.lock().unwrap().len() > 0,
+            "Should have received progress updates"
+        );
 
-        // Verify data was actually inserted
+        // Data was actually inserted across every table
         let mut conn = pool.get().unwrap();
-        let all_intake = Intake::all(&mut conn).unwrap();
-        assert_eq!(all_intake.len(), 3);
+        assert_eq!(Intake::all(&mut conn).unwrap().len(), 3);
+        assert_eq!(WeightTracker::all(&mut conn).unwrap().len(), 2);
+        assert_eq!(IntakeTarget::all(&mut conn).unwrap().len(), 1);
+        assert_eq!(WeightTarget::all(&mut conn).unwrap().len(), 1);
     });
 }
 
 #[test]
-fn import_intake_csv_with_validation_errors() {
-    scenario!("[IM-003]");
+fn import_json_partial_with_invalid_entries() {
+    scenario!("[IM-007]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
         app.manage(pool.clone());
-        app.manage(librefit_lib::service::import::ImportCancellation::new());
+        app.manage(ImportCancellation::new());
 
-        // Invalid: amount exceeds max (10000)
-        let csv_data = "added,amount,category,description\n\
-                        2026-01-15,500,b,Valid entry\n\
-                        2026-01-16,15000,l,Invalid amount\n\
-                        2026-01-17,600,d,Valid entry\n";
+        // Middle intake entry is invalid (amount exceeds max of 10000)
+        let json_data = r#"{
+            "schemaVersion": 1,
+            "intake": [
+                { "added": "2026-01-15", "amount": 500, "category": "b", "description": "Valid" },
+                { "added": "2026-01-16", "amount": 15000, "category": "l", "description": "Invalid" },
+                { "added": "2026-01-17", "amount": 600, "category": "d", "description": "Valid" }
+            ]
+        }"#;
 
         let (channel, _progress_list) = create_test_channel();
 
         let result = import_data_from_string(
             app.state(),
-            app.state::<librefit_lib::service::import::ImportCancellation>()
-                .inner()
-                .clone(),
-            csv_data.to_string(),
-            ImportFormat::Csv,
-            ImportTable::Intake,
+            app.state::<ImportCancellation>().inner().clone(),
+            json_data.to_string(),
+            ImportFormat::Json,
             channel,
         )
         .await;
 
-        // With the new all-or-nothing approach, validation errors cause the entire import to fail
-        assert!(result.is_err());
-        let error_msg = result.unwrap_err();
-        assert!(error_msg.contains("Row 3")); // Row 3 (index 1 + 2) has the validation error
-        assert!(error_msg.contains("Validation failed"));
+        // Invalid entries are skipped and counted, not aborted
+        assert!(result.is_ok());
+        let import_result = result.unwrap();
+        assert_eq!(import_result.intake, 2);
+        assert_eq!(import_result.failed, 1);
 
-        // Verify NO data was inserted (rollback due to validation failure)
+        // Only the two valid rows landed
         let mut conn = pool.get().unwrap();
-        let all_intake = Intake::all(&mut conn).unwrap();
-        assert_eq!(all_intake.len(), 0);
+        assert_eq!(Intake::all(&mut conn).unwrap().len(), 2);
     });
 }
 
 #[test]
-fn import_intake_csv_with_parse_errors() {
-    scenario!("[IM-003]");
+fn import_json_empty_document() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
         app.manage(pool.clone());
-        app.manage(librefit_lib::service::import::ImportCancellation::new());
+        app.manage(ImportCancellation::new());
 
-        // Invalid amount value (not a number)
-        let csv_data = "added,amount,category,description\n\
-                        2026-01-15,500,b,Valid\n\
-                        2026-01-16,invalid,l,Bad amount\n\
-                        2026-01-17,600,d,Valid\n";
+        let json_data = r#"{ "schemaVersion": 1, "intake": [] }"#;
 
         let (channel, _progress_list) = create_test_channel();
 
         let result = import_data_from_string(
             app.state(),
-            app.state::<librefit_lib::service::import::ImportCancellation>()
-                .inner()
-                .clone(),
-            csv_data.to_string(),
-            ImportFormat::Csv,
-            ImportTable::Intake,
-            channel,
-        )
-        .await;
-
-        // Parse errors also cause the entire import to fail
-        assert!(result.is_err());
-        let error_msg = result.unwrap_err();
-        assert!(error_msg.contains("Row 3")); // Row 3 has the parse error
-        assert!(error_msg.contains("Failed to parse CSV"));
-
-        // Verify NO data was inserted
-        let mut conn = pool.get().unwrap();
-        let all_intake = Intake::all(&mut conn).unwrap();
-        assert_eq!(all_intake.len(), 0);
-    });
-}
-
-#[test]
-fn test_import_intake_csv_empty_file() {
-    tauri::async_runtime::block_on(async {
-        let pool = setup_test_pool();
-        let app = tauri::test::mock_app();
-        app.manage(pool.clone());
-        app.manage(librefit_lib::service::import::ImportCancellation::new());
-
-        let csv_data = "added,amount,category,description\n";
-
-        let (channel, _progress_list) = create_test_channel();
-
-        let result = import_data_from_string(
-            app.state(),
-            app.state::<librefit_lib::service::import::ImportCancellation>()
-                .inner()
-                .clone(),
-            csv_data.to_string(),
-            ImportFormat::Csv,
-            ImportTable::Intake,
+            app.state::<ImportCancellation>().inner().clone(),
+            json_data.to_string(),
+            ImportFormat::Json,
             channel,
         )
         .await;
 
         assert!(result.is_ok());
         let import_result = result.unwrap();
-        assert_eq!(import_result.imported_count, 0);
+        assert_eq!(import_result.intake, 0);
+        assert_eq!(import_result.failed, 0);
     });
 }
 
-// ============================================================================
-// WEIGHT TRACKER IMPORT TESTS
-// ============================================================================
-
 #[test]
-fn import_weight_tracker_csv_success() {
-    scenario!("[IM-002]");
+fn import_json_does_not_restore_food_categories() {
+    scenario!("[IM-010]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
         app.manage(pool.clone());
-        app.manage(librefit_lib::service::import::ImportCancellation::new());
+        app.manage(ImportCancellation::new());
 
-        let csv_data = "added,amount\n\
-                        2026-01-15,75.5\n\
-                        2026-01-16,75.2\n\
-                        2026-01-17,75.0\n";
+        let before = {
+            let mut conn = pool.get().unwrap();
+            FoodCategory::all(&mut conn).unwrap().len()
+        };
 
         let (channel, _progress_list) = create_test_channel();
 
+        // sample_document() carries a bogus `zzz` food category that must not be written back
         let result = import_data_from_string(
             app.state(),
-            app.state::<librefit_lib::service::import::ImportCancellation>()
-                .inner()
-                .clone(),
-            csv_data.to_string(),
-            ImportFormat::Csv,
-            ImportTable::WeightTracker,
+            app.state::<ImportCancellation>().inner().clone(),
+            sample_document(),
+            ImportFormat::Json,
             channel,
         )
         .await;
 
         assert!(result.is_ok());
-        let import_result = result.unwrap();
-        assert_eq!(import_result.imported_count, 3);
 
-        // Verify data was actually inserted
         let mut conn = pool.get().unwrap();
-        let all_weight = WeightTracker::all(&mut conn).unwrap();
-        assert_eq!(all_weight.len(), 3);
+        let categories = FoodCategory::all(&mut conn).unwrap();
+        assert_eq!(
+            categories.len(),
+            before,
+            "food categories should be unchanged (seed data, not restored)"
+        );
+        assert!(
+            !categories.iter().any(|c| c.shortvalue == "zzz"),
+            "bogus category from the backup must not be imported"
+        );
     });
 }
 
 #[test]
-fn test_import_weight_tracker_csv_with_validation_errors() {
+fn import_json_appends_without_dedup() {
+    scenario!("[IM-011]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
         app.manage(pool.clone());
-        app.manage(librefit_lib::service::import::ImportCancellation::new());
+        app.manage(ImportCancellation::new());
 
-        // Invalid: amount below min (30.0)
-        let csv_data = "added,amount\n\
-                    2026-01-15,75.5\n\
-                    2026-01-16,25.0\n\
-                    2026-01-17,75.0\n";
+        for _ in 0..2 {
+            let (channel, _progress_list) = create_test_channel();
+            let result = import_data_from_string(
+                app.state(),
+                app.state::<ImportCancellation>().inner().clone(),
+                sample_document(),
+                ImportFormat::Json,
+                channel,
+            )
+            .await;
+            assert!(result.is_ok());
+        }
 
-        let (channel, _progress_list) = create_test_channel();
-
-        let result = import_data_from_string(
-            app.state(),
-            app.state::<librefit_lib::service::import::ImportCancellation>()
-                .inner()
-                .clone(),
-            csv_data.to_string(),
-            ImportFormat::Csv,
-            ImportTable::WeightTracker,
-            channel,
-        )
-        .await;
-
-        // With the new all-or-nothing approach, validation errors cause the entire import to fail
-        assert!(result.is_err());
-        let error_msg = result.unwrap_err();
-        assert!(error_msg.contains("Row 3")); // Row 3 has the validation error
-        assert!(error_msg.contains("Validation failed"));
-
-        // Verify NO data was inserted
+        // Re-importing the same backup duplicates its entries (no deduplication)
         let mut conn = pool.get().unwrap();
-        let all_weight = WeightTracker::all(&mut conn).unwrap();
-        assert_eq!(all_weight.len(), 0);
+        assert_eq!(Intake::all(&mut conn).unwrap().len(), 6);
+        assert_eq!(WeightTracker::all(&mut conn).unwrap().len(), 4);
     });
 }
 
@@ -280,24 +253,31 @@ fn test_import_weight_tracker_csv_with_validation_errors() {
 
 #[test]
 fn import_cancellation() {
-    scenario!("[IM-004]", "[STG-003]");
+    scenario!("[IM-008]", "[STG-003]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
         app.manage(pool.clone());
 
-        let cancellation = librefit_lib::service::import::ImportCancellation::new();
+        let cancellation = ImportCancellation::new();
         app.manage(cancellation.clone());
 
-        // Create a large CSV to give time for cancellation
-        let mut csv_data = String::from("added,amount,category,description\n");
+        // Build a large document to give time for cancellation
+        let mut entries = String::new();
         for i in 1..=1000 {
-            csv_data.push_str(&format!("2026-01-{:02},500,b,Entry {}\n", (i % 28) + 1, i));
+            if i > 1 {
+                entries.push(',');
+            }
+            entries.push_str(&format!(
+                r#"{{ "added": "2026-01-{:02}", "amount": 500, "category": "b", "description": "Entry {}" }}"#,
+                (i % 28) + 1,
+                i
+            ));
         }
+        let json_data = format!(r#"{{ "schemaVersion": 1, "intake": [{}] }}"#, entries);
 
         let (channel, _progress_list) = create_test_channel();
 
-        // Spawn import task in a separate async task
         let pool_clone = pool.clone();
         let cancel_flag = cancellation.clone();
         let import_handle = std::thread::spawn(move || {
@@ -309,9 +289,8 @@ fn import_cancellation() {
                 import_data_from_string(
                     app_test.state(),
                     cancel_flag.clone(),
-                    csv_data,
-                    ImportFormat::Csv,
-                    ImportTable::Intake,
+                    json_data,
+                    ImportFormat::Json,
                     channel,
                 )
                 .await
