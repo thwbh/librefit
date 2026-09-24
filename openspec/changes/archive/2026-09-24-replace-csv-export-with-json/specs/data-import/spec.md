@@ -1,10 +1,12 @@
-## Purpose
+## REMOVED Requirements
 
-**ID prefix:** `IM`
+### Requirement: Import data from CSV
 
-Restore or transfer data by importing a JSON backup document with validation and progress tracking.
+**Reason**: CSV import is replaced by whole-document JSON import that pairs with the JSON export. Import no longer targets a single table selected by the user; it ingests the full export document.
 
-## Requirements
+**Migration**: Export a JSON backup from the Export screen and import that document. CSV files are no longer accepted.
+
+## ADDED Requirements
 
 ### Requirement: Import data from JSON backup
 

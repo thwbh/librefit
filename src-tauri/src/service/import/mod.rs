@@ -1,4 +1,4 @@
-pub mod csv;
+pub mod json;
 
 use crate::db::connection::DbPool;
 use serde::{Deserialize, Serialize};
@@ -43,12 +43,16 @@ impl ImportCancellation {
 // SHARED TYPES
 // ============================================================================
 
-/// Import result
-#[derive(Serialize, Deserialize, Debug)]
+/// Import result — per-table imported counts plus the number of skipped (invalid) entries.
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ImportResult {
-    pub imported_count: usize,
-    pub table: ImportTable,
+    pub intake: usize,
+    pub weight_tracker: usize,
+    pub intake_target: usize,
+    pub weight_target: usize,
+    /// Total entries skipped across all tables because they failed validation.
+    pub failed: usize,
 }
 
 /// Progress tracking
@@ -78,21 +82,11 @@ pub enum ImportStage {
     Error,
 }
 
-/// Target table for import
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub enum ImportTable {
-    Intake,
-    WeightTracker,
-    IntakeTarget,
-    WeightTarget,
-}
-
 /// User selected import format
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum ImportFormat {
-    Csv,
+    Json,
 }
 
 // ============================================================================
@@ -133,7 +127,6 @@ pub async fn import_data_file(
     cancellation: State<'_, ImportCancellation>,
     path: String,
     import_format: ImportFormat,
-    target_table: ImportTable,
     on_progress: Channel<ImportProgress>,
 ) -> Result<ImportResult, String> {
     // Reset cancellation flag at the start
@@ -157,12 +150,11 @@ pub async fn import_data_file(
         .map_err(|e| format!("Failed to read file '{}': {}", path, e))?;
 
     let result = match import_format {
-        ImportFormat::Csv => {
-            csv::import_csv(
+        ImportFormat::Json => {
+            json::import_json(
                 pool,
                 cancellation.inner().clone(),
                 &data_file,
-                target_table,
                 on_progress.clone(),
             )
             .await
@@ -208,24 +200,16 @@ pub fn cancel_import(cancellation: State<'_, ImportCancellation>) {
 pub async fn import_data_from_string(
     pool: State<'_, DbPool>,
     cancellation: ImportCancellation,
-    csv_data: String,
+    json_data: String,
     import_format: ImportFormat,
-    target_table: ImportTable,
     on_progress: Channel<ImportProgress>,
 ) -> Result<ImportResult, String> {
     // Reset cancellation flag at the start
     cancellation.reset();
 
     let result = match import_format {
-        ImportFormat::Csv => {
-            csv::import_csv(
-                pool,
-                cancellation.clone(),
-                &csv_data,
-                target_table,
-                on_progress.clone(),
-            )
-            .await
+        ImportFormat::Json => {
+            json::import_json(pool, cancellation.clone(), &json_data, on_progress.clone()).await
         }
     };
 

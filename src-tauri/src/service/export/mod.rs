@@ -1,4 +1,4 @@
-pub mod csv;
+pub mod json;
 pub mod raw;
 
 use serde::{Deserialize, Serialize};
@@ -80,7 +80,7 @@ pub enum ExportStage {
 #[serde(rename_all = "camelCase")]
 pub enum ExportFormat {
     Raw,
-    Csv,
+    Json,
 }
 
 // ============================================================================
@@ -138,8 +138,8 @@ pub async fn export_database_file(
         ExportFormat::Raw => {
             raw::export_raw(pool, cancellation.inner().clone(), on_progress.clone()).await
         }
-        ExportFormat::Csv => {
-            csv::export_csv(pool, cancellation.inner().clone(), on_progress.clone()).await
+        ExportFormat::Json => {
+            json::export_json(pool, cancellation.inner().clone(), on_progress.clone()).await
         }
     };
 

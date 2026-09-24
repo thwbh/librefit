@@ -4,7 +4,6 @@
 		ImportFormatSchema,
 		type ImportProgress,
 		ImportStageSchema,
-		ImportTableSchema,
 		type ImportResult
 	} from '$lib/api/gen/types';
 	import { Channel } from '@tauri-apps/api/core';
@@ -15,17 +14,13 @@
 		AlertType,
 		AlertVariant,
 		LoadingIndicator,
-		ModalDialog,
-		OptionCards,
-		type OptionCardData
+		ModalDialog
 	} from '@thwbh/veilchen';
-	import { Check, ForkKnife, Scales, Upload, Warning } from 'phosphor-svelte';
+	import { Check, Upload, Warning } from 'phosphor-svelte';
 
 	const ImportFormat = ImportFormatSchema.enum;
-	const ImportTable = ImportTableSchema.enum;
 	const ImportStage = ImportStageSchema.enum;
 
-	let importTarget: string = $state(ImportTable.intake);
 	let selectedFilePath: string | null = $state(null);
 
 	let dialog: HTMLDialogElement | undefined = $state();
@@ -37,18 +32,14 @@
 	let importResult: ImportResult | undefined = $state();
 	let importStarted = $state(false);
 
-	const importOptions: OptionCardData<string>[] = [
-		{
-			value: ImportTable.intake,
-			header: 'Intake',
-			text: 'Restore your tracked meals and calorie entries from a CSV file.'
-		},
-		{
-			value: ImportTable.weightTracker,
-			header: 'Weight',
-			text: 'Restore your weight history and measurements from a CSV file.'
-		}
-	];
+	const importedTotal = $derived(
+		importResult
+			? importResult.intake +
+					importResult.weightTracker +
+					importResult.intakeTarget +
+					importResult.weightTarget
+			: 0
+	);
 
 	async function showFileDialog() {
 		try {
@@ -56,7 +47,7 @@
 				multiple: false,
 				directory: false,
 				canCreateDirectories: false,
-				// Android file picker has issues with CSV MIME type filtering
+				// Android file picker has issues with MIME type filtering
 				// Using no filters allows broader file selection
 				filters: []
 			});
@@ -82,8 +73,7 @@
 
 			importResult = await importDataFile({
 				path: selectedFilePath!,
-				targetTable: ImportTableSchema.safeParse(importTarget).data!,
-				importFormat: ImportFormat.csv,
+				importFormat: ImportFormat.json,
 				onProgress
 			});
 		} catch (err) {
@@ -153,7 +143,7 @@
 		<div class="flex items-start justify-between">
 			<div class="flex flex-col gap-1">
 				<span class="text-2xl font-bold">Import Data</span>
-				<span class="text-sm opacity-70">Restore your data from CSV files</span>
+				<span class="text-sm opacity-70">Restore your data from a JSON backup</span>
 			</div>
 			<span class="opacity-50">
 				<Upload size="2.5rem" weight="duotone" />
@@ -166,39 +156,25 @@
 		<AlertBox type={AlertType.Info} variant={AlertVariant.Callout}>
 			<span class="font-bold">Import existing data</span>
 			<span>
-				Import your LibreFit data from CSV files. Choose a valid CSV file and select the target
-				table to import into.
+				Restore your LibreFit data from a JSON backup exported on the Export screen. The whole
+				document is imported at once — no need to pick a table.
 			</span>
 		</AlertBox>
 
 		<div class="rounded-box border border-base-300 overflow-hidden">
 			<div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
-				<h3 class="text-sm font-semibold text-base-content tracking-wide">
-					Available import targets
-				</h3>
+				<h3 class="text-sm font-semibold text-base-content tracking-wide">What gets restored</h3>
 			</div>
 			<div class="divide-y divide-base-200">
 				<div class="flex items-center gap-3 px-4 py-3">
 					<span class="list-caret"></span>
-					<span class="text-sm text-base-content/80">Meal data (Intake)</span>
+					<span class="text-sm text-base-content/80">Meal data and calorie targets</span>
 				</div>
 				<div class="flex items-center gap-3 px-4 py-3">
 					<span class="list-caret"></span>
-					<span class="text-sm text-base-content/80">Weight tracking history</span>
+					<span class="text-sm text-base-content/80">Weight history and targets</span>
 				</div>
 			</div>
-		</div>
-
-		<div>
-			<OptionCards bind:value={importTarget} data={importOptions} scrollable={false}>
-				{#snippet icon(option)}
-					{#if option.value === ImportTable.intake}
-						<ForkKnife size="2em" />
-					{:else if option.value === ImportTable.weightTracker}
-						<Scales size="2em" />
-					{/if}
-				{/snippet}
-			</OptionCards>
 		</div>
 
 		<div class="flex flex-col flex-1 gap-2">
@@ -261,7 +237,16 @@
 						variant={AlertVariant.Callout}
 						class="break-all wrap-normal"
 					>
-						Successfully imported all {importResult.importedCount} rows.
+						<span class="font-bold">Imported {importedTotal} entries.</span>
+						<ul class="mt-1 text-sm">
+							<li>Meals: {importResult.intake}</li>
+							<li>Calorie targets: {importResult.intakeTarget}</li>
+							<li>Weight entries: {importResult.weightTracker}</li>
+							<li>Weight targets: {importResult.weightTarget}</li>
+						</ul>
+						{#if importResult.failed > 0}
+							<span class="text-sm">{importResult.failed} invalid entries were skipped.</span>
+						{/if}
 					</AlertBox>
 				{/if}
 
