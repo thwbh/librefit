@@ -1,6 +1,6 @@
 //! Export functionality tests
 //!
-//! Tests for both raw SQLite and CSV export formats, including progress tracking,
+//! Tests for both raw SQLite and JSON export formats, including progress tracking,
 //! cancellation, and data verification.
 
 use crate::helpers::{
@@ -8,6 +8,7 @@ use crate::helpers::{
     create_test_weight_entry, create_test_weight_target, setup_test_pool,
 };
 use librefit_lib::scenario;
+use librefit_lib::service::export::json::ExportDocument;
 use librefit_lib::service::export::{
     cancel_export, export_database_file, ExportCancellation, ExportFormat, ExportProgress,
     ExportStage,
@@ -75,7 +76,7 @@ fn test_export_raw_database_empty() {
 
 #[test]
 fn raw_sqlite_export_with_data() {
-    scenario!("[EX-002]", "[EX-004]", "[STG-001]", "[STG-002]");
+    scenario!("[EX-002]", "[EX-004]", "[EX-005]", "[STG-001]", "[STG-002]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -214,11 +215,11 @@ fn test_export_raw_progress_tracking() {
 }
 
 // ============================================================================
-// CSV EXPORT TESTS
+// JSON EXPORT TESTS
 // ============================================================================
 
 #[test]
-fn test_export_csv_empty_database() {
+fn test_export_json_empty_database() {
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
@@ -228,20 +229,21 @@ fn test_export_csv_empty_database() {
         let (channel, progress_list) = create_test_channel();
 
         let result =
-            export_database_file(app.state(), app.state(), ExportFormat::Csv, channel).await;
+            export_database_file(app.state(), app.state(), ExportFormat::Json, channel).await;
 
         assert!(result.is_ok());
         let export_result = result.unwrap();
 
-        // Should be a ZIP file even if empty
-        assert!(export_result.bytes.len() > 0);
+        // Should be a parseable JSON document even if empty
+        let document: ExportDocument = serde_json::from_slice(&export_result.bytes)
+            .expect("export bytes should be valid JSON");
+        assert_eq!(document.schema_version, 1);
+        assert!(document.intake.is_empty());
+        assert!(document.weight_tracker.is_empty());
 
-        // Verify ZIP magic number (PK)
-        assert_eq!(&export_result.bytes[0..2], b"PK");
-
-        // Filename should contain date
+        // Filename should contain date and use the .json extension
         assert!(export_result.file_path.contains("librefit_export_"));
-        assert!(export_result.file_path.ends_with(".zip"));
+        assert!(export_result.file_path.ends_with(".json"));
 
         // Verify complete stage
         let mut complete_received = false;
@@ -255,7 +257,7 @@ fn test_export_csv_empty_database() {
 }
 
 #[test]
-fn csv_export_with_data() {
+fn json_export_with_data() {
     scenario!("[EX-001]", "[STG-001]", "[STG-002]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
@@ -264,7 +266,7 @@ fn csv_export_with_data() {
         app.manage(ExportCancellation::new());
 
         // Create comprehensive test data
-        create_test_user(&pool, "CSV Test User", "avatar.png");
+        create_test_user(&pool, "JSON Test User", "avatar.png");
         create_test_intake_target(&pool, "2026-01-01", "2026-06-01", 2000, 2500);
         create_test_weight_target(&pool, "2026-01-01", "2026-06-01", 80.0, 75.0);
 
@@ -278,34 +280,27 @@ fn csv_export_with_data() {
         create_test_weight_entry(&pool, "2026-01-15", 79.5);
         create_test_weight_entry(&pool, "2026-01-16", 79.3);
 
-        let (channel, progress_list) = create_test_channel();
+        let (channel, _progress_list) = create_test_channel();
 
         let result =
-            export_database_file(app.state(), app.state(), ExportFormat::Csv, channel).await;
+            export_database_file(app.state(), app.state(), ExportFormat::Json, channel).await;
 
         assert!(result.is_ok());
         let export_result = result.unwrap();
+        assert!(export_result.file_path.ends_with(".json"));
 
-        // ZIP should be reasonably sized
-        assert!(export_result.bytes.len() > 200);
-
-        // Verify ZIP magic number
-        assert_eq!(&export_result.bytes[0..2], b"PK");
-
-        // Verify progress included record counts
-        let mut final_message = String::new();
-        for progress in progress_list.lock().unwrap().iter() {
-            if matches!(progress.stage, ExportStage::Complete) {
-                final_message = progress.message.clone();
-            }
-        }
-
-        assert!(final_message.contains("records"));
+        // Document should round-trip and contain every entry we created
+        let document: ExportDocument = serde_json::from_slice(&export_result.bytes)
+            .expect("export bytes should be valid JSON");
+        assert_eq!(document.intake.len(), 4);
+        assert_eq!(document.weight_tracker.len(), 2);
+        assert_eq!(document.intake_target.len(), 1);
+        assert_eq!(document.weight_target.len(), 1);
     });
 }
 
 #[test]
-fn csv_export_cancellation() {
+fn json_export_cancellation() {
     scenario!("[EX-003]", "[STG-003]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
@@ -326,7 +321,7 @@ fn csv_export_cancellation() {
         cancellation.cancel();
 
         let result =
-            export_database_file(app.state(), app.state(), ExportFormat::Csv, channel).await;
+            export_database_file(app.state(), app.state(), ExportFormat::Json, channel).await;
 
         // Export might succeed or fail depending on timing - both are valid
         // If it fails, it should be due to cancellation
@@ -339,36 +334,41 @@ fn csv_export_cancellation() {
 }
 
 #[test]
-fn csv_export_all_tables_included() {
-    scenario!("[EX-005]");
+fn json_export_document_structure() {
+    scenario!("[EX-008]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
         let app = tauri::test::mock_app();
         app.manage(pool.clone());
         app.manage(ExportCancellation::new());
 
-        // Create data for all table types
+        // Create data for all user table types
         create_test_intake_entry(&pool, "2026-01-15", 500, "b", None);
         create_test_weight_entry(&pool, "2026-01-15", 79.5);
         create_test_intake_target(&pool, "2026-01-01", "2026-06-01", 2000, 2500);
         create_test_weight_target(&pool, "2026-01-01", "2026-06-01", 80.0, 75.0);
 
-        let (channel, progress_list) = create_test_channel();
+        let (channel, _progress_list) = create_test_channel();
 
         let result =
-            export_database_file(app.state(), app.state(), ExportFormat::Csv, channel).await;
+            export_database_file(app.state(), app.state(), ExportFormat::Json, channel).await;
 
         assert!(result.is_ok());
+        let export_result = result.unwrap();
 
-        // Verify we got progress for all tables
-        let mut messages = Vec::new();
-        for progress in progress_list.lock().unwrap().iter() {
-            messages.push(progress.message.clone());
+        // The document is a single object with schemaVersion + one camelCase array per table
+        let value: serde_json::Value = serde_json::from_slice(&export_result.bytes)
+            .expect("export bytes should be valid JSON");
+        assert_eq!(value["schemaVersion"], 1);
+        for key in [
+            "intake",
+            "weightTracker",
+            "intakeTarget",
+            "weightTarget",
+            "foodCategory",
+        ] {
+            assert!(value[key].is_array(), "expected `{}` to be an array", key);
         }
-
-        let messages_str = messages.join(" ");
-        assert!(messages_str.contains("calorie") || messages_str.contains("Exporting"));
-        assert!(messages_str.contains("weight") || messages_str.contains("history"));
     });
 }
 
@@ -458,7 +458,7 @@ fn raw_export_all_stages_present() {
 }
 
 #[test]
-fn csv_export_all_stages_present() {
+fn json_export_all_stages_present() {
     scenario!("[EX-004]");
     tauri::async_runtime::block_on(async {
         let pool = setup_test_pool();
@@ -471,17 +471,17 @@ fn csv_export_all_stages_present() {
         let (channel, progress_list) = create_test_channel();
 
         let _result =
-            export_database_file(app.state(), app.state(), ExportFormat::Csv, channel).await;
+            export_database_file(app.state(), app.state(), ExportFormat::Json, channel).await;
 
         let mut stages = std::collections::HashSet::new();
         for progress in progress_list.lock().unwrap().iter() {
             stages.insert(format!("{:?}", progress.stage));
         }
 
-        // CSV export should have these stages
+        // JSON export should have these stages
         assert!(stages.contains("Initializing"));
         assert!(stages.contains("AnalyzingDatabase"));
-        assert!(stages.contains("CreatingBackup")); // Used for CSV creation phase
+        assert!(stages.contains("CreatingBackup")); // Used for the serialization phase
         assert!(stages.contains("Finalizing"));
         assert!(stages.contains("Complete"));
     });

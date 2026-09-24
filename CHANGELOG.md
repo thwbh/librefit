@@ -5,6 +5,24 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
+## [26.39.0] - 2026-09-24
+
+### Added
+
+- Exercise library maintenance page: manage your exercise catalog with multi-tag batch edits, swipe gestures, and undoable tidy-up operations.
+- Workout templates: create and manage reusable workout templates; start a workout from a template or from scratch, swap template exercises while preserving their position, and add sets to predefined exercises.
+
+### Changed
+
+- Data export and import now use JSON instead of CSV; raw SQLite export is unchanged. CSV backups created with earlier versions can no longer be imported.
+- Upgraded frontend stack: Vitest 5, Vite 8, SvelteKit 2.70, Svelte 5.57, TypeScript 6, Tauri 2.11.
+- Upgraded Rust dependencies, including diesel 2.3.10 which fixes several security issues.
+
+### Fixed
+
+- Android release builds now generate the API bindings with the same tauri-typegen version as local development (0.5.1). Previously the release pipeline used an outdated generator, so production builds shipped without the wizard's number parsing and blocked setup with validation errors.
+- CI now uses Node 26 everywhere via .nvmrc, matching local development and eliminating the recurring npm 10/11 lockfile sync failures.
+
 ## [26.23.4] - 2026-06-07
 
 ### Added

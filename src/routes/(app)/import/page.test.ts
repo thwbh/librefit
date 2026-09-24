@@ -24,10 +24,17 @@ vi.mock('@tauri-apps/plugin-log', () => ({
 import Page from './+page.svelte';
 
 describe('import page', () => {
-	it('[IM-005] should disable the Import button until a file is chosen', () => {
+	it('[IM-009] should disable the Import button until a file is chosen', () => {
 		render(Page);
 
 		const importButton = screen.getByRole('button', { name: /^Import$/ });
 		expect(importButton).toBeDisabled();
+	});
+
+	it('[IM-011] should warn that importing appends and does not deduplicate', () => {
+		render(Page);
+
+		expect(screen.getByText(/no automatic deduplication/i)).toBeInTheDocument();
+		expect(screen.getByText(/duplicate entries/i)).toBeInTheDocument();
 	});
 });

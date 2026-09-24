@@ -1,13 +1,13 @@
+// Register the shared @thwbh/veilchen mock before any import below loads the
+// real module (vitest 5 hoists vi.mock to the top of tests/utils/mocks.ts).
+import '../../../../tests/utils/mocks';
+
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import IntakeStack from './IntakeStack.svelte';
 import TestWrapper from '../../../../tests/utils/TestWrapper.svelte';
-import { setupVeilchenMock } from '../../../../tests/utils/mocks';
 import type { Intake } from '$lib/api';
-
-// Setup mocks
-setupVeilchenMock();
 
 vi.mock('@tauri-apps/plugin-haptics', () => ({
 	vibrate: vi.fn()

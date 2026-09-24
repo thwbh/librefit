@@ -1,10 +1,10 @@
+// Register the shared @thwbh/veilchen mock before any import below loads the
+// real module (vitest 5 hoists vi.mock to the top of tests/utils/mocks.ts).
+import '../../../../tests/utils/mocks';
+
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import UserProfileCard from './UserProfileCard.svelte';
-import { setupVeilchenMock } from '../../../../tests/utils/mocks';
-
-// Setup common mocks
-setupVeilchenMock();
 
 // Mock the avatar and activity modules
 vi.mock('$lib/avatar', () => ({

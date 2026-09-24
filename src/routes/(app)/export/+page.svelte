@@ -13,34 +13,32 @@
 		OptionCards,
 		type OptionCardData
 	} from '@thwbh/veilchen';
-	import { Database, FileCsv, FilePdf, TreeStructure } from 'phosphor-svelte';
+	import { Database, FileCode, TreeStructure } from 'phosphor-svelte';
 
 	const ExportStage = ExportStageSchema.enum;
 	const ExportFormat = ExportFormatSchema.enum;
 
 	const exportOptions: OptionCardData<string>[] = [
 		{
-			value: ExportFormat.csv,
-			header: 'CSV',
-			text: 'The export provides zipped CSV files to be processed with a tabular calculation tool.'
+			value: ExportFormat.json,
+			header: 'JSON',
+			text: 'The export provides a single JSON document containing your data, ready to be imported again or processed with other tools.'
 		},
 		{
 			value: ExportFormat.raw,
 			header: 'Raw',
 			text: 'The export creates a SQLite database file that you can store safely or use to restore your data later.'
 		}
-
-		/*		{
-			value: 'pdf',
-			header: 'PDF',
-			text: 'The export provides a PDF report, presenting your data as interpolated charts.'
-		} */
 	];
 
 	const exportExtensions = new Map([
 		[ExportFormat.raw, 'db'],
-		[ExportFormat.csv, 'zip']
-		//		[ExportFormat.pdf, 'pdf']
+		[ExportFormat.json, 'json']
+	]);
+
+	const exportFilterNames = new Map([
+		[ExportFormat.raw, 'SQLite Database'],
+		[ExportFormat.json, 'JSON Document']
 	]);
 
 	let exportProgress = $state(0);
@@ -50,7 +48,7 @@
 	let isExporting = $state(true);
 	let bytesInfo = $state('');
 
-	let exportFormat = $state(ExportFormat.csv);
+	let exportFormat = $state(ExportFormat.json);
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -90,7 +88,12 @@
 
 			filePath = await save({
 				defaultPath: data.filePath,
-				filters: [{ name: 'SQLite Database', extensions: [exportExtensions.get(exportFormat)!] }]
+				filters: [
+					{
+						name: exportFilterNames.get(exportFormat)!,
+						extensions: [exportExtensions.get(exportFormat)!]
+					}
+				]
 			});
 
 			debug(`Export to selected file path=${filePath}`);
@@ -224,10 +227,8 @@
 				{#snippet icon(option)}
 					{#if option.value === 'raw'}
 						<Database size="2em" />
-					{:else if option.value === 'csv'}
-						<FileCsv size="2em" />
-					{:else if option.value === 'pdf'}
-						<FilePdf size="2em" />
+					{:else if option.value === 'json'}
+						<FileCode size="2em" />
 					{/if}
 				{/snippet}
 			</OptionCards>

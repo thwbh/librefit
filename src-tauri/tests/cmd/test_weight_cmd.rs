@@ -1,4 +1,4 @@
-use crate::helpers::setup_test_pool;
+use crate::helpers::{create_future_test_dates, setup_test_pool};
 use librefit_lib::scenario;
 use librefit_lib::service::weight::{
     create_weight_target, create_weight_tracker_entry, delete_weight_tracker_entry,
@@ -17,10 +17,12 @@ fn test_create_weight_target_success() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
+    let future_dates = create_future_test_dates();
+
     let new_target = NewWeightTarget {
         added: "2026-01-15".to_string(),
-        start_date: "2026-01-15".to_string(),
-        end_date: "2026-06-15".to_string(),
+        start_date: future_dates.0,
+        end_date: future_dates.1,
         initial_weight: 80.0,
         target_weight: 70.0,
     };
@@ -368,19 +370,21 @@ fn test_get_last_weight_target_success() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
+    let (start_date, end_date) = create_future_test_dates();
+
     // Create multiple weight targets
     let target1 = NewWeightTarget {
         added: "2026-01-15".to_string(),
-        start_date: "2026-01-15".to_string(),
-        end_date: "2026-06-15".to_string(),
+        start_date: start_date.clone(),
+        end_date: end_date.clone(),
         initial_weight: 80.0,
         target_weight: 70.0,
     };
 
     let target2 = NewWeightTarget {
         added: "2026-02-01".to_string(),
-        start_date: "2026-02-01".to_string(),
-        end_date: "2026-08-01".to_string(),
+        start_date,
+        end_date,
         initial_weight: 75.0,
         target_weight: 68.0,
     };
@@ -423,10 +427,12 @@ fn test_get_last_weight_target_single_entry() {
     let app = tauri::test::mock_app();
     app.manage(pool);
 
+    let future_dates = create_future_test_dates();
+
     let target = NewWeightTarget {
         added: "2026-01-15".to_string(),
-        start_date: "2026-01-15".to_string(),
-        end_date: "2026-06-15".to_string(),
+        start_date: future_dates.0,
+        end_date: future_dates.1,
         initial_weight: 80.0,
         target_weight: 70.0,
     };
