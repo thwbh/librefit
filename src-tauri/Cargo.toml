@@ -8,20 +8,25 @@ repository = "https://github.com/thwbh/librefit"
 edition = "2021"
 rust-version = "1.84.0"
 
+[workspace]
+members = [".", "typegen"]
+default-members = ["."]          # bare `cargo build`/`cargo test` + Tauri builds ignore typegen
+
+[workspace.dependencies]
+tauri-typegen = "0.5.1"          # single version for build.rs and the typegen crate
+
 [lib]
 name = "librefit_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.0.5", features = [] }
-# build.rs regenerates the TS bindings; the `typegen` bin uses the [dependencies]
-# copy. Cargo unifies both to a single version.
-tauri-typegen = "0.5.1"
+# build.rs regenerates the TS bindings on `cargo check`/build (dev loop). The
+# `typegen` workspace crate runs the same generation for beforeBuildCommand,
+# isolated from the app's system deps (glib/webkit) so it builds on lean runners.
+tauri-typegen = { workspace = true }
 
 [dependencies]
-# Used by the host-only `typegen` bin (src/bin/typegen.rs). Not referenced by the
-# lib, so it isn't compiled into the Android cdylib build.
-tauri-typegen = "0.5.1"
 serde_json = "1.0.137"
 serde = { version = "1.0.217", features = ["derive"] }
 log = "0.4.32"
