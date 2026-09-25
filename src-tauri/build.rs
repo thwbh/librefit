@@ -1,11 +1,12 @@
 use std::env;
-use tauri_typegen::BuildSystem;
 
 fn main() {
     setup_android_llvm();
 
-    // Generate TypeScript bindings from Tauri commands
-    BuildSystem::generate_at_build_time().expect("Failed to generate TypeScript bindings");
+    // Keep the TS bindings fresh on `cargo check`/build. The `typegen` bin calls
+    // this same entry point for the frontend build (via beforeBuildCommand).
+    tauri_typegen::BuildSystem::generate_at_build_time()
+        .expect("Failed to generate TypeScript bindings");
 
     tauri_build::build()
 }

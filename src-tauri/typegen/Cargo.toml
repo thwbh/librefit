@@ -1,0 +1,11 @@
+[package]
+name = "typegen"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Deliberately depends ONLY on tauri-typegen (not the librefit app crate), so
+# `cargo run -p typegen` doesn't compile tauri -> glib/webkit. That keeps it
+# runnable on the Android CI runner, which has no host GTK stack.
+[dependencies]
+tauri-typegen = { workspace = true }
