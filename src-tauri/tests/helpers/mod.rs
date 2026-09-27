@@ -10,12 +10,31 @@ use librefit_lib::service::weight::{
 
 pub type TestPool = Pool<ConnectionManager<SqliteConnection>>;
 
+/// Mirror the production pool's pragmas (see `db::connection`). Foreign keys are
+/// the one that matters here: SQLite leaves them OFF by default, so without this
+/// the suite happily accepts writes the app rejects on device (issue #418).
+#[derive(Debug, Clone, Copy)]
+struct TestConnectionOptions;
+
+impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
+    for TestConnectionOptions
+{
+    fn on_acquire(&self, conn: &mut SqliteConnection) -> Result<(), diesel::r2d2::Error> {
+        use diesel::RunQueryDsl;
+        diesel::sql_query("PRAGMA foreign_keys = ON;")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+        Ok(())
+    }
+}
+
 /// Creates an in-memory SQLite database with all migrations applied.
 /// Each test should call this to get a fresh, isolated database.
 pub fn setup_test_pool() -> TestPool {
     let manager = ConnectionManager::<SqliteConnection>::new(":memory:");
     let pool = Pool::builder()
         .max_size(1)
+        .connection_customizer(Box::new(TestConnectionOptions))
         .build(manager)
         .expect("Failed to create test pool");
 

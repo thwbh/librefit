@@ -2,9 +2,9 @@ use crate::helpers::setup_test_pool;
 use librefit_lib::scenario;
 use librefit_lib::service::workout::{
     batch_tag_exercises, create_exercise, delete_exercise, get_exercise_library,
-    list_unverified_exercises, log_workout_set, quick_add_exercise, start_workout_session,
-    undo_batch_tag, unverified_exercise_summary, update_exercise, BatchTag, BatchTagInput,
-    ExerciseInput, LiftingSetMetrics, MuscleInput,
+    list_exercise_categories, list_muscles, list_unverified_exercises, log_workout_set,
+    quick_add_exercise, start_workout_session, undo_batch_tag, unverified_exercise_summary,
+    update_exercise, BatchTag, BatchTagInput, ExerciseInput, LiftingSetMetrics, MuscleInput,
 };
 use tauri::Manager;
 
@@ -254,4 +254,48 @@ fn unverified_summary_counts_and_clears() {
 
     update_exercise(app.state(), g.id, full_input("Ghost D", "cable")).unwrap();
     assert_eq!(unverified_exercise_summary(app.state()).unwrap().count, 0);
+}
+
+/// Regression for #418: the picker builds its payload from the lookup commands,
+/// so whatever `shortvalue` they hand out must be a usable FK value. A struct
+/// field order that disagreed with the schema silently swapped the two columns,
+/// and every write then failed on a foreign key violation.
+#[test]
+fn lookup_shortvalues_round_trip_into_a_created_exercise() {
+    scenario!("[WO-029]", "[WO-012]");
+    let pool = setup_test_pool();
+    let app = tauri::test::mock_app();
+    app.manage(pool);
+
+    let category = list_exercise_categories(app.state())
+        .unwrap()
+        .into_iter()
+        .find(|c| c.longvalue == "Barbell")
+        .expect("seeded barbell category");
+    let muscle = list_muscles(app.state())
+        .unwrap()
+        .into_iter()
+        .find(|m| m.longvalue == "Chest")
+        .expect("seeded chest muscle");
+
+    assert_eq!(category.shortvalue, "barbell");
+    assert_eq!(muscle.shortvalue, "chest");
+
+    let ex = create_exercise(
+        app.state(),
+        ExerciseInput {
+            name: "Atlas Press".to_string(),
+            category: category.shortvalue.clone(),
+            default_rest_seconds: Some(90),
+            muscles: vec![MuscleInput {
+                muscle: muscle.shortvalue.clone(),
+                role: "primary".to_string(),
+            }],
+        },
+    )
+    .expect("creating an exercise from lookup values must not violate a foreign key");
+
+    assert_eq!(ex.category, "barbell");
+    assert_eq!(ex.muscles[0].muscle, "chest");
+    assert!(ex.verified);
 }
