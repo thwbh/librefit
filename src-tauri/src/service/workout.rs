@@ -24,29 +24,35 @@ const STALE_AFTER_SECS: i64 = 4 * 60 * 60;
 // ============================================================================
 // LOOKUPS (seeded; follow the food_category precedent)
 // ============================================================================
+//
+// Field order MUST match the column order in `db::schema` and reads MUST go
+// through `as_select()`: a bare `.load()` maps the table's default select list
+// to `Queryable` *by position*, so a struct listing `longvalue` first silently
+// hands back the label as the `shortvalue` key (see issue #418 — the UI then
+// posts 'Barbell'/'Abs' back as FK values and every write fails).
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
 #[diesel(table_name = workout_type)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct WorkoutType {
-    pub longvalue: String,
     pub shortvalue: String,
+    pub longvalue: String,
 }
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
 #[diesel(table_name = exercise_category)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct ExerciseCategory {
-    pub longvalue: String,
     pub shortvalue: String,
+    pub longvalue: String,
 }
 
 #[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
 #[diesel(table_name = muscle)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Muscle {
-    pub longvalue: String,
     pub shortvalue: String,
+    pub longvalue: String,
 }
 
 // ============================================================================
@@ -1139,11 +1145,15 @@ impl Exercise {
         exercise_category::table
             .filter(exercise_category::shortvalue.ne(UNCATEGORIZED))
             .order(exercise_category::longvalue.asc())
+            .select(ExerciseCategory::as_select())
             .load(conn)
     }
 
     pub fn muscles(conn: &mut SqliteConnection) -> QueryResult<Vec<Muscle>> {
-        muscle::table.order(muscle::longvalue.asc()).load(conn)
+        muscle::table
+            .order(muscle::longvalue.asc())
+            .select(Muscle::as_select())
+            .load(conn)
     }
 }
 
