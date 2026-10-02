@@ -3311,9 +3311,9 @@ dependencies = [
 
 [[package]]
 name = "rust-i18n"
-version = "4.2.3"
+version = "4.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68abb338402a175bc93faba6a7d7f7e57adc48bc607b93ec86a57447f9edf6fb"
+checksum = "8502e73e6461c738659455c5d2cf95bc132760a6f203c717e66ee72b78906d7f"
 dependencies = [
  "globwalk 0.8.1",
  "regex",
