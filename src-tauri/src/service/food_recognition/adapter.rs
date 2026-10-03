@@ -54,6 +54,20 @@ pub fn analyze(
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(45);
 
+/// Normalize a user-entered provider base URL to the OpenAI-compatible root the
+/// adapter appends `/chat/completions` and `/models` to. Tolerates a trailing
+/// slash and a pasted-in `/chat/completions` suffix (a common mistake), so both
+/// `https://host/v1` and `https://host/v1/chat/completions/` resolve to the same
+/// root.
+pub fn normalize_base_url(raw: &str) -> String {
+    let trimmed = raw.trim().trim_end_matches('/');
+    trimmed
+        .strip_suffix("/chat/completions")
+        .unwrap_or(trimmed)
+        .trim_end_matches('/')
+        .to_string()
+}
+
 pub struct MistralAdapter {
     base_url: String,
     model: String,
@@ -68,7 +82,7 @@ impl MistralAdapter {
             .build()
             .map_err(|e| AnalysisError::Other(e.to_string()))?;
         Ok(Self {
-            base_url: base_url.trim_end_matches('/').to_string(),
+            base_url: normalize_base_url(&base_url),
             model,
             api_key,
             client,
@@ -146,17 +160,28 @@ impl ProviderAdapter for MistralAdapter {
     }
 
     fn test_connection(&self) -> Result<(), AnalysisError> {
+        let url = format!("{}/models", self.base_url);
+        log::info!(
+            ">>> MistralAdapter::test_connection: GET {} (model={})",
+            url,
+            self.model
+        );
         let resp = self
             .client
-            .get(format!("{}/models", self.base_url))
+            .get(&url)
             .bearer_auth(&self.api_key)
             .send()
-            .map_err(|e| Self::classify(&e))?;
+            .map_err(|e| {
+                log::error!(">>> test_connection transport error: {}", e);
+                Self::classify(&e)
+            })?;
 
-        if resp.status().is_success() {
+        let status = resp.status();
+        log::info!(">>> test_connection: provider responded {}", status);
+        if status.is_success() {
             Ok(())
         } else {
-            Err(Self::classify_status(resp.status()))
+            Err(Self::classify_status(status))
         }
     }
 }

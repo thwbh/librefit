@@ -1,5 +1,6 @@
 <script lang="ts">
 	import IntakeFab from '$lib/component/intake/IntakeFab.svelte';
+	import IntakeCaptureButton from '$lib/component/intake/IntakeCaptureButton.svelte';
 	import IntakeScore from '$lib/component/intake/IntakeScore.svelte';
 	import IntakeStack from '$lib/component/intake/IntakeStack.svelte';
 	import WeightScore from '$lib/component/weight/WeightScore.svelte';
@@ -7,6 +8,7 @@
 	import {
 		createIntake,
 		createWeightTrackerEntry,
+		getAiIntakeConfig,
 		getBodyData,
 		getExerciseLibrary,
 		deleteIntake,
@@ -307,6 +309,44 @@
 		}
 	});
 
+	// AI meal-photo capture (add-food-recognition, FR). The camera button appears
+	// only when the feature is enabled, configured, and the device is online; manual
+	// entry (the FAB) always stays available.
+	let aiEnabled = $state(false);
+	let aiConfigured = $state(false);
+	let aiConsentGranted = $state(false);
+	let aiBaseUrl = $state<string | undefined>();
+	let online = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
+	let aiNotice = $state<string | undefined>();
+
+	const aiAvailable = $derived(aiEnabled && aiConfigured && online);
+
+	async function loadAiStatus() {
+		try {
+			const status = await getAiIntakeConfig();
+			aiEnabled = status.config.enabled;
+			aiConfigured = status.configured;
+			aiConsentGranted = status.config.consentGranted;
+			aiBaseUrl = status.config.baseUrl ?? undefined;
+		} catch {
+			// Background fetch — stay silent (ERR-003); the button simply stays hidden.
+		}
+	}
+
+	// A captured candidate pre-fills the create modal; nothing is saved until the
+	// user confirms via the normal save path (FR-025/026, IT-034).
+	function onCaptureResult(entry: NewIntake, lowConfidence: boolean) {
+		aiNotice = lowConfidence
+			? 'Low confidence — please double-check this estimate before saving.'
+			: undefined;
+		modal.openCreateWith(entry);
+	}
+
+	function openManualCreate() {
+		aiNotice = undefined;
+		modal.openCreate();
+	}
+
 	debug(`dashboardData=${JSON.stringify(dashboard)}`);
 	debug(`user profile=${JSON.stringify(userContext.user)}`);
 
@@ -335,7 +375,18 @@
 			.then((l) => (exerciseLibrary = l))
 			.catch(() => {});
 		refreshUnverified();
-		return () => workoutStore.dispose();
+		loadAiStatus();
+
+		const goOnline = () => (online = true);
+		const goOffline = () => (online = false);
+		window.addEventListener('online', goOnline);
+		window.addEventListener('offline', goOffline);
+
+		return () => {
+			workoutStore.dispose();
+			window.removeEventListener('online', goOnline);
+			window.removeEventListener('offline', goOffline);
+		};
 	});
 </script>
 
@@ -486,7 +537,17 @@
 		</DashboardLayout>
 	</div>
 </div>
-<IntakeFab onclick={modal.openCreate} />
+<!-- Manual add (always) + AI photo capture (when configured & online). -->
+<div class="fixed bottom-20 right-4 z-40 flex flex-col items-center gap-3">
+	<IntakeCaptureButton
+		available={aiAvailable}
+		consentGranted={aiConsentGranted}
+		endpoint={aiBaseUrl}
+		onresult={onCaptureResult}
+		onconsent={() => (aiConsentGranted = true)}
+	/>
+</div>
+<IntakeFab onclick={openManualCreate} />
 
 <!-- Batch-tagging quick-fix, entered from the avatar maintenance indicator (DH-022). -->
 {#if quickFixOpen}
@@ -559,6 +620,7 @@
 	bind:entry={modal.currentEntry}
 	mode="create"
 	errorMessage={modal.errorMessage}
+	notice={aiNotice}
 	onsave={modal.save}
 	oncancel={modal.cancel}
 />

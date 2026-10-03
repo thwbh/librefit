@@ -237,7 +237,7 @@ fn test_export_json_empty_database() {
         // Should be a parseable JSON document even if empty
         let document: ExportDocument = serde_json::from_slice(&export_result.bytes)
             .expect("export bytes should be valid JSON");
-        assert_eq!(document.schema_version, 1);
+        assert_eq!(document.schema_version, 2);
         assert!(document.intake.is_empty());
         assert!(document.weight_tracker.is_empty());
 
@@ -359,13 +359,14 @@ fn json_export_document_structure() {
         // The document is a single object with schemaVersion + one camelCase array per table
         let value: serde_json::Value = serde_json::from_slice(&export_result.bytes)
             .expect("export bytes should be valid JSON");
-        assert_eq!(value["schemaVersion"], 1);
+        assert_eq!(value["schemaVersion"], 2);
         for key in [
             "intake",
             "weightTracker",
             "intakeTarget",
             "weightTarget",
             "foodCategory",
+            "appConfig",
         ] {
             assert!(value[key].is_array(), "expected `{}` to be an array", key);
         }

@@ -3,7 +3,7 @@ use librefit_lib::scenario;
 use librefit_lib::secret::{InMemorySecretStore, SecretStore, AI_INTAKE_API_KEY};
 use librefit_lib::service::app_config::{AiIntakeConfig, AppConfigEntry, KEY_AI_BASE_URL};
 use librefit_lib::service::food_recognition::adapter::{
-    analyze, AnalysisRequest, FakeProviderAdapter, ProviderAdapter,
+    analyze, normalize_base_url, AnalysisRequest, FakeProviderAdapter, ProviderAdapter,
 };
 use librefit_lib::service::food_recognition::analysis::{parse_analysis, AnalysisError};
 use librefit_lib::service::food_recognition::image::{file_extension_for, strip_exif};
@@ -258,8 +258,41 @@ fn timeout_failure_classified() {
 }
 
 #[test]
+fn errors_carry_no_response_content() {
+    scenario!("[FR-010]");
+    // Classified errors render as a stable code only — never image bytes or a
+    // response body — so any log line built from them cannot leak content.
+    assert_eq!(AnalysisError::BadKey.to_string(), "bad_key");
+    assert_eq!(AnalysisError::Quota.to_string(), "quota");
+    assert_eq!(AnalysisError::Timeout.to_string(), "timeout");
+}
+
+#[test]
 fn successful_test_connection() {
     scenario!("[FR-004]");
     let adapter = FakeProviderAdapter::with_response(VALID_SINGLE).with_test_result(Ok(()));
     assert!(adapter.test_connection().is_ok());
+}
+
+#[test]
+fn base_url_normalized_for_openai_compatible_root() {
+    scenario!("[FR-004]");
+    // A pasted full endpoint or trailing slash resolves to the same root the
+    // adapter appends /chat/completions and /models to.
+    assert_eq!(
+        normalize_base_url("https://api.mistral.ai/v1"),
+        "https://api.mistral.ai/v1"
+    );
+    assert_eq!(
+        normalize_base_url("https://api.mistral.ai/v1/chat/completions"),
+        "https://api.mistral.ai/v1"
+    );
+    assert_eq!(
+        normalize_base_url("https://api.mistral.ai/v1/chat/completions/"),
+        "https://api.mistral.ai/v1"
+    );
+    assert_eq!(
+        normalize_base_url("http://localhost:11434/v1/"),
+        "http://localhost:11434/v1"
+    );
 }

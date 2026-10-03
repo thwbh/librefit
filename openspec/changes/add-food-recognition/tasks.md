@@ -29,32 +29,32 @@
 
 ## 5. Frontend — settings & consent
 
-- [ ] 5.1 Add an AI intake settings surface: enable toggle (default OFF), base URL, model name, API key field, "test connection" button with distinct success/error feedback.
-- [ ] 5.2 Add the one-time consent dialog (`_conv-modals`) stating what is sent and where; record consent in `app_config`.
+- [x] 5.1 Add an AI intake settings surface: enable toggle (default OFF), base URL, model name, API key field, "test connection" button with distinct success/error feedback.
+- [x] 5.2 Add the one-time consent dialog (`_conv-modals`) stating what is sent and where; record consent in `app_config`.
 
 ## 6. Frontend — capture in the intake flow
 
-- [ ] 6.1 Add the capture button (`<input type="file" accept="image/*" capture="environment">`) to the add-intake flow, shown only when enabled + configured + online.
-- [ ] 6.2 Send image bytes to `analyze_meal_photo`; pre-fill the existing `IntakeMask` with the returned candidate; surface low-confidence warning.
-- [ ] 6.3 Save via the existing `create_intake` path; cancel discards; no auto-save.
-- [ ] 6.4 Wire distinct bad-key / quota / timeout errors to toasts that nudge to manual entry.
+- [x] 6.1 Add the capture button (`<input type="file" accept="image/*" capture="environment">`) to the add-intake flow, shown only when enabled + configured + online.
+- [x] 6.2 Send image bytes to `analyze_meal_photo`; pre-fill the existing `IntakeMask` with the returned candidate; surface low-confidence warning.
+- [x] 6.3 Save via the existing `create_intake` path; cancel discards; no auto-save.
+- [x] 6.4 Wire distinct bad-key / quota / timeout errors to toasts that nudge to manual entry.
 
 ## 7. Export / import
 
-- [ ] 7.1 Include non-secret `app_config` settings in the JSON export; assert the API key is never exported.
-- [ ] 7.2 Restore `app_config` settings on JSON import (validated per `_conv-validation`); imported config stays unconfigured until a key is re-entered.
+- [x] 7.1 Include non-secret `app_config` settings in the JSON export; assert the API key is never exported.
+- [x] 7.2 Restore `app_config` settings on JSON import (validated per `_conv-validation`); imported config stays unconfigured until a key is re-entered.
 
 ## 8. Tests & traceability
 
 - [x] 8.1 Rust integration tests covering `FR` backend scenarios (config, secret handling, parsing/retry, mapping, error taxonomy) using the fakes; cite IDs via `scenario!`. (17 tests, covering FR-001..009, 017..024, 028..030, 004..006.)
-- [ ] 8.2 Vitest component tests for `FR` + `IT` frontend scenarios (availability/degradation, consent, pre-fill, cancel) with bracketed IDs.
-- [ ] 8.3 Vitest/Rust coverage for `EX`/`IM` settings export/import scenarios.
-- [ ] 8.4 Run `npm run lint:traceability` and resolve any uncovered scenarios.
+- [x] 8.2 Vitest component tests for `FR` + `IT` frontend scenarios (availability/degradation, consent, pre-fill, cancel) with bracketed IDs.
+- [x] 8.3 Vitest/Rust coverage for `EX`/`IM` settings export/import scenarios. (4 Rust cmd tests: EX-009/010, IM-012/013.)
+- [x] 8.4 Run `npm run lint:traceability` and resolve any uncovered scenarios.
 
 ## 9. Docs & registry
 
-- [ ] 9.1 Register the `FR` prefix in the CLAUDE.md scenario registry table.
-- [ ] 9.2 Update README / F-Droid privacy wording ("local-first unless you opt in"); highlight Ollama as the zero-egress local option.
+- [x] 9.1 Register the `FR` prefix in the CLAUDE.md scenario registry table.
+- [x] 9.2 Update README / F-Droid privacy wording ("local-first unless you opt in"); highlight Ollama as the zero-egress local option.
 
 ## 10. Manual verification
 

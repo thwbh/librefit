@@ -5,6 +5,8 @@ use validator::Validate;
 
 use crate::db::connection::DbPool;
 use crate::db::DbExecutor;
+use crate::secret::AI_INTAKE_API_KEY;
+use crate::service::app_config::AppConfigEntry;
 use crate::service::intake::{Intake, IntakeTarget, NewIntake, NewIntakeTarget};
 use crate::service::weight::{NewWeightTarget, NewWeightTracker, WeightTarget, WeightTracker};
 
@@ -13,7 +15,7 @@ use super::{send_progress, ImportCancellation, ImportProgress, ImportResult, Imp
 /// Whole-document backup produced by the JSON export. Unknown fields (e.g. `schemaVersion`,
 /// `foodCategory`, or record `id`s) are ignored: `foodCategory` is seed data that is not
 /// restored, and `id`s are re-assigned on insert. Missing arrays default to empty so a
-/// partial document still imports what it does contain.
+/// partial document still imports what it does contain (older v1 backups have no `appConfig`).
 #[derive(Deserialize, Default)]
 #[serde(rename_all = "camelCase", default)]
 struct ImportDocument {
@@ -21,6 +23,7 @@ struct ImportDocument {
     weight_tracker: Vec<NewWeightTracker>,
     intake_target: Vec<NewIntakeTarget>,
     weight_target: Vec<NewWeightTarget>,
+    app_config: Vec<AppConfigEntry>,
 }
 
 /// Import a JSON backup document, restoring every supported table in a single transaction.
@@ -136,6 +139,21 @@ pub async fn import_json(
                     result.weight_target,
                     WeightTarget::create
                 );
+
+                // Restore non-secret application settings (IM-012). Settings are
+                // keyed singletons, so they are upserted rather than appended, and
+                // are not counted among the data-row totals. A secret key must
+                // never be restored even if a tampered backup smuggles one in
+                // (IM-013: the key only ever lives in the OS keystore).
+                for entry in &document.app_config {
+                    if cancellation.is_cancelled() {
+                        return Err(diesel::result::Error::RollbackTransaction);
+                    }
+                    if entry.key == AI_INTAKE_API_KEY {
+                        continue;
+                    }
+                    AppConfigEntry::set(conn, &entry.key, &entry.value)?;
+                }
 
                 Ok(result)
             })

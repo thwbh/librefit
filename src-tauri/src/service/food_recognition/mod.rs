@@ -91,7 +91,16 @@ pub fn get_ai_intake_config(
         .get(AI_INTAKE_API_KEY)
         .map_err(|e| e.to_string())?
         .is_some();
-    Ok(AiIntakeStatus::build(config, has_key))
+    let status = AiIntakeStatus::build(config, has_key);
+    log::info!(
+        ">>> get_ai_intake_config: enabled={} base_url={:?} model={:?} has_key={} configured={}",
+        status.config.enabled,
+        status.config.base_url,
+        status.config.model,
+        has_key,
+        status.configured
+    );
+    Ok(status)
 }
 
 /// Persist the non-secret AI-intake config (enabled flag, base URL, model).
@@ -118,7 +127,16 @@ pub fn update_ai_intake_config(
         .get(AI_INTAKE_API_KEY)
         .map_err(|e| e.to_string())?
         .is_some();
-    Ok(AiIntakeStatus::build(config, has_key))
+    let status = AiIntakeStatus::build(config, has_key);
+    log::info!(
+        ">>> update_ai_intake_config: enabled={} base_url={:?} model={:?} has_key={} configured={}",
+        status.config.enabled,
+        status.config.base_url,
+        status.config.model,
+        has_key,
+        status.configured
+    );
+    Ok(status)
 }
 
 /// Store the API key in the OS keystore. The key never touches SQLite.
@@ -128,12 +146,23 @@ pub fn set_ai_intake_api_key(
     api_key: String,
 ) -> Result<(), String> {
     if api_key.trim().is_empty() {
+        log::warn!(">>> set_ai_intake_api_key: rejected empty key");
         return Err("API key must not be empty".to_string());
     }
-    secret
+    // Never log the key itself — length only (FR-010).
+    log::info!(
+        ">>> set_ai_intake_api_key: storing key (len={})",
+        api_key.trim().len()
+    );
+    let result = secret
         .store()
-        .set(AI_INTAKE_API_KEY, &api_key)
-        .map_err(|e| e.to_string())
+        .set(AI_INTAKE_API_KEY, api_key.trim())
+        .map_err(|e| e.to_string());
+    match &result {
+        Ok(_) => log::info!(">>> set_ai_intake_api_key: stored OK"),
+        Err(e) => log::error!(">>> set_ai_intake_api_key: store failed: {}", e),
+    }
+    result
 }
 
 /// Remove the stored API key.
@@ -160,22 +189,39 @@ fn build_adapter(
         .execute(AiIntakeConfig::load)
         .map_err(|e| FrError::new("other", e))?;
 
+    let has_key = secret
+        .store()
+        .get(AI_INTAKE_API_KEY)
+        .map_err(|e| FrError::new("other", e.to_string()))?
+        .is_some();
+    log::info!(
+        ">>> build_adapter: enabled={} base_url={:?} model={:?} has_key={}",
+        config.enabled,
+        config.base_url,
+        config.model,
+        has_key
+    );
+
     if !config.enabled {
+        log::warn!(">>> build_adapter: not_configured (disabled)");
         return Err(FrError::new("not_configured", "AI intake is disabled"));
     }
-    let base_url = config
-        .base_url
-        .filter(|s| !s.is_empty())
-        .ok_or_else(|| FrError::new("not_configured", "missing provider base URL"))?;
-    let model = config
-        .model
-        .filter(|s| !s.is_empty())
-        .ok_or_else(|| FrError::new("not_configured", "missing model name"))?;
+    let base_url = config.base_url.filter(|s| !s.is_empty()).ok_or_else(|| {
+        log::warn!(">>> build_adapter: not_configured (missing base URL)");
+        FrError::new("not_configured", "missing provider base URL")
+    })?;
+    let model = config.model.filter(|s| !s.is_empty()).ok_or_else(|| {
+        log::warn!(">>> build_adapter: not_configured (missing model)");
+        FrError::new("not_configured", "missing model name")
+    })?;
     let api_key = secret
         .store()
         .get(AI_INTAKE_API_KEY)
         .map_err(|e| FrError::new("other", e.to_string()))?
-        .ok_or_else(|| FrError::new("not_configured", "missing API key"))?;
+        .ok_or_else(|| {
+            log::warn!(">>> build_adapter: not_configured (missing API key)");
+            FrError::new("not_configured", "missing API key")
+        })?;
 
     MistralAdapter::new(base_url, model, api_key).map_err(FrError::from)
 }
@@ -230,13 +276,20 @@ pub fn test_ai_intake_connection(
     pool: State<DbPool>,
     secret: State<ManagedSecretStore>,
 ) -> Result<(), FrError> {
+    log::info!(">>> test_ai_intake_connection: starting");
     let adapter = build_adapter(&pool, &secret)?;
     let started = Instant::now();
     let outcome = adapter.test_connection();
-    log::info!(
-        "food_recognition: test_connection completed in {}ms, outcome={}",
-        started.elapsed().as_millis(),
-        outcome.as_ref().map(|_| "ok").unwrap_or("err")
-    );
+    match &outcome {
+        Ok(_) => log::info!(
+            ">>> test_ai_intake_connection: OK in {}ms",
+            started.elapsed().as_millis()
+        ),
+        Err(e) => log::error!(
+            ">>> test_ai_intake_connection: failed in {}ms, error={}",
+            started.elapsed().as_millis(),
+            e
+        ),
+    }
     outcome.map_err(FrError::from)
 }

@@ -70,6 +70,12 @@ impl AppConfigEntry {
         diesel::delete(app_config::table.find(k)).execute(conn)?;
         Ok(())
     }
+
+    /// Read every stored key/value pair. Used by JSON export; safe to include in
+    /// a backup because secrets (the API key) never live in this table.
+    pub fn all(conn: &mut SqliteConnection) -> QueryResult<Vec<Self>> {
+        app_config::table.load::<Self>(conn)
+    }
 }
 
 // ----------------------------------------------------------------------------
