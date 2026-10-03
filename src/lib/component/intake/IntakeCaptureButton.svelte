@@ -80,7 +80,7 @@
 
 {#if available}
 	<button
-		class="btn btn-circle btn-secondary shadow-lg"
+		class="btn btn-xl btn-circle btn-primary shadow-lg"
 		onclick={handleClick}
 		disabled={loading}
 		aria-label="Estimate calories from a photo"

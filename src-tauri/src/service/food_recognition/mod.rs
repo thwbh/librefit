@@ -180,62 +180,72 @@ pub fn grant_ai_intake_consent(pool: State<DbPool>) -> Result<(), String> {
     pool.execute(AiIntakeConfig::grant_consent)
 }
 
-/// Resolve config + key into a ready adapter, enforcing enabled/configured.
-fn build_adapter(
+/// Owned provider credentials, resolved from state so the blocking HTTP call can
+/// run off the main thread without borrowing `State`.
+struct Credentials {
+    base_url: String,
+    model: String,
+    api_key: String,
+}
+
+/// Read config + key from state and enforce enabled/configured, returning owned
+/// values. Synchronous (touches the DB + keystore); callers hand the result to a
+/// blocking task for the network leg.
+fn resolve_credentials(
     pool: &State<DbPool>,
     secret: &State<ManagedSecretStore>,
-) -> Result<MistralAdapter, FrError> {
+) -> Result<Credentials, FrError> {
     let config = pool
         .execute(AiIntakeConfig::load)
         .map_err(|e| FrError::new("other", e))?;
 
-    let has_key = secret
+    let api_key_opt = secret
         .store()
         .get(AI_INTAKE_API_KEY)
-        .map_err(|e| FrError::new("other", e.to_string()))?
-        .is_some();
+        .map_err(|e| FrError::new("other", e.to_string()))?;
     log::info!(
-        ">>> build_adapter: enabled={} base_url={:?} model={:?} has_key={}",
+        ">>> resolve_credentials: enabled={} base_url={:?} model={:?} has_key={}",
         config.enabled,
         config.base_url,
         config.model,
-        has_key
+        api_key_opt.is_some()
     );
 
     if !config.enabled {
-        log::warn!(">>> build_adapter: not_configured (disabled)");
+        log::warn!(">>> resolve_credentials: not_configured (disabled)");
         return Err(FrError::new("not_configured", "AI intake is disabled"));
     }
     let base_url = config.base_url.filter(|s| !s.is_empty()).ok_or_else(|| {
-        log::warn!(">>> build_adapter: not_configured (missing base URL)");
+        log::warn!(">>> resolve_credentials: not_configured (missing base URL)");
         FrError::new("not_configured", "missing provider base URL")
     })?;
     let model = config.model.filter(|s| !s.is_empty()).ok_or_else(|| {
-        log::warn!(">>> build_adapter: not_configured (missing model)");
+        log::warn!(">>> resolve_credentials: not_configured (missing model)");
         FrError::new("not_configured", "missing model name")
     })?;
-    let api_key = secret
-        .store()
-        .get(AI_INTAKE_API_KEY)
-        .map_err(|e| FrError::new("other", e.to_string()))?
-        .ok_or_else(|| {
-            log::warn!(">>> build_adapter: not_configured (missing API key)");
-            FrError::new("not_configured", "missing API key")
-        })?;
+    let api_key = api_key_opt.ok_or_else(|| {
+        log::warn!(">>> resolve_credentials: not_configured (missing API key)");
+        FrError::new("not_configured", "missing API key")
+    })?;
 
-    MistralAdapter::new(base_url, model, api_key).map_err(FrError::from)
+    Ok(Credentials {
+        base_url,
+        model,
+        api_key,
+    })
 }
 
 /// Analyze a meal photo and return a single confirmable intake candidate.
 ///
 /// The webview passes only image bytes (FR-008); the key, endpoint, EXIF strip,
-/// provider call, parsing, and mapping all happen here. Nothing logs image bytes
+/// provider call, parsing, and mapping all happen here. The blocking network leg
+/// runs on a blocking thread so the UI stays responsive. Nothing logs image bytes
 /// or response content — only status and timing (FR-010).
 #[command]
-pub fn analyze_meal_photo(
-    pool: State<DbPool>,
-    secret: State<ManagedSecretStore>,
-    mut image: Vec<u8>,
+pub async fn analyze_meal_photo(
+    pool: State<'_, DbPool>,
+    secret: State<'_, ManagedSecretStore>,
+    image: Vec<u8>,
     mime: String,
     locale: String,
 ) -> Result<IntakeCandidate, FrError> {
@@ -247,17 +257,26 @@ pub fn analyze_meal_photo(
         return Err(FrError::new("consent_required", "consent not yet granted"));
     }
 
-    let adapter = build_adapter(&pool, &secret)?;
+    let creds = resolve_credentials(&pool, &secret)?;
 
-    image::strip_exif(&mut image, &mime).map_err(FrError::from)?;
-
+    // EXIF strip + provider call are blocking work; keep them off the main thread.
     let started = Instant::now();
-    let request = AnalysisRequest {
-        image,
-        mime,
-        locale,
-    };
-    let result = analyze(&adapter, &request);
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let mut image = image;
+        image::strip_exif(&mut image, &mime)?;
+        let adapter = MistralAdapter::new(creds.base_url, creds.model, creds.api_key)?;
+        analyze(
+            &adapter,
+            &AnalysisRequest {
+                image,
+                mime,
+                locale,
+            },
+        )
+    })
+    .await
+    .map_err(|e| FrError::new("other", e.to_string()))?;
+
     log::info!(
         "food_recognition: analyze completed in {}ms, outcome={}",
         started.elapsed().as_millis(),
@@ -270,16 +289,22 @@ pub fn analyze_meal_photo(
 }
 
 /// Run a single low-cost provider call to validate the current configuration
-/// (FR-004/005/006).
+/// (FR-004/005/006). The network leg runs on a blocking thread.
 #[command]
-pub fn test_ai_intake_connection(
-    pool: State<DbPool>,
-    secret: State<ManagedSecretStore>,
+pub async fn test_ai_intake_connection(
+    pool: State<'_, DbPool>,
+    secret: State<'_, ManagedSecretStore>,
 ) -> Result<(), FrError> {
     log::info!(">>> test_ai_intake_connection: starting");
-    let adapter = build_adapter(&pool, &secret)?;
+    let creds = resolve_credentials(&pool, &secret)?;
     let started = Instant::now();
-    let outcome = adapter.test_connection();
+    let outcome = tauri::async_runtime::spawn_blocking(move || {
+        let adapter = MistralAdapter::new(creds.base_url, creds.model, creds.api_key)?;
+        adapter.test_connection()
+    })
+    .await
+    .map_err(|e| FrError::new("other", e.to_string()))?;
+
     match &outcome {
         Ok(_) => log::info!(
             ">>> test_ai_intake_connection: OK in {}ms",

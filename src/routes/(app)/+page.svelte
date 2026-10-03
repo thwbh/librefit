@@ -309,13 +309,14 @@
 		}
 	});
 
-	// AI meal-photo capture (add-food-recognition, FR). The camera button appears
-	// only when the feature is enabled, configured, and the device is online; manual
-	// entry (the FAB) always stays available.
-	let aiEnabled = $state(false);
-	let aiConfigured = $state(false);
-	let aiConsentGranted = $state(false);
-	let aiBaseUrl = $state<string | undefined>();
+	// AI meal-photo capture (add-food-recognition, FR). The camera FAB replaces the
+	// manual-add FAB when the feature is enabled, configured, and the device is
+	// online. The status is preloaded in the page loader so the correct affordance
+	// paints immediately (no flicker); onMount refreshes it after a settings change.
+	let aiEnabled = $state(data.aiStatus?.config.enabled ?? false);
+	let aiConfigured = $state(data.aiStatus?.configured ?? false);
+	let aiConsentGranted = $state(data.aiStatus?.config.consentGranted ?? false);
+	let aiBaseUrl = $state<string | undefined>(data.aiStatus?.config.baseUrl ?? undefined);
 	let online = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
 	let aiNotice = $state<string | undefined>();
 
@@ -537,17 +538,22 @@
 		</DashboardLayout>
 	</div>
 </div>
-<!-- Manual add (always) + AI photo capture (when configured & online). -->
-<div class="fixed bottom-20 right-4 z-40 flex flex-col items-center gap-3">
-	<IntakeCaptureButton
-		available={aiAvailable}
-		consentGranted={aiConsentGranted}
-		endpoint={aiBaseUrl}
-		onresult={onCaptureResult}
-		onconsent={() => (aiConsentGranted = true)}
-	/>
-</div>
-<IntakeFab onclick={openManualCreate} />
+{#if aiAvailable}
+	<!-- When AI is available the camera FAB swaps in for the manual-add FAB (1:1,
+	     no extra dashboard clutter). The captured candidate opens the editable mask,
+	     which remains the place to adjust or clear the entry. -->
+	<div class="fixed bottom-20 right-4 z-40">
+		<IntakeCaptureButton
+			available={aiAvailable}
+			consentGranted={aiConsentGranted}
+			endpoint={aiBaseUrl}
+			onresult={onCaptureResult}
+			onconsent={() => (aiConsentGranted = true)}
+		/>
+	</div>
+{:else}
+	<IntakeFab onclick={openManualCreate} />
+{/if}
 
 <!-- Batch-tagging quick-fix, entered from the avatar maintenance indicator (DH-022). -->
 {#if quickFixOpen}
