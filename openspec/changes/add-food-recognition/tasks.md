@@ -1,31 +1,31 @@
 ## 1. Foundations — config store & secret storage
 
-- [ ] 1.1 Add `app_config` migration: two-column (`key`, `value`) kv table; add Diesel schema + model.
-- [ ] 1.2 Add `AppConfig` service with typed get/set helpers for the AI intake keys (enabled flag, base URL, model name); never stores secrets.
-- [ ] 1.3 Add `tauri-plugin-secure-keystore` (version-pinned) and wire it into the Tauri app; review the plugin source once.
-- [ ] 1.4 Define a `SecretStore` trait (set/get/delete one secret) with a keystore-plugin impl and an in-memory fake for tests.
-- [ ] 1.5 Add Tauri commands to read/write non-secret AI config and to set/clear the API key via `SecretStore`; expose a `is_configured` helper.
+- [x] 1.1 Add `app_config` migration: two-column (`key`, `value`) kv table; add Diesel schema + model.
+- [x] 1.2 Add `AppConfig` service with typed get/set helpers for the AI intake keys (enabled flag, base URL, model name); never stores secrets.
+- [ ] 1.3 **[DEFERRED — needs on-device verification]** Add `tauri-plugin-secure-keystore` (version-pinned), review source once, implement the concrete `SecretStore` keystore backend, and wire Android gradle/permissions. Swap it in for the in-memory placeholder in `run()`.
+- [x] 1.4 Define a `SecretStore` trait (set/get/delete one secret) with an in-memory fake (used for tests and as the placeholder backend until 1.3 lands).
+- [x] 1.5 Add Tauri commands to read/write non-secret AI config and to set/clear the API key via `SecretStore`; expose a `is_configured` helper.
 
 ## 2. Provider adapter (backend egress)
 
-- [ ] 2.1 Define the `ProviderAdapter` trait (`analyze(image_bytes, prompt, locale) -> AnalysisResult`, `test_connection()`).
-- [ ] 2.2 Implement the Mistral/OpenAI-compatible adapter over `reqwest` (rustls): `/chat/completions` with image content parts + `response_format` structured output.
-- [ ] 2.3 Define the fixed analysis schema (`items:[{name, calorieEstimate}]` + confidence) and serde validation with exactly one retry on parse failure.
-- [ ] 2.4 Classify failures into bad-key / quota / timeout error variants per `_conv-user-errors`.
-- [ ] 2.5 Add a fake `ProviderAdapter` (canned success, malformed-then-valid, hard-fail) for tests.
+- [x] 2.1 Define the `ProviderAdapter` trait (`analyze(image_bytes, prompt, locale) -> AnalysisResult`, `test_connection()`).
+- [x] 2.2 Implement the Mistral/OpenAI-compatible adapter over `reqwest` (rustls): `/chat/completions` with image content parts + `response_format` structured output.
+- [x] 2.3 Define the fixed analysis schema (`items:[{name, calorieEstimate}]` + confidence) and serde validation with exactly one retry on parse failure.
+- [x] 2.4 Classify failures into bad-key / quota / timeout error variants per `_conv-user-errors`.
+- [x] 2.5 Add a fake `ProviderAdapter` (canned success, malformed-then-valid, hard-fail) for tests.
 
 ## 3. Image handling & privacy
 
-- [ ] 3.1 Add `little_exif`; strip EXIF from incoming image bytes in the backend before any provider call.
-- [ ] 3.2 Keep image bytes in-memory across the IPC boundary (no temp file, never persisted to disk).
-- [ ] 3.3 Audit logging so only call status/timing are logged — no image bytes, no response content.
+- [x] 3.1 Add `little_exif`; strip EXIF from incoming image bytes in the backend before any provider call.
+- [x] 3.2 Keep image bytes in-memory across the IPC boundary (no temp file, never persisted to disk).
+- [x] 3.3 Audit logging so only call status/timing are logged — no image bytes, no response content.
 
 ## 4. Mapping & commands
 
-- [ ] 4.1 Map `AnalysisResult` → a single `NewIntake`: concatenate item names, sum calorie estimates.
-- [ ] 4.2 Resolve category locally against `food_category` (never from the model); set a low-confidence flag.
-- [ ] 4.3 Add the `analyze_meal_photo` Tauri command returning one `NewIntake` candidate; add `test_connection` command.
-- [ ] 4.4 Regenerate `$lib/api` bindings for the new commands/types.
+- [x] 4.1 Map `AnalysisResult` → a single `NewIntake`: concatenate item names, sum calorie estimates.
+- [x] 4.2 Resolve category locally against `food_category` (never from the model); set a low-confidence flag.
+- [x] 4.3 Add the `analyze_meal_photo` Tauri command returning one `NewIntake` candidate; add `test_connection` command.
+- [x] 4.4 Regenerate `$lib/api` bindings for the new commands/types.
 
 ## 5. Frontend — settings & consent
 
@@ -46,7 +46,7 @@
 
 ## 8. Tests & traceability
 
-- [ ] 8.1 Rust integration tests covering `FR` backend scenarios (config, secret handling, parsing/retry, mapping, error taxonomy) using the fakes; cite IDs via `scenario!`.
+- [x] 8.1 Rust integration tests covering `FR` backend scenarios (config, secret handling, parsing/retry, mapping, error taxonomy) using the fakes; cite IDs via `scenario!`. (17 tests, covering FR-001..009, 017..024, 028..030, 004..006.)
 - [ ] 8.2 Vitest component tests for `FR` + `IT` frontend scenarios (availability/degradation, consent, pre-fill, cancel) with bracketed IDs.
 - [ ] 8.3 Vitest/Rust coverage for `EX`/`IM` settings export/import scenarios.
 - [ ] 8.4 Run `npm run lint:traceability` and resolve any uncovered scenarios.

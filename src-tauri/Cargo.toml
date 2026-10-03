@@ -44,6 +44,12 @@ tauri-plugin-fs = "2.5.1"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-haptics = "2.3.2"
 url = "2.5"
+# Backend-only egress for AI meal-photo analysis (add-food-recognition, FR).
+# rustls (no OpenSSL); blocking client keeps the Tauri commands synchronous like
+# the rest of the service layer. reqwest is already in the lockfile transitively.
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "json", "rustls"] }
+base64 = "0.22"
+little_exif = "0.6.23"
 
 # satisfy linker for sqlite3 required by diesel
 [dependencies.libsqlite3-sys]

@@ -15,6 +15,10 @@ use crate::service::wizard::{
 // Individual model commands
 use crate::service::body::{get_body_data, update_body_data};
 use crate::service::export::{cancel_export, export_database_file, ExportCancellation};
+use crate::service::food_recognition::{
+    analyze_meal_photo, clear_ai_intake_api_key, get_ai_intake_config, grant_ai_intake_consent,
+    set_ai_intake_api_key, test_ai_intake_connection, update_ai_intake_config,
+};
 use crate::service::import::{cancel_import, import_data_file, ImportCancellation};
 use crate::service::intake::{
     create_intake, create_intake_target, delete_intake, get_food_categories,
@@ -47,6 +51,7 @@ use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 pub mod db;
 pub mod i18n;
+pub mod secret;
 pub mod service;
 pub mod test_support;
 pub mod util;
@@ -136,7 +141,14 @@ pub fn run() {
             delete_workout_template,
             clone_workout_template,
             swap_template_exercise,
-            start_workout_from_template
+            start_workout_from_template,
+            get_ai_intake_config,
+            update_ai_intake_config,
+            set_ai_intake_api_key,
+            clear_ai_intake_api_key,
+            grant_ai_intake_consent,
+            analyze_meal_photo,
+            test_ai_intake_connection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -219,6 +231,18 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(pool);
     app.manage(ExportCancellation::new());
     app.manage(ImportCancellation::new());
+
+    // Secret storage for the AI-intake API key. Until the OS-keystore backend
+    // (add-food-recognition task 1.3) is wired, this is a process-lifetime
+    // in-memory placeholder: nothing hits disk, but the key is not persisted
+    // across restarts. MUST be swapped for the keystore backend before release.
+    log::warn!(
+        "SecretStore: using in-memory placeholder backend (keys do not persist across restarts); \
+         wire the OS-keystore backend (task 1.3) before release"
+    );
+    app.manage(crate::secret::ManagedSecretStore(Box::new(
+        crate::secret::InMemorySecretStore::default(),
+    )));
 
     Ok(())
 }
