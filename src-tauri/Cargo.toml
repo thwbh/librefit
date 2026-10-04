@@ -62,6 +62,8 @@ windows-native-keyring-store = "1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus-secret-service-keyring-store = "1"
+# The underlying secret-service crate requires a crypto backend to be selected.
+secret-service = { version = "5.2", features = ["crypto-rust"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android-native-keyring-store = "1"
