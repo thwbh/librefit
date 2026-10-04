@@ -2,7 +2,9 @@
 
 ## Purpose
 
-TBD - created by archiving change add-food-recognition. Update Purpose after archive.
+**ID prefix:** `FR`
+
+Opt-in, bring-your-own-key AI assistance that turns a meal photo into a single confirmable intake candidate. Covers configuration and secret storage, image capture and privacy hygiene, the backend-only provider call, structured-output parsing, and deterministic mapping to a `NewIntake`. The feature never auto-saves and never replaces manual entry — it only pre-fills the existing intake mask.
 
 ## Requirements
 
