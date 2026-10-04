@@ -108,13 +108,13 @@ describe('IntakeCaptureButton', () => {
 		expect(onresult).toHaveBeenCalledWith(candidate.intake, false);
 	});
 
-	it('[FR-028] a bad-key failure shows an error that nudges to manual entry', async () => {
+	it('[FR-028] a bad-key failure shows a distinct bad-key error', async () => {
 		analyzeMealPhoto.mockRejectedValue({ code: 'bad_key', message: 'unauthorized' });
 		setup({ consentGranted: true });
 
 		const file = new File([new Uint8Array([1, 2, 3])], 'meal.jpg', { type: 'image/jpeg' });
 		await fireEvent.change(fileInput(), { target: { files: [file] } });
 
-		expect(await screen.findByText(/add this meal manually/i)).toBeInTheDocument();
+		expect(await screen.findByText(/api key was rejected/i)).toBeInTheDocument();
 	});
 });
