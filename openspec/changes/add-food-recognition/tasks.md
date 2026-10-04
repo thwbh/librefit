@@ -2,7 +2,7 @@
 
 - [x] 1.1 Add `app_config` migration: two-column (`key`, `value`) kv table; add Diesel schema + model.
 - [x] 1.2 Add `AppConfig` service with typed get/set helpers for the AI intake keys (enabled flag, base URL, model name); never stores secrets.
-- [ ] 1.3 **[DEFERRED — needs on-device verification]** Add `tauri-plugin-secure-keystore` (version-pinned), review source once, implement the concrete `SecretStore` keystore backend, and wire Android gradle/permissions. Swap it in for the in-memory placeholder in `run()`.
+- [x] 1.3 Implement the concrete `SecretStore` keystore backend with the Rust `keyring` crate (v4) and swap it in for the in-memory placeholder in `run()`. Chosen over `tauri-plugin-secure-keystore` because the backend must _read_ the key for the provider call (FR-008) — a JS-side plugin can't do that. `keyring` v4 covers macOS/Windows/Linux (default `v1`) and Android (`android-native-keyring-store`); Android runtime behavior still needs on-device verification (folded into 10.1).
 - [x] 1.4 Define a `SecretStore` trait (set/get/delete one secret) with an in-memory fake (used for tests and as the placeholder backend until 1.3 lands).
 - [x] 1.5 Add Tauri commands to read/write non-secret AI config and to set/clear the API key via `SecretStore`; expose a `is_configured` helper.
 

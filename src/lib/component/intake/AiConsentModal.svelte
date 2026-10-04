@@ -32,13 +32,12 @@
 			<p>
 				Your meal photo will be sent <strong>directly from this device</strong> to your configured
 				provider{#if endpoint}
-					(<span class="break-all opacity-70">{endpoint}</span>){/if}. It never passes through a
-				LibreFit server.
+					(<span class="break-all opacity-70">{endpoint}</span>){/if}.
 			</p>
 			<ul class="list-disc pl-5 opacity-80 space-y-1">
 				<li>The photo is used only for this estimate and is not stored.</li>
 				<li>Location and other metadata are stripped before sending.</li>
-				<li>The result pre-fills the form — nothing is saved until you confirm.</li>
+				<li>The result pre-fills the form. Nothing is saved until you confirm.</li>
 			</ul>
 			<p class="opacity-70">You can turn this off any time in AI settings.</p>
 		</div>

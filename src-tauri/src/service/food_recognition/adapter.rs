@@ -5,7 +5,7 @@
 //! lets the parsing/retry/mapping/error scenarios run without network.
 
 use std::collections::VecDeque;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use base64::Engine;
@@ -54,6 +54,27 @@ pub fn analyze(
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(45);
 
+/// A rustls client config trusting the bundled Mozilla roots, shared across
+/// requests. Handed to reqwest via `use_preconfigured_tls` so the provider call
+/// verifies certs with webpki roots on every platform — no OS trust store, hence
+/// no per-platform TLS init (and no Android Java support classes).
+fn tls_config() -> rustls::ClientConfig {
+    static CONFIG: OnceLock<rustls::ClientConfig> = OnceLock::new();
+    CONFIG
+        .get_or_init(|| {
+            let mut roots = rustls::RootCertStore::empty();
+            roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+            rustls::ClientConfig::builder_with_provider(Arc::new(
+                rustls::crypto::aws_lc_rs::default_provider(),
+            ))
+            .with_safe_default_protocol_versions()
+            .expect("rustls default protocol versions")
+            .with_root_certificates(roots)
+            .with_no_client_auth()
+        })
+        .clone()
+}
+
 /// Normalize a user-entered provider base URL to the OpenAI-compatible root the
 /// adapter appends `/chat/completions` and `/models` to. Tolerates a trailing
 /// slash and a pasted-in `/chat/completions` suffix (a common mistake), so both
@@ -79,6 +100,7 @@ impl MistralAdapter {
     pub fn new(base_url: String, model: String, api_key: String) -> Result<Self, AnalysisError> {
         let client = reqwest::blocking::Client::builder()
             .timeout(REQUEST_TIMEOUT)
+            .use_preconfigured_tls(tls_config())
             .build()
             .map_err(|e| AnalysisError::Other(e.to_string()))?;
         Ok(Self {
@@ -91,10 +113,18 @@ impl MistralAdapter {
 
     fn system_prompt(locale: &str) -> String {
         format!(
-            "You identify foods in a meal photo and estimate calories. Respond ONLY with JSON \
-             matching: {{\"items\":[{{\"name\":string,\"calorieEstimate\":integer}}],\"confidence\":number}}. \
-             Estimate kcal per item. confidence is 0..1 for the overall estimate. Use food names in \
-             the '{}' locale. Do not include any prose.",
+            "You estimate calories from a meal photo. Respond ONLY with JSON matching: \
+             {{\"items\":[{{\"name\":string,\"calorieEstimate\":integer}}],\"confidence\":number}}.\n\
+             Rules:\n\
+             - List each distinct dish or food as ONE item. Treat a composite dish (e.g. a pizza, a \
+             burger, a salad, a sandwich) as a single item — do NOT break it into its ingredients and \
+             do NOT add separate items for components. The calorie totals are summed, so listing both \
+             a dish and its ingredients would double-count.\n\
+             - `name` is a short label for the item (the dish name), not an ingredient list.\n\
+             - `calorieEstimate` is the total kcal for that item at the portion shown.\n\
+             - Use at most 5 items; combine trivial extras.\n\
+             - `confidence` is 0..1 for the overall estimate.\n\
+             - Food names in the '{}' locale. No prose, JSON only.",
             locale
         )
     }
@@ -132,7 +162,7 @@ impl ProviderAdapter for MistralAdapter {
             "messages": [
                 { "role": "system", "content": Self::system_prompt(&request.locale) },
                 { "role": "user", "content": [
-                    { "type": "text", "text": "Identify the foods and estimate calories." },
+                    { "type": "text", "text": "Estimate the calories of the meal in this photo. One item per distinct dish; do not list ingredients separately." },
                     { "type": "image_url", "image_url": {
                         "url": Self::data_uri(&request.image, &request.mime)
                     }}

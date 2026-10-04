@@ -27,9 +27,9 @@ export function isFrError(e: unknown): e is FrError {
  * the user back to manual entry, which always stays available.
  */
 const AI_ERROR_MESSAGES: Record<string, string> = {
-	bad_key: 'Your API key was rejected. Check it in AI settings, or add this meal manually.',
-	quota: 'Your provider quota is used up. Try again later, or add this meal manually.',
-	timeout: 'The request timed out. Check your connection, or add this meal manually.',
+	bad_key: 'Your API key was rejected.',
+	quota: 'Your provider quota is used up.',
+	timeout: 'The request timed out. Check your connection.',
 	parse: "Couldn't read the result. Please add this meal manually.",
 	not_configured:
 		'AI intake is not set up yet. Configure it in settings, or add this meal manually.',
