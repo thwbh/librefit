@@ -18,8 +18,8 @@ LibreFit is a cross-platform app built with Tauri that helps you track your calo
 - 📈 **Visual progress charts** - Monitor your journey with intuitive graphs and insights
 - 🔒 **Local-first, opt-in egress** - All data stays on your device by default: no cloud sync, no tracking, no ads. The only thing that ever leaves the device is an optional, off-by-default AI meal-photo estimate (see below), which you must enable with your own API key.
 - 🎨 **Clean, modern UI** - Built with Svelte 5 and Tauri for a smooth, near-native experience
-- 📤 **Data export** - Export your data as CSV or complete database backups
-- 📷 **AI calorie estimation (opt-in, BYOK)** - Snap a meal photo and have your own LLM provider pre-fill the entry for you to confirm. Off by default. When enabled, the photo is sent straight from your device to the provider you configure — never to a LibreFit server — with EXIF stripped and the photo never stored. Your API key lives in the device keystore, never in the database or a backup. Point it at a local model (e.g. Ollama) to keep everything on device.
+- 📤 **Data export** - Export your data as JSON or complete database backups
+- 📷 **LLM food recognition (opt-in, BYOK)** - Snap a meal photo and have your own LLM provider pre-fill the entry for you to confirm. Off by default.
 - 🔧 **Cross-platform** - Currently targeting Android, with broader support possible in the future
 
 ## Links

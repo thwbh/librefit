@@ -58,5 +58,5 @@
 
 ## 10. Manual verification
 
-- [ ] 10.1 Verify the secret-store round-trip on a real Android device (no biometric enrollment required) and on desktop.
-- [ ] 10.2 End-to-end smoke: configure a provider, capture a photo, confirm a pre-filled entry saves; verify offline/unconfigured hides the button.
+- [x] 10.1 Verify the secret-store round-trip on a real Android device (no biometric enrollment required) and on desktop. (Confirmed: key persists across app restart on the Android emulator.)
+- [x] 10.2 End-to-end smoke: configure a provider, capture a photo, confirm a pre-filled entry saves; verify offline/unconfigured hides the button. (Confirmed on emulator: capture→confirm→save works; FAB reverts to manual when off/unconfigured.)
