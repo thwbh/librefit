@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('$lib/api/gen', () => ({
-	dailyDashboard: vi.fn().mockResolvedValue({ marker: 'dashboard' })
+	dailyDashboard: vi.fn().mockResolvedValue({ marker: 'dashboard' }),
+	// The loader also preloads AI-intake status (food-recognition); it tolerates
+	// failure via `.catch(() => null)`, so a resolved stub is enough here.
+	getAiIntakeConfig: vi.fn().mockResolvedValue(null)
 }));
 
 vi.mock('$lib/date', () => ({

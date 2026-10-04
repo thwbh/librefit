@@ -96,6 +96,19 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 	};
 
 	/**
+	 * Open the create modal pre-filled with a supplied entry instead of a blank
+	 * one. Used by AI meal-photo capture (FR): the candidate pre-fills the mask and
+	 * the user confirms via the same save path as manual entry (no auto-save).
+	 */
+	const openCreateWith = (prefill: N) => {
+		mode = 'create';
+		currentEntry = prefill;
+		enableDelete = false;
+		errorMessage = undefined;
+		createDialog?.showModal();
+	};
+
+	/**
 	 * Open edit modal with an existing entry
 	 */
 	const openEdit = (entry: T) => {
@@ -336,6 +349,7 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 
 		// Actions
 		openCreate,
+		openCreateWith,
 		openEdit,
 		openDelete,
 		save,

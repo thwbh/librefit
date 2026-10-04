@@ -3,6 +3,7 @@
 
 mod test_body_repo;
 mod test_food_category_repo;
+mod test_food_recognition_repo;
 mod test_intake_repo;
 mod test_user_repo;
 mod test_utilities;

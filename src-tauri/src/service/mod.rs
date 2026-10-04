@@ -1,8 +1,10 @@
 // Service layer - Domain models with repository methods + Tauri commands
 // This layer combines business logic with data access
+pub mod app_config;
 pub mod body;
 pub mod dashboard;
 pub mod export;
+pub mod food_recognition;
 pub mod import;
 pub mod intake;
 pub mod progress;

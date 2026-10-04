@@ -13,24 +13,24 @@ val tauriProperties = Properties().apply {
     }
 }
 
-// Load keystore properties
-val keystoreProperties = Properties().apply {
-    val propFile = file("../keystore.properties")
-    if (propFile.exists()) {
-        propFile.inputStream().use { load(it) }
-    }
-}
-
 android {
     compileSdk = 36
     namespace = "io.tohowabohu.librefit"
 
+    // NDK version is supplied by CI (setup-ndk output). When unset (e.g. local
+    // builds) Gradle falls back to the NDK resolved via ndk.dir / NDK_HOME.
+    System.getenv("NDK_VERSION")?.let { ndkVersion = it }
+
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            storeFile = file(keystoreProperties.getProperty("storeFile"))
-            storePassword = keystoreProperties.getProperty("storePassword")
+            // Release signing credentials come straight from the environment
+            // (CI secrets) — no keystore.properties file on disk to manage.
+            System.getenv("KEYSTORE_FILE")?.let {
+                storeFile = file(it)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
         }
     }
 
@@ -48,7 +48,8 @@ android {
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
-            packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
+            packaging {
+                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86_64/*.so")

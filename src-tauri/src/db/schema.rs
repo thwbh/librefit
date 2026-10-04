@@ -1,6 +1,13 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    app_config (key) {
+        key -> Text,
+        value -> Text,
+    }
+}
+
+diesel::table! {
     body_data (id) {
         id -> Integer,
         age -> Integer,
@@ -181,6 +188,7 @@ diesel::joinable!(workout_session -> workout_type (workout_type));
 diesel::joinable!(workout_set -> workout_exercise (workout_exercise_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    app_config,
     body_data,
     exercise,
     exercise_category,

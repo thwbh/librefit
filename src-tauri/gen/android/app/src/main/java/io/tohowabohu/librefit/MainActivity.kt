@@ -1,6 +1,8 @@
 package io.tohowabohu.librefit
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -14,9 +16,21 @@ class MainActivity : TauriActivity() {
 
   private val safeArea = SafeAreaProvider()
 
+  // Implemented in Rust (librefit_lib). Initializes ndk-context with the app
+  // context so the keyring Android Keystore backend can resolve it.
+  private external fun initNdkContext(context: Context)
+
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+    // super.onCreate loads librefit_lib; initialize ndk-context now so the first
+    // keyring use (AI-intake key storage) has a valid Android context.
+    try {
+      System.loadLibrary("librefit_lib")
+      initNdkContext(applicationContext)
+    } catch (e: Throwable) {
+      Log.e("librefit", "initNdkContext failed", e)
+    }
   }
 
   override fun onWebViewCreate(webView: WebView) {

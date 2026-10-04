@@ -7,7 +7,8 @@
 		MagicWand,
 		Info,
 		Barbell,
-		ClipboardText
+		ClipboardText,
+		Sparkle
 	} from 'phosphor-svelte';
 
 	interface Props {
@@ -25,6 +26,7 @@
 		{ href: '/export', label: 'Export', icon: TreeStructure },
 		{ href: '/import', label: 'Import', icon: Upload },
 		{ href: '/wizard', label: 'Wizard', icon: MagicWand },
+		{ href: '/ai', label: 'AI Intake', icon: Sparkle },
 		{ href: '/about', label: 'About', icon: Info }
 	];
 </script>

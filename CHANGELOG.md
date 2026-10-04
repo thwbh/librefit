@@ -5,6 +5,24 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
+## [26.40.0] - 2026-10-04
+
+### Added
+
+- LLM meal-photo calorie estimation (opt-in, bring-your-own-key): a dashboard camera button sends a photo to your own Mistral/OpenAI-compatible provider (including local Ollama) and pre-fills an entry to confirm. Off by default; set up under Settings → AI Intake.
+- Privacy-preserving by design: device→provider calls only, API key kept in the OS keystore, photo never stored, EXIF stripped before upload.
+- Settings travel in JSON backups; the API key never does.
+
+### Changed
+
+- JSON backup format gains an application-settings section (schema v2); older backups still import.
+
+## [26.39.1] - 2026-09-27
+
+### Fixed
+
+- Fixed creating custom exercises failing because the category `shortvalue`/`longvalue` were declared in the wrong order.
+
 ## [26.39.0] - 2026-09-24
 
 ### Added

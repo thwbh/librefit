@@ -13,6 +13,11 @@
 		mode: 'create' | 'edit' | 'delete';
 		enableDelete?: boolean;
 		errorMessage?: string;
+		/**
+		 * Non-blocking informational notice shown above the form — used to flag a
+		 * low-confidence AI estimate (FR-023). Distinct from `errorMessage`.
+		 */
+		notice?: string;
 		onsave?: (event?: Event) => Promise<boolean> | boolean | void;
 		oncancel: () => void;
 		onrequestdelete?: () => void;
@@ -32,6 +37,7 @@
 		mode,
 		enableDelete = false,
 		errorMessage,
+		notice,
 		onsave,
 		oncancel,
 		onrequestdelete,
@@ -133,6 +139,9 @@
 	{#snippet content()}
 		{#if entry}
 			<IntakeMask bind:entry readonly={isDeleteView} />
+		{/if}
+		{#if !isDeleteView && notice}
+			<AlertBox type={AlertType.Warning} variant={AlertVariant.Box}>{notice}</AlertBox>
 		{/if}
 		{#if !isDeleteView && (errorMessage || validity.showError)}
 			<AlertBox type={AlertType.Error} variant={AlertVariant.Box}>
