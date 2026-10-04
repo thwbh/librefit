@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{ipc::Channel, State};
 
 use crate::db::connection::DbPool;
+use crate::service::app_config::AppConfigEntry;
 use crate::service::intake::{FoodCategory, Intake, IntakeTarget};
 use crate::service::weight::{WeightTarget, WeightTracker};
 
@@ -10,10 +11,12 @@ use super::{
 };
 
 /// Current version of the JSON export document schema. Bump when the shape changes.
-const SCHEMA_VERSION: u32 = 1;
+const SCHEMA_VERSION: u32 = 2;
 
 /// Self-describing backup document: one array per exported table plus a schema version.
 /// `foodCategory` is included for reference; it is seed data and is not restored on import.
+/// `appConfig` carries non-secret application settings; the AI-intake API key lives only in
+/// the OS keystore and is therefore never part of a backup (EX-010).
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportDocument {
@@ -23,6 +26,7 @@ pub struct ExportDocument {
     pub intake_target: Vec<IntakeTarget>,
     pub weight_target: Vec<WeightTarget>,
     pub food_category: Vec<FoodCategory>,
+    pub app_config: Vec<AppConfigEntry>,
 }
 
 /// Export all user data as a single JSON document.
@@ -130,6 +134,18 @@ pub async fn export_json(
     let food_category = FoodCategory::all(&mut conn)
         .map_err(|e| format!("Failed to load food categories: {}", e))?;
 
+    send_progress(
+        &on_progress,
+        ExportStage::AnalyzingDatabase,
+        75.0,
+        "Reading application settings...",
+        None,
+        None,
+    );
+
+    let app_config = AppConfigEntry::all(&mut conn)
+        .map_err(|e| format!("Failed to load application settings: {}", e))?;
+
     if cancellation.is_cancelled() {
         log::debug!(">>> JSON export cancelled by user");
         return Err("Export cancelled by user".to_string());
@@ -152,6 +168,7 @@ pub async fn export_json(
         intake_target,
         weight_target,
         food_category,
+        app_config,
     };
 
     let bytes = serde_json::to_vec_pretty(&document)

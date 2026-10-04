@@ -21,9 +21,6 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.0.5", features = [] }
-# build.rs regenerates the TS bindings on `cargo check`/build (dev loop). The
-# `typegen` workspace crate runs the same generation for beforeBuildCommand,
-# isolated from the app's system deps (glib/webkit) so it builds on lean runners.
 tauri-typegen = { workspace = true }
 
 [dependencies]
@@ -44,11 +41,34 @@ tauri-plugin-fs = "2.5.1"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-haptics = "2.3.2"
 url = "2.5"
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "json", "rustls"] }
+# Bundled Mozilla roots for the provider HTTPS call to avoid Android plumping
+rustls = "0.23"
+webpki-roots = "0.26"
+base64 = "0.22"
+little_exif = "0.6.23"
+keyring-core = "1"
 
 # satisfy linker for sqlite3 required by diesel
 [dependencies.libsqlite3-sys]
 version = "0.38.1"
 features = [ "bundled" ]
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+apple-native-keyring-store = { version = "1", features = ["keychain"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-native-keyring-store = "1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus-secret-service-keyring-store = "1"
+# The underlying secret-service crate requires a crypto backend to be selected.
+secret-service = { version = "5.2", features = ["crypto-rust"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android-native-keyring-store = "1"
+jni = "0.21"
+ndk-context = "0.1"
 
 [profile.dev]
 incremental = true

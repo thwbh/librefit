@@ -15,6 +15,10 @@ use crate::service::wizard::{
 // Individual model commands
 use crate::service::body::{get_body_data, update_body_data};
 use crate::service::export::{cancel_export, export_database_file, ExportCancellation};
+use crate::service::food_recognition::{
+    analyze_meal_photo, clear_ai_intake_api_key, get_ai_intake_config, grant_ai_intake_consent,
+    set_ai_intake_api_key, test_ai_intake_connection, update_ai_intake_config,
+};
 use crate::service::import::{cancel_import, import_data_file, ImportCancellation};
 use crate::service::intake::{
     create_intake, create_intake_target, delete_intake, get_food_categories,
@@ -47,6 +51,7 @@ use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 pub mod db;
 pub mod i18n;
+pub mod secret;
 pub mod service;
 pub mod test_support;
 pub mod util;
@@ -136,7 +141,14 @@ pub fn run() {
             delete_workout_template,
             clone_workout_template,
             swap_template_exercise,
-            start_workout_from_template
+            start_workout_from_template,
+            get_ai_intake_config,
+            update_ai_intake_config,
+            set_ai_intake_api_key,
+            clear_ai_intake_api_key,
+            grant_ai_intake_consent,
+            analyze_meal_photo,
+            test_ai_intake_connection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -220,5 +232,50 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(ExportCancellation::new());
     app.manage(ImportCancellation::new());
 
+    // Secret storage for the AI-intake API key: the OS credential store via
+    // keyring-core (macOS Keychain, Windows Credential Manager, Linux Secret
+    // Service, Android Keystore). The key never touches SQLite or an export. The
+    // platform default store is registered lazily on first use (on Android it must
+    // wait until MainActivity.onCreate has initialized ndk-context).
+    app.manage(crate::secret::ManagedSecretStore(Box::new(
+        crate::secret::KeyringSecretStore::new(crate::secret::KEYRING_SERVICE),
+    )));
+
     Ok(())
+}
+
+/// Initialize `ndk-context` with the Android application context so the keyring
+/// Android Keystore backend can resolve it (add-food-recognition, FR / task 1.3).
+///
+/// Tauri does not initialize `ndk-context`, so `MainActivity.onCreate` calls this
+/// JNI function (`external fun initNdkContext(context)`) once the native library is
+/// loaded. Idempotent. (TLS needs no init — the provider call uses bundled webpki
+/// roots, see `food_recognition::adapter::tls_config`.)
+#[cfg(target_os = "android")]
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "system" fn Java_io_tohowabohu_librefit_MainActivity_initNdkContext(
+    env: jni::JNIEnv,
+    _this: jni::objects::JObject,
+    context: jni::objects::JObject,
+) {
+    use jni::objects::GlobalRef;
+    use std::ffi::c_void;
+    use std::sync::OnceLock;
+
+    // Keep the context global ref alive for the process; `ndk-context` holds a raw
+    // pointer to it.
+    static NDK_CTX: OnceLock<GlobalRef> = OnceLock::new();
+    if NDK_CTX.get().is_some() {
+        return;
+    }
+    if let (Ok(ctx_ref), Ok(vm)) = (env.new_global_ref(&context), env.get_java_vm()) {
+        let vm_ptr = vm.get_java_vm_pointer() as *mut c_void;
+        let ctx_ptr = ctx_ref.as_obj().as_raw() as *mut c_void;
+        unsafe { ndk_context::initialize_android_context(vm_ptr, ctx_ptr) };
+        let _ = NDK_CTX.set(ctx_ref);
+        log::debug!("ndk-context initialized for keyring Android Keystore");
+    } else {
+        log::error!("failed to init ndk-context for keyring");
+    }
 }
