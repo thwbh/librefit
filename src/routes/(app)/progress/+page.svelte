@@ -15,7 +15,7 @@
 	import WorkoutSummaryCard from '$lib/component/workout/WorkoutSummaryCard.svelte';
 	import WorkoutHistoryModal from '$lib/component/workout/WorkoutHistoryModal.svelte';
 	import MuscleMap from '$lib/component/workout/MuscleMap.svelte';
-	import { browser } from '$app/environment';
+	import { browser } from '$app/env';
 
 	let { data } = $props();
 
