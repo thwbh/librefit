@@ -38,4 +38,4 @@
 
 - [x] 7.1 Run `npm run lint:traceability` and confirm every new/changed FR scenario (FR-011/013, FR-020..038 touched, FR-028..039) is cited by a test.
 - [x] 7.2 Run the Vitest + Rust suites; fix regressions.
-- [ ] 7.3 Manually verify on an Android device: camera opens directly, loading shows in-modal, badge renders, and a non-food photo yields an actionable "Add manually" snackbar.
+- [x] 7.3 Manually verify on an Android device: camera opens directly, loading shows in-modal, badge renders, and a non-food photo yields an actionable "Add manually" snackbar.

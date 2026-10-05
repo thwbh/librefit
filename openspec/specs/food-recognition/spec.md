@@ -77,7 +77,7 @@ The API key SHALL be stored only in the OS keystore and SHALL never be written t
 
 ### Requirement: Capture availability and degradation
 
-The capture entry point SHALL be available only when the feature is enabled and configured. It SHALL be hidden or disabled when the feature is off, unconfigured, or the device is offline. Manual entry SHALL remain available in all cases.
+The capture entry point SHALL be available only when the feature is enabled and configured. It SHALL be hidden or disabled when the feature is off, unconfigured, or the device is offline. When triggered, the capture entry point SHALL open the device camera directly through the native capture path rather than relying on the WebView file-chooser capture hint; no in-app camera/gallery chooser is shown. Where the camera is unavailable, capture SHALL fall back to the file picker. Manual entry SHALL remain available in all cases.
 
 #### Scenario: [FR-011] Capture hidden when feature off
 
@@ -93,6 +93,22 @@ The capture entry point SHALL be available only when the feature is enabled and 
 
 - **WHEN** the device is offline
 - **THEN** the capture button is disabled and manual entry remains available
+
+#### Scenario: [FR-031] Capture opens the device camera directly
+
+- **WHEN** the user triggers capture while the feature is available and consent is granted
+- **THEN** the device camera is opened directly through the native capture path
+- **AND** no in-app camera/gallery chooser is shown
+
+#### Scenario: [FR-032] Captured image is analyzed and not persisted
+
+- **WHEN** the camera returns a photo
+- **THEN** the captured image bytes are passed to analysis without being persisted to disk
+
+#### Scenario: [FR-033] Camera unavailable falls back to the file picker
+
+- **WHEN** the device camera is unavailable (e.g. desktop)
+- **THEN** capture falls back to the file picker and the selected image bytes are passed to analysis
 
 ### Requirement: One-time consent before first upload
 
@@ -135,7 +151,7 @@ The analysis call SHALL request a structured response conforming to a fixed sche
 
 ### Requirement: Deterministic mapping to a single intake candidate
 
-The system SHALL map an analysis result into exactly one `NewIntake` candidate: multiple detected items SHALL be collapsed into a single entry whose description concatenates the item names and whose amount sums the per-item calorie estimates. The category SHALL be resolved locally against `food_category`. A low-confidence result SHALL be flagged to the user. The candidate amount SHALL pass through the existing `create_intake` 1–10,000 kcal validation unchanged.
+The system SHALL map an analysis result into exactly one `NewIntake` candidate: multiple detected items SHALL be collapsed into a single entry whose description concatenates the item names and whose amount sums the per-item calorie estimates. The category SHALL be resolved locally against `food_category`. The candidate SHALL carry a confidence level derived from the analysis confidence, and a low-confidence result SHALL additionally be flagged to the user. The candidate amount SHALL pass through the existing `create_intake` 1–10,000 kcal validation unchanged.
 
 #### Scenario: [FR-020] Single item maps to one candidate
 
@@ -162,9 +178,21 @@ The system SHALL map an analysis result into exactly one `NewIntake` candidate: 
 - **WHEN** the summed amount exceeds 10,000 kcal and the user attempts to save
 - **THEN** the existing `create_intake` validation rejects it
 
+#### Scenario: [FR-034] Candidate carries a confidence level
+
+- **WHEN** a candidate is produced from an analysis result
+- **THEN** the candidate includes the numeric analysis confidence
+- **AND** a confidence level of low, medium, or high is derivable from it
+
+#### Scenario: [FR-035] Confidence level agrees with the low-confidence flag
+
+- **WHEN** the analysis confidence is below the low-confidence threshold
+- **THEN** the derived confidence level is low
+- **AND** the low-confidence warning is shown
+
 ### Requirement: Confirm-first save
 
-A produced candidate SHALL pre-fill the existing intake mask for review. The system SHALL NOT auto-save. The user SHALL be able to edit any field and save via the existing `create_intake` path, or cancel to discard the candidate.
+A produced candidate SHALL pre-fill the existing intake mask for review. While analysis is in flight the intake mask SHALL show a loading state and SHALL NOT allow saving. The confidence level SHALL be surfaced in the pre-filled mask. The system SHALL NOT auto-save. The user SHALL be able to edit any field and save via the existing `create_intake` path, or cancel to discard the candidate.
 
 #### Scenario: [FR-025] Candidate pre-fills the mask
 
@@ -181,21 +209,41 @@ A produced candidate SHALL pre-fill the existing intake mask for review. The sys
 - **WHEN** the user cancels the pre-filled mask
 - **THEN** no entry is created
 
+#### Scenario: [FR-036] Loading state shown while analysis is in flight
+
+- **WHEN** analysis starts
+- **THEN** the intake mask opens immediately in a loading state with saving disabled
+
+#### Scenario: [FR-037] Confidence badge shown on the candidate
+
+- **WHEN** the mask is pre-filled with a candidate
+- **THEN** a low/medium/high confidence badge is shown reflecting the candidate's confidence level
+
+#### Scenario: [FR-038] Cancel during loading aborts cleanly
+
+- **WHEN** the user cancels while analysis is still in flight
+- **THEN** no entry is created and a late analysis result does not reopen or pre-fill the mask
+
 ### Requirement: Distinct failure feedback
 
-Analysis failures SHALL be surfaced as distinct, user-facing errors per `_conv-user-errors` — at minimum bad key, quota exceeded, and timeout/network — each nudging the user toward manual entry.
+Analysis failures SHALL be surfaced as distinct, user-facing errors per `_conv-user-errors` — at minimum bad key, quota exceeded, and timeout/network — each offering a one-tap action that opens manual entry.
 
 #### Scenario: [FR-028] Bad-key failure
 
 - **WHEN** an analysis call returns an authentication error
-- **THEN** a bad-key error is shown that nudges the user to manual entry
+- **THEN** a bad-key error is shown with a one-tap "Add manually" action that opens the manual intake mask
 
 #### Scenario: [FR-029] Quota failure
 
 - **WHEN** an analysis call returns a quota/rate-limit error
-- **THEN** a quota error is shown that nudges the user to manual entry
+- **THEN** a quota error is shown with a one-tap "Add manually" action that opens the manual intake mask
 
 #### Scenario: [FR-030] Timeout failure
 
 - **WHEN** an analysis call does not complete before timeout
-- **THEN** a timeout error is shown that nudges the user to manual entry
+- **THEN** a timeout error is shown with a one-tap "Add manually" action that opens the manual intake mask
+
+#### Scenario: [FR-039] Add-manually action opens a blank mask
+
+- **WHEN** the user taps the "Add manually" action on a failure snackbar
+- **THEN** the normal blank intake mask opens for manual entry
