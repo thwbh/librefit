@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import TestWrapper from '../../../tests/utils/TestWrapper.svelte';
 
 // Capture the callback the dashboard registers with veilchen's useRefresh so we
@@ -22,6 +23,22 @@ vi.mock('$app/navigation', () => ({
 
 vi.mock('@tauri-apps/plugin-log', () => ({ debug: vi.fn() }));
 
+// A manually-resolvable analyze call so a test can interleave a cancel between
+// "analysis started" and "result arrives" (FR-038).
+const analyzeControl = vi.hoisted(() => {
+	let resolve!: (value: unknown) => void;
+	const analyzeMealPhoto = vi.fn(
+		() =>
+			new Promise((r) => {
+				resolve = r;
+			})
+	);
+	return {
+		analyzeMealPhoto,
+		resolveWith: (value: unknown) => resolve(value)
+	};
+});
+
 vi.mock('$lib/api', () => ({
 	createIntake: vi.fn(),
 	createWeightTrackerEntry: vi.fn(),
@@ -35,6 +52,16 @@ vi.mock('$lib/api', () => ({
 	getBodyData: vi.fn(() => Promise.resolve({ sex: 'MALE' })),
 	getExerciseLibrary: vi.fn(() => Promise.resolve([])),
 	listWorkouts: vi.fn(() => Promise.resolve([])),
+	unverifiedExerciseSummary: vi.fn(() => Promise.resolve({ count: 0 })),
+	// AI meal-photo intake: status load on mount + the capture/analysis boundary.
+	getAiIntakeConfig: vi.fn(() =>
+		Promise.resolve({
+			config: { enabled: true, consentGranted: true, baseUrl: 'https://api.mistral.ai/v1' },
+			configured: true
+		})
+	),
+	analyzeMealPhoto: analyzeControl.analyzeMealPhoto,
+	grantAiIntakeConsent: vi.fn(() => Promise.resolve()),
 	// Imported by the flat-CRUD editor; not called in the open→edit→Done flow.
 	addWorkoutSet: vi.fn(),
 	createWorkoutForDate: vi.fn(),
@@ -44,6 +71,15 @@ vi.mock('$lib/api', () => ({
 
 vi.mock('$lib/avatar', () => ({
 	getAvatarFromUser: () => 'data:image/svg+xml;avatar=test'
+}));
+
+// Keep the real helpers (confidenceLevel/aiErrorMessage) but stub the byte reader
+// (jsdom has no File.arrayBuffer) and the native camera invoke, which resolves with
+// image bytes so tapping the capture button proceeds straight to analysis.
+vi.mock('$lib/food-recognition', async (orig) => ({
+	...(await orig<typeof import('$lib/food-recognition')>()),
+	fileToBytes: vi.fn(async () => [1, 2, 3]),
+	capturePhotoFromCamera: vi.fn(async () => ({ image: [1, 2, 3], mime: 'image/jpeg' }))
 }));
 
 import DashboardPage from './+page.svelte';
@@ -95,6 +131,25 @@ function renderDashboard() {
 	});
 }
 
+function renderDashboardWithAi() {
+	return render(TestWrapper, {
+		props: {
+			component: DashboardPage,
+			props: {
+				data: {
+					dashboardData: makeDashboardData(),
+					aiStatus: {
+						config: { enabled: true, consentGranted: true, baseUrl: 'https://api.mistral.ai/v1' },
+						configured: true
+					}
+				}
+			},
+			categories: mockCategories,
+			user: { id: 1, name: 'Alice', avatar: 'alice' }
+		}
+	});
+}
+
 describe('dashboard page', () => {
 	beforeEach(() => {
 		refreshCallbacks.length = 0;
@@ -115,5 +170,42 @@ describe('dashboard page', () => {
 		// data by invalidating the load's `depends('data:dashboardData')` key.
 		//		refreshCallbacks[0]();
 		//		expect(invalidate).toHaveBeenCalledWith('data:dashboardData');
+	});
+
+	it('[FR-036] analysis opens the create modal in a loading state before the candidate arrives', async () => {
+		const { container } = renderDashboardWithAi();
+
+		// Tapping opens the camera directly; the mocked camera resolves and analysis
+		// (deferred) begins, so the modal shows its loading state.
+		await fireEvent.click(screen.getByLabelText(/estimate calories from a photo/i));
+		await tick();
+		await tick();
+
+		expect(container.querySelector('[data-testid="intake-loading"]')).not.toBeNull();
+	});
+
+	it('[FR-038] cancelling during loading aborts cleanly — a late result does not pre-fill the mask', async () => {
+		const { container } = renderDashboardWithAi();
+
+		await fireEvent.click(screen.getByLabelText(/estimate calories from a photo/i));
+		await tick();
+		await tick();
+
+		// User cancels while analysis is still in flight.
+		await fireEvent.click(screen.getByRole('button', { name: /^Cancel$/ }));
+		await tick();
+
+		// The analysis result arrives late.
+		analyzeControl.resolveWith({
+			intake: { added: '2026-01-01', amount: 999, category: 'l', description: 'LatePizza' },
+			lowConfidence: false,
+			confidence: 0.9
+		});
+		await tick();
+		await tick();
+
+		// It must not re-open or pre-fill the mask.
+		expect(screen.queryByText('LatePizza')).toBeNull();
+		expect(container.querySelector('[data-testid="intake-loading"]')).toBeNull();
 	});
 });

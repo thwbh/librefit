@@ -2,7 +2,7 @@
 
 ### Requirement: Capture availability and degradation
 
-The capture entry point SHALL be available only when the feature is enabled and configured. It SHALL be hidden or disabled when the feature is off, unconfigured, or the device is offline. When triggered, the capture entry point SHALL offer an explicit choice between taking a photo and choosing from the gallery; taking a photo SHALL open the device camera directly rather than relying on the WebView file-chooser capture hint. Manual entry SHALL remain available in all cases.
+The capture entry point SHALL be available only when the feature is enabled and configured. It SHALL be hidden or disabled when the feature is off, unconfigured, or the device is offline. When triggered, the capture entry point SHALL open the device camera directly through the native capture path rather than relying on the WebView file-chooser capture hint; no in-app camera/gallery chooser is shown. Where the camera is unavailable, capture SHALL fall back to the file picker. Manual entry SHALL remain available in all cases.
 
 #### Scenario: [FR-011] Capture hidden when feature off
 
@@ -19,21 +19,21 @@ The capture entry point SHALL be available only when the feature is enabled and 
 - **WHEN** the device is offline
 - **THEN** the capture button is disabled and manual entry remains available
 
-#### Scenario: [FR-031] Capture offers camera and gallery choices
+#### Scenario: [FR-031] Capture opens the device camera directly
 
 - **WHEN** the user triggers capture while the feature is available and consent is granted
-- **THEN** a choice between "Take photo" and "Choose from gallery" is presented
-
-#### Scenario: [FR-032] Take photo opens the device camera
-
-- **WHEN** the user chooses "Take photo"
 - **THEN** the device camera is opened directly through the native capture path
-- **AND** the captured image bytes are passed to analysis without being persisted to disk
+- **AND** no in-app camera/gallery chooser is shown
 
-#### Scenario: [FR-033] Choose from gallery opens the picker
+#### Scenario: [FR-032] Captured image is analyzed and not persisted
 
-- **WHEN** the user chooses "Choose from gallery"
-- **THEN** the gallery/file picker is opened and the selected image bytes are passed to analysis
+- **WHEN** the camera returns a photo
+- **THEN** the captured image bytes are passed to analysis without being persisted to disk
+
+#### Scenario: [FR-033] Camera unavailable falls back to the file picker
+
+- **WHEN** the device camera is unavailable (e.g. desktop)
+- **THEN** capture falls back to the file picker and the selected image bytes are passed to analysis
 
 ### Requirement: Deterministic mapping to a single intake candidate
 

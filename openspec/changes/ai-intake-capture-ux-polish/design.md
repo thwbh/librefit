@@ -30,13 +30,18 @@ Constraints: `_conv-user-errors` (error/snackbar handling), `_conv-modals` (dial
 
 ## Decisions
 
-### D1 — Native camera command instead of the `capture` attribute
+### D1 — Use `tauri-plugin-camera` instead of the `capture` attribute
 
-The `capture="environment"` attribute is dropped by wry's Android `onShowFileChooser`, and that class lives in the gitignored, Tauri-regenerated `gen/android/.../generated/` tree — patching it would not survive CI. Instead add a backend command (e.g. `capture_meal_photo`) that launches the OS camera via an Android `ActivityResult` + `FileProvider` and returns the captured image bytes to the webview, mirroring the existing analyze boundary (no key or endpoint crosses). The native glue lives in the **committed** `gen/android` skeleton (`MainActivity.kt`, `AndroidManifest.xml`), which the branch's config-driven signing work keeps out of CI regeneration.
+The `capture="environment"` attribute is dropped by wry's Android `onShowFileChooser`, and that class lives in the gitignored, Tauri-regenerated `gen/android/.../generated/` tree — patching it would not survive CI. Rather than hand-roll a native camera command (Kotlin `@TauriPlugin` + `ActivityResult` + `FileProvider` + permission flow — a large, device-only surface), use the existing **`tauri-plugin-camera`** crate (`^0.1.4`, requires tauri `^2.3.1`; project is on 2.11.2). It ships its own `CameraActivity`, `FileProvider`, and merged `AndroidManifest` (CAMERA permission), and exposes `takePicture()` which opens the OS camera and returns `{ imageData: base64, width, height }` **to the webview**.
 
-The FAB tap presents two actions: **Take photo** → `capture_meal_photo` → bytes; **Choose from gallery** → the existing hidden `<input type="file">` path (kept, since gallery selection still works and desktop has no camera intent). On desktop the camera action falls back to the file input.
+Crucially, this needs **no new backend command**: the webview decodes the base64 to bytes and feeds them to the existing `analyze_meal_photo`, so the FR-008 boundary is unchanged (key and endpoint stay in the backend) and EXIF is still stripped backend-side before upload (FR-009).
 
-- _Alternative considered:_ overriding `RustWebChromeClient.onShowFileChooser` from `MainActivity`. Rejected — fragile against regeneration and overriding Tauri's own client risks breaking unrelated uploads (e.g. avatar picker).
+The FAB tap opens the camera directly — `takePicture()` → decode → `analyze_meal_photo`. There is **no in-app camera/gallery chooser**: the OS camera owns the capture UI, so an extra prompt would be redundant. If `takePicture()` rejects (desktop / plugin unavailable) the tap falls back silently to the hidden `<input type="file">`, so capture degrades gracefully rather than dead-ending and AI intake still works off-device.
+
+Plugin wiring: `.plugin(tauri_plugin_camera::init())` in `lib.rs`, the npm package `tauri-plugin-camera` for the JS binding, and a `camera:default` entry in `capabilities/default.json`.
+
+- _Alternative considered — hand-rolled native command:_ rejected — large device-only surface, unverifiable in CI, duplicates what the plugin already provides.
+- _Alternative considered — overriding `RustWebChromeClient.onShowFileChooser` from `MainActivity`:_ rejected — fragile against regeneration and overriding Tauri's own client risks breaking unrelated uploads (e.g. avatar picker).
 
 ### D2 — Expose numeric confidence; bucket to a badge on the frontend
 
@@ -56,8 +61,8 @@ Replace the FAB-adjacent `AlertBox` with an action snackbar through the existing
 
 ## Risks / Trade-offs
 
-- **Native camera adds Android surface (permissions, FileProvider).** → Keep it minimal and in the committed `gen/android` skeleton; gallery + manual entry remain working fallbacks if the camera intent is unavailable, so the feature degrades rather than breaks.
-- **Camera command can't run in the Vitest/jsdom environment.** → Mock the `capture_meal_photo` invoke in component tests (same approach already used for `analyze_meal_photo`); the native path itself is not unit-tested (consistent with the dropped-e2e decision).
+- **Third-party plugin (`tauri-plugin-camera`, 0.1.x, community).** → It supplies permissions/FileProvider/CameraActivity itself; gallery + manual entry remain working fallbacks if `takePicture()` is unavailable or rejects, so the feature degrades rather than breaks. Needs on-device verification on the target Android before archive (task 7.3).
+- **`takePicture()` can't run in the Vitest/jsdom environment.** → Mock the `tauri-plugin-camera` module in component tests (same approach already used for the `$lib/api` invokes); the native path itself is not unit-tested (consistent with the dropped-e2e decision).
 - **Badge and warning could disagree.** → Derive both from the same backend thresholds; `low_confidence` remains authoritative for the warning.
 - **Opening the modal before the candidate exists** means a transient modal with no entry. → Guard the mask render on `loading || entry`, and ensure cancel during loading aborts cleanly (ignore a late `onresult` after cancel).
 - **Snackbar vs. modal stacking.** → Close the loading modal before showing the failure snackbar (established ordering from `ExerciseQuickFix`).

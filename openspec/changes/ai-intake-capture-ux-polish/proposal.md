@@ -4,7 +4,7 @@ The AI meal-photo intake pipeline (`food-recognition`, shipped in 26.40.0) works
 
 ## What Changes
 
-- **Camera-first capture.** Tapping the capture FAB offers an explicit "Take photo" (opens the OS camera directly) and "Choose from gallery" choice. "Take photo" goes through a new native backend command instead of the `<input capture="environment">` hint, which the Android WebView file chooser silently ignores. Gallery capture keeps the existing file-input path. Manual entry stays available throughout.
+- **Camera-first capture.** Tapping the capture FAB opens the OS camera directly via `tauri-plugin-camera`, instead of the `<input capture="environment">` hint that the Android WebView file chooser silently ignores. There is no in-app camera/gallery chooser — the OS camera owns the capture UI; where the camera is unavailable (e.g. desktop) it falls back to the file picker. Manual entry stays available throughout.
 - **In-modal loading state.** The intake modal opens immediately when analysis starts and shows a loading state inside it, rather than spinning the capture button. It transitions in place to the pre-filled form on success, or hands off to the failure-recovery path on error.
 - **Confidence badge.** The backend already flags low confidence (FR-023) but only emits a boolean. The numeric confidence is exposed on the candidate and rendered as a low/medium/high badge in the intake modal header, so every estimate carries a visible trust signal — not just the low-confidence warning.
 - **Failure-recovery snackbar.** When analysis fails or returns nothing usable, a snackbar explains the failure and offers a one-tap "Add manually" action that opens the normal intake modal, replacing today's passive `AlertBox` that mentions manual entry without a way to act on it.
@@ -29,6 +29,6 @@ The AI meal-photo intake pipeline (`food-recognition`, shipped in 26.40.0) works
 ## Impact
 
 - **Frontend:** `IntakeCaptureButton.svelte` (camera/gallery choice, invoke native capture, open modal before analysis), `IntakeModal.svelte` / `IntakeMask.svelte` (loading state + confidence badge), `src/routes/(app)/+page.svelte` (capture → loading → result/failure wiring), `$lib/food-recognition` (confidence bucketing helper), `$lib/snackbar` (action snackbar for failure recovery). New/updated colocated Vitest tests.
-- **Backend:** `IntakeCandidate` (`service/food_recognition/mapping.rs`) gains a `confidence` field; a new Tauri command captures a photo from the device camera and returns image bytes to the webview (mirroring the existing analyze boundary — no key or endpoint crosses). Regenerated `$lib/api/gen` bindings.
-- **Android native:** `MainActivity.kt` / `AndroidManifest.xml` gain `CAMERA` permission and a `FileProvider` for the camera `ActivityResult`. Lives in committed `gen/android` so it survives CI regeneration.
+- **Backend:** `IntakeCandidate` (`service/food_recognition/mapping.rs`) gains a `confidence` field; `tauri-plugin-camera` is added and initialized in `lib.rs`. No new analyze command — camera bytes feed the existing `analyze_meal_photo` from the webview, preserving the FR-008 boundary. Regenerated `$lib/api/gen` bindings.
+- **Android native:** provided by `tauri-plugin-camera` (its own `CameraActivity`, `FileProvider`, and `CAMERA` permission merged into the manifest); a `camera:default` entry is added to `capabilities/default.json`.
 - **Spec:** `openspec/specs/food-recognition/spec.md` delta for the amended requirements and new scenarios.

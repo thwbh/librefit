@@ -58,7 +58,7 @@ pub mod util;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(
             tauri_plugin_log::Builder::default()
@@ -78,7 +78,16 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_haptics::init())
-        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_dialog::init());
+
+    // Camera plugin is mobile-only — it opens the OS camera for AI meal-photo
+    // capture (FR) and returns base64 to the webview, which feeds the existing
+    // analyze_meal_photo. The crate only compiles on mobile; desktop falls back
+    // to the file picker in IntakeCaptureButton.
+    #[cfg(mobile)]
+    let builder = builder.plugin(tauri_plugin_camera::init());
+
+    builder
         .setup(setup_db)
         .invoke_handler(tauri::generate_handler![
             daily_dashboard,

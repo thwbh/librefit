@@ -200,6 +200,34 @@ fn low_confidence_result_flagged() {
 }
 
 #[test]
+fn candidate_carries_numeric_confidence() {
+    scenario!("[FR-034]");
+    let pool = setup_test_pool();
+    let mut conn = pool.get().unwrap();
+
+    // The raw analysis confidence is surfaced on the candidate so the UI can
+    // derive a low/medium/high badge (the bucketing itself is a frontend helper).
+    let high = to_candidate(&mut conn, &parse_analysis(VALID_SINGLE).unwrap()).unwrap();
+    assert_eq!(high.confidence, 0.9);
+
+    let low = to_candidate(&mut conn, &parse_analysis(LOW_CONF).unwrap()).unwrap();
+    assert_eq!(low.confidence, 0.2);
+}
+
+#[test]
+fn confidence_below_threshold_also_flags_low() {
+    scenario!("[FR-035]");
+    let pool = setup_test_pool();
+    let mut conn = pool.get().unwrap();
+
+    // A sub-threshold confidence both carries the raw value and sets the
+    // authoritative low-confidence warning flag, so badge and warning agree.
+    let low = to_candidate(&mut conn, &parse_analysis(LOW_CONF).unwrap()).unwrap();
+    assert!(low.confidence < 0.5);
+    assert!(low.low_confidence);
+}
+
+#[test]
 fn out_of_range_sum_rejected_on_save() {
     scenario!("[FR-024]");
     let pool = setup_test_pool();
