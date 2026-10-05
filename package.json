@@ -47,7 +47,7 @@
 		"@thwbh/veilchen": "^0.3.4",
 		"@tsconfig/svelte": "^5.0.4",
 		"@types/date-fns": "^2.6.0",
-		"@types/node": "^26.6.3",
+		"@types/node": "^26.6.4",
 		"@vitest/coverage-v8": "^5.0.3",
 		"autoprefixer": "^10.6.1",
 		"chart.js": "^4.4.2",
