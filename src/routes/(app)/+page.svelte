@@ -20,6 +20,7 @@
 		type Dashboard,
 		type ExerciseDetail,
 		type Intake,
+		type IntakeCandidate,
 		type IntakeTarget,
 		type NewIntake,
 		type NewWeightTracker,
@@ -34,6 +35,7 @@
 	import { invalidate } from '$app/navigation';
 	import { CaretDown, Lightning, TrendDown, TrendUp } from 'phosphor-svelte';
 	import { useEntryModal } from '$lib/composition/useEntryModal.svelte';
+	import { actionSnackbar } from '$lib/snackbar';
 	import {
 		convertDateStrToDisplayDateStr,
 		getDateAsStr,
@@ -319,6 +321,8 @@
 	let aiBaseUrl = $state<string | undefined>(data.aiStatus?.config.baseUrl ?? undefined);
 	let online = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
 	let aiNotice = $state<string | undefined>();
+	let aiLoading = $state(false);
+	let aiConfidence = $state<number | undefined>();
 
 	const aiAvailable = $derived(aiEnabled && aiConfigured && online);
 
@@ -334,17 +338,51 @@
 		}
 	}
 
+	// Capture → loading → result/failure (FR-036/025/028..030). The modal opens in a
+	// loading state the moment analysis starts; the candidate fills it in place, or a
+	// failure hands off to an actionable snackbar.
+	function onCaptureStart() {
+		aiNotice = undefined;
+		aiConfidence = undefined;
+		aiLoading = true;
+		modal.openCreateLoading();
+	}
+
 	// A captured candidate pre-fills the create modal; nothing is saved until the
-	// user confirms via the normal save path (FR-025/026, IT-034).
-	function onCaptureResult(entry: NewIntake, lowConfidence: boolean) {
-		aiNotice = lowConfidence
+	// user confirms via the normal save path (FR-025/026, IT-034). A late result
+	// after the user cancelled during loading is ignored (FR-038).
+	function onCaptureResult(candidate: IntakeCandidate) {
+		if (!aiLoading) return;
+		aiLoading = false;
+		aiNotice = candidate.lowConfidence
 			? 'Low confidence — please double-check this estimate before saving.'
 			: undefined;
-		modal.openCreateWith(entry);
+		aiConfidence = candidate.confidence;
+		modal.fillCreate(candidate.intake);
+	}
+
+	// Failure recovery (FR-028..030/FR-039): close the loading modal, then surface a
+	// snackbar with a one-tap path into manual entry.
+	function onCaptureError(message: string) {
+		if (!aiLoading) return;
+		aiLoading = false;
+		modal.cancel();
+		actionSnackbar(message, 'Add manually', openManualCreate);
+	}
+
+	// Cancelling while analysis is still in flight aborts the capture cleanly so a
+	// late result can't reopen the mask (FR-038).
+	function onCaptureModalCancel() {
+		aiLoading = false;
+		aiConfidence = undefined;
+		aiNotice = undefined;
+		modal.cancel();
 	}
 
 	function openManualCreate() {
 		aiNotice = undefined;
+		aiConfidence = undefined;
+		aiLoading = false;
 		modal.openCreate();
 	}
 
@@ -547,7 +585,9 @@
 			available={aiAvailable}
 			consentGranted={aiConsentGranted}
 			endpoint={aiBaseUrl}
+			onstart={onCaptureStart}
 			onresult={onCaptureResult}
+			onerror={onCaptureError}
 			onconsent={() => (aiConsentGranted = true)}
 		/>
 	</div>
@@ -625,10 +665,12 @@
 	bind:dialog={modal.createDialog.value}
 	bind:entry={modal.currentEntry}
 	mode="create"
+	loading={aiLoading}
+	confidence={aiConfidence}
 	errorMessage={modal.errorMessage}
 	notice={aiNotice}
 	onsave={modal.save}
-	oncancel={modal.cancel}
+	oncancel={onCaptureModalCancel}
 />
 
 <!-- Intake update modal -->

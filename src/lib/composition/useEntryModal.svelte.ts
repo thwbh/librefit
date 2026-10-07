@@ -109,6 +109,33 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 	};
 
 	/**
+	 * Open the create modal with no entry yet, for a loading state. Used by AI
+	 * meal-photo capture (FR-036): the modal opens immediately when analysis
+	 * starts; `fillCreate` later supplies the candidate without re-opening the
+	 * (already open) dialog.
+	 */
+	const openCreateLoading = () => {
+		mode = 'create';
+		currentEntry = undefined;
+		enableDelete = false;
+		errorMessage = undefined;
+		createDialog?.showModal();
+	};
+
+	/**
+	 * Supply the candidate into an already-open create modal (see
+	 * `openCreateLoading`). Does not call `showModal` — calling it on an open
+	 * dialog throws — so this only fills the entry for the loading→filled
+	 * transition.
+	 */
+	const fillCreate = (prefill: N) => {
+		mode = 'create';
+		currentEntry = prefill;
+		enableDelete = false;
+		errorMessage = undefined;
+	};
+
+	/**
 	 * Open edit modal with an existing entry
 	 */
 	const openEdit = (entry: T) => {
@@ -350,6 +377,8 @@ export function useEntryModal<T extends { id?: number }, N = T>(
 		// Actions
 		openCreate,
 		openCreateWith,
+		openCreateLoading,
+		fillCreate,
 		openEdit,
 		openDelete,
 		save,

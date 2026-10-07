@@ -1,0 +1,8 @@
+{
+	"$schema": "../gen/schemas/mobile-schema.json",
+	"identifier": "mobile",
+	"description": "mobile-only permissions (camera capture for AI meal-photo intake, FR)",
+	"platforms": ["android", "iOS"],
+	"windows": ["main"],
+	"permissions": ["camera:default"]
+}

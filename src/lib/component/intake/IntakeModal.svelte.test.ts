@@ -320,6 +320,54 @@ describe('IntakeModal', () => {
 		categoryButtons.forEach((b) => expect((b as HTMLButtonElement).disabled).toBe(true));
 	});
 
+	it('[FR-036] loading state shows a spinner and disables Save, with no form', () => {
+		// AI analysis in flight: the create modal opens immediately in a loading
+		// state (no entry yet) and Save is disabled until the candidate arrives.
+		const { container } = renderModal({
+			entry: undefined,
+			mode: 'create',
+			loading: true,
+			onsave: vi.fn(),
+			oncancel: vi.fn()
+		});
+		openDialog(container);
+
+		expect(container.querySelector('[data-testid="intake-loading"]')).not.toBeNull();
+		// The form (category buttons) is not rendered while loading.
+		expect(container.querySelector('button[aria-pressed]')).toBeNull();
+		expect(screen.getByRole('button', { name: /^Save$/ })).toBeDisabled();
+	});
+
+	it('[FR-037] a high-confidence candidate shows a high-confidence badge', () => {
+		const { container } = renderModal({
+			entry: makeNewIntake({ amount: 420, description: 'Pizza' }),
+			mode: 'create',
+			confidence: 0.92,
+			onsave: vi.fn(),
+			oncancel: vi.fn()
+		});
+		openDialog(container);
+
+		const badge = container.querySelector('[data-testid="confidence-badge"]');
+		expect(badge?.textContent).toMatch(/high confidence/i);
+		expect(badge?.classList.contains('badge-success')).toBe(true);
+	});
+
+	it('[FR-037] a low-confidence candidate shows a low-confidence badge', () => {
+		const { container } = renderModal({
+			entry: makeNewIntake({ amount: 420, description: 'Mystery' }),
+			mode: 'create',
+			confidence: 0.2,
+			onsave: vi.fn(),
+			oncancel: vi.fn()
+		});
+		openDialog(container);
+
+		const badge = container.querySelector('[data-testid="confidence-badge"]');
+		expect(badge?.textContent).toMatch(/low confidence/i);
+		expect(badge?.classList.contains('badge-error')).toBe(true);
+	});
+
 	it('create mode does not render the trash/delete affordance', () => {
 		const { container } = renderModal({
 			entry: makeNewIntake(),

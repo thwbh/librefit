@@ -120,3 +120,64 @@ pub fn create_future_test_dates() -> (String, String) {
         end.format("%Y-%m-%d").to_string(),
     )
 }
+
+/// Spin up a one-shot local HTTP server. Accepts a single request, captures the
+/// raw bytes for assertions, and replies with `status` + `json_body`. Returns
+/// the base URL to point the adapter at and the captured request.
+pub fn one_shot_server(
+    status: &str,
+    json_body: &str,
+) -> (String, std::sync::mpsc::Receiver<String>) {
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    let (tx, rx) = std::sync::mpsc::channel::<String>();
+    let status = status.to_string();
+    let json_body = json_body.to_string();
+
+    std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut buf: Vec<u8> = Vec::new();
+        let mut chunk = [0u8; 8192];
+        // Read until the full request (headers + Content-Length body) is in.
+        loop {
+            let n = stream.read(&mut chunk).unwrap();
+            if n == 0 {
+                break;
+            }
+            buf.extend_from_slice(&chunk[..n]);
+            if let Some(pos) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
+                let headers = String::from_utf8_lossy(&buf[..pos]).to_string();
+                let content_length = headers
+                    .lines()
+                    .find_map(|l| {
+                        let lower = l.to_ascii_lowercase();
+                        if lower.starts_with("content-length:") {
+                            l.split(':')
+                                .nth(1)
+                                .and_then(|v| v.trim().parse::<usize>().ok())
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or(0);
+                if buf.len() >= pos + 4 + content_length {
+                    break;
+                }
+            }
+        }
+        tx.send(String::from_utf8_lossy(&buf).into_owned()).unwrap();
+
+        let response = format!(
+            "HTTP/1.1 {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            status,
+            json_body.len(),
+            json_body
+        );
+        stream.write_all(response.as_bytes()).unwrap();
+    });
+
+    (format!("http://{}", addr), rx)
+}
