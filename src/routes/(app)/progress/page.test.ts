@@ -11,7 +11,7 @@ vi.mock('@thwbh/veilchen', async (importOriginal) => {
 	return { ...actual, LineChart };
 });
 
-vi.mock('$app/environment', () => ({ browser: true }));
+vi.mock('$app/env', () => ({ browser: true }));
 
 vi.mock('$lib/api', () => ({
 	getBodyData: vi.fn(() => Promise.resolve({ sex: 'MALE' })),

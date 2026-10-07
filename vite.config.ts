@@ -1,8 +1,11 @@
 /// <reference types="vitest/config" />
+import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { svelteTesting } from '@testing-library/svelte/vite';
+import { sveltePreprocess } from 'svelte-preprocess';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { readFileSync } from 'fs';
 
@@ -12,9 +15,32 @@ const host = process.env.TAURI_DEV_HOST;
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit(), tsconfigPaths()],
+	plugins: [
+		tailwindcss(),
+		// SvelteKit 3 no longer reads `svelte.config.js`; all Svelte/SvelteKit
+		// config is passed through the `sveltekit(...)` plugin instead.
+		sveltekit({
+			preprocess: [vitePreprocess({ script: true }), sveltePreprocess()],
+			adapter: adapter({
+				pages: 'build',
+				assets: 'build',
+				precompress: false,
+				strict: true,
+				fallback: 'index.html'
+			}),
+			paths: {
+				relative: false
+			}
+		}),
+		tsconfigPaths()
+	],
 	define: {
 		__APP_VERSION__: JSON.stringify(pkg.version)
+	},
+	ssr: {
+		// chart.js is a CommonJS package that breaks SSR bundling unless it is
+		// treated as an external (legacy behavior of svelte.config.js `ssr.noExternal`)
+		noExternal: ['chart.js']
 	},
 	build: {
 		target: 'esnext',

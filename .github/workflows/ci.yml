@@ -77,7 +77,11 @@ jobs:
         with:
           name: typescript-bindings
           path: src/lib/api/gen/
-          retention-days: 1
+          # The svelte-test job downloads this artifact. Keep it long enough to
+          # survive re-runs of that job; with the previous 1-day retention, a
+          # re-run >24h after this job completed failed with 'Artifact not
+          # found' before vitest could even start.
+          retention-days: 7
       - name: 'Upload Rust coverage to Codecov'
         uses: codecov/codecov-action@v7
         with:
