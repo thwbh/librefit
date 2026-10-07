@@ -23,19 +23,31 @@ vi.mock('$app/navigation', () => ({
 
 vi.mock('@tauri-apps/plugin-log', () => ({ debug: vi.fn() }));
 
+// The failure-recovery path (FR-039) routes through the snackbar; mock it so the
+// test can grab the one-tap "Add manually" callback and fire it as if the user
+// tapped the snackbar action.
+const actionSnackbar = vi.fn();
+vi.mock('$lib/snackbar', () => ({
+	actionSnackbar: (message: string, actionLabel: string, onAction: () => void) =>
+		actionSnackbar(message, actionLabel, onAction)
+}));
+
 // A manually-resolvable analyze call so a test can interleave a cancel between
 // "analysis started" and "result arrives" (FR-038).
 const analyzeControl = vi.hoisted(() => {
 	let resolve!: (value: unknown) => void;
+	let reject!: (reason?: unknown) => void;
 	const analyzeMealPhoto = vi.fn(
 		() =>
-			new Promise((r) => {
-				resolve = r;
+			new Promise((res, rej) => {
+				resolve = res;
+				reject = rej;
 			})
 	);
 	return {
 		analyzeMealPhoto,
-		resolveWith: (value: unknown) => resolve(value)
+		resolveWith: (value: unknown) => resolve(value),
+		rejectWith: (reason?: unknown) => reject(reason)
 	};
 });
 
@@ -207,5 +219,79 @@ describe('dashboard page', () => {
 		// It must not re-open or pre-fill the mask.
 		expect(screen.queryByText('LatePizza')).toBeNull();
 		expect(container.querySelector('[data-testid="intake-loading"]')).toBeNull();
+	});
+
+	it('[FR-025] [IT-034] a produced candidate pre-fills the mask in place of the loading state', async () => {
+		const { container } = renderDashboardWithAi();
+
+		await fireEvent.click(screen.getByLabelText(/estimate calories from a photo/i));
+		await tick();
+		await tick();
+
+		analyzeControl.resolveWith({
+			intake: { added: '2026-01-01', amount: 420, category: 'l', description: 'Pizza' },
+			lowConfidence: false,
+			confidence: 0.9
+		});
+		await tick();
+		await tick();
+
+		// The loading state made way for the pre-filled candidate: description,
+		// amount and category are editable in the mask, nothing saved yet.
+		expect(container.querySelector('[data-testid="intake-loading"]')).toBeNull();
+		expect(screen.getAllByDisplayValue('Pizza').length).toBeGreaterThan(0);
+		expect(screen.getAllByDisplayValue('420').length).toBeGreaterThan(0);
+		expect(screen.getByText('Add Intake')).toBeInTheDocument();
+	});
+
+	it('[FR-023] [FR-037] a low-confidence candidate shows the warning and a low confidence badge', async () => {
+		const { container } = renderDashboardWithAi();
+
+		await fireEvent.click(screen.getByLabelText(/estimate calories from a photo/i));
+		await tick();
+		await tick();
+
+		analyzeControl.resolveWith({
+			intake: { added: '2026-01-01', amount: 420, category: 'l', description: 'Pizza' },
+			lowConfidence: true,
+			confidence: 0.3
+		});
+		await tick();
+		await tick();
+
+		// The non-blocking notice warns above the form (FR-023)...
+		expect(screen.getByText(/low confidence — please double-check/i)).toBeInTheDocument();
+		// ...and the badge colour-tracks the same bucket (FR-037).
+		const badge = container.querySelector('[data-testid="confidence-badge"]');
+		expect(badge).not.toBeNull();
+		expect(badge?.textContent).toBe('Low confidence');
+		expect(badge?.className).toContain('badge-error');
+	});
+
+	it('[FR-039] [FR-028] a failed analysis offers a one-tap path into the blank mask', async () => {
+		const { container } = renderDashboardWithAi();
+
+		await fireEvent.click(screen.getByLabelText(/estimate calories from a photo/i));
+		await tick();
+		await tick();
+
+		// The analysis fails with a typed error class (FR-028)...
+		analyzeControl.rejectWith({ code: 'bad_key', message: 'unauthorized' });
+		await tick();
+		await tick();
+
+		// ...the loading modal closes and the failure becomes an actionable
+		// snackbar (FR-039) carrying the mapped message.
+		expect(container.querySelector('[data-testid="intake-loading"]')).toBeNull();
+		expect(actionSnackbar).toHaveBeenCalledTimes(1);
+		const [message, actionLabel, onAction] = actionSnackbar.mock.calls[0];
+		expect(message).toMatch(/api key was rejected/i);
+		expect(actionLabel).toBe('Add manually');
+
+		// One tap opens the normal intake mask — blank, nothing pre-filled.
+		onAction();
+		await tick();
+		expect(screen.getByText('Add Intake')).toBeInTheDocument();
+		expect(screen.queryByDisplayValue('Pizza')).toBeNull();
 	});
 });

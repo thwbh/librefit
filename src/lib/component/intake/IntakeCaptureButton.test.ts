@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import IntakeCaptureButton from './IntakeCaptureButton.svelte';
 
 // The webview only transports bytes; mock the IPC commands, the byte reader and
@@ -161,5 +161,55 @@ describe('IntakeCaptureButton', () => {
 		await fireEvent.click(screen.getByLabelText(BUTTON_LABEL));
 
 		expect(onerror).toHaveBeenCalledWith(expect.stringMatching(/api key was rejected/i));
+	});
+
+	it('[FR-014] accepting consent records it and proceeds straight to capture', async () => {
+		// First tap → consent dialog → Accept: the grant is recorded, the parent
+		// is told, and capture continues without a second tap.
+		capturePhotoFromCamera.mockResolvedValue({ image: [9, 9, 9], mime: 'image/jpeg' });
+		analyzeMealPhoto.mockResolvedValue(candidate);
+		const { onconsent, onstart, onresult } = setup({ consentGranted: false });
+
+		await fireEvent.click(screen.getByLabelText(BUTTON_LABEL));
+		await fireEvent.click(screen.getByText(/accept & continue/i));
+
+		expect(grantAiIntakeConsent).toHaveBeenCalledOnce();
+		expect(onconsent).toHaveBeenCalledOnce();
+		expect(capturePhotoFromCamera).toHaveBeenCalledOnce();
+		expect(analyzeMealPhoto).toHaveBeenCalledWith(
+			expect.objectContaining({ image: [9, 9, 9], mime: 'image/jpeg' })
+		);
+		expect(onstart).toHaveBeenCalledOnce();
+		await waitFor(() => expect(onresult).toHaveBeenCalledWith(candidate));
+	});
+
+	it('[FR-015] a failed consent grant surfaces the failure instead of silently proceeding', async () => {
+		// The grant itself can fail (backend down, config gone); the user must
+		// not be dropped into a capture flow that will fail confusingly later.
+		grantAiIntakeConsent.mockRejectedValue({ code: 'not_configured', message: 'gone' });
+		const { onerror, onconsent } = setup({ consentGranted: false });
+
+		await fireEvent.click(screen.getByLabelText(BUTTON_LABEL));
+		await fireEvent.click(screen.getByText(/accept & continue/i));
+
+		expect(onerror).toHaveBeenCalledWith(
+			expect.stringMatching(/not set up yet|add this meal manually/i)
+		);
+		expect(onconsent).not.toHaveBeenCalled();
+		expect(capturePhotoFromCamera).not.toHaveBeenCalled();
+	});
+
+	it('[FR-033] an empty picker selection does not start an analysis', async () => {
+		// Fallback path: the file dialog opens but is dismissed without a file;
+		// nothing may run (no spurious loading modal, no analysis call).
+		capturePhotoFromCamera.mockRejectedValue(new Error('no camera'));
+		analyzeMealPhoto.mockResolvedValue(candidate);
+		const { onstart } = setup({ consentGranted: true });
+
+		await fireEvent.click(screen.getByLabelText(BUTTON_LABEL));
+		await fireEvent.change(fileInput(), new Event('change'));
+
+		expect(analyzeMealPhoto).not.toHaveBeenCalled();
+		expect(onstart).not.toHaveBeenCalled();
 	});
 });
