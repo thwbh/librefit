@@ -5,6 +5,14 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
+## [26.41.0] - 2026-10-07
+
+### Changed
+
+- LLM meal-photo calorie estimation now opens the intake modal and indicates a loading state
+- Tapping the capture button now opens the device camera directly with a file picker as fallback
+- Confidence score on calorie estimation is displayed
+
 ## [26.40.0] - 2026-10-04
 
 ### Added

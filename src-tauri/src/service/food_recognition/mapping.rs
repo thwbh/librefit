@@ -23,6 +23,10 @@ const MAX_DESCRIPTION_LEN: usize = 500;
 pub struct IntakeCandidate {
     pub intake: NewIntake,
     pub low_confidence: bool,
+    /// Raw analysis confidence (0.0–1.0), surfaced so the UI can render a
+    /// low/medium/high badge (FR-034). `low_confidence` stays authoritative for
+    /// the warning (FR-023); this is additive.
+    pub confidence: f32,
 }
 
 /// Collapse an analysis result into one `NewIntake` (FR-020/021/022/023):
@@ -49,6 +53,7 @@ pub fn to_candidate(
     Ok(IntakeCandidate {
         intake: NewIntake::new(today, amount, category, Some(description)),
         low_confidence: result.confidence < LOW_CONFIDENCE_THRESHOLD,
+        confidence: result.confidence,
     })
 }
 

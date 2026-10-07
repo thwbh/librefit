@@ -2,8 +2,15 @@
 	import type { Intake, NewIntake } from '$lib/api';
 	import { NewIntakeSchema } from '$lib/api/gen/types';
 	import { convertDateStrToDisplayDateStr } from '$lib/date';
+	import { confidenceLevel } from '$lib/food-recognition';
 	import { useFieldValidity } from '$lib/composition/useFieldValidity.svelte';
-	import { AlertBox, AlertType, AlertVariant, ModalDialog } from '@thwbh/veilchen';
+	import {
+		AlertBox,
+		AlertType,
+		AlertVariant,
+		LoadingIndicator,
+		ModalDialog
+	} from '@thwbh/veilchen';
 	import { Trash } from 'phosphor-svelte';
 	import IntakeMask from './IntakeMask.svelte';
 
@@ -18,6 +25,17 @@
 		 * low-confidence AI estimate (FR-023). Distinct from `errorMessage`.
 		 */
 		notice?: string;
+		/**
+		 * AI meal-photo analysis in flight: show a loading state instead of the
+		 * form and disable Save (FR-036). Cleared once the candidate arrives.
+		 */
+		loading?: boolean;
+		/**
+		 * Raw AI analysis confidence (0.0–1.0) for the pre-filled candidate; shown
+		 * as a low/medium/high badge in the header (FR-037). Undefined for manual
+		 * entry (no badge).
+		 */
+		confidence?: number;
 		onsave?: (event?: Event) => Promise<boolean> | boolean | void;
 		oncancel: () => void;
 		onrequestdelete?: () => void;
@@ -38,12 +56,30 @@
 		enableDelete = false,
 		errorMessage,
 		notice,
+		loading = false,
+		confidence,
 		onsave,
 		oncancel,
 		onrequestdelete,
 		oncanceldelete,
 		ondelete
 	}: Props = $props();
+
+	// Confidence badge (FR-037): only on a pre-filled create candidate, never in
+	// the delete view or while loading. Colour tracks the bucket.
+	const level = $derived(confidence === undefined ? undefined : confidenceLevel(confidence));
+	const badgeLabel = $derived(
+		level === 'high'
+			? 'High confidence'
+			: level === 'medium'
+				? 'Medium confidence'
+				: level === 'low'
+					? 'Low confidence'
+					: ''
+	);
+	const badgeClass = $derived(
+		level === 'high' ? 'badge-success' : level === 'medium' ? 'badge-warning' : 'badge-error'
+	);
 
 	// True whenever the modal renders as a delete-confirm view — either entered
 	// via the in-place edit→trash flip, or opened directly via openDelete().
@@ -120,6 +156,11 @@
 	{#snippet title()}
 		<span class="modal-header border-l-4 border-accent pl-2">{titleText}</span>
 		<span class="flex items-center gap-2">
+			{#if !isDeleteView && !loading && level}
+				<span class="badge badge-sm {badgeClass}" data-testid="confidence-badge">
+					{badgeLabel}
+				</span>
+			{/if}
 			{#if dateLabel}
 				<span class="text-xs opacity-70">{dateLabel}</span>
 			{/if}
@@ -137,13 +178,21 @@
 	{/snippet}
 
 	{#snippet content()}
-		{#if entry}
+		{#if loading}
+			<div
+				class="flex flex-col items-center justify-center gap-3 py-10"
+				data-testid="intake-loading"
+			>
+				<LoadingIndicator />
+				<span class="text-sm opacity-70">Analyzing photo…</span>
+			</div>
+		{:else if entry}
 			<IntakeMask bind:entry readonly={isDeleteView} />
 		{/if}
-		{#if !isDeleteView && notice}
+		{#if !loading && !isDeleteView && notice}
 			<AlertBox type={AlertType.Warning} variant={AlertVariant.Box}>{notice}</AlertBox>
 		{/if}
-		{#if !isDeleteView && (errorMessage || validity.showError)}
+		{#if !loading && !isDeleteView && (errorMessage || validity.showError)}
 			<AlertBox type={AlertType.Error} variant={AlertVariant.Box}>
 				{errorMessage ?? validity.errorMessage}
 			</AlertBox>
@@ -159,6 +208,7 @@
 					class="btn btn-primary save-button"
 					class:shake={shakeKey > 0}
 					onclick={handleSaveClick}
+					disabled={loading}
 				>
 					Save
 				</button>

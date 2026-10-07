@@ -1,9 +1,10 @@
-use crate::helpers::setup_test_pool;
+use crate::helpers::{one_shot_server, setup_test_pool};
 use librefit_lib::scenario;
 use librefit_lib::secret::{InMemorySecretStore, SecretStore, AI_INTAKE_API_KEY};
 use librefit_lib::service::app_config::{AiIntakeConfig, AppConfigEntry, KEY_AI_BASE_URL};
 use librefit_lib::service::food_recognition::adapter::{
-    analyze, normalize_base_url, AnalysisRequest, FakeProviderAdapter, ProviderAdapter,
+    analyze, normalize_base_url, AnalysisRequest, FakeProviderAdapter, MistralAdapter,
+    ProviderAdapter,
 };
 use librefit_lib::service::food_recognition::analysis::{parse_analysis, AnalysisError};
 use librefit_lib::service::food_recognition::image::{file_extension_for, strip_exif};
@@ -200,6 +201,34 @@ fn low_confidence_result_flagged() {
 }
 
 #[test]
+fn candidate_carries_numeric_confidence() {
+    scenario!("[FR-034]");
+    let pool = setup_test_pool();
+    let mut conn = pool.get().unwrap();
+
+    // The raw analysis confidence is surfaced on the candidate so the UI can
+    // derive a low/medium/high badge (the bucketing itself is a frontend helper).
+    let high = to_candidate(&mut conn, &parse_analysis(VALID_SINGLE).unwrap()).unwrap();
+    assert_eq!(high.confidence, 0.9);
+
+    let low = to_candidate(&mut conn, &parse_analysis(LOW_CONF).unwrap()).unwrap();
+    assert_eq!(low.confidence, 0.2);
+}
+
+#[test]
+fn confidence_below_threshold_also_flags_low() {
+    scenario!("[FR-035]");
+    let pool = setup_test_pool();
+    let mut conn = pool.get().unwrap();
+
+    // A sub-threshold confidence both carries the raw value and sets the
+    // authoritative low-confidence warning flag, so badge and warning agree.
+    let low = to_candidate(&mut conn, &parse_analysis(LOW_CONF).unwrap()).unwrap();
+    assert!(low.confidence < 0.5);
+    assert!(low.low_confidence);
+}
+
+#[test]
 fn out_of_range_sum_rejected_on_save() {
     scenario!("[FR-024]");
     let pool = setup_test_pool();
@@ -295,4 +324,263 @@ fn base_url_normalized_for_openai_compatible_root() {
         normalize_base_url("http://localhost:11434/v1/"),
         "http://localhost:11434/v1"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Parsing edge cases
+// ---------------------------------------------------------------------------
+
+#[test]
+fn absent_confidence_defaults_to_full_confidence() {
+    scenario!("[FR-017]");
+    // Some providers omit `confidence`; the candidate stays usable and is not
+    // flagged low (the default sits above LOW_CONFIDENCE_THRESHOLD).
+    let raw = r#"{"items":[{"name":"Apple","calorieEstimate":95}]}"#;
+    let result = parse_analysis(raw).unwrap();
+    assert_eq!(result.confidence, 1.0);
+}
+
+#[test]
+fn empty_item_list_rejected() {
+    scenario!("[FR-019]");
+    // A "valid JSON, no food detected" answer must not become an empty intake.
+    let err = parse_analysis(r#"{"items":[],"confidence":0.9}"#).unwrap_err();
+    assert_eq!(err, AnalysisError::Parse);
+}
+
+#[test]
+fn non_positive_calories_rejected() {
+    scenario!("[FR-019]");
+    // Zero/negative estimates are model noise; reject rather than map.
+    let err =
+        parse_analysis(r#"{"items":[{"name":"Ghost","calorieEstimate":0}],"confidence":0.9}"#)
+            .unwrap_err();
+    assert_eq!(err, AnalysisError::Parse);
+}
+
+#[test]
+fn other_failure_carries_code_and_short_display() {
+    scenario!("[FR-010]");
+    // The `Other` class keeps the stable code and a short transport reason —
+    // never response content.
+    let err = AnalysisError::Other("provider returned status 500".to_string());
+    assert_eq!(err.code(), "other");
+    assert_eq!(err.to_string(), "other: provider returned status 500");
+}
+
+#[test]
+fn typed_error_maps_to_coded_frontend_error() {
+    scenario!("[FR-028]");
+    // The `From<AnalysisError>` bridge is what the command layer uses; the
+    // frontend picks its localized message off the stable `code`.
+    let fr = librefit_lib::service::food_recognition::FrError::from(AnalysisError::BadKey);
+    assert_eq!(fr.code, "bad_key");
+    assert_eq!(fr.message, "bad_key");
+}
+
+// ---------------------------------------------------------------------------
+// Mapping edge cases
+// ---------------------------------------------------------------------------
+
+#[test]
+fn empty_item_names_are_skipped_in_the_description() {
+    scenario!("[FR-021]");
+    let pool = setup_test_pool();
+    let mut conn = pool.get().unwrap();
+
+    let raw =
+        r#"{"items":[{"name":"  ","calorieEstimate":100},{"name":"Apple","calorieEstimate":95}]}"#;
+    let candidate = to_candidate(&mut conn, &parse_analysis(raw).unwrap()).unwrap();
+
+    // The blank name dropped out of the joined description but its calories
+    // still count toward the sum.
+    assert_eq!(candidate.intake.description.as_deref(), Some("Apple"));
+    assert_eq!(candidate.intake.amount, 195);
+}
+
+#[test]
+fn description_is_truncated_to_the_column_bound() {
+    scenario!("[FR-021]");
+    let pool = setup_test_pool();
+    let mut conn = pool.get().unwrap();
+
+    // One item with a name far past the 500-char description bound.
+    let long_name = "x".repeat(900);
+    let raw = format!(
+        r#"{{"items":[{{"name":"{}","calorieEstimate":42}}],"confidence":0.9}}"#,
+        long_name
+    );
+    let candidate = to_candidate(&mut conn, &parse_analysis(&raw).unwrap()).unwrap();
+
+    let description = candidate.intake.description.unwrap();
+    assert_eq!(description.chars().count(), 500);
+    assert!(description.chars().all(|c| c == 'x'));
+}
+
+#[test]
+fn category_falls_back_when_the_time_of_day_row_is_missing() {
+    scenario!("[FR-022]");
+    let pool = setup_test_pool();
+    let mut conn = pool.get().unwrap();
+
+    // Remove the category the current time of day would pick...
+    use diesel::prelude::*;
+    for shortvalue in ["b", "l", "d", "s"] {
+        diesel::delete(librefit_lib::db::schema::food_category::table.find(shortvalue))
+            .execute(&mut conn)
+            .unwrap();
+    }
+
+    // ...the candidate still gets a valid local category (first row), never one
+    // from the model.
+    let candidate = to_candidate(&mut conn, &parse_analysis(VALID_SINGLE).unwrap()).unwrap();
+    assert!(
+        !candidate.intake.category.is_empty(),
+        "fallback category must exist"
+    );
+    assert!(["t", "u"].contains(&candidate.intake.category.as_str()));
+}
+
+// ---------------------------------------------------------------------------
+// Image hygiene edge cases
+// ---------------------------------------------------------------------------
+
+#[test]
+fn heic_variants_are_supported_for_stripping() {
+    scenario!("[FR-009]");
+    // HEIC/HEIF (common iPhone captures) map to a little_exif type like the
+    // other supported formats.
+    assert!(file_extension_for("image/heic").is_some());
+    assert!(file_extension_for("image/HEIF").is_some());
+    assert!(file_extension_for("image/jpg").is_some());
+}
+
+// ---------------------------------------------------------------------------
+// Live provider adapter (one-shot local HTTP server)
+// ---------------------------------------------------------------------------
+
+fn completion_body(content: &str) -> String {
+    serde_json::json!({
+        "id": "x",
+        "choices": [{ "message": { "content": content } }]
+    })
+    .to_string()
+}
+
+#[test]
+fn adapter_test_connection_hits_models_with_bearer_auth() {
+    scenario!("[FR-004]");
+    let (base, request_rx) = one_shot_server("200 OK", r#"{"data":[]}"#);
+
+    let adapter =
+        MistralAdapter::new(base, "pixtral-12b".to_string(), "sk-test".to_string()).unwrap();
+    adapter.test_connection().unwrap();
+
+    let request = request_rx
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .unwrap();
+    // Health check goes to /models and carries the key as a bearer token only.
+    assert!(request.starts_with("GET /models "));
+    assert!(request
+        .to_ascii_lowercase()
+        .contains("authorization: bearer sk-test"));
+}
+
+#[test]
+fn adapter_test_connection_rejects_a_bad_key() {
+    scenario!("[FR-005]", "[FR-028]");
+    let (base, _request_rx) = one_shot_server("401 Unauthorized", r#"{"error":"bad key"}"#);
+
+    let adapter =
+        MistralAdapter::new(base, "pixtral-12b".to_string(), "sk-wrong".to_string()).unwrap();
+    let err = adapter.test_connection().unwrap_err();
+    assert_eq!(err, AnalysisError::BadKey);
+}
+
+#[test]
+fn adapter_test_connection_reports_an_unreachable_provider() {
+    scenario!("[FR-006]", "[FR-030]");
+    // Nothing listens on this port: the connect failure is classified as a
+    // timeout-class error so the user gets the "check connection" nudge.
+    let adapter = MistralAdapter::new(
+        "http://127.0.0.1:9".to_string(),
+        "pixtral-12b".to_string(),
+        "sk-test".to_string(),
+    )
+    .unwrap();
+    let err = adapter.test_connection().unwrap_err();
+    assert_eq!(err, AnalysisError::Timeout);
+}
+
+#[test]
+fn adapter_completion_round_trips_through_chat_completions() {
+    scenario!("[FR-032]");
+    let content = r#"{"items":[{"name":"Apple","calorieEstimate":95}],"confidence":0.9}"#;
+    let (base, request_rx) = one_shot_server("200 OK", &completion_body(content));
+
+    let adapter =
+        MistralAdapter::new(base, "pixtral-12b".to_string(), "sk-test".to_string()).unwrap();
+    let result = analyze(&adapter, &req()).unwrap();
+    assert_eq!(result.items[0].name, "Apple");
+
+    let request = request_rx
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .unwrap();
+    assert!(request.starts_with("POST /chat/completions "));
+    assert!(request
+        .to_ascii_lowercase()
+        .contains("authorization: bearer sk-test"));
+    // Only image bytes cross the boundary, inlined as a data URI (FR-008);
+    // the locale reaches the system prompt.
+    assert!(request.contains("data:image/jpeg;base64,/9j/2Q=="));
+    assert!(request.contains("Food names in the 'en' locale"));
+}
+
+#[test]
+fn adapter_maps_quota_exhaustion() {
+    scenario!("[FR-029]");
+    let (base, _request_rx) = one_shot_server("429 Too Many Requests", r#"{"error":"quota"}"#);
+
+    let adapter =
+        MistralAdapter::new(base, "pixtral-12b".to_string(), "sk-test".to_string()).unwrap();
+    let err = adapter.complete(&req()).unwrap_err();
+    assert_eq!(err, AnalysisError::Quota);
+}
+
+#[test]
+fn adapter_maps_gateway_timeout_status() {
+    scenario!("[FR-030]");
+    let (base, _request_rx) = one_shot_server("504 Gateway Timeout", r#"{"error":"slow"}"#);
+
+    let adapter =
+        MistralAdapter::new(base, "pixtral-12b".to_string(), "sk-test".to_string()).unwrap();
+    let err = adapter.complete(&req()).unwrap_err();
+    assert_eq!(err, AnalysisError::Timeout);
+}
+
+#[test]
+fn adapter_maps_unexpected_status_to_other() {
+    scenario!("[FR-028]");
+    let (base, _request_rx) = one_shot_server("500 Internal Server Error", r#"{"error":"boom"}"#);
+
+    let adapter =
+        MistralAdapter::new(base, "pixtral-12b".to_string(), "sk-test".to_string()).unwrap();
+    let err = adapter.complete(&req()).unwrap_err();
+    assert_eq!(
+        err,
+        AnalysisError::Other("provider returned status 500".to_string())
+    );
+}
+
+#[test]
+fn adapter_reports_non_json_success_as_parse_failure() {
+    scenario!("[FR-019]");
+    // A 200 whose body is not the expected shape degrades to Parse — the
+    // retry logic upstream treats it like any other unparseable answer.
+    let (base, _request_rx) = one_shot_server("200 OK", r#"{"unexpected":true}"#);
+
+    let adapter =
+        MistralAdapter::new(base, "pixtral-12b".to_string(), "sk-test".to_string()).unwrap();
+    let err = adapter.complete(&req()).unwrap_err();
+    assert_eq!(err, AnalysisError::Parse);
 }
