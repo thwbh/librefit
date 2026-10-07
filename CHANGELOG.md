@@ -5,6 +5,12 @@ All notable changes to LibreFit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning](https://calver.org/) (YY.WW.MICRO format).
 
+## [26.41.1] - 2026-10-07
+
+### Fixed
+
+- Fixed missing permission entry for camera access
+
 ## [26.41.0] - 2026-10-07
 
 ### Changed
