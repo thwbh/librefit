@@ -5,6 +5,7 @@ mod test_body_cmd;
 mod test_dashboard_cmd;
 mod test_exercise_cmd;
 mod test_export_cmd;
+mod test_food_recognition_cmd;
 mod test_food_recognition_config_cmd;
 mod test_import_cmd;
 mod test_intake_cmd;
