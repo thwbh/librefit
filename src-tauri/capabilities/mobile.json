@@ -4,5 +4,5 @@
 	"description": "mobile-only permissions (camera capture for AI meal-photo intake, FR)",
 	"platforms": ["android", "iOS"],
 	"windows": ["main"],
-	"permissions": ["camera:default"]
+	"permissions": ["camera:allow-take-picture"]
 }
