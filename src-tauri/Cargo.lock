@@ -2796,7 +2796,7 @@ version = "0.1.0"
 dependencies = [
  "android-native-keyring-store",
  "apple-native-keyring-store",
- "base64 0.23.1",
+ "base64 0.22.1",
  "chrono",
  "diesel",
  "diesel_migrations",
