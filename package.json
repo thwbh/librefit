@@ -61,7 +61,7 @@
 		"jsdom": "^30.1.2",
 		"lint-staged": "^17.6.0",
 		"phosphor-svelte": "^3.1.1",
-		"prettier": "^3.9.9",
+		"prettier": "^3.9.10",
 		"prettier-plugin-svelte": "^4.1.1",
 		"svelte": "^5.57.2",
 		"svelte-check": "^4.7.6",
@@ -75,7 +75,7 @@
 		"vite": "^8.3.4",
 		"vite-tsconfig-paths": "^6.1.1",
 		"vitest": "^5.0.1",
-		"zod": "^4.6.5"
+		"zod": "^4.6.6"
 	},
 	"lint-staged": {
 		"*.{js,ts,svelte,css,md,json}": "prettier --write"
