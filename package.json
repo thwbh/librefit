@@ -50,7 +50,7 @@
 		"@types/node": "^26.6.5",
 		"@vitest/coverage-v8": "^5.0.5",
 		"autoprefixer": "^10.6.1",
-		"chart.js": "^4.4.2",
+		"chart.js": "^4.6.1",
 		"daisyui": "^5.7.50",
 		"date-fns": "^4.4.0",
 		"dayjs": "^1.11.23",
