@@ -108,10 +108,26 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      # Out-of-range cargo bumps (0.x→0.y+1 and 1.x→2.0 both count as major
+      # under caret semantics) land as ONE grouped PR instead of one solo PR
+      # per dependency per day — the webpki-roots/base64/jni phantoms.
+      cargo-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
       cargo-security:
         applies-to: security-updates
         patterns:
           - "*"
+    ignore:
+      # jni is an android-target dependency deliberately pinned at 0.21.
+      # Dependabot's 0.21.1→0.22.4 bumps updated only Cargo.lock, which no
+      # ^0.21 manifest requirement can ever satisfy: merged 8 times, each
+      # time silently reverted by the next cargo build, then re-proposed the
+      # next day. Take this bump deliberately (manifest change + android
+      # build verification), not via recurring phantom PRs.
+      - dependency-name: "jni"
+        versions: [">=0.22.0"]
 
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
