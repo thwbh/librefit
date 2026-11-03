@@ -2801,7 +2801,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "dotenv",
- "jni 0.21.1",
+ "jni 0.22.4",
  "keyring-core",
  "libmath",
  "libsqlite3-sys",
