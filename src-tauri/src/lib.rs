@@ -263,28 +263,33 @@ fn setup_db(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(target_os = "android")]
 #[allow(non_snake_case)]
 #[no_mangle]
-pub extern "system" fn Java_io_tohowabohu_librefit_MainActivity_initNdkContext(
-    env: jni::JNIEnv,
-    _this: jni::objects::JObject,
-    context: jni::objects::JObject,
+pub extern "system" fn Java_io_tohowabohu_librefit_MainActivity_initNdkContext<'caller>(
+    mut unowned_env: jni::EnvUnowned<'caller>,
+    _this: jni::objects::JObject<'caller>,
+    context: jni::objects::JObject<'caller>,
 ) {
-    use jni::objects::GlobalRef;
+    use jni::objects::Global;
     use std::ffi::c_void;
     use std::sync::OnceLock;
 
     // Keep the context global ref alive for the process; `ndk-context` holds a raw
     // pointer to it.
-    static NDK_CTX: OnceLock<GlobalRef> = OnceLock::new();
+    static NDK_CTX: OnceLock<Global<jni::objects::JObject<'static>>> = OnceLock::new();
     if NDK_CTX.get().is_some() {
         return;
     }
-    if let (Ok(ctx_ref), Ok(vm)) = (env.new_global_ref(&context), env.get_java_vm()) {
-        let vm_ptr = vm.get_java_vm_pointer() as *mut c_void;
-        let ctx_ptr = ctx_ref.as_obj().as_raw() as *mut c_void;
-        unsafe { ndk_context::initialize_android_context(vm_ptr, ctx_ptr) };
-        let _ = NDK_CTX.set(ctx_ref);
-        log::debug!("ndk-context initialized for keyring Android Keystore");
-    } else {
-        log::error!("failed to init ndk-context for keyring");
-    }
+    unowned_env
+        .with_env(|env| -> jni::errors::Result<()> {
+            let ctx_ref = env.new_global_ref(&context)?;
+            let vm = env.get_java_vm()?;
+            let vm_ptr = vm.get_raw() as *mut c_void;
+            let ctx_ptr = ctx_ref.as_obj().as_raw() as *mut c_void;
+            unsafe { ndk_context::initialize_android_context(vm_ptr, ctx_ptr) };
+            let _ = NDK_CTX.set(ctx_ref);
+            log::debug!("ndk-context initialized for keyring Android Keystore");
+            Ok(())
+        })
+        .resolve_with::<jni::errors::LogContextErrorAndDefault, _>(|| {
+            "failed to init ndk-context for keyring".to_string()
+        });
 }

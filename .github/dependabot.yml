@@ -108,6 +108,13 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      # Out-of-range cargo bumps (0.x→0.y+1 and 1.x→2.0 both count as major
+      # under caret semantics) land as ONE grouped PR instead of one solo PR
+      # per dependency per day — the webpki-roots/base64/jni phantoms.
+      cargo-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
       cargo-security:
         applies-to: security-updates
         patterns:

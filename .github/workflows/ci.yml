@@ -132,3 +132,70 @@ jobs:
         files: ./coverage/coverage-final.json
         flags: svelte
         name: svelte-coverage
+
+  # Android is the only shipping target; compile it on every PR so target-
+  # gated dependencies (jni, android-native-keyring-store, ndk-context) and
+  # the JNI glue in lib.rs are actually type-checked — the desktop-only jobs
+  # never see them. Debug + aarch64 only: validation, not release artifacts.
+  android-build:
+    name: 'Build Android (aarch64)'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: 'Install Node'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - name: 'Install frontend dependencies'
+        run: npm ci
+      - name: 'Set up Rust'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - name: 'Cache Rust dependencies'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-all-crates: true
+          shared-key: android-build-ci
+      - name: 'Setup Java'
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: 'Setup Android SDK'
+        uses: android-actions/setup-android@v4
+      - name: 'Setup Android NDK'
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r29
+          local-cache: true
+      - name: 'Setup Gradle'
+        uses: gradle/actions/setup-gradle@v6.4.1
+        with:
+          cache-read-only: false
+      - name: 'Cache Tauri CLI'
+        id: cache-tauri-cli
+        uses: actions/cache@v6
+        with:
+          path: ~/.cargo/bin/cargo-tauri
+          key: ${{ runner.os }}-tauri-cli-2.9.5
+      - name: 'Install Tauri CLI'
+        run: |
+          if ! command -v cargo-tauri &> /dev/null; then
+            cargo install tauri-cli --version "=2.9.5" --locked
+          fi
+      - name: 'Configure NDK path'
+        working-directory: src-tauri/gen/android
+        run: echo "ndk.dir=${{ steps.setup-ndk.outputs.ndk-path }}" > local.properties
+      - name: 'Build debug APK'
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_VERSION: ${{ steps.setup-ndk.outputs.ndk-full-version }}
+        run: cargo tauri android build --target aarch64 --apk true --debug

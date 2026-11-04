@@ -2796,12 +2796,12 @@ version = "0.1.0"
 dependencies = [
  "android-native-keyring-store",
  "apple-native-keyring-store",
- "base64 0.22.1",
+ "base64 0.23.1",
  "chrono",
  "diesel",
  "diesel_migrations",
  "dotenv",
- "jni 0.21.1",
+ "jni 0.22.4",
  "keyring-core",
  "libmath",
  "libsqlite3-sys",
@@ -2825,7 +2825,7 @@ dependencies = [
  "tauri-typegen",
  "url",
  "validator",
- "webpki-roots 0.26.11",
+ "webpki-roots",
  "windows-native-keyring-store",
  "zbus-secret-service-keyring-store",
 ]
@@ -6177,15 +6177,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b96554aa2acc8ccdb7e1c9a58a7a68dd5d13bccc69cd124cb09406db612a1c9b"
 dependencies = [
  "rustls-pki-types",
-]
-
-[[package]]
-name = "webpki-roots"
-version = "0.26.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
-dependencies = [
- "webpki-roots 1.0.9",
 ]
 
 [[package]]
