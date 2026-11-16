@@ -35,7 +35,11 @@ jobs:
         run: npm run lint:conventions
   rust-test:
     name: 'Run nextest'
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest migrated to Ubuntu 26 on 2026-10-19, which dropped
+    # the WebKitGTK 4.1 packages (libwebkit2gtk-4.1-dev / webkit2gtk-driver) this
+    # job installs for the Tauri desktop build. Stay on 24.04 until we move to
+    # tauri's webkitgtk-6.0 support deliberately.
+    runs-on: ubuntu-24.04
     needs: lint
     steps:
       - uses: actions/checkout@v7
